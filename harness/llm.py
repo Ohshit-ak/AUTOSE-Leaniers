@@ -1,4 +1,4 @@
-"""Unified LLM caller for DeepSeek, Groq and Gemma (Google AI Studio)."""
+"""Unified LLM caller for DeepSeek, Groq, Gemma (Google AI Studio) and local Qwen."""
 import os
 import re
 
@@ -7,6 +7,8 @@ from config import API_KEY_VARS, BASE_URLS, MODELS, TEMPERATURE
 
 def _api_key(provider: str) -> str:
     var = API_KEY_VARS[provider]
+    if var is None:
+        return "not-needed"  # local server; the OpenAI client still wants a string
     key = os.getenv(var)
     if not key:
         raise RuntimeError(f"{var} is not set; add it to .env")

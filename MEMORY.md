@@ -12,8 +12,9 @@ decision someone else would need to know.
 | `harness/config.py` | Done. Models, keys, retries, timeouts. |
 | `harness/llm.py` | Written. Gemma model name not yet checked against the live API. |
 | `harness/lean_runner.py` | Done. |
-| `harness/agents/` (L0/L1/L2) | Written, not yet run end to end. |
-| `harness/main.py` | **Not started.** Wires L0 → L1 → L2 together. |
+| `harness/req_parser.py` | Done (2026-10-28). SRS XML → requirements JSON, deterministic, no LLM. Tests in `harness/tests/`. |
+| `harness/agents/` (L0/L1/L2) | Written, not yet run end to end. L0 can now read the parser JSON (`run_spec_from_json`). |
+| `harness/main.py` | Single entry point. Stages `parse` → `spec` (L0) work; L1/L2 not wired yet. Auto-starts the Qwen server. |
 | `harness/reverify.py` | Not started. |
 | `benchmark/` | Not started. |
 | `evaluation/` | Not started. |
@@ -31,6 +32,11 @@ decision someone else would need to know.
 - **`sorry` counts as failure** in `check_lean`.
 - **Locked context:** already-verified Lean (spec, contracts) is passed as `context` to `generate_verified` and prepended at check time, so later agents can't change it.
 - **Gemma has no system role**, so `llm.py` puts the system prompt in front of the user prompt.
+
+- **Requirements parser is rule-based and must stay AI-free.** Same XML bytes → same JSON bytes (tested across hash seeds). Every dropped statement is kept in `dropped` with the rule that removed it; tune the word lists at the top of `req_parser.py`, not ad hoc.
+- **Performance requirements are kept**, tagged `verification: "lean+python_runtime"`. Bounds are integers (µs, per-second, counts) so a Python-measured value can be checked against the Lean spec with `decide`.
+- Module is `req_parser.py`, not `parser.py`: Python 3.9 ships a stdlib `parser` module.
+- **Local Qwen (`model="qwen"`)** = Qwen 2.5 7B GGUF via llama.cpp `llama-server` on **port 8082** (`scripts/start_qwen_server.sh`). Kept isolated from other projects on ada: own port (8080 vrspecml, 8081 housing-trends), own `CF_`-prefixed env vars, own `venv/` inside this repo; the shared model file and binary are only read.
 
 ## Proof obligations (naming used everywhere)
 

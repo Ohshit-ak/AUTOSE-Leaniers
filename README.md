@@ -141,7 +141,17 @@ cd harness
 python -c "from llm import call_llm; print(call_llm('Write hello world in Lean 4', model='deepseek'))"
 ```
 
-`model` is one of `deepseek`, `groq` or `gemma`.
+`model` is one of `deepseek`, `groq`, `gemma` or `qwen`.
+
+`qwen` is the local Qwen 2.5 7B on ada, served by llama.cpp on port 8082 (no API key).
+Start it on a GPU node and run the harness on that same node:
+
+```bash
+srun -p u22 --gres=gpu:1 --pty bash
+bash scripts/start_qwen_server.sh &        # wait for "server is listening"
+source venv/bin/activate && cd harness
+python -c "from llm import call_llm; print(call_llm('Write hello world in Lean 4', model='qwen'))"
+```
 
 ### Type-check Lean code against the framework
 
