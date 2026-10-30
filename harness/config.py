@@ -11,6 +11,7 @@ FRAMEWORK_PATH = ROOT / "framework"
 
 MAX_RETRIES = int(os.getenv("CF_MAX_RETRIES", "5"))
 LEAN_TIMEOUT = int(os.getenv("CF_LEAN_TIMEOUT", "60"))
+API_RETRIES = int(os.getenv("CF_API_RETRIES", "6"))  # 5xx / 429 / network errors, with backoff
 TEMPERATURE = 0.2
 
 # Provider name -> model id. Override any of these via env vars if a
@@ -18,7 +19,7 @@ TEMPERATURE = 0.2
 MODELS = {
     "deepseek": os.getenv("CF_DEEPSEEK_MODEL", "deepseek-chat"),
     "groq": os.getenv("CF_GROQ_MODEL", "llama-3.3-70b-versatile"),
-    "gemma": os.getenv("CF_GEMMA_MODEL", "gemma-4-27b-it"),
+    "gemma": os.getenv("CF_GEMMA_MODEL", "gemma-4-31b-it"),
     # Local Qwen 2.5 7B served by llama.cpp (scripts/start_qwen_server.sh).
     "qwen": os.getenv("CF_QWEN_MODEL", "qwen2.5-7b-instruct"),
 }

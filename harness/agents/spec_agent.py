@@ -13,17 +13,47 @@ that captures the requirement precisely.
 
 Rules:
 - The framework is already imported and opened; do not write `import` lines.
+- `Contract` ALREADY EXISTS. Never redefine it. Its shape, for reference only:
+    structure Contract (α β : Type) where
+      pre  : α → Prop
+      post : α → β → Prop
 - Use only Lean core (no Mathlib). For sortedness use `List.Pairwise (· ≤ ·)`,
   for permutations use `List.Perm`.
-- Define any data types the system needs.
+- Define `structure Input` and `structure Output` (and any helper types or
+  functions) BEFORE `Spec`. Every name must be defined before it is used.
 - Define the spec as `def Spec : Contract Input Output` with `pre` and `post`.
-- The spec must be satisfiable: add `example` showing a witness.
-- Output ONLY Lean 4 code in one ```lean block.
+- The spec must be satisfiable: add one `example` proving
+  `Spec.pre i ∧ Spec.post i o` for concrete `i`, `o`. `Spec` is not a function:
+  write `Spec.pre x` / `Spec.post x y`, never `Spec x y`.
+- `pre` and `post` return `Prop`: use `True`/`False`, `=`, `∧`, `∨`, `¬`, `→`.
+  Do not use Bool `true`/`false` as a proposition.
+- Output ONLY Lean 4 code in one ```lean block. No `sorry`.
 
-The Contract structure is:
-structure Contract (α β : Type) where
-  pre  : α → Prop
-  post : α → β → Prop
+Write Lean 4 syntax ONLY. Lean 3 does not compile. Forbidden → use instead:
+- `begin ... end`            → `by` followed by indented tactics
+- `λ x, e`  / `assume x,`    → `fun x => e`
+- tactics separated by `,`   → one tactic per line
+- `{ tac }` goal blocks      → `·` bullets, or `constructor` / `exact ⟨_, _⟩`
+- `split` on `∧`             → `constructor`
+- `cases h with a b`         → `obtain ⟨a, b⟩ := h`
+- `#eval` / `#check` lines   → leave them out
+
+Follow this template exactly (it compiles):
+
+```lean
+structure Input where
+  amount : Nat
+
+structure Output where
+  accepted : Bool
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.amount ≤ 1000
+  post := fun i o => o.accepted = true ↔ 0 < i.amount
+
+example : Spec.pre ⟨5⟩ ∧ Spec.post ⟨5⟩ ⟨true⟩ := by
+  simp [Spec]
+```
 """
 
 RUNTIME_NOTE = """\

@@ -40,19 +40,30 @@ AUTOSE-Leaniers/
 │   │   └── Tactics.lean    # discharge_po tactic
 │   └── Test.lean           # smoke test
 │
-└── harness/                # Python orchestration
-    ├── config.py           # models, API keys, retry/timeout settings
-    ├── llm.py              # call_llm(): DeepSeek / Groq / Gemma; extract_lean()
-    ├── lean_runner.py      # check_lean(): type-checks code against the framework
-    └── agents/
-        ├── base.py             # generate → check → repair loop
-        ├── spec_agent.py       # L0: requirement → spec
-        ├── architect_agent.py  # L1: spec → contracts + PO1/PO2
-        └── coding_agent.py     # L2: contract → impl + PO3
+├── harness/                # Python orchestration
+│   ├── main.py             # pipeline entry point: parse → spec (L0)
+│   ├── config.py           # models, API keys, retry/timeout settings
+│   ├── llm.py              # call_llm(): DeepSeek / Groq / Gemma / Qwen; extract_lean()
+│   ├── lean_runner.py      # check_lean(): type-checks code against the framework
+│   ├── req_parser.py       # SRS XML → requirements JSON (rule-based, no LLM)
+│   ├── tests/              # unit tests (req_parser)
+│   └── agents/
+│       ├── base.py             # generate → check → repair loop
+│       ├── spec_agent.py       # L0: requirement → spec
+│       ├── architect_agent.py  # L1: spec → contracts + PO1/PO2
+│       └── coding_agent.py     # L2: contract → impl + PO3
+│
+├── scripts/
+│   └── start_qwen_server.sh  # local Qwen 2.5 7B via llama.cpp (port 8082)
+│
+├── Requirements/           # input SRS documents (.xml, .pdf)
+│   └── parsed/             # parser output, one JSON per document
+│
+└── runs/                   # pipeline outputs: runs/<document>/<model>/
 ```
 
-Planned, not yet created: `harness/main.py`, `harness/reverify.py`,
-`benchmark/`, `evaluation/`, `requirements.txt` (see [MEMORY.md](MEMORY.md)).
+Planned, not yet created: `harness/reverify.py`, `requirements.txt`, and the
+contents of `benchmark/` and `evaluation/` (see [MEMORY.md](MEMORY.md)).
 
 ### Where to look for…
 
@@ -61,6 +72,8 @@ Planned, not yet created: `harness/main.py`, `harness/reverify.py`,
 | Understand the core types and proof obligations | [framework/ContractForge/Contract.lean](framework/ContractForge/Contract.lean) |
 | See why the pipeline is sound | [framework/ContractForge/Soundness.lean](framework/ContractForge/Soundness.lean) |
 | Change the automatic proof tactic | [framework/ContractForge/Tactics.lean](framework/ContractForge/Tactics.lean) |
+| Run the pipeline | [harness/main.py](harness/main.py) |
+| Change how requirements are extracted from the SRS | [harness/req_parser.py](harness/req_parser.py) |
 | Switch models or change retries/timeouts | [harness/config.py](harness/config.py) |
 | Add a new LLM provider | [harness/llm.py](harness/llm.py) |
 | Change how Lean is invoked or errors are reported | [harness/lean_runner.py](harness/lean_runner.py) |
@@ -121,8 +134,11 @@ Optional overrides (also in `.env`):
 |----------|---------|
 | `CF_DEEPSEEK_MODEL` | `deepseek-chat` |
 | `CF_GROQ_MODEL` | `llama-3.3-70b-versatile` |
-| `CF_GEMMA_MODEL` | `gemma-4-27b-it` |
-| `CF_MAX_RETRIES` | `5` |
+| `CF_GEMMA_MODEL` | `gemma-4-31b-it` |
+| `CF_QWEN_MODEL` | `qwen2.5-7b-instruct` |
+| `CF_MODEL` | `qwen` (default `--model` for `main.py`) |
+| `CF_MAX_RETRIES` | `5` (Lean generate → check → repair attempts) |
+| `CF_API_RETRIES` | `6` (retries on 429 / 5xx / network errors, with backoff) |
 | `CF_LEAN_TIMEOUT` | `60` (seconds) |
 
 ---
@@ -162,9 +178,39 @@ python -c "from lean_runner import check_lean; print(check_lean('example : 1 + 1
 It returns `{'success': True, ...}`, or `{'success': False, 'error': ...}` with
 Lean's error message. A `sorry` counts as a failure.
 
+### Run the pipeline (`main.py`)
+
+`main.py` parses every SRS XML in `Requirements/` and generates one Lean spec (L0)
+per requirement, data constraint and use case. L1/L2 are not wired in yet.
+
+```bash
+python main.py                                    # all XMLs, model qwen (or $CF_MODEL)
+python main.py "../Requirements/0000 - gamma j.xml" --model gemma
+python main.py --until parse                      # parser only, no model
+python main.py --limit 5                          # first 5 entries
+python main.py --only 5.1/R4 DD-user-id           # specific entries
+python main.py --kinds data_constraint            # requirement | data_constraint | use_case
+python main.py --resume                           # skip entries that already passed
+python main.py --skip-lean                        # don't type-check (specs marked unchecked)
+```
+
+With `--model qwen`, the local server is started automatically if it isn't running
+(GPU node required). Outputs:
+
+| File | Contents |
+|------|----------|
+| `Requirements/parsed/<doc>.json` | parser output (requirements, data dictionary, use cases, dropped statements) |
+| `runs/<doc>/<model>/specs.json` | summary + per entry: requirement text, prompt, Lean spec, `checked`, attempts, seconds |
+| `runs/<doc>/<model>/lean/<id>.lean` | each Lean spec as a file |
+
+`specs.json` is rewritten after every entry, so a crash or Ctrl-C loses nothing;
+rerun with `--resume` to continue.
+
+Parser tests: `python -m unittest discover tests`.
+
 ### Run the agents step by step
 
-`harness/main.py` doesn't exist yet. Until it does, chain the agents by hand:
+To use the agents directly (e.g. to try L1/L2 before they are in `main.py`):
 
 ```python
 from agents.spec_agent import run_spec

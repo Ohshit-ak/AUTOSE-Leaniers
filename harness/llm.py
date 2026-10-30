@@ -1,8 +1,9 @@
 """Unified LLM caller for DeepSeek, Groq, Gemma (Google AI Studio) and local Qwen."""
 import os
 import re
+import time
 
-from config import API_KEY_VARS, BASE_URLS, MODELS, TEMPERATURE
+from config import API_KEY_VARS, API_RETRIES, BASE_URLS, MODELS, TEMPERATURE
 
 
 def _api_key(provider: str) -> str:
@@ -15,8 +16,29 @@ def _api_key(provider: str) -> str:
     return key
 
 
+def _transient(e: Exception) -> bool:
+    """Server overload, 5xx, rate limit or network blip: worth retrying."""
+    code = getattr(e, "code", None) or getattr(e, "status_code", None)
+    if code in (429, 500, 502, 503, 504):
+        return True
+    return type(e).__name__ in ("ConnectError", "ReadTimeout", "APIConnectionError",
+                                "APITimeoutError", "RemoteProtocolError")
+
+
 def call_llm(prompt: str, system: str = "", model: str = "deepseek") -> str:
-    """Call a model by provider name. Returns the response text."""
+    """Call a model by provider name, retrying transient API errors. Returns the response text."""
+    for attempt in range(API_RETRIES + 1):
+        try:
+            return _call_llm_once(prompt, system, model)
+        except Exception as e:
+            if attempt == API_RETRIES or not _transient(e):
+                raise
+            wait = min(10 * 2 ** attempt, 120)
+            print(f"  api error ({type(e).__name__}), retry {attempt + 1}/{API_RETRIES} in {wait}s")
+            time.sleep(wait)
+
+
+def _call_llm_once(prompt: str, system: str, model: str) -> str:
     if model not in MODELS:
         raise ValueError(f"unknown model {model!r}; choose from {list(MODELS)}")
 
