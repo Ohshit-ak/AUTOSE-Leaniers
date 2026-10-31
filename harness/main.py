@@ -179,7 +179,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
     if args.limit:
         items = items[:args.limit]
 
-    out_dir = RUNS_DIR / stem / args.model
+    out_dir = RUNS_DIR / stem / (args.run_name or args.model)
     lean_dir = out_dir / "lean"
     lean_dir.mkdir(parents=True, exist_ok=True)
     specs_path = out_dir / "specs.json"
@@ -246,7 +246,7 @@ def stage_check(doc: dict, stem: str, args) -> dict:
     """Review every spec, write the report and review.json, then apply --on-l0-fail."""
     from validate import review_run, write_report
 
-    out_dir = RUNS_DIR / stem / args.model
+    out_dir = RUNS_DIR / stem / (args.run_name or args.model)
     specs_path = out_dir / "specs.json"
     if not specs_path.exists():
         _fail(f"no specs to check: {specs_path.relative_to(ROOT)} (run the spec stage first)")
@@ -291,6 +291,7 @@ def main(argv=None) -> int:
     ap.add_argument("--until", choices=STAGES, default=STAGES[-1], help="last stage to run (default: %(default)s)")
     ap.add_argument("--model", default=os.getenv("CF_MODEL", "qwen"),
                     help="qwen | deepseek | groq | gemma (default: $CF_MODEL or qwen)")
+    ap.add_argument("--run-name", help="output folder under runs/<doc>/ (default: the model name)")
     ap.add_argument("--limit", type=int, help="only the first N entries")
     ap.add_argument("--only", nargs="+", metavar="ID", help="only these entry ids")
     ap.add_argument("--kinds", nargs="+", choices=["requirement", "data_constraint", "use_case"])
