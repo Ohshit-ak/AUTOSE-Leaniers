@@ -1,0 +1,82 @@
+===== 1.4/S2 bad_example | no `Spec.post { … } { … }` with named-field records found
+values: None
+```lean
+-- why: The output does not satisfy the postcondition, as the items count should not change.
+example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by
+  unfold Spec
+  let IN := { items := 100 }
+  let OUT := { items := 50 }
+  decide
+```
+===== 3.3.3/S1 bad_example | no `Spec.post { … } { … }` with named-field records found
+values: None
+```lean
+-- why: The requirement does not allow the cart length to increase by more than one product, and the added flag should be true only if the product is added to the cart.
+example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by
+  unfold Spec
+  let IN := { cart := [], productCode := "A123" }
+  let OUT := { cart := [{ code := "A123", price := 100 }, { code := "B456", price := 200 }], added := true }
+  decide
+```
+===== 5.1/R4 bad_example | no `Spec.post { … } { … }` with named-field records found
+values: None
+```lean
+-- why: The output violates the requirement that `elapsedMicros` must be less than 2000 microseconds.
+example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by
+  unfold Spec
+  let IN := { productID := 1, cart := [2, 3] }
+  let OUT := { added := true, elapsedMicros := 2500 }
+  decide
+```
+===== DD-user-id bad_example | no `Spec.post { … } { … }` with named-field records found
+values: None
+```lean
+-- why: The output should not be `true` because the `User ID` does not meet the length requirement.
+example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by
+  unfold Spec
+  let IN := { raw := "ab" } -- Length is 2, which is less than the minimum length of 4.
+  let OUT := { valid := true } -- This should be false according to the requirement.
+  decide
+```
+===== UC-customer-register-customer bad_example | no `Spec.post { … } { … }` with named-field records found
+values: None
+```lean
+-- why: The output does not create a new account or session cookie, violating the postcondition.
+example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by
+  unfold Spec
+  let IN := { name := "JohnDoe", email := "johndoe@example.com" }
+  let OUT := { registered := false, sessionCookie := "" }
+  decide
+```
+===== UC-customer-checkout-an-order bad_example | no `Spec.post { … } { … }` with named-field records found
+values: None
+```lean
+-- why: The output does not satisfy the postcondition that the order must be confirmed and the email must be sent.
+example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by
+  unfold Spec
+  let IN := { signedIn := true, cart := ["item1", "item2"] }
+  let OUT := { signedIn := true, cart := ["item1", "item2"], orderConfirmed := false, emailSent := false }
+  decide
+```
+===== UC-administrator-login-administrator bad_example | no `Spec.post { … } { … }` with named-field records found
+values: None
+```lean
+-- why: The output allows the administrator to be signed in even though the username or password is incorrect.
+example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by
+  unfold Spec
+  let IN := { username := "admin", password := "wrongpassword" }
+  let OUT := { signedIn := true, cookie := none }
+  decide
+```
+===== UC-sales-person-login-sales-person bad_example | no `Spec.post { … } { … }` with named-field records found
+values: None
+```lean
+-- why: The output incorrectly states that the Sales Person is signed in, even though the entered password is incorrect.
+example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by
+  unfold Spec
+  let i := { username := "john_doe", password := "wrong_password", accounts := [Account.{ username := "john_doe", password := "correct_password", email := "john@example.com" }]}
+  let o := { signedIn := true }
+  decide
+```
+
+In this example, the input `i` satisfies `Spec.pre` because the username and password are not empty. However, the output `o` incorrectly states that the Sales Person is signed in, even though the entered password is incorrect. This is a violation of the requirement, as the system should not log in the Sales Person with an incorrect password.
