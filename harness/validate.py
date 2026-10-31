@@ -64,8 +64,29 @@ def _balanced(text: str, start: int, open_ch: str = "{", close_ch: str = "}") ->
     return None
 
 
+def one_line(lit: str) -> str:
+    """`lit` with every whitespace run outside string literals collapsed to one space.
+
+    Record literals are pasted into new statements (vacuity, data tests, negative check).
+    A literal the model wrote across several lines does not parse at its new position
+    (`unexpected identifier; expected '}'`), which used to be reported as a vacuous `post`.
+    """
+    out, in_str, prev_space = [], False, False
+    for k, c in enumerate(lit):
+        if c == '"' and (k == 0 or lit[k - 1] != "\\"):
+            in_str = not in_str
+        if not in_str and c.isspace():
+            if not prev_space:
+                out.append(" ")
+            prev_space = True
+            continue
+        out.append(c)
+        prev_space = False
+    return "".join(out).strip()
+
+
 def example_witness(code: str) -> Optional[Tuple[str, str]]:
-    """(input literal, output literal) from `Spec.post { … } { … }` in the example."""
+    """(input literal, output literal) from `Spec.post { … } { … }` in the example, each on one line."""
     _, example = split_example(code)
     m = re.search(r"Spec\.post\s*", example)
     if not m:
@@ -79,7 +100,7 @@ def example_witness(code: str) -> Optional[Tuple[str, str]]:
         end = _balanced(example, k)
         if end is None:
             return None
-        groups.append(example[k:end])
+        groups.append(one_line(example[k:end]))
         k = end
     return groups[0], groups[1]
 
@@ -429,6 +450,26 @@ def data_cases(constraints: dict) -> List[Tuple[str, bool, str]]:
     return cases
 
 
+def _numeric_data_tests(code: str, inp: dict, b_fields: List[str], c: dict) -> List[str]:
+    """Data tests for `value : Nat`. Money fields have no bounds in the SRS, so there is
+    nothing to test; `max_ref` ("at most the quantity in stock") is tested against the
+    one other `Nat` field of `Input`, which holds that limit."""
+    if "max_ref" not in c:
+        return []
+    limits = [f for f, t in inp.items() if t == "Nat" and f != "value"]
+    if len(limits) != 1 or len(inp) != 2 or len(b_fields) != 1:
+        return [f"data test skipped: `value` must be at most `{c['max_ref']}`, but `Input` does "
+                "not have exactly one other `Nat` field holding that limit"]
+    lim, b = limits[0], b_fields[0]
+    cases = [(5, 5, True, f"`value` equal to the limit ({c['max_ref']})"),
+             (6, 5, False, f"`value` above the limit ({c['max_ref']})")]
+    examples = [f"example : Spec.pre {{ value := {v}, {lim} := {m} }} → Spec.post "
+                f"{{ value := {v}, {lim} := {m} }} {{ {b} := {'true' if ok else 'false'} }} := by\n"
+                f"  unfold Spec; decide" for v, m, ok, _ in cases]
+    return [f"{'rejects a valid' if ok else 'accepts an invalid'} value {v} with {lim} = {m} ({why})"
+            for (v, m, ok, why), passed in zip(cases, _check_examples(code, examples)) if not passed]
+
+
 def check_data_tests(code: str, entry: dict) -> List[str]:
     """Flags for data-field specs that accept or reject the wrong values."""
     if entry.get("kind") != "data_constraint":
@@ -437,6 +478,9 @@ def check_data_tests(code: str, entry: dict) -> List[str]:
     inp, out = types.get("Input", {}), types.get("Output", {})
     s_fields = [f for f, t in inp.items() if t == "String"]
     b_fields = [f for f, t in out.items() if t == "Bool"]
+    c = entry.get("constraints", {})
+    if inp.get("value") == "Nat":  # numeric data field (money in cents, quantities)
+        return _numeric_data_tests(code, inp, b_fields, c)
     if len(inp) != 1 or len(s_fields) != 1 or len(out) != 1 or len(b_fields) != 1:
         return ["data tests skipped: `Input` is not one `String` field and `Output` one `Bool` field"]
     cases = data_cases(entry.get("constraints", {}))
@@ -483,7 +527,7 @@ def _pre_input(example: str) -> Optional[str]:
     if not m or m.end() >= len(example) or example[m.end()] != "{":
         return None
     end = _balanced(example, m.end())
-    return example[m.end():end] if end else None
+    return one_line(example[m.end():end]) if end else None
 
 
 def check_example_inputs(code: str) -> List[str]:

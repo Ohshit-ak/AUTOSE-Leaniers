@@ -19,12 +19,13 @@ from llm import call_llm, extract_lean
 
 NEG_SYSTEM = """\
 You test Lean 4 specifications by finding behaviour that the requirement forbids.
-Answer with one ```lean block containing:
+Answer with one ```lean block containing exactly these three lines:
   -- why: <which part of the requirement the output breaks>
-  example : Spec.pre IN ∧ ¬ Spec.post IN OUT := by unfold Spec; decide
-where IN and OUT are named-field records `{ field := value, … }` listing EVERY field
-of `Input` and `Output` (and of any helper structure inside them), and IN is the
-same value both times. Use only values Lean can evaluate (numbers, strings, lists)."""
+  IN  := { field := value, … }
+  OUT := { field := value, … }
+IN is an `Input` and OUT an `Output`, each a named-field record listing EVERY field
+(and every field of any helper structure inside them). Write no `example`, `let`,
+proof or other Lean. Use only values Lean can evaluate (numbers, strings, lists)."""
 
 NEG_PROMPT = """\
 Requirement:
@@ -47,10 +48,28 @@ _WHY = re.compile(r"^\s*--\s*why:\s*(.+)$", re.MULTILINE)
 _DECIDED_FALSE = "proved that the proposition"
 
 
+def _named_record(code: str, name: str) -> Optional[str]:
+    """The record after `IN :=` / `let IN :=` (or `IN : Input :=`), on one line, or None."""
+    from validate import _balanced, one_line
+    m = re.search(rf"(?<![\w.]){name}\s*(?::\s*\w+\s*)?:=\s*(?=\{{)", code)
+    if not m:
+        return None
+    end = _balanced(code, m.end())
+    return one_line(code[m.end():end]) if end else None
+
+
 def _bad_values(reply: str) -> Optional[tuple]:
-    """(input literal, output literal) from `… Spec.post {…} {…}` in the reply, or None."""
+    """(input literal, output literal) from the reply, or None.
+
+    Accepts `IN := {…}` / `OUT := {…}` lines (what NEG_SYSTEM asks for), the same with
+    `let` (what Qwen wrote in qwen-v6/v7: `let IN := {…}` inside the proof), and
+    `Spec.post {…} {…}` written inline.
+    """
     from validate import example_witness  # imported here: validate imports agents.base
     code = extract_lean(reply)
+    inp, out = _named_record(code, "IN"), _named_record(code, "OUT")
+    if inp and out:
+        return inp, out
     if not re.search(r"^(example|theorem)\b", code, re.MULTILINE):
         code = "example : " + code
     return example_witness(code)
@@ -70,7 +89,7 @@ def judge_bad_example(code: str, reply: str) -> dict:
     values = _bad_values(reply)
     if not values:
         return {"status": "bad_example", "example": None, "why": why,
-                "error": "no `Spec.post { … } { … }` with named-field records found"}
+                "error": "no `IN := { … }` and `OUT := { … }` named-field records found"}
     inp, out = values
     pre_ex = f"example : Spec.pre {inp} := by\n  unfold Spec; decide"
     neg_ex = f"example : ¬ Spec.post {inp} {out} := by\n  unfold Spec; decide"

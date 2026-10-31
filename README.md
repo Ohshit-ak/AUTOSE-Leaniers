@@ -280,7 +280,7 @@ With `--model qwen`, the local server is started automatically if it isn't runni
 | `Requirements/parsed/<doc>.json` | parser output (requirements, data dictionary, use cases, dropped statements) |
 | `runs/<doc>/<model>/specs.json` | summary + per entry: requirement text, prompt, Lean spec, `compiles`, `rejects_bad_example`, `bad_example`, `checked`, attempts, seconds |
 | `runs/<doc>/<model>/lean/<id>.lean` | each Lean spec as a file; it starts with `import ContractForge`, so `lake env lean <file>` from the repo root checks it on its own. For a failed entry this is the attempt that got furthest (e.g. one that compiled but failed L0.5), not necessarily the last |
-| `runs/<doc>/<model>/l05_report.md` | L0.5 verdict per entry: ✅ pass, ⚠️ flagged for review, ❌ fail, with reasons. Known bug (2026-10-31): "`post` accepted every changed output" can be a false alarm when the example's input is written across several lines; see MEMORY.md, *Gotchas* |
+| `runs/<doc>/<model>/l05_report.md` | L0.5 verdict per entry: ✅ pass, ⚠️ flagged for review, ❌ fail, with reasons. Reports from runs up to `qwen-v7` contain false "`post` accepted every changed output" failures (a multi-line example input that didn't parse when pasted); fixed since, see MEMORY.md |
 | `runs/<doc>/<model>/review.json` | decision per entry (accept / review / redo / exclude); edits you make are kept on reruns |
 
 `specs.json` is rewritten after every entry, so a crash or Ctrl-C loses nothing;
@@ -299,7 +299,9 @@ None of these mean the spec matches the requirement, so read the generated specs
 Tests: `python -m unittest discover -s tests` (from `harness/`). They cover the parser,
 the negative check, and harness regressions (`test_harness_fixes.py`: Lean extraction,
 locked-example repair, `sorry` detection, best-attempt selection, the always-false-equation
-and example-input checks, repair hints). Tests that run Lean are skipped if `lake` is missing.
+and example-input checks, one-line witnesses for the vacuity check, the negative check's
+reply forms, numeric data tests, fixups and repair hints). Tests that run Lean are skipped
+if `lake` is missing.
 
 ### Run the agents step by step
 

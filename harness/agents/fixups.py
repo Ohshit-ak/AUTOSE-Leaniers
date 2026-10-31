@@ -21,6 +21,30 @@ _DOT_SPACE = re.compile(r"·\s+\.(?=[\w])")  # `(· .1)` → `(·.1)`
 # `{ a := 1, a := 1, b := 2 }`: the same field with the same value twice.
 _DUP_FIELD = re.compile(r"(\b\w+\s*:=\s*[^,{}]+?)\s*,\s*\1(?=\s*[,}])")
 _DEBUG_CMD = re.compile(r"^\s*#(eval|check|print|reduce)\b.*$\n?", re.MULTILINE)
+# A C-style `// comment` at the end of a line (Lean comments are `--`). Lines with `{`
+# before the `//` are left alone: `{ x // p x }` is Lean's subtype notation.
+_SLASH_COMMENT = re.compile(r"^([^\n{\"]*?\S)[ \t]+//[ \t]+([^\n]*)$", re.MULTILINE)
+_FIELD_DECL = re.compile(r"^[ \t]+(\w+)\s*:\s*([^\n:=]+?)\s*(?::=.*)?$", re.MULTILINE)
+_STRUCT_BODY = re.compile(r"^structure\s+\w+[^\n]*\bwhere\s*\n((?:[ \t]+.*\n?)*)", re.MULTILINE)
+
+
+def _string_fields(code: str) -> List[str]:
+    """Fields declared as `String` in every structure that declares them."""
+    types: dict = {}
+    for body in _STRUCT_BODY.findall(code):
+        for name, typ in _FIELD_DECL.findall(body):
+            types.setdefault(name, set()).add(typ.strip())
+    return [n for n, ts in types.items() if ts == {"String"}]
+
+
+def _string_all_to_list(code: str) -> str:
+    """`i.raw.all p` → `i.raw.toList.all p` for `String` fields: `String.all` does not
+    reduce under `decide`, and the prompt already asks for `.toList` (DD-item-name, qwen-v7)."""
+    fields = _string_fields(code)
+    if not fields:
+        return code
+    names = "|".join(re.escape(f) for f in fields)
+    return re.sub(rf"(?<![\w])([a-z]\w*\.(?:{names}))\.(all|any)\b", r"\1.toList.\2", code)
 
 
 def _atom_start(code: str, end: int) -> int:
@@ -117,6 +141,16 @@ def apply_fixups(code: str) -> Tuple[str, List[str]]:
     new = _DEBUG_CMD.sub("", code)
     if new != code:
         notes.append("removed `#eval`/`#check` lines")
+    code = new
+
+    new = _SLASH_COMMENT.sub(r"\1 -- \2", code)
+    if new != code:
+        notes.append("rewrote `// comment` to `-- comment`")
+    code = new
+
+    new = _string_all_to_list(code)
+    if new != code:
+        notes.append("rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`")
     code = new
 
     code = _rename_keyword_fields(code, notes)

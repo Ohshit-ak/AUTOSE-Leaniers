@@ -33,6 +33,15 @@ MISSING_API = {
     "String.isNumeric": "use `s.toList.all Char.isDigit = true`",
     "String.isDigit": "use `s.toList.all Char.isDigit = true`",
     "String.isAlphanum": "use `s.toList.all Char.isAlphanum = true`",
+    # seen in qwen-v6/v7
+    "String.substring": "use `(s.toList.drop a).take n` (characters a … a+n-1) or `s.toList[k]?`",
+    "String.slice": "use `(s.toList.drop a).take n`",
+    "List.nth": "use `xs[k]?` (an `Option`) or `xs.getD k d`",
+    "List.nth?": "use `xs[k]?`",
+    "List.nodup": "use `xs.Nodup` (capital N)",
+    "Function.sum": "`.sum` is on lists: write `(xs.map (fun x => …)).sum`, not `xs.map f.sum` "
+                    "or `xs.sum (fun x => …)`",
+    "Function.map": "`.map` is on lists: write `xs.map (fun x => …)`, not `(fun x => …).map`",
 }
 
 # Lean 3 names models keep writing; Lean 4 spells them differently.
@@ -86,6 +95,43 @@ def contains_itself(code: str, name: str) -> bool:
     return False
 
 
+def _field_of_other(fields: dict, struct: str, name: str) -> Optional[str]:
+    """Hint when `name` is a field of the *other* record (`i.done` where `done` is in `Output`)."""
+    other = {"Input": ("Output", "o"), "Output": ("Input", "i")}.get(struct)
+    if other and name in fields.get(other[0], []):
+        mine = "i" if struct == "Input" else "o"
+        return (f"`{name}` is a field of `{other[0]}`, not `{struct}`: write `{other[1]}.{name}`, "
+                f"not `{mine}.{name}`. If the input also needs it, add `{name}` to `structure {struct}`.")
+    return None
+
+
+def collection_field_hint(code: str, owner: str, name: str) -> Optional[str]:
+    """Hint for `∃ a ∈ i.accounts, a.username = …` when `Input` has no `accounts` field.
+
+    Names the helper structure and the fields the spec reads from `a`, e.g.
+    `structure Account where username : String; password : String` and
+    `accounts : List Account`.
+    """
+    var = owner[:1].lower()
+    m = re.search(rf"[∃∀]\s*(\w+)\s*∈\s*{var}\.{re.escape(name)}\b", code)
+    if not m:
+        return None
+    elem = m.group(1)
+    used = list(dict.fromkeys(re.findall(rf"(?<![\w.]){re.escape(elem)}\.(\w+)", code)))
+    helper = (name[:-1] if name.endswith("s") else name + "Item")
+    helper = helper[:1].upper() + helper[1:]
+    struct_fields = structure_fields(code)
+    if helper in struct_fields:
+        decl = f"`structure {helper}` already exists"
+    else:
+        listed = "\n".join(f"  {f} : String" for f in used) or "  id : Nat"
+        decl = (f"define it first:\n```lean\nstructure {helper} where\n{listed}\n"
+                f"  deriving DecidableEq, Repr\n```\n(change each field type as needed)")
+    return (f"`post` reads `{var}.{name}`, but `structure {owner}` has no field `{name}`. "
+            f"Add `{name} : List {helper}` to `structure {owner}`; {decl}. Then give `{name}` a "
+            f"value in every `{owner}` record of the example, e.g. `{name} := [{{ … }}]`.")
+
+
 def parse_errors(output: str) -> List[dict]:
     """[{line, col, msg}] for each `error` in Lean's output (positions as Lean reports them)."""
     errors, cur = [], None
@@ -122,6 +168,12 @@ def hint_for(msg: str, code: str) -> Optional[str]:
         if api:
             return f"`{owner}.{name}` does not exist in Lean core: {api}."
         if owner in fields:
+            other = _field_of_other(fields, owner, name)
+            if other:
+                return other
+            coll = collection_field_hint(code, owner, name)
+            if coll:
+                return coll
             return (f"`{owner}` has no field `{name}`; its fields are: "
                     f"{', '.join(fields[owner]) or '(none)'}. Add `{name}` to `structure {owner}` "
                     "or use an existing field.")
@@ -138,6 +190,9 @@ def hint_for(msg: str, code: str) -> Optional[str]:
     m = re.search(r"`(\w+)` is not a field of structure `(\w+)`", msg)
     if m:
         name, struct = m.group(1), m.group(2)
+        other = _field_of_other(fields, struct, name)
+        if other:
+            return other
         listed = "; ".join(f"`{k}` has {', '.join(v) or '(none)'}" for k, v in fields.items())
         return (f"`{struct}` has no field `{name}`. {listed}. A value written for `{struct}` may only "
                 f"use `{struct}`'s fields; add `{name}` to `structure {struct}` if the spec needs it.")
@@ -166,6 +221,14 @@ def hint_for(msg: str, code: str) -> Optional[str]:
         return ("A record literal has a field twice or misses fields. In the example the input "
                 "after `Spec.post` must be exactly the record given to `Spec.pre`, and the output "
                 f"record lists every `Output` field once. Fields: {listed}.")
+    if re.search(r"failed to synthesize[\s\S]*×", msg):
+        return ("Tuples (`a × b`, `(x, y, z)`, `.1`/`.2`) have no `≤`/`<` and are hard to read. "
+                "Define a helper structure with named fields and use a list of it, e.g.\n"
+                "```lean\nstructure Edge where\n  src  : Nat\n  dst  : Nat\n  cost : Nat\n"
+                "  deriving DecidableEq, Repr\n```\nwith `edges : List Edge` and `e.cost` instead of `e.2`.")
+    if re.search(r"isSome = true →|isSome\s*=\s*true\s*→", msg) or "Option.get" in msg:
+        return ("`x.get` on an `Option` needs a proof. Use `x.getD d`, or compare the option itself: "
+                "`x = some v`, `x.isSome = true`.")
     if "failed to synthesize" in msg and "Decidable" in msg:
         return ("Prove the `example` with `by unfold Spec; decide`, add `deriving DecidableEq, Repr` "
                 "to every structure, and inspect strings through `.toList`.")

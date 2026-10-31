@@ -93,8 +93,22 @@ shortest path). Never put conditions in comments instead of `pre`/`post`.
 - String: `s.length`, `s.toList`, `s.isEmpty`
 - Char: `c.isDigit`, `c.isAlpha`, `c.isAlphanum`, `c.isUpper`, `c.isLower`, `c == ' '`
 - Option: `x.isSome`, `x.isNone`, `x.getD d`
-These DO NOT exist: `List.forall`, `List.exists`, `String.forall`, `String.isNumeric`,
-`String.isAlpha`. Do not use `String.all` / `String.any`; use `s.toList.all` / `s.toList.any`.
+These DO NOT exist: `List.forall`, `List.exists`, `List.nth`, `List.nth?`, `List.nodup`
+(it is `xs.Nodup`), `String.forall`, `String.isNumeric`, `String.isAlpha`,
+`String.substring`, `String.slice`. Do not use `String.all` / `String.any`; use
+`s.toList.all` / `s.toList.any`. Characters a … a+n-1 of `s`: `(s.toList.drop a).take n`.
+`.sum` and `.map` are on lists: `(xs.map (fun x => …)).sum`, never `xs.sum (fun x => …)`.
+Do not split strings (`String.split`, `splitOn`): check characters with `.toList`.
+No tuples (`a × b`, `(x, y)`, `.1`/`.2`): use a helper structure with named fields.
+On an `Option`, never use `.get` / `.get!`: use `x.getD d` or compare `x = some v`.
+Comments are `-- …`, never `// …`.
+
+## Fields
+Every `i.<field>` must be declared in `structure Input` and every `o.<field>` in
+`structure Output`: `i.` reads the input, `o.` reads the output, never the other way.
+If `post` says `∃ a ∈ i.accounts, a.username = …`, then `Input` needs
+`accounts : List Account` and `structure Account` must be defined first (see the
+login template).
 
 ## Lean 4 syntax only (Lean 3 does not compile)
 - `begin ... end`          → `by` followed by indented tactics

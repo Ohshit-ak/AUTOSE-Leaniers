@@ -140,6 +140,111 @@ class SpecChecks(unittest.TestCase):
         self.assertIn("exactly the record given to `Spec.pre`", hint)
 
 
+class V7Fixes(unittest.TestCase):
+    """Fixes for the issues found in runs/0000 - gamma j/qwen-v7."""
+
+    def test_witness_is_one_line(self):
+        from validate import example_witness
+        code = ('def Spec := 1\n\nexample : Spec.pre { a := 1 } ∧\n'
+                '  Spec.post { a := 1,\n               b := "x  y" }\n            { c := true } := by\n'
+                '  unfold Spec; decide')
+        inp, out = example_witness(code)
+        self.assertEqual(inp, '{ a := 1, b := "x  y" }')  # spaces inside strings kept
+        self.assertEqual(out, "{ c := true }")
+
+    def test_negative_reply_forms(self):
+        from agents.negative import _bad_values
+        want = ("{ raw := \"ab\" }", "{ valid := true }")
+        plain = '```lean\n-- why: too short\nIN  := { raw := "ab" }\nOUT := { valid := true }\n```'
+        let = ('```lean\nexample : Spec.pre IN ∧ ¬ Spec.post IN OUT := by\n  unfold Spec\n'
+               '  let IN := { raw := "ab" } -- too short\n  let OUT := { valid := true }\n  decide\n```')
+        inline = ('```lean\nexample : Spec.pre { raw := "ab" } ∧ ¬ Spec.post { raw := "ab" } '
+                  '{ valid := true } := by\n  unfold Spec; decide\n```')
+        for reply in (plain, let, inline):
+            self.assertEqual(_bad_values(reply), want, reply)
+
+    def test_string_all_rewrite(self):
+        from agents.fixups import apply_fixups
+        code = ("structure Input where\n  raw : String\n  tags : List String\n"
+                "def Spec := fun i => i.raw.all (·.isAlpha) ∧ i.tags.all (· ≠ \"\") ∧ i.raw.toList.any f")
+        fixed, notes = apply_fixups(code)
+        self.assertIn("i.raw.toList.all (·.isAlpha)", fixed)
+        self.assertIn("i.tags.all", fixed)              # a list: unchanged
+        self.assertIn("i.raw.toList.any f", fixed)      # already fine: unchanged
+        self.assertTrue(notes)
+
+    def test_slash_comment_rewrite_keeps_subtypes(self):
+        from agents.fixups import apply_fixups
+        fixed, _ = apply_fixups("  i.items) // Add product\ndef T := { x : Nat // x > 0 }")
+        self.assertIn("i.items) -- Add product", fixed)
+        self.assertIn("{ x : Nat // x > 0 }", fixed)
+
+    def test_missing_collection_field_hint(self):
+        from agents.repair import hint_for
+        code = ("structure Input where\n  username : String\n  password : String\n"
+                "  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n"
+                "  post := fun i o => o.signedIn = true ↔\n"
+                "    ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password\n")
+        hint = hint_for("error: Invalid field `accounts`: The environment does not contain "
+                        "`Input.accounts`", code)
+        self.assertIn("accounts : List Account", hint)
+        self.assertIn("structure Account where\n  username : String\n  password : String", hint)
+
+    def test_field_of_other_record_hint(self):
+        from agents.repair import hint_for
+        code = ("structure Input where\n  cart : List String\n  deriving DecidableEq, Repr\n\n"
+                "structure Output where\n  done : Bool\n  deriving DecidableEq, Repr\n")
+        hint = hint_for("error: `done` is not a field of structure `Input`", code)
+        self.assertIn("write `o.done`", hint)
+
+    def test_missing_api_entries(self):
+        from agents.repair import hint_for
+        for name in ("Function.sum", "String.substring", "List.nth"):
+            owner, field = name.split(".")
+            hint = hint_for(f"error: The environment does not contain `{owner}.{field}`", "")
+            self.assertIn("does not exist", hint, name)
+
+
+@unittest.skipUnless(shutil.which("lake"), "needs Lean (lake)")
+class NumericDataTests(unittest.TestCase):
+    QTY = ("structure Input where\n  value : Nat\n  stock : Nat\n  deriving DecidableEq, Repr\n\n"
+           "structure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\n"
+           "def Spec : Contract Input Output where\n  pre  := fun _ => True\n"
+           "  post := fun i o => o.valid = true ↔ 1 ≤ i.value ∧ i.value ≤ i.stock\n")
+    ENTRY = {"kind": "data_constraint", "constraints": {"default": 1, "max_ref": "stock"}}
+
+    def test_quantity_limit_passes(self):
+        from validate import check_data_tests
+        self.assertEqual(check_data_tests(self.QTY, self.ENTRY), [])
+
+    def test_quantity_without_limit_is_flagged(self):
+        from validate import check_data_tests
+        loose = self.QTY.replace(" ∧ i.value ≤ i.stock", "")
+        flags = check_data_tests(loose, self.ENTRY)
+        self.assertEqual(len(flags), 1)
+        self.assertIn("accepts an invalid value 6", flags[0])
+
+    def test_money_without_bounds_is_not_flagged(self):
+        from validate import check_data_tests
+        money = self.QTY.replace("  stock : Nat\n", "").replace(" ∧ i.value ≤ i.stock", "")
+        entry = {"kind": "data_constraint", "constraints": {"type": "money", "precision": "cents"}}
+        self.assertEqual(check_data_tests(money, entry), [])
+
+
+@unittest.skipUnless(shutil.which("lake"), "needs Lean (lake)")
+class VacuityMultiLine(unittest.TestCase):
+    def test_multiline_example_input_is_not_a_false_alarm(self):
+        from validate import check_vacuity
+        code = ("structure Input where\n  user : String\n  pw : String\n  deriving DecidableEq, Repr\n\n"
+                "structure Output where\n  ok : Bool\n  deriving DecidableEq, Repr\n\n"
+                "def Spec : Contract Input Output where\n  pre  := fun _ => True\n"
+                "  post := fun i o => (o.ok = true ↔ i.pw = \"pw1\")\n\n"
+                "example : Spec.pre { user := \"sam\", pw := \"pw1\" } ∧\n"
+                "          Spec.post { user := \"sam\",\n                      pw := \"pw1\" }\n"
+                "                    { ok := true } := by\n  unfold Spec; decide\n")
+        self.assertEqual(check_vacuity(code)[0], [])
+
+
 @unittest.skipUnless(shutil.which("lake"), "needs Lean (lake)")
 class SorryDetection(unittest.TestCase):
     def test_sorry_is_a_failure(self):
