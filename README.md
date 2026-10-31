@@ -280,7 +280,7 @@ With `--model qwen`, the local server is started automatically if it isn't runni
 | `Requirements/parsed/<doc>.json` | parser output (requirements, data dictionary, use cases, dropped statements) |
 | `runs/<doc>/<model>/specs.json` | summary + per entry: requirement text, prompt, Lean spec, `compiles`, `rejects_bad_example`, `bad_example`, `checked`, attempts, seconds |
 | `runs/<doc>/<model>/lean/<id>.lean` | each Lean spec as a file; it starts with `import ContractForge`, so `lake env lean <file>` from the repo root checks it on its own. For a failed entry this is the attempt that got furthest (e.g. one that compiled but failed L0.5), not necessarily the last |
-| `runs/<doc>/<model>/l05_report.md` | L0.5 verdict per entry: ✅ pass, ⚠️ flagged for review, ❌ fail, with reasons |
+| `runs/<doc>/<model>/l05_report.md` | L0.5 verdict per entry: ✅ pass, ⚠️ flagged for review, ❌ fail, with reasons. Known bug (2026-10-31): "`post` accepted every changed output" can be a false alarm when the example's input is written across several lines; see MEMORY.md, *Gotchas* |
 | `runs/<doc>/<model>/review.json` | decision per entry (accept / review / redo / exclude); edits you make are kept on reruns |
 
 `specs.json` is rewritten after every entry, so a crash or Ctrl-C loses nothing;
