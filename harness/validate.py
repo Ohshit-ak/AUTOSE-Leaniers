@@ -457,9 +457,54 @@ def check_data_tests(code: str, entry: dict) -> List[str]:
 # Entry points
 # ---------------------------------------------------------------------------
 
+# `x + 1 = x` / `x = x + 1` with the same `x` on both sides: false for every value.
+_TERM = r"(?<![\w.])([A-Za-z_][\w.]*)"   # a name or field path such as `a.failedAttempts`
+_SELF_EQ = [
+    re.compile(_TERM + r"\s*\+\s*[1-9]\d*\s*\)?\s*=\s*\(?\s*\1(?![\w.])(?!\s*[+\-*/])"),  # x + 1 = x
+    re.compile(_TERM + r"\s*=\s*\(?\s*\1\s*\+\s*[1-9]\d*"),                              # x = x + 1
+]
+
+
+def check_contradictions(code: str) -> List[str]:
+    """Equations in `pre`/`post` that no value satisfies, e.g. `a.n + 1 = a.n`."""
+    defs, _ = split_example(code)
+    found = []
+    for rx in _SELF_EQ:
+        for m in rx.finditer(defs):
+            text = " ".join(m.group(0).replace("(", "").replace(")", "").split())
+            if text not in found:
+                found.append(text)
+    return [f"`{t}` can never be true (the same value on both sides). If a value changes, "
+            f"add it to `Output` and write `o.<field> = i.<field> + 1`." for t in found]
+
+
+def _pre_input(example: str) -> Optional[str]:
+    m = re.search(r"Spec\.pre\s*", example)
+    if not m or m.end() >= len(example) or example[m.end()] != "{":
+        return None
+    end = _balanced(example, m.end())
+    return example[m.end():end] if end else None
+
+
+def check_example_inputs(code: str) -> List[str]:
+    """The example must use the same input record for `Spec.pre` and `Spec.post`."""
+    _, example = split_example(code)
+    pre_in, w = _pre_input(example), example_witness(code)
+    if not pre_in or not w:
+        return []
+    norm = lambda lit: {k: " ".join(v.split()) for k, v in literal_fields(lit).items()}  # noqa: E731
+    if norm(pre_in) != norm(w[0]):
+        return ["The example gives `Spec.pre` and `Spec.post` different input records. "
+                "Use exactly the same input record in both."]
+    return []
+
+
 def hard_checks(entry: dict):
     """Validator for the L0 repair loop: problems that must be fixed before L1."""
     def validate(code: str) -> List[str]:
+        problems = check_contradictions(code) + check_example_inputs(code)
+        if problems:
+            return problems
         problems = check_housekeeping(code)
         if problems:
             return problems

@@ -9,6 +9,8 @@ from config import FRAMEWORK_PATH, LEAN_TIMEOUT
 
 HEADER = "import ContractForge\nopen ContractForge\n\n"
 _IMPORT = re.compile(r"^\s*import\s+.*$", re.MULTILINE)
+# Lean 4 quotes it with backticks ("declaration uses `sorry`"); older versions used '…'.
+_SORRY = re.compile(r"declaration uses [`']sorry[`']")
 
 
 def build_framework() -> None:
@@ -41,7 +43,7 @@ def check_lean(code: str) -> dict:
     output = (result.stdout + result.stderr).replace(filepath, "<generated>")
     if result.returncode != 0:
         return {"success": False, "error": output}
-    if "declaration uses 'sorry'" in output:
+    if _SORRY.search(output):
         return {"success": False, "error": "proof incomplete (uses `sorry`)\n" + output}
     return {"success": True, "output": output}
 

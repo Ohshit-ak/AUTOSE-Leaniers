@@ -11,7 +11,8 @@ decision someone else would need to know.
 | `framework/` (Lean library) | Done for v0. Builds with `lake build`; `Test.lean` smoke test passes. |
 | `harness/config.py` | Done. Models, keys, retries, timeouts, API retry count (`CF_API_RETRIES`). |
 | `harness/llm.py` | Done. DeepSeek / Groq / Gemma / local Qwen. Retries transient API errors (429, 5xx, network) with exponential backoff (10s → max 120s). |
-| `harness/lean_runner.py` | Done. |
+| `harness/lean_runner.py` | Done. `sorry` detection fixed 2026-10-31 (see *v7*). |
+| Repo-root Lake workspace | Added 2026-10-31 (uncommitted at time of writing): `lakefile.lean` (`require contractforge from "framework"`), `lean-toolchain`, `lake-manifest.json`, so editors resolve `import ContractForge` for files under `runs/`. |
 | `harness/req_parser.py` | Done (2026-10-28). SRS XML → requirements JSON, deterministic, no LLM. Tests in `harness/tests/`. |
 | `harness/agents/spec_agent.py` (L0) | Done. Prompt hardened 2026-10-30 (see *Decisions*). Builds prompts from parser JSON (`spec_prompts`, `run_spec_from_json`). |
 | `harness/agents/` (L1/L2) | Written, not yet run end to end. |
@@ -70,6 +71,16 @@ The parser yields 75 entries: 35 requirements, 20 data constraints, 20 use cases
   - **Outputs:** `specs.json` has `compiles` and `rejects_bad_example` (`true`/`false`/`null`) plus `bad_example`; `checked` still means everything passed. Saved `lean/<id>.lean` files start with `lean_runner.HEADER`, so they compile on their own. L0.5 review and the report's "Compiles" now use `compiles`.
   - `validate.example_errors` returns Lean errors per extra example. A failed Lean run without a positioned error (e.g. a timeout) used to count every example as passing; it now counts as failing.
   - **Tested:** `tests/test_negative_check.py` (8 Lean-only tests: the old login spec is caught, the account-based one passes, unusable examples don't block). With Gemma 26B on the real qwen-v3 login spec: `accepts_forbidden` with "wrong password → signed in".
+- **v6 failures checked by hand (2026-10-31).** Recompiling all 75 `qwen-v6/lean/*.lean` files gives the same 64/11 as the `compiles` headers. Of the 11 failures, 4 use names that don't exist in Lean 4 (`List.nth?`, `String.substring`, `List.nodup`, `.map` on a function), 4 are type errors, and 3 are prompt gaps (items 9–11 below). Two (`5.3_R5`, `DD-credit-card-expiry-date`) declared `Input`/`Output`/`Spec` twice because of a harness bug, and two (`3.1.3/S3`, `5.3/R5`) had compiled at an earlier attempt but the broken last attempt was saved.
+- **v7 harness fixes (2026-10-31, not yet run).** Tests: `harness/tests/test_harness_fixes.py` (16 tests; whole suite 30, passing).
+  - `llm.extract_lean` keeps only the last ```lean block that defines `Spec` (else the last block). It used to join every block, so a draft + correction declared everything twice.
+  - Example-only repair (`base.with_locked_defs`): if the reply has no `example`, keep the previous one instead of appending the whole reply to the locked definitions.
+  - `lean_runner.check_lean` matches ``declaration uses `sorry` `` (backticks, Lean 4.29) as well as the old `'sorry'`. Before, a `sorry` proof exits 0 and passed.
+  - `generate_verified` returns the attempt that got furthest (compiles-but-fails-L0.5 > Lean error > weakened), not the last one, and logs `{"stage": "returned", "attempt": N}`.
+  - Prompt rules: a structure must never contain itself (store trees flat with `id`/`parent : Option Nat`; Lean can't derive `DecidableEq` for `List Category` inside `Category`); a changing value is a field of both `Input` and `Output` linked as `o.x = i.x + 1`, never `x + 1 = x`; the example's `Spec.post` input must be exactly the `Spec.pre` input.
+  - `validate.check_contradictions` (`x + n = x` / `x = x + n`, same `x`) and `check_example_inputs` run first in `hard_checks`; the contradiction check is also appended to the feedback when Lean fails, since `5.3/R5`'s `a.failedAttempts + 1 = a.failedAttempts` fails inside `decide` where `hard_checks` never runs. Neither flags any currently compiling spec in any run.
+  - Repair hints (`agents/repair.py`): "None of the deriving handlers" on a self-containing structure → flat id/parent layout; "has already been specified" / "Fields missing" → reuse the `Spec.pre` input record and list every structure's fields.
+  - Still open: the 4 invented-name failures need entries in the prompt's "don't exist" list / `MISSING_API`.
 - **Requirements parser is rule-based and must stay AI-free.** Same XML bytes → same JSON bytes (tested across hash seeds). Every dropped statement is kept in `dropped` with the rule that removed it; tune the word lists at the top of `req_parser.py`, not ad hoc.
 - **Performance requirements are kept**, tagged `verification: "lean+python_runtime"`. Bounds are integers (µs, per-second, counts) so a Python-measured value can be checked against the Lean spec with `decide`.
 - Module is `req_parser.py`, not `parser.py`: Python 3.9 ships a stdlib `parser` module.
@@ -87,6 +98,8 @@ The parser yields 75 entries: 35 requirements, 20 data constraints, 20 use cases
 
 - Run harness code from inside `harness/` (modules import each other as `from config import ...`).
 - Run `lake build` in `framework/` once before the harness, or `import ContractForge` won't resolve (`main.py` builds it on first run).
+- **`lake env lean <file>` only uses the Lake project in the current directory.** Run inside `runs/.../lean/` it finds none and fails with "unknown module prefix 'ContractForge'". Run from the repo root or `framework/`, or use `lake -d <repo root> env lean <file>`. In VS Code, open the repo root folder (the root `lakefile.lean` makes the infoview resolve the import) and restart the Lean server.
+- **Lean marks a broken `def` with `sorry`.** "declaration uses `sorry`" next to a real error is a side effect, not the model writing `sorry`.
 - **A real Gemini key was committed to `.env.example` in `dd2bdfe` and pushed to GitHub.** The working copy is now blanked, but the key is still in history: **revoke it in Google AI Studio** and put a new one in `.env`.
 - `Requirements/parsed/0000 - gamma j.json` committed in 2573d72 was parsed from an older XML; re-parsing the current XML only changes `source.sha256`.
 - Run logs (`runs/*.log`, e.g. `runs/qwen_server.log` written by `main.py`) are gitignored.
@@ -104,6 +117,7 @@ The parser yields 75 entries: 35 requirements, 20 data constraints, 20 use cases
 ## Next steps
 
 1. Revoke the leaked Gemini key.
+1. Rerun the v6 failures with the v7 fixes (`--run-name qwen-v6 --only 3.1.3/S3 3.2.3/S1 5.3/R5`, then all 11), and commit the v7 changes and the root Lake files.
 2. Commit `runs/0000 - gamma j/qwen/` (prompt v2) and `qwen-baseline/` (v1). Next for L0: add the APIs Qwen still invents (`List.nodup`, `String.last`, `String.toInt`, `Char.isAlphabetic`) to the "don't exist" list and repair hints; look at the 7 entries that regressed.
 3. Review the checked specs for meaning, not just compilation (see *Gotchas*).
 4. Run Gemma (and DeepSeek/Groq if keys are available) on all 75 entries with `--resume` to get comparable L0 pass rates.

@@ -90,7 +90,15 @@ _THINK = re.compile(r"<think>.*?</think>", re.DOTALL)
 
 
 def extract_lean(text: str) -> str:
-    """Pull Lean code out of a model reply (fenced blocks, reasoning tags stripped)."""
+    """Pull Lean code out of a model reply (fenced blocks, reasoning tags stripped).
+
+    A reply with several blocks is usually a draft followed by a corrected version;
+    joining them declares `Input`/`Output`/`Spec` twice. Keep the last block that
+    defines `Spec`, else the last block.
+    """
     text = _THINK.sub("", text)
-    blocks = _FENCE.findall(text)
-    return "\n\n".join(b.strip() for b in blocks) if blocks else text.strip()
+    blocks = [b.strip() for b in _FENCE.findall(text)]
+    if not blocks:
+        return text.strip()
+    with_spec = [b for b in blocks if re.search(r"^def\s+Spec\b", b, re.MULTILINE)]
+    return (with_spec or blocks)[-1]

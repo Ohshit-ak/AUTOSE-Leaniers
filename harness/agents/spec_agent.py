@@ -49,6 +49,14 @@ Do not write `import` or `open` lines. `Contract` ALREADY EXISTS; never redefine
   The kernel cannot reduce `String.all` / `String.any` with `decide`.
   Length: `s.length`. Never compare strings with `<` or `≤`.
 - No recursive functions, no `partial`, no `termination_by`, no `match` on strings.
+- A structure must never contain itself (no `subcategories : List Category` inside
+  `structure Category`): Lean cannot derive `DecidableEq` for it. Store a tree flat:
+  give each item `id : Nat` and `parent : Option Nat`, and keep all items in one list.
+- A value that changes (a counter, stock level, balance, failed attempts) must be a
+  field of BOTH `Input` and `Output`, related as `o.failedAttempts = i.failedAttempts + 1`.
+  Never write `x + 1 = x` or `x = x + 1` with the same `x` on both sides: it is always false.
+- In the `example`, the input record after `Spec.post` must be exactly the record given
+  to `Spec.pre`, and the output record must list every field of `Output` once.
 - No `sorry`, no `#eval`, no `#check`, no `theorem` other than the one `example`.
 - Field names must not be keywords: exists, fun, end, at, from, have, show, do,
   let, in, then, else, match, with, where, by, type, class, instance.

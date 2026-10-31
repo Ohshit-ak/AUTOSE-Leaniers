@@ -77,6 +77,15 @@ def structure_fields(code: str) -> dict:
     return {m.group(1): _FIELD.findall(m.group(2)) for m in _STRUCT.finditer(code)}
 
 
+def contains_itself(code: str, name: str) -> bool:
+    """True if `structure name` has a field whose type mentions `name` (e.g. `List Category`)."""
+    for m in _STRUCT.finditer(code):
+        if m.group(1) == name:
+            types = re.findall(r"^[ \t]+\w+\s*:\s*(.+)$", m.group(2), re.MULTILINE)
+            return any(re.search(rf"\b{re.escape(name)}\b", t) for t in types)
+    return False
+
+
 def parse_errors(output: str) -> List[dict]:
     """[{line, col, msg}] for each `error` in Lean's output (positions as Lean reports them)."""
     errors, cur = [], None
@@ -146,6 +155,17 @@ def hint_for(msg: str, code: str) -> Optional[str]:
     if "fail to show termination" in msg or "structural recursion" in msg or "termination_by" in msg:
         return ("Do not write recursive functions. Express the property with "
                 "`List.all` / `List.any` / `List.length` / `List.count` instead.")
+    m = re.search(r"None of the deriving handlers for class `\w+` applied to `(\w+)`", msg)
+    if m and contains_itself(code, m.group(1)):
+        name = m.group(1)
+        return (f"`structure {name}` contains `{name}` itself, so Lean cannot derive it. Store "
+                f"the tree flat: give `{name}` fields `id : Nat` and `parent : Option Nat` "
+                f"instead of a list of `{name}`, and keep every `{name}` in one list.")
+    if "has already been specified" in msg or "Fields missing" in msg:
+        listed = "; ".join(f"`{k}`: {', '.join(v)}" for k, v in fields.items())
+        return ("A record literal has a field twice or misses fields. In the example the input "
+                "after `Spec.post` must be exactly the record given to `Spec.pre`, and the output "
+                f"record lists every `Output` field once. Fields: {listed}.")
     if "failed to synthesize" in msg and "Decidable" in msg:
         return ("Prove the `example` with `by unfold Spec; decide`, add `deriving DecidableEq, Repr` "
                 "to every structure, and inspect strings through `.toList`.")

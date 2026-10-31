@@ -35,6 +35,21 @@ def split_example(code: str):
     return (code[:m.start()].rstrip(), code[m.start():].strip()) if m else (code, "")
 
 
+def with_locked_defs(locked_defs: str, reply: str, fallback_example: str) -> str:
+    """The locked definitions plus the `example` from `reply`.
+
+    The model was asked for only an `example`. If it sent none, keep the previous
+    example instead of appending the whole reply, which would declare
+    `Input`/`Output`/`Spec` a second time.
+    """
+    _, example = split_example(reply)
+    return f"{locked_defs}\n\n{example or fallback_example}".rstrip()
+
+
+# How far an attempt got: higher is better. Used to return the best attempt, not the last.
+RANK_NOT_CHECKED, RANK_LEAN_ERROR, RANK_COMPILES = 0, 1, 2
+
+
 def _output_refs(code: str) -> int:
     """How many different `o.<field>` the code mentions (0 = `post` ignores the output)."""
     return len(set(re.findall(r"\bo\.(\w+)", code)))
@@ -101,16 +116,16 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
     system = system + REPAIR_RULES
     code = extract_lean(call_llm(prompt, system=system, model=model))
     original, history, last_sig = None, [], None
-    locked_defs, value_tries = None, 0
+    locked_defs, locked_example, value_tries = None, "", 0
     searched: set = set()  # definitions the witness search already ran on
     log: List[dict] = []
     result = {"error": ""}
+    best = None  # (rank, attempt, code, error) of the furthest-reaching attempt
 
     for attempt in range(1, MAX_RETRIES + 1):
         code, fixes = apply_fixups(code)
         if locked_defs is not None:
-            _, example = split_example(code)
-            code = f"{locked_defs}\n\n{example or code}"
+            code = with_locked_defs(locked_defs, code, locked_example)
         if original is None:
             original = code
 
@@ -134,6 +149,12 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
             else:
                 stage = earliest_stage(result["error"]) or "other"
                 feedback_body = format_feedback(code, result["error"], context)
+                # Lean failed, so `validate` did not run; an always-false equation is
+                # worth reporting anyway (the example can never be proved with it).
+                from validate import check_contradictions  # imported here: validate imports this module
+                impossible = check_contradictions(code)
+                if impossible:
+                    feedback_body += "\n\n" + "\n".join(f"- {p}" for p in impossible)
                 if "proved that the proposition" in result["error"] and not context:
                     from validate import false_conjuncts  # imported here: validate imports this module
                     broken = false_conjuncts(code)
@@ -142,6 +163,9 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
                                           + "\n".join(f"- {b}" for b in broken)
                                           + "\nChange the example values so that every condition holds.")
         log.append({"attempt": attempt, "stage": stage, "fixups": fixes})
+        rank = {"weakened": RANK_NOT_CHECKED, "check": RANK_COMPILES}.get(stage, RANK_LEAN_ERROR)
+        if best is None or rank > best[0]:  # ties keep the earlier attempt
+            best = (rank, attempt, code, result["error"])
         if attempt == MAX_RETRIES:
             break
 
@@ -164,7 +188,7 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
                 value_tries = VALUE_ATTEMPTS  # go straight to a full repair
         # Only the example is wrong: lock the definitions and ask for new values.
         if only_example and value_tries < VALUE_ATTEMPTS:
-            locked_defs, _ = split_example(code)
+            locked_defs, locked_example = split_example(code)
             value_tries += 1
             ask = (f"{prompt}\n\nThese definitions are fixed and compile; do not change them:\n"
                    f"```lean\n{locked_defs}\n```\n\n{feedback_body}\n\n"
@@ -190,5 +214,9 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
         # keep the original request plus the last HISTORY_TURNS exchanges
         history = history[:1] + history[1:][-2 * HISTORY_TURNS:]
         code = extract_lean(reply)
-    return {"success": False, "code": code, "attempts": MAX_RETRIES,
-            "error": result["error"], "log": log}
+    # Out of retries: return the attempt that got furthest (e.g. one that compiled but
+    # failed L0.5), not whatever the last repair produced.
+    _, best_attempt, best_code, best_error = best
+    log.append({"attempt": best_attempt, "stage": "returned"})
+    return {"success": False, "code": best_code, "attempts": MAX_RETRIES,
+            "error": best_error, "log": log}
