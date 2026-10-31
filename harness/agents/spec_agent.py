@@ -21,7 +21,9 @@ Do not write `import` or `open` lines. `Contract` ALREADY EXISTS; never redefine
 ## Shape of every answer, in this order
 1. `structure Input` and `structure Output`, each ending with
    `deriving DecidableEq, Repr`. Declare EVERY field you use later.
-   Field types: `Nat`, `Bool`, `String`, `List Nat`, `List String`, `Option Nat`.
+   Field types: `Nat`, `Bool`, `String`, `List Nat`, `List String`, `Option Nat`,
+   or `List <Structure>` for a helper structure (e.g. `structure Account`), which is
+   defined first and also ends with `deriving DecidableEq, Repr`.
 2. Any helper `def`s (non-recursive), each defined before it is used.
 3. `def Spec : Contract Input Output where` with `pre := fun i => ...` and
    `post := fun i o => ...`.
@@ -29,6 +31,12 @@ Do not write `import` or `open` lines. `Contract` ALREADY EXISTS; never redefine
    with concrete values for `i` and `o`.
 
 ## Rules
+- Lean core only: no Mathlib, no `import`.
+- If the requirement has a success and a failure outcome (login accepted or refused,
+  order placed or rejected), `post` must say WHEN each happens, with `↔` or
+  `if … then … else`. A `post` in which the success outcome always holds is wrong.
+- Every piece of state the decision depends on (registered accounts, stock levels,
+  the cart, the session) must be a field of `Input`; otherwise `post` cannot refer to it.
 - `pre` and `post` return `Prop`. Use `=`, `≠`, `≤`, `<`, `∧`, `∨`, `¬`, `→`, `↔`.
   A Bool is not a Prop: write `o.accepted = true`, never just `o.accepted`.
   Do not use `&&`, `||`, `!` in `pre`/`post`.
@@ -36,6 +44,7 @@ Do not write `import` or `open` lines. `Contract` ALREADY EXISTS; never redefine
   Never use `⟨…⟩` for structures.
 - `Spec` is not a function: write `Spec.pre i` / `Spec.post i o`, never `Spec i o`.
 - Strings: inspect characters through `.toList`, e.g. `s.toList.all Char.isDigit = true`.
+  The kernel cannot reduce `String.all` / `String.any` with `decide`.
   Length: `s.length`. Never compare strings with `<` or `≤`.
 - No recursive functions, no `partial`, no `termination_by`, no `match` on strings.
 - No `sorry`, no `#eval`, no `#check`, no `theorem` other than the one `example`.
@@ -147,6 +156,36 @@ def Spec : Contract Input Output where
 example : Spec.pre { signedIn := true, pending := 2 } ∧
           Spec.post { signedIn := true, pending := 2 }
                     { signedIn := true, pending := 1, done := true } := by
+  unfold Spec; decide
+```
+
+## Template: a use case with success and failure (compiles as is)
+```lean
+structure Account where
+  username : String
+  password : String
+  deriving DecidableEq, Repr
+
+structure Input where
+  accounts : List Account
+  username : String
+  password : String
+  deriving DecidableEq, Repr
+
+structure Output where
+  signedIn : Bool
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.username ≠ "" ∧ i.password ≠ ""
+  post := fun i o => (o.signedIn = true ↔
+    ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password)
+
+example : Spec.pre { accounts := [{ username := "sam", password := "pw1" }],
+                     username := "sam", password := "pw1" } ∧
+          Spec.post { accounts := [{ username := "sam", password := "pw1" }],
+                      username := "sam", password := "pw1" }
+                    { signedIn := true } := by
   unfold Spec; decide
 ```
 
