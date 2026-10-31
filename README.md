@@ -144,6 +144,8 @@ Optional overrides (also in `.env`):
 | `CF_MAX_RETRIES` | `5` (Lean generate → check → repair attempts) |
 | `CF_API_RETRIES` | `6` (retries on 429 / 5xx / network errors, with backoff) |
 | `CF_LEAN_TIMEOUT` | `60` (seconds) |
+| `CF_NEGATIVE_CHECK` | `1` (`0` turns off the L0 negative-case check) |
+| `CF_NEG_ATTEMPTS` | `2` (tries to get a usable forbidden example from the model) |
 
 ---
 
@@ -256,18 +258,25 @@ With `--model qwen`, the local server is started automatically if it isn't runni
 | File | Contents |
 |------|----------|
 | `Requirements/parsed/<doc>.json` | parser output (requirements, data dictionary, use cases, dropped statements) |
-| `runs/<doc>/<model>/specs.json` | summary + per entry: requirement text, prompt, Lean spec, `checked`, attempts, seconds |
-| `runs/<doc>/<model>/lean/<id>.lean` | each Lean spec as a file |
+| `runs/<doc>/<model>/specs.json` | summary + per entry: requirement text, prompt, Lean spec, `compiles`, `rejects_bad_example`, `bad_example`, `checked`, attempts, seconds |
+| `runs/<doc>/<model>/lean/<id>.lean` | each Lean spec as a file; it starts with `import ContractForge`, so `cd framework && lake env lean <file>` checks it on its own |
 | `runs/<doc>/<model>/l05_report.md` | L0.5 verdict per entry: ✅ pass, ⚠️ flagged for review, ❌ fail, with reasons |
 | `runs/<doc>/<model>/review.json` | decision per entry (accept / review / redo / exclude); edits you make are kept on reruns |
 
 `specs.json` is rewritten after every entry, so a crash or Ctrl-C loses nothing;
 rerun with `--resume` to continue.
 
-`checked: true` means Lean compiled the spec, nothing more. It doesn't mean the spec
-matches the requirement, so read the generated specs as well.
+Per entry in `specs.json`:
 
-Parser tests: `python -m unittest discover tests`.
+| Field | Meaning |
+|-------|---------|
+| `compiles` | Lean accepts the spec and its satisfiability `example` |
+| `rejects_bad_example` | `true`: Lean proved `post` rejects an output the requirement forbids (the model picks the forbidden example, the harness writes the statement). `false`: the spec accepts it. `null`: not run, or no usable example |
+| `checked` | everything passed: compiles, the L0.5 hard checks, and the negative check |
+
+None of these mean the spec matches the requirement, so read the generated specs as well.
+
+Tests (parser, negative check; the latter needs Lean): `python -m unittest discover -s tests`.
 
 ### Run the agents step by step
 
