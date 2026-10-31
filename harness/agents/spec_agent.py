@@ -5,6 +5,8 @@ from pathlib import Path
 from typing import List
 
 from agents.base import generate_verified
+from agents.negative import NegativeCheck
+from config import NEGATIVE_CHECK
 
 SYSTEM_PROMPT_SPEC = """\
 You are a formal specification agent for Lean 4 (version 4.29, Lean core only).
@@ -210,9 +212,23 @@ IMPL_WORDS = re.compile(r"\bvia\b|\balgorithms?\b|\bby means of\b|\b(?:shall|wil
 
 
 def run_spec(requirement: str, model: str, validate=None) -> dict:
+    """Generate a checked spec. With CF_NEGATIVE_CHECK on, a spec that passes `validate`
+    must also reject an output the requirement forbids (agents/negative.py)."""
     from validate import find_witness  # imported here: validate imports agents.base
-    return generate_verified(requirement, SYSTEM_PROMPT_SPEC, model, validate=validate,
-                             find_witness=find_witness)
+    checker = NegativeCheck(requirement, model) if NEGATIVE_CHECK else None
+
+    def full_check(code: str) -> List[str]:
+        problems = validate(code) if validate else []
+        if problems or not checker:  # the negative check costs a model call: run it last
+            return problems
+        return checker(code)
+
+    r = generate_verified(requirement, SYSTEM_PROMPT_SPEC, model,
+                          validate=full_check if (validate or checker) else None,
+                          find_witness=find_witness)
+    r.update(checker.outcome(r["code"]) if checker
+             else {"rejects_bad_example": None, "bad_example": None})
+    return r
 
 
 # ---------------------------------------------------------------------------

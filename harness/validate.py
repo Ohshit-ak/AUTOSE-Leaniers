@@ -116,26 +116,33 @@ def _lean_str(s: str) -> str:
     return '"' + s.replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def _check_examples(code: str, examples: List[str]) -> List[bool]:
-    """Check each extra `example` after `code`; True where it passes."""
+def example_errors(code: str, examples: List[str]) -> List[List[str]]:
+    """Check each extra `example` after `code`; the Lean error messages of each (empty = passes)."""
     text = code + "\n\n" + "\n\n".join(examples)
     result = check_lean(text)
     if result["success"]:
-        return [True] * len(examples)
+        return [[] for _ in examples]
     first = HEADER.count("\n") + code.count("\n") + 3  # line of the first extra example
     starts, line = [], first
     for ex in examples:
         starts.append(line)
         line += ex.count("\n") + 2
-    bad = set()
+    errors = [[] for _ in examples]
     for e in parse_errors(result["error"]):
         for i in range(len(examples) - 1, -1, -1):
             if e["line"] >= starts[i]:
-                bad.add(i)
+                errors[i].append(e["msg"])
                 break
-        else:
-            return [False] * len(examples)  # error in the spec itself
-    return [i not in bad for i in range(len(examples))]
+        else:  # error in the spec itself
+            return [[f"error in the spec itself: {e['msg']}"] for _ in examples]
+    if not any(errors):  # failed without a positioned error (e.g. a timeout)
+        return [[result["error"]] for _ in examples]
+    return errors
+
+
+def _check_examples(code: str, examples: List[str]) -> List[bool]:
+    """Check each extra `example` after `code`; True where it passes."""
+    return [not errs for errs in example_errors(code, examples)]
 
 
 def _top_level_split(body: str, sep: str) -> List[str]:
@@ -497,6 +504,7 @@ def write_report(specs: dict, out_dir: Path) -> Path:
     lines = [f"# L0.5 report — {specs['source'].get('file', '')} ({specs['model']})", "",
              f"Compiles: {specs['summary'].get('compiles', specs['summary']['checked'])}"
              f"/{specs['summary']['total']} · "
+             f"rejects a bad example: {specs['summary'].get('rejects_bad_example', '—')} · "
              f"✅ pass {s['pass']} · ⚠️ flagged {s['flag']} · ❌ fail {s['fail']}", "",
              "| | Entry | Kind | Reasons |", "|---|---|---|---|"]
     decisions = {}

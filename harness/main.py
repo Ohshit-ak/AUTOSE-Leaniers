@@ -155,7 +155,7 @@ def _generate_spec(p: dict, model: str, skip_lean: bool) -> dict:
         return r
     from llm import call_llm, extract_lean
     return {"success": None, "code": extract_lean(call_llm(prompt, system=SYSTEM_PROMPT_SPEC, model=model)),
-            "attempts": 1, "compiles": None}
+            "attempts": 1, "compiles": None, "rejects_bad_example": None, "bad_example": None}
 
 
 def _lean_file(p: dict, r: dict) -> str:
@@ -163,7 +163,8 @@ def _lean_file(p: dict, r: dict) -> str:
     from lean_runner import HEADER
     text = " ".join(p["text"].split())
     return (f"{HEADER}-- {p['id']}: {text}\n"
-            f"-- compiles: {r.get('compiles')} · checked: {r['success']}\n\n{r['code']}\n")
+            f"-- compiles: {r.get('compiles')} · rejects_bad_example: {r.get('rejects_bad_example')}"
+            f" · checked: {r['success']}\n\n{r['code']}\n")
 
 
 def stage_spec(doc: dict, stem: str, args) -> dict:
@@ -194,6 +195,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
         ordered = [results[p["id"]] for p in all_prompts if p["id"] in results]
         summary = {"total": len(ordered),
                    "compiles": sum(r.get("compiles") is True for r in ordered),
+                   "rejects_bad_example": sum(r.get("rejects_bad_example") is True for r in ordered),
                    "checked": sum(r["checked"] is True for r in ordered),
                    "failed": sum(r["checked"] is False for r in ordered),
                    "unchecked": sum(r["checked"] is None for r in ordered)}
@@ -219,7 +221,9 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
         results[p["id"]] = {
             "id": p["id"], "kind": p["kind"], "verification": p["verification"],
             "requirement_text": p["text"], "text_predicate": p["prompt"],
-            "lean_predicate": r["code"], "compiles": r.get("compiles"), "checked": r["success"],
+            "lean_predicate": r["code"], "compiles": r.get("compiles"),
+            "rejects_bad_example": r.get("rejects_bad_example"), "bad_example": r.get("bad_example"),
+            "checked": r["success"],
             "attempts": r.get("attempts"), "seconds": secs,
             **({"error": r["error"]} if r.get("error") else {}),
             **({"log": r["log"]} if r.get("log") else {}),

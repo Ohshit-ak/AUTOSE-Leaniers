@@ -15,6 +15,10 @@ API_RETRIES = int(os.getenv("CF_API_RETRIES", "6"))  # 5xx / 429 / network error
 TEMPERATURE = 0.2
 # Used when the repair loop restarts from scratch after the same error twice.
 RESTART_TEMPERATURE = float(os.getenv("CF_RESTART_TEMPERATURE", "0.7"))
+# L0 negative check: after a spec compiles, the model names an output the requirement
+# forbids, and Lean must prove that `post` rejects it (agents/negative.py).
+NEGATIVE_CHECK = os.getenv("CF_NEGATIVE_CHECK", "1") == "1"
+NEG_EXAMPLE_ATTEMPTS = int(os.getenv("CF_NEG_ATTEMPTS", "2"))  # tries to get a usable bad example
 
 # Provider name -> model id. Override any of these via env vars if a
 # provider renames or retires a model.
