@@ -16,13 +16,17 @@ def _api_key(provider: str) -> str:
     return key
 
 
+class EmptyReply(Exception):
+    """The API call succeeded but the reply has no text."""
+
+
 def _transient(e: Exception) -> bool:
     """Server overload, 5xx, rate limit or network blip: worth retrying."""
     code = getattr(e, "code", None) or getattr(e, "status_code", None)
     if code in (429, 500, 502, 503, 504):
         return True
     return type(e).__name__ in ("ConnectError", "ReadTimeout", "APIConnectionError",
-                                "APITimeoutError", "RemoteProtocolError")
+                                "APITimeoutError", "RemoteProtocolError", "EmptyReply")
 
 
 def call_llm(prompt: str, system: str = "", model: str = "deepseek",
@@ -34,7 +38,10 @@ def call_llm(prompt: str, system: str = "", model: str = "deepseek",
     """
     for attempt in range(API_RETRIES + 1):
         try:
-            return _call_llm_once(prompt, system, model, history or [], temperature)
+            text = _call_llm_once(prompt, system, model, history or [], temperature)
+            if not text:  # Gemma sometimes answers with no text at all
+                raise EmptyReply(f"{model} returned no text")
+            return text
         except Exception as e:
             if attempt == API_RETRIES or not _transient(e):
                 raise
