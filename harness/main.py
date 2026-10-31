@@ -145,10 +145,25 @@ def _generate_spec(p: dict, model: str, skip_lean: bool) -> dict:
     from validate import hard_checks
     prompt = p["prompt"]
     if not skip_lean:
-        return run_spec(prompt, model, validate=hard_checks(p["entry"]))
+        r = run_spec(prompt, model, validate=hard_checks(p["entry"]))
+        # `success` also needs the L0.5 checks; record plain compilation separately.
+        if r["success"]:
+            r["compiles"] = True
+        else:
+            from lean_runner import check_lean
+            r["compiles"] = bool(r["code"]) and check_lean(r["code"])["success"]
+        return r
     from llm import call_llm, extract_lean
     return {"success": None, "code": extract_lean(call_llm(prompt, system=SYSTEM_PROMPT_SPEC, model=model)),
-            "attempts": 1}
+            "attempts": 1, "compiles": None}
+
+
+def _lean_file(p: dict, r: dict) -> str:
+    """A saved spec that compiles on its own: the same prelude `check_lean` adds, then the code."""
+    from lean_runner import HEADER
+    text = " ".join(p["text"].split())
+    return (f"{HEADER}-- {p['id']}: {text}\n"
+            f"-- compiles: {r.get('compiles')} · checked: {r['success']}\n\n{r['code']}\n")
 
 
 def stage_spec(doc: dict, stem: str, args) -> dict:
@@ -178,6 +193,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
     def save() -> dict:
         ordered = [results[p["id"]] for p in all_prompts if p["id"] in results]
         summary = {"total": len(ordered),
+                   "compiles": sum(r.get("compiles") is True for r in ordered),
                    "checked": sum(r["checked"] is True for r in ordered),
                    "failed": sum(r["checked"] is False for r in ordered),
                    "unchecked": sum(r["checked"] is None for r in ordered)}
@@ -203,13 +219,12 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
         results[p["id"]] = {
             "id": p["id"], "kind": p["kind"], "verification": p["verification"],
             "requirement_text": p["text"], "text_predicate": p["prompt"],
-            "lean_predicate": r["code"], "checked": r["success"],
+            "lean_predicate": r["code"], "compiles": r.get("compiles"), "checked": r["success"],
             "attempts": r.get("attempts"), "seconds": secs,
             **({"error": r["error"]} if r.get("error") else {}),
             **({"log": r["log"]} if r.get("log") else {}),
         }
-        (lean_dir / f"{_safe(p['id'])}.lean").write_text(
-            f"-- {p['id']}: {p['text']}\n-- checked: {r['success']}\n\n{r['code']}\n", encoding="utf-8")
+        (lean_dir / f"{_safe(p['id'])}.lean").write_text(_lean_file(p, r), encoding="utf-8")
         save()
         status = {True: "OK", False: "FAILED", None: "unchecked"}[r["success"]]
         print(f"[spec {i}/{len(items)}] {p['id']}: {status} ({r.get('attempts')} attempts, {secs}s)")

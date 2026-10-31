@@ -482,7 +482,8 @@ def review_run(specs: dict, entries: dict) -> dict:
     """Add an `l05` verdict to every result and return {status: count}."""
     counts = {"pass": 0, "flag": 0, "fail": 0}
     for r in specs["results"]:
-        r["l05"] = review(r["lean_predicate"], r["checked"], entries.get(r["id"], {}))
+        compiled = r.get("compiles", r["checked"])  # runs before `compiles` existed only have `checked`
+        r["l05"] = review(r["lean_predicate"], compiled, entries.get(r["id"], {}))
         counts[r["l05"]["status"]] += 1
     specs["l05_summary"] = counts
     return counts
@@ -494,7 +495,8 @@ def write_report(specs: dict, out_dir: Path) -> Path:
     default = {"pass": "accept", "flag": "review", "fail": "redo"}
     s = specs["l05_summary"]
     lines = [f"# L0.5 report — {specs['source'].get('file', '')} ({specs['model']})", "",
-             f"Compiles: {specs['summary']['checked']}/{specs['summary']['total']} · "
+             f"Compiles: {specs['summary'].get('compiles', specs['summary']['checked'])}"
+             f"/{specs['summary']['total']} · "
              f"✅ pass {s['pass']} · ⚠️ flagged {s['flag']} · ❌ fail {s['fail']}", "",
              "| | Entry | Kind | Reasons |", "|---|---|---|---|"]
     decisions = {}
