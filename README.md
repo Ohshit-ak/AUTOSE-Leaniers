@@ -46,15 +46,19 @@ AUTOSE-Leaniers/
 │   ├── llm.py              # call_llm(): DeepSeek / Groq / Gemma / Qwen; extract_lean()
 │   ├── lean_runner.py      # check_lean(): type-checks code against the framework
 │   ├── req_parser.py       # SRS XML → requirements JSON (rule-based, no LLM)
+│   ├── validate.py         # L0.5: rule-based checks of generated specs, report, review.json
 │   ├── tests/              # unit tests (req_parser)
 │   └── agents/
-│       ├── base.py             # generate → check → repair loop
+│       ├── base.py             # generate → check → repair loop (staged, guarded)
+│       ├── repair.py           # Lean errors → short feedback + fix hints
+│       ├── fixups.py           # mechanical syntax fixes before each check
 │       ├── spec_agent.py       # L0: requirement → spec
 │       ├── architect_agent.py  # L1: spec → contracts + PO1/PO2
 │       └── coding_agent.py     # L2: contract → impl + PO3
 │
 ├── scripts/
-│   └── start_qwen_server.sh  # local Qwen 2.5 7B via llama.cpp (port 8082)
+│   ├── start_qwen_server.sh  # local Qwen 2.5 7B via llama.cpp (port 8082)
+│   └── usage_guard.sh        # stops a run above 75% GPU memory / job RAM
 │
 ├── Requirements/           # input SRS documents (.xml, .pdf)
 │   └── parsed/             # parser output, one JSON per document
@@ -160,14 +164,62 @@ python -c "from llm import call_llm; print(call_llm('Write hello world in Lean 4
 `model` is one of `deepseek`, `groq`, `gemma` or `qwen`.
 
 `qwen` is the local Qwen 2.5 7B on ada, served by llama.cpp on port 8082 (no API key).
-Start it on a GPU node and run the harness on that same node:
+See *Run local Qwen on ada* below for the one-time setup.
+
+### Run local Qwen on ada
+
+You have no sudo on ada, so everything goes in your home folder. Ollama's installer needs sudo; use llama.cpp instead.
+
+**One-time setup, on `ada-gw1`:**
 
 ```bash
-srun -p u22 --gres=gpu:1 --pty bash
-bash scripts/start_qwen_server.sh &        # wait for "server is listening"
-source venv/bin/activate && cd harness
-python -c "from llm import call_llm; print(call_llm('Write hello world in Lean 4', model='qwen'))"
+# model (~4.4 GB), at the path scripts/start_qwen_server.sh expects
+mkdir -p ~/llm-models/qwen2.5-7b-instruct && cd ~/llm-models/qwen2.5-7b-instruct
+for n in 00001 00002; do
+  wget -c "https://huggingface.co/Qwen/Qwen2.5-7B-Instruct-GGUF/resolve/main/qwen2.5-7b-instruct-q4_k_m-$n-of-00002.gguf"
+done
+
+# cmake (pip isn't on PATH and conda needs its ToS accepted, so use python -m pip)
+python -m pip install --user cmake
+export PATH=$HOME/.local/bin:$PATH
+
+# llama-server with CUDA
+module load u22/cuda/12.4
+git clone https://github.com/ggml-org/llama.cpp ~/build/llama.cpp && cd ~/build/llama.cpp
+cmake -B build-cuda -DGGML_CUDA=ON -DGGML_NATIVE=OFF -DCMAKE_CUDA_ARCHITECTURES="61;75;80;86;89"
+cmake --build build-cuda -j 8 --target llama-server
+
+# project
+cd ~/AUTOSE-Leaniers
+python -m pip install openai python-dotenv google-genai
+cd framework && lake build
 ```
+
+`-DGGML_NATIVE=OFF` is required. Without it the binary is tuned to the login node's
+CPU and crashes on GPU nodes with exit code `-4` (illegal instruction).
+The CUDA architectures are listed because the login node has no GPU to detect (61 = GTX 1080 Ti).
+
+**Each run, on a GPU node:**
+
+```bash
+sinfo -p u22 | grep idle                   # find a free node
+srun -p u22 --gres=gpu:1 -c 8 --mem=16G --time=06:00:00 -w gnode005 --pty bash
+tmux new -s qwen                           # keeps running after you disconnect (Ctrl-b d)
+module load u22/cuda/12.4
+cd ~/AUTOSE-Leaniers/harness
+python main.py "../Requirements/0000 - gamma j.xml" --model qwen --limit 3   # quick test
+python main.py "../Requirements/0000 - gamma j.xml" --model qwen --resume    # the rest
+```
+
+To stop a run automatically if GPU memory or the job's RAM goes above 75%:
+
+```bash
+python main.py "../Requirements/0000 - gamma j.xml" --model qwen & bash ../scripts/usage_guard.sh $! usage.log
+```
+
+`main.py` starts and stops the Qwen server itself. If it stops, the server log is
+`runs/qwen_server.log`. Rerun with `--resume` to continue an interrupted run.
+To get back into a running job: `squeue -u $USER`, then `ssh <node>` and `tmux attach -t qwen`.
 
 ### Type-check Lean code against the framework
 
@@ -180,8 +232,10 @@ Lean's error message. A `sorry` counts as a failure.
 
 ### Run the pipeline (`main.py`)
 
-`main.py` parses every SRS XML in `Requirements/` and generates one Lean spec (L0)
-per requirement, data constraint and use case. L1/L2 are not wired in yet.
+`main.py` parses every SRS XML in `Requirements/`, generates one Lean spec (L0)
+per requirement, data constraint and use case, and then checks the specs (L0.5,
+`validate.py`): no empty `post`, runtime bounds present, data-field specs accept and
+reject values built from the parser's rules. L1/L2 are not wired in yet.
 
 ```bash
 python main.py                                    # all XMLs, model qwen (or $CF_MODEL)
@@ -192,6 +246,8 @@ python main.py --only 5.1/R4 DD-user-id           # specific entries
 python main.py --kinds data_constraint            # requirement | data_constraint | use_case
 python main.py --resume                           # skip entries that already passed
 python main.py --skip-lean                        # don't type-check (specs marked unchecked)
+python main.py --until spec                       # stop after L0, skip the L0.5 checks
+python main.py --on-l0-fail redo                  # redo L0 once for entries failing L0.5 (or: exclude, stop)
 ```
 
 With `--model qwen`, the local server is started automatically if it isn't running
@@ -202,9 +258,14 @@ With `--model qwen`, the local server is started automatically if it isn't runni
 | `Requirements/parsed/<doc>.json` | parser output (requirements, data dictionary, use cases, dropped statements) |
 | `runs/<doc>/<model>/specs.json` | summary + per entry: requirement text, prompt, Lean spec, `checked`, attempts, seconds |
 | `runs/<doc>/<model>/lean/<id>.lean` | each Lean spec as a file |
+| `runs/<doc>/<model>/l05_report.md` | L0.5 verdict per entry: ✅ pass, ⚠️ flagged for review, ❌ fail, with reasons |
+| `runs/<doc>/<model>/review.json` | decision per entry (accept / review / redo / exclude); edits you make are kept on reruns |
 
 `specs.json` is rewritten after every entry, so a crash or Ctrl-C loses nothing;
 rerun with `--resume` to continue.
+
+`checked: true` means Lean compiled the spec, nothing more. It doesn't mean the spec
+matches the requirement, so read the generated specs as well.
 
 Parser tests: `python -m unittest discover tests`.
 

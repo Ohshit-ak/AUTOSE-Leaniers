@@ -3,6 +3,8 @@
 Stages run in order up to --until:
     parse   requirements XML → requirements JSON (deterministic, no model)
     spec    L0: one Lean spec (pre/post predicates) per requirements entry
+    check   L0.5: rule-based checks that each spec is not empty or wrong (validate.py);
+            writes a report and review.json with a decision per entry
     (L1 architect and L2 coding stages are not wired in yet)
 
 Run from harness/:
@@ -10,7 +12,7 @@ Run from harness/:
     python main.py "../Requirements/0000 - gamma j.xml" --model deepseek
     python main.py --until parse                    # only the parser
     python main.py --limit 5                        # first 5 entries only
-    python main.py --only 5.1/R4 DD-user-id         # specific entries
+    python main.py --only 5.1/R4 DD-user-id         # rerun specific entries (others are kept)
     python main.py --kinds data_constraint          # requirement | data_constraint | use_case
     python main.py --resume                         # skip entries that already passed
     python main.py --skip-lean                      # collect specs without Lean (unchecked)
@@ -23,6 +25,8 @@ Outputs, per input document <stem>:
     Requirements/parsed/<stem>.json                 parser output
     runs/<stem>/<model>/specs.json                  text predicate + Lean predicate per entry
     runs/<stem>/<model>/lean/<id>.lean              each Lean spec as a file
+    runs/<stem>/<model>/l05_report.md               L0.5 verdict per entry (pass / flag / fail)
+    runs/<stem>/<model>/review.json                 decision per entry (accept / review / redo / exclude)
 specs.json is rewritten after every entry, so a crash or Ctrl-C loses nothing.
 """
 import argparse
@@ -40,7 +44,7 @@ from pathlib import Path
 from config import BASE_URLS, FRAMEWORK_PATH, ROOT
 from req_parser import parse_file, to_json
 
-STAGES = ["parse", "spec"]
+STAGES = ["parse", "spec", "check"]
 REQ_DIR = ROOT / "Requirements"
 PARSED_DIR = REQ_DIR / "parsed"
 RUNS_DIR = ROOT / "runs"
@@ -136,10 +140,12 @@ def _safe(name: str) -> str:
     return re.sub(r"[^A-Za-z0-9_.-]+", "_", name)
 
 
-def _generate_spec(prompt: str, model: str, skip_lean: bool) -> dict:
+def _generate_spec(p: dict, model: str, skip_lean: bool) -> dict:
     from agents.spec_agent import SYSTEM_PROMPT_SPEC, run_spec
+    from validate import hard_checks
+    prompt = p["prompt"]
     if not skip_lean:
-        return run_spec(prompt, model)
+        return run_spec(prompt, model, validate=hard_checks(p["entry"]))
     from llm import call_llm, extract_lean
     return {"success": None, "code": extract_lean(call_llm(prompt, system=SYSTEM_PROMPT_SPEC, model=model)),
             "attempts": 1}
@@ -162,8 +168,11 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
     lean_dir.mkdir(parents=True, exist_ok=True)
     specs_path = out_dir / "specs.json"
 
+    # Keep earlier results when resuming or running a subset, so `--only X` reruns X
+    # without dropping every other entry from specs.json.
     results = {}
-    if args.resume and specs_path.exists():
+    subset = bool(args.only or args.kinds or args.limit)
+    if (args.resume or subset) and specs_path.exists():
         results = {r["id"]: r for r in json.loads(specs_path.read_text(encoding="utf-8"))["results"]}
 
     def save() -> dict:
@@ -184,7 +193,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
             continue
         t0 = time.time()
         try:
-            r = _generate_spec(p["prompt"], args.model, args.skip_lean)
+            r = _generate_spec(p, args.model, args.skip_lean)
         except KeyboardInterrupt:
             save()
             raise
@@ -197,6 +206,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
             "lean_predicate": r["code"], "checked": r["success"],
             "attempts": r.get("attempts"), "seconds": secs,
             **({"error": r["error"]} if r.get("error") else {}),
+            **({"log": r["log"]} if r.get("log") else {}),
         }
         (lean_dir / f"{_safe(p['id'])}.lean").write_text(
             f"-- {p['id']}: {p['text']}\n-- checked: {r['success']}\n\n{r['code']}\n", encoding="utf-8")
@@ -207,6 +217,51 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
     summary = save()
     print(f"[spec] {stem}: {summary} -> {specs_path.relative_to(ROOT)}")
     return summary
+
+
+# ---------------------------------------------------------------------------
+# Stage: check (L0.5)
+# ---------------------------------------------------------------------------
+
+def stage_check(doc: dict, stem: str, args) -> dict:
+    """Review every spec, write the report and review.json, then apply --on-l0-fail."""
+    from validate import review_run, write_report
+
+    out_dir = RUNS_DIR / stem / args.model
+    specs_path = out_dir / "specs.json"
+    if not specs_path.exists():
+        _fail(f"no specs to check: {specs_path.relative_to(ROOT)} (run the spec stage first)")
+    entries = {e["id"]: e for e in doc["requirements"] + doc["data_dictionary"] + doc["use_cases"]}
+    specs = json.loads(specs_path.read_text(encoding="utf-8"))
+    counts = review_run(specs, entries)
+    _write_json(specs_path, specs)
+    report = write_report(specs, out_dir)
+    print(f"[check] {stem}: {counts} -> {report.relative_to(ROOT)}")
+
+    failed = [r["id"] for r in specs["results"] if r["l05"]["status"] == "fail"]
+    if not failed:
+        return counts
+    if args.on_l0_fail == "redo" and not getattr(args, "_redone", False):
+        print(f"[check] redoing L0 for {len(failed)} failed entries")
+        redo = argparse.Namespace(**{**vars(args), "only": failed, "resume": True, "kinds": None,
+                                     "limit": None, "_redone": True})
+        for r in specs["results"]:  # make --resume retry them
+            if r["id"] in failed:
+                r["checked"] = False
+        _write_json(specs_path, specs)
+        stage_spec(doc, stem, redo)
+        return stage_check(doc, stem, redo)
+    if args.on_l0_fail == "exclude":
+        review_path = out_dir / "review.json"
+        decisions = json.loads(review_path.read_text(encoding="utf-8"))
+        for i in failed:
+            decisions[i]["decision"] = "exclude"
+        _write_json(review_path, decisions)
+        print(f"[check] excluded {len(failed)} failed entries in {review_path.relative_to(ROOT)}")
+    else:
+        print(f"[check] {len(failed)} entries failed L0.5; stopping before L1. Edit "
+              f"{(out_dir / 'review.json').relative_to(ROOT)} or rerun with --on-l0-fail redo|exclude")
+    return counts
 
 
 # ---------------------------------------------------------------------------
@@ -222,6 +277,8 @@ def main(argv=None) -> int:
     ap.add_argument("--kinds", nargs="+", choices=["requirement", "data_constraint", "use_case"])
     ap.add_argument("--resume", action="store_true", help="skip entries already done in a previous run")
     ap.add_argument("--skip-lean", action="store_true", help="do not type-check (specs marked unchecked)")
+    ap.add_argument("--on-l0-fail", choices=["stop", "redo", "exclude"], default="stop",
+                    help="entries failing L0.5: stop before L1 (default), redo them once, or exclude them")
     args = ap.parse_args(argv)
 
     paths = [Path(p).resolve() for p in args.inputs] or sorted(REQ_DIR.glob("*.xml"))
@@ -235,6 +292,8 @@ def main(argv=None) -> int:
         doc = stage_parse(path)
         if run_spec_stage:
             stage_spec(doc, path.stem, args)
+        if STAGES.index(args.until) >= STAGES.index("check") and not args.skip_lean:
+            stage_check(doc, path.stem, args)
     return 0
 
 

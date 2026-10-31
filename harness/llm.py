@@ -25,11 +25,16 @@ def _transient(e: Exception) -> bool:
                                 "APITimeoutError", "RemoteProtocolError")
 
 
-def call_llm(prompt: str, system: str = "", model: str = "deepseek") -> str:
-    """Call a model by provider name, retrying transient API errors. Returns the response text."""
+def call_llm(prompt: str, system: str = "", model: str = "deepseek",
+             history=None, temperature: float = TEMPERATURE) -> str:
+    """Call a model by provider name, retrying transient API errors. Returns the response text.
+
+    `history` is a list of earlier {"role": "user"|"assistant", "content": ...} turns
+    that go between the system prompt and `prompt`.
+    """
     for attempt in range(API_RETRIES + 1):
         try:
-            return _call_llm_once(prompt, system, model)
+            return _call_llm_once(prompt, system, model, history or [], temperature)
         except Exception as e:
             if attempt == API_RETRIES or not _transient(e):
                 raise
@@ -38,7 +43,7 @@ def call_llm(prompt: str, system: str = "", model: str = "deepseek") -> str:
             time.sleep(wait)
 
 
-def _call_llm_once(prompt: str, system: str, model: str) -> str:
+def _call_llm_once(prompt: str, system: str, model: str, history: list, temperature: float) -> str:
     if model not in MODELS:
         raise ValueError(f"unknown model {model!r}; choose from {list(MODELS)}")
 
@@ -49,21 +54,26 @@ def _call_llm_once(prompt: str, system: str, model: str) -> str:
         messages = []
         if system:
             messages.append({"role": "system", "content": system})
+        messages += history
         messages.append({"role": "user", "content": prompt})
         resp = client.chat.completions.create(
-            model=MODELS[model], messages=messages, temperature=TEMPERATURE
+            model=MODELS[model], messages=messages, temperature=temperature
         )
         return resp.choices[0].message.content
 
     from google import genai
 
     client = genai.Client(api_key=_api_key(model))
-    # Gemma has no system role, so the system prompt goes in front of the user prompt.
-    contents = f"{system}\n\n{prompt}" if system else prompt
+    # Gemma has no system role, so the system prompt goes in front of the first user turn.
+    turns = history + [{"role": "user", "content": prompt}]
+    if system:
+        turns[0] = {"role": "user", "content": f"{system}\n\n{turns[0]['content']}"}
+    contents = [{"role": "model" if t["role"] == "assistant" else "user",
+                 "parts": [{"text": t["content"]}]} for t in turns]
     resp = client.models.generate_content(
         model=MODELS[model],
         contents=contents,
-        config={"temperature": TEMPERATURE},
+        config={"temperature": temperature},
     )
     return resp.text
 

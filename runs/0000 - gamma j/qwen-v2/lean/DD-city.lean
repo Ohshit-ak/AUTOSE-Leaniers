@@ -1,0 +1,20 @@
+-- DD-city: Name of the city for the above address; maximum 20 characters alphabetic string
+-- checked: True
+
+structure Input where
+  raw : String
+  deriving DecidableEq, Repr
+
+structure Output where
+  valid : Bool
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun _ => True
+  post := fun i o => o.valid = true ↔
+    (i.raw.length ≤ 20) ∧
+    i.raw.toList.all (·.isAlpha = true)
+
+example : Spec.pre { raw := "Springfield" } ∧
+          Spec.post { raw := "Springfield" } { valid := true } := by
+  unfold Spec; decide

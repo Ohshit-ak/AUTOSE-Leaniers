@@ -13,6 +13,8 @@ MAX_RETRIES = int(os.getenv("CF_MAX_RETRIES", "5"))
 LEAN_TIMEOUT = int(os.getenv("CF_LEAN_TIMEOUT", "60"))
 API_RETRIES = int(os.getenv("CF_API_RETRIES", "6"))  # 5xx / 429 / network errors, with backoff
 TEMPERATURE = 0.2
+# Used when the repair loop restarts from scratch after the same error twice.
+RESTART_TEMPERATURE = float(os.getenv("CF_RESTART_TEMPERATURE", "0.7"))
 
 # Provider name -> model id. Override any of these via env vars if a
 # provider renames or retires a model.

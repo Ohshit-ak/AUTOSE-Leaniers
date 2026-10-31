@@ -11,13 +11,13 @@
 # Settings (CF_ prefix so they never collide with other projects' variables):
 #   CF_LLAMA_SERVER  llama-server binary          CF_QWEN_GGUF  first shard of the model
 #   CF_QWEN_HOST     bind address (127.0.0.1)     CF_QWEN_PORT  port (8082)
-#   CF_QWEN_CTX      context size (8192)          CF_QWEN_NGL   layers offloaded to the GPU (99 = all)
+#   CF_QWEN_CTX      context size (16384; repair conversations need more than 8192)          CF_QWEN_NGL   layers offloaded to the GPU (99 = all)
 set -euo pipefail
 
 GGUF="${CF_QWEN_GGUF:-$HOME/llm-models/qwen2.5-7b-instruct/qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf}"
 HOST="${CF_QWEN_HOST:-127.0.0.1}"
 PORT="${CF_QWEN_PORT:-8082}"
-CTX="${CF_QWEN_CTX:-8192}"
+CTX="${CF_QWEN_CTX:-16384}"
 NGL="${CF_QWEN_NGL:-99}"
 SERVER="${CF_LLAMA_SERVER:-$HOME/build/llama.cpp/build-cuda/bin/llama-server}"
 
