@@ -196,6 +196,8 @@ def hint_for(msg: str, code: str) -> Optional[str]:
             if coll:
                 return coll
             return undeclared_field_hint(fields, owner, name, code)
+        if owner == "Function":
+            return function_field_hint(name)
         return _did_you_mean(owner, name)
     for old, new in LEAN3_NAMES.items():
         if f"`{old}`" in msg or f".{old}`" in msg:
@@ -271,8 +273,7 @@ def hint_for(msg: str, code: str) -> Optional[str]:
         return ("The `example` proof does not close. Prove it with `by unfold Spec; decide`, and "
                 "pick concrete values for every field that obviously satisfy `pre` and `post`.")
     if "Function expected" in msg:
-        return ("`Spec` is not a function: write `Spec.pre i` / `Spec.post i o`. "
-                "`Contract` takes two types: `Contract Input Output`. Do not redefine `Contract`.")
+        return function_expected_hint(msg)
     if "Invalid `end`" in msg:
         return "This is Lean 3 syntax. Lean 4 has no `begin`/`end`: write `by` and indented tactics."
     if "unexpected token" in msg:
@@ -291,6 +292,38 @@ def hint_for(msg: str, code: str) -> Optional[str]:
     if "timed out" in msg:
         return "Lean timed out. Make the spec and the example values smaller and simpler."
     return None
+
+
+def function_field_hint(name: str) -> str:
+    """`.name` was projected from a function value (`xs.map f.sum`, `(fun x => …).map`):
+    list operations go on the list, after mapping."""
+    return (f"`Function.{name}` does not exist: `.{name}` was applied to a function (`fun …`), not to a list. List operations go "
+            f"on the list: `xs.map (fun x => …)` maps, and `(xs.map (fun x => …)).{name}` applies "
+            f"`.{name}` to the mapped list.")
+
+
+_FN_EXPECTED = re.compile(r"Function expected at\s+(.+?)\s+but this term has type\s+(.+?)(?:\n\s*\n|\nNote|$)",
+                          re.DOTALL)
+
+
+def function_expected_hint(msg: str) -> str:
+    """Lean: "Function expected at X but this term has type T" — X was given an argument
+    it cannot take. Only when X is `Spec` itself is the fix about `Spec.pre` / `Spec.post`."""
+    m = _FN_EXPECTED.search(msg)
+    term = " ".join(m.group(1).split()) if m else ""
+    typ = " ".join(m.group(2).split()) if m else ""
+    if not term or term == "Spec" or term.startswith("Spec "):
+        return ("`Spec` is not a function: write `Spec.pre i` / `Spec.post i o`. "
+                "`Contract` takes two types: `Contract Input Output`. Do not redefine `Contract`.")
+    applied = "(fun …)" if "argument\n  (fun" in msg or "argument (fun" in msg else "an argument"
+    dot = re.fullmatch(r"([\w.]+)\.(\w+[?!]?)", term)
+    if dot:
+        xs, op = dot.groups()
+        return (f"`{term}` is already a value of type `{typ}`, so it cannot take {applied}. "
+                f"To apply a function to each element first, map then apply: "
+                f"`({xs}.map (fun x => …)).{op}`.")
+    return (f"`{term}` has type `{typ}`, not a function type, so it cannot take {applied}. "
+            "Remove the extra argument or use a function that takes it.")
 
 
 def _did_you_mean(owner: str, name: str) -> str:

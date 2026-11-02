@@ -26,7 +26,7 @@ MAX_TOKENS_RETRY = int(os.getenv("CF_MAX_TOKENS_RETRY", "4096"))
 SEED = int(os.getenv("CF_SEED", "42"))
 SEEDED_PROVIDERS = {"qwen"}
 # Harness version, recorded in every specs.json and used in the default run name.
-HARNESS_VERSION = os.getenv("CF_HARNESS_VERSION", "v10")
+HARNESS_VERSION = os.getenv("CF_HARNESS_VERSION", "v10.1")
 # L0 negative check: after a spec compiles, the model names an output the requirement
 # forbids, and Lean must prove that `post` rejects it (agents/negative.py).
 NEGATIVE_CHECK = os.getenv("CF_NEGATIVE_CHECK", "1") == "1"

@@ -296,5 +296,36 @@ class NameLookup(unittest.TestCase):
         self.assertIn("Add `bound : <type>` to `structure Input`", h)
 
 
+class FunctionMisuseHints(unittest.TestCase):
+    """v10.1: hints for applying a list operation to a function, or giving a non-function
+    an argument. Only an error about `Spec` itself gets the `Spec.pre`/`Spec.post` hint."""
+
+    def test_function_projection(self):
+        from agents.repair import hint_for
+        h = hint_for("Invalid field `sum`: The environment does not contain `Function.sum`, so", "x")
+        self.assertIn("`(xs.map (fun x => …)).sum`", h)
+
+    def test_operation_given_a_lambda(self):
+        from agents.repair import hint_for
+        msg = ("Function expected at\n  i.rows.sum\nbut this term has type\n  Row\n\n"
+               "Note: Expected a function because this term is being applied to the argument\n"
+               "  (fun r => r.n)")
+        h = hint_for(msg, "x")
+        self.assertIn("`(i.rows.map (fun x => …)).sum`", h)
+        self.assertNotIn("Spec", h)
+
+    def test_spec_applied(self):
+        from agents.repair import hint_for
+        h = hint_for("Function expected at\n  Spec\nbut this term has type\n  Contract Input Output", "x")
+        self.assertIn("`Spec.pre i`", h)
+
+    def test_compound_term(self):
+        from agents.repair import hint_for
+        msg = "Function expected at\n  List.drop 2 s\nbut this term has type\n  List Char"
+        h = hint_for(msg, "x")
+        self.assertIn("not a function type", h)
+        self.assertNotIn(".map", h)
+
+
 if __name__ == "__main__":
     unittest.main()
