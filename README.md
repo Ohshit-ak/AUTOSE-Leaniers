@@ -61,12 +61,14 @@ AUTOSE-Leaniers/
 │
 ├── scripts/
 │   ├── start_qwen_server.sh  # local Qwen 2.5 7B via llama.cpp (port 8082)
-│   └── usage_guard.sh        # stops a run above 75% GPU memory / job RAM
+│   ├── usage_guard.sh        # stops a run above 75% GPU memory / job RAM
+│   └── compare_runs.py       # before/after report of two runs of one SRS → comparison.md
 │
 ├── Requirements/           # input SRS documents (.xml, .pdf)
 │   └── parsed/             # parser output, one JSON per document
 │
-└── runs/                   # pipeline outputs: runs/<document>/<model>/
+└── runs/                   # pipeline outputs: runs/<document>/<run-name>/
+                            #   SRSs run so far: `0000 - gamma j`, `2009 - video search`
 ```
 
 Planned, not yet created: `harness/reverify.py`, `requirements.txt`, and the
@@ -282,6 +284,16 @@ With `--model qwen`, the local server is started automatically if it isn't runni
 | `runs/<doc>/<model>/lean/<id>.lean` | each Lean spec as a file; it starts with `import ContractForge`, so `lake env lean <file>` from the repo root checks it on its own. For a failed entry this is the attempt that got furthest (e.g. one that compiled but failed L0.5), not necessarily the last |
 | `runs/<doc>/<model>/l05_report.md` | L0.5 verdict per entry: ✅ pass, ⚠️ flagged for review, ❌ fail, with reasons. Reports from runs up to `qwen-v7` contain false "`post` accepted every changed output" failures (a multi-line example input that didn't parse when pasted); fixed since, see MEMORY.md |
 | `runs/<doc>/<model>/review.json` | decision per entry (accept / review / redo / exclude); edits you make are kept on reruns |
+| `runs/<doc>/<run>/comparison.md` | written by `scripts/compare_runs.py`, not by `main.py`: totals, entries added/removed by the parser, improved/regressed entries and current L0.5 failures versus an earlier run |
+
+To compare two runs of the same SRS (from the repo root):
+
+```bash
+python scripts/compare_runs.py "runs/0000 - gamma j/qwen-v8" "runs/0000 - gamma j/qwen-v9"
+# → runs/0000 - gamma j/qwen-v9/comparison.md  (optional 3rd argument: output path)
+```
+
+Latest reports: [gamma j v8 → v9](runs/0000%20-%20gamma%20j/qwen-v9/comparison.md), [video search v8 → v9](runs/2009%20-%20video%20search/qwen-v9/comparison.md). Results per run are in [MEMORY.md](MEMORY.md).
 
 `specs.json` is rewritten after every entry, so a crash or Ctrl-C loses nothing;
 rerun with `--resume` to continue.
@@ -300,7 +312,8 @@ Tests: `python -m unittest discover -s tests` (from `harness/`). They cover the 
 the negative check, and harness regressions (`test_harness_fixes.py`: Lean extraction,
 locked-example repair, `sorry` detection, best-attempt selection, the always-false-equation
 and example-input checks, one-line witnesses for the vacuity check, the negative check's
-reply forms, numeric data tests, fixups and repair hints). Tests that run Lean are skipped
+reply forms, numeric data tests, fixups and repair hints) and the v9 changes (`test_v9_fixes.py`:
+filter/sort/limit parsing, scope-section drops, `Nat ≥ 0`, per-mutant vacuity, the search template). Tests that run Lean are skipped
 if `lake` is missing.
 
 ### Run the agents step by step
