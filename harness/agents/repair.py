@@ -5,10 +5,10 @@ locked context + code). This keeps the first few errors, maps each position to
 a line of the model's own code, trims long type dumps, and adds a one-line hint
 chosen by the kind of error.
 """
-import difflib
 import re
 from typing import List, Optional
 
+from config import FRAMEWORK_PATH
 from lean_runner import HEADER, core_names
 
 MAX_ERRORS = 3          # errors shown per repair
@@ -22,28 +22,6 @@ _FIELD = re.compile(r"^[ \t]+(\w+)\s*:", re.MULTILINE)
 
 KEYWORDS = "exists, fun, end, at, from, have, show, do, let, in, then, else, match, with, where, by"
 
-MISSING_API = {
-    "List.forall": "use `xs.all (fun x => ...) = true` or `∀ x ∈ xs, ...`",
-    "List.exists": "use `xs.any (fun x => ...) = true` or `∃ x ∈ xs, ...`",
-    "String.forall": "use `s.toList.all (fun c => ...) = true`",
-    "String.exists": "use `s.toList.any (fun c => ...) = true`",
-    "String.all": "use `s.toList.all (fun c => ...) = true` (String.all does not evaluate in proofs)",
-    "String.any": "use `s.toList.any (fun c => ...) = true`",
-    "String.isAlpha": "use `s.toList.all Char.isAlpha = true`",
-    "String.isNumeric": "use `s.toList.all Char.isDigit = true`",
-    "String.isDigit": "use `s.toList.all Char.isDigit = true`",
-    "String.isAlphanum": "use `s.toList.all Char.isAlphanum = true`",
-    # seen in qwen-v6/v7
-    "String.substring": "use `(s.toList.drop a).take n` (characters a … a+n-1) or `s.toList[k]?`",
-    "String.slice": "use `(s.toList.drop a).take n`",
-    "List.nth": "use `xs[k]?` (an `Option`) or `xs.getD k d`",
-    "List.nth?": "use `xs[k]?`",
-    "List.nodup": "use `xs.Nodup` (capital N)",
-    "Function.sum": "`.sum` is on lists: write `(xs.map (fun x => …)).sum`, not `xs.map f.sum` "
-                    "or `xs.sum (fun x => …)`",
-    "Function.map": "`.map` is on lists: write `xs.map (fun x => …)`, not `(fun x => …).map`",
-}
-
 # Lean 3 names models keep writing; Lean 4 spells them differently.
 LEAN3_NAMES = {
     "dec_trivial": "`by decide`",
@@ -55,30 +33,58 @@ LEAN3_NAMES = {
 }
 
 
-def suggest_names(owner: str, name: str) -> List[str]:
-    """Real Lean core names close to the invented `owner.name`, e.g. Char.isAlphabetic → Char.isAlpha.
+def edit_distance(a: str, b: str) -> int:
+    """Levenshtein distance, ignoring case."""
+    a, b = a.lower(), b.lower()
+    prev = list(range(len(b) + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i]
+        for j, cb in enumerate(b, 1):
+            cur.append(min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (ca != cb)))
+        prev = cur
+    return prev[-1]
 
-    Tries an exact match ignoring case, then names containing `name`, then close spellings.
-    For `String`, also suggests the `List` function reached through `.toList`.
-    """
+
+def closest(name: str, candidates, n: int = 3) -> List[str]:
+    """The `n` candidates nearest to `name` by edit distance (ties: shorter, then alphabetical).
+    A candidate containing `name` (or contained in it) counts as distance 1."""
+    def key(c: str):
+        d = edit_distance(name, c)
+        if name.lower() in c.lower() or c.lower() in name.lower():
+            d = min(d, 1)
+        return (d, len(c), c)
+    uniq = sorted(set(candidates), key=key)
+    limit = max(2, len(name) // 2)  # farther than this is not a plausible typo or synonym
+    return [c for c in uniq if key(c)[0] <= limit][:n]
+
+
+_HELPER_DEF = re.compile(r"^def\s+(\w+)", re.MULTILINE)
+
+
+def framework_helpers() -> List[str]:
+    """Top-level helpers the framework provides to specs (e.g. `allDigits`)."""
+    names = []
+    for f in sorted((FRAMEWORK_PATH / "ContractForge").glob("*.lean")):
+        names += _HELPER_DEF.findall(f.read_text(encoding="utf-8"))
+    return names
+
+
+def local_names(code: str) -> List[str]:
+    """Structures and defs declared in the model's code."""
+    return re.findall(r"^(?:structure|def|abbrev|inductive)\s+(\w+)", code, re.MULTILINE)
+
+
+def suggest_names(owner: str, name: str) -> List[str]:
+    """The 3 real Lean core names in `owner`'s namespace closest to the invented `owner.name`
+    (edit distance), e.g. Char.isAlphabetic → Char.isAlpha. For `String`, functions reached
+    through `.toList` count too."""
     names = core_names()
     space = owner[:1].upper() + owner[1:]  # Lean 3 used lowercase namespaces (nat, list)
-
-    def close(ns: str) -> List[str]:
-        cands = names.get(ns, [])
-        exact = [c for c in cands if c.lower() == name.lower()]
-        contains = [c for c in cands if name.lower() in c.lower() and c not in exact]
-        fuzzy = difflib.get_close_matches(name, cands, n=3, cutoff=0.6)
-        out = []
-        for c in exact + sorted(contains, key=len)[:3] + fuzzy:
-            if c not in out:
-                out.append(c)
-        return out[:3]
-
-    found = [f"{space}.{c}" for c in close(space)]
-    if space == "String" and len(found) < 3:
-        found += [f"s.toList.{c}" for c in close("List")][:3 - len(found)]
-    return found
+    cands = [f"{space}.{c}" for c in names.get(space, [])]
+    if space == "String":
+        cands += [f"s.toList.{c}" for c in names.get("List", [])]
+    by_short = {c.rsplit(".", 1)[-1]: c for c in reversed(cands)}
+    return [by_short[c] for c in closest(name, list(by_short))]
 
 
 def structure_fields(code: str) -> dict:
@@ -161,12 +167,9 @@ def hint_for(msg: str, code: str) -> Optional[str]:
     """One actionable sentence for a Lean error message, or None."""
     fields = structure_fields(code)
 
-    m = re.search(r"does not contain `([\w.]+)\.(\w+)`", msg)
+    m = re.search(r"does not contain `([\w.]+)\.([\w?!]+)`", msg)
     if m:
         owner, name = m.group(1).split(".")[-1], m.group(2)
-        api = MISSING_API.get(f"{owner}.{name}")
-        if api:
-            return f"`{owner}.{name}` does not exist in Lean core: {api}."
         if owner in fields:
             other = _field_of_other(fields, owner, name)
             if other:
@@ -178,15 +181,18 @@ def hint_for(msg: str, code: str) -> Optional[str]:
                     f"{', '.join(fields[owner]) or '(none)'}. Add `{name}` to `structure {owner}` "
                     "or use an existing field.")
         return _did_you_mean(owner, name)
-    for api, fix in MISSING_API.items():
-        if api in msg:
-            return f"`{api}` does not exist in Lean core: {fix}."
     for old, new in LEAN3_NAMES.items():
         if f"`{old}`" in msg or f".{old}`" in msg:
             return f"`{old}` is Lean 3. In Lean 4 use {new}."
     m = re.search(r"[Uu]nknown (?:identifier|constant) `(\w+)\.([\w?!]+)`", msg)
     if m and m.group(1)[:1].upper() + m.group(1)[1:] in core_names():
         return _did_you_mean(m.group(1), m.group(2))
+    m = re.search(r"[Uu]nknown (?:identifier|constant) `([\w?!']+)`", msg)
+    if m:
+        near = closest(m.group(1), local_names(code) + framework_helpers())
+        if near:
+            return (f"`{m.group(1)}` is not defined. Closest defined names: "
+                    f"{', '.join(f'`{n}`' for n in near)}. Otherwise define it before it is used.")
     m = re.search(r"`(\w+)` is not a field of structure `(\w+)`", msg)
     if m:
         name, struct = m.group(1), m.group(2)
@@ -276,8 +282,8 @@ def hint_for(msg: str, code: str) -> Optional[str]:
 def _did_you_mean(owner: str, name: str) -> str:
     found = suggest_names(owner, name)
     if found:
-        return (f"`{owner}.{name}` does not exist in Lean core. Did you mean: "
-                f"{', '.join(f'`{f}`' for f in found)}?")
+        return (f"`{owner}.{name}` does not exist in Lean core. Closest real names: "
+                f"{', '.join(f'`{f}`' for f in found)}.")
     return f"`{owner}.{name}` does not exist in Lean core. Use only functions listed in the rules."
 
 

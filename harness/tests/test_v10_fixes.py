@@ -271,5 +271,25 @@ class UiDrops(unittest.TestCase):
         self.assertEqual(len(doc["requirements"]), 3, doc["dropped"])
 
 
+class NameLookup(unittest.TestCase):
+    CODE = ("structure Input where\n  query : String\n  deriving DecidableEq, Repr\n"
+            "structure Output where\n  ok : Bool\n  deriving DecidableEq, Repr\n"
+            "def Spec : Contract Input Output where\n  pre := fun i => i.bound > 0\n  post := fun i o => o.ok = true\n")
+
+    def test_closest_by_edit_distance(self):
+        from agents.repair import closest
+        self.assertEqual(closest("isAlphabetic", ["isAlpha", "isDigit", "isUpper"])[0], "isAlpha")
+        self.assertEqual(closest("zzzzzz", ["isAlpha"]), [])
+
+    def test_no_hand_written_table(self):
+        import agents.repair as repair
+        self.assertFalse(hasattr(repair, "MISSING_API"))
+
+    def test_unknown_identifier_suggests_helper(self):
+        from agents.repair import hint_for
+        self.assertIn("`allDigits`", hint_for("Unknown identifier `allDigit`", self.CODE))
+
+
+
 if __name__ == "__main__":
     unittest.main()
