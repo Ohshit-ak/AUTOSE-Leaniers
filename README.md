@@ -40,6 +40,7 @@ AUTOSE-Leaniers/
 │   ├── ContractForge/
 │   │   ├── Contract.lean   # Contract type, PO1/PO2/PO3 definitions, seq composition
 │   │   ├── Soundness.lean  # seq_sound, refines_sound, system_sound
+│   │   ├── Strings.lean    # decidable string-format helpers for specs (allDigits, isMMYY, …)
 │   │   └── Tactics.lean    # discharge_po tactic
 │   └── Test.lean           # smoke test
 │
@@ -62,7 +63,10 @@ AUTOSE-Leaniers/
 ├── scripts/
 │   ├── start_qwen_server.sh  # local Qwen 2.5 7B via llama.cpp (port 8082)
 │   ├── usage_guard.sh        # stops a run above 75% GPU memory / job RAM
-│   └── compare_runs.py       # before/after report of two runs of one SRS → comparison.md
+│   └── compare_runs.py       # before/after report of two single runs (v9 and earlier)
+│
+├── evaluation/
+│   └── compare_runs.py       # compare two runs over repetitions (rep1..N): mean (min–max), verdict only beyond the spread
 │
 ├── Requirements/           # input SRS documents (.xml, .pdf)
 │   └── parsed/             # parser output, one JSON per document
@@ -72,7 +76,7 @@ AUTOSE-Leaniers/
 ```
 
 Planned, not yet created: `harness/reverify.py`, `requirements.txt`, and the
-contents of `benchmark/` and `evaluation/` (see [MEMORY.md](MEMORY.md)).
+contents of `benchmark/` and the rest of `evaluation/` (see [MEMORY.md](MEMORY.md)).
 
 ### Where to look for…
 
@@ -293,7 +297,16 @@ python scripts/compare_runs.py "runs/0000 - gamma j/qwen-v8" "runs/0000 - gamma 
 # → runs/0000 - gamma j/qwen-v9/comparison.md  (optional 3rd argument: output path)
 ```
 
-Latest reports: [gamma j v8 → v9](runs/0000%20-%20gamma%20j/qwen-v9/comparison.md), [video search v8 → v9](runs/2009%20-%20video%20search/qwen-v9/comparison.md). Results per run are in [MEMORY.md](MEMORY.md).
+Since v10, run each SRS several times and compare with `evaluation/compare_runs.py`
+(a single run moves by ±5 L0.5 passes on its own):
+
+```bash
+cd harness && python main.py "../Requirements/0000 - gamma j.xml" --model qwen --repeat 3
+# → runs/0000 - gamma j/qwen-v10.1/rep1..3/  (seeds CF_SEED, +1, +2; metadata in specs.json "meta")
+cd .. && python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-v8x3" "runs/0000 - gamma j/qwen-v10.1" -o report.md
+```
+
+Latest reports: [gamma j v8 ×3 → v10.1 ×3](runs/0000%20-%20gamma%20j/qwen-v10.1/comparison.md), [v10 → v10.1](runs/0000%20-%20gamma%20j/qwen-v10.1/comparison-vs-v10.md), [video search v8 → v10.1](runs/2009%20-%20video%20search/qwen-v10.1/comparison.md) (single runs). L0 is frozen at v10.1. Results per run are in [MEMORY.md](MEMORY.md).
 
 `specs.json` is rewritten after every entry, so a crash or Ctrl-C loses nothing;
 rerun with `--resume` to continue.
@@ -313,7 +326,9 @@ the negative check, and harness regressions (`test_harness_fixes.py`: Lean extra
 locked-example repair, `sorry` detection, best-attempt selection, the always-false-equation
 and example-input checks, one-line witnesses for the vacuity check, the negative check's
 reply forms, numeric data tests, fixups and repair hints) and the v9 changes (`test_v9_fixes.py`:
-filter/sort/limit parsing, scope-section drops, `Nat ≥ 0`, per-mutant vacuity, the search template). Tests that run Lean are skipped
+filter/sort/limit parsing, scope-section drops, `Nat ≥ 0`, per-mutant vacuity, the search template) and the v10 changes
+(`test_v10_fixes.py`: seeds and run metadata, truncation, deriving fixup, rule-based negative cases, vacuity feedback,
+`has_precondition`, UI drops, `ContractForge.Strings`, name suggestions, field and function-misuse hints). Tests that run Lean are skipped
 if `lake` is missing.
 
 ### Run the agents step by step

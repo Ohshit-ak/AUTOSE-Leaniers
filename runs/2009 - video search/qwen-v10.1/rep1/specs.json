@@ -1,0 +1,891 @@
+{
+  "source": {
+    "file": "2009 - video search.xml",
+    "sha256": "d984c5a001a0bc6f7892eb3770ad352324ba036e5280e54ebc63cd3296a24b77"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v10.1",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "a4ace6f72b38",
+    "git_commit": "b01f013",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 21,
+    "compiles": 19,
+    "rejects_bad_example": 10,
+    "checked": 16,
+    "failed": 5,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "REQ-1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Torrent search will share the same search bar with the streaming search.",
+      "text_predicate": "Requirement REQ-1 (System Features > Torrent Search > Functional Requirements):\nTorrent search will share the same search bar with the streaming search.",
+      "lean_predicate": "structure Input where\n  query          : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  torrentResults : List String\n  streamingResults : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => \n    o.torrentResults.length ≤ 100 ∧\n    o.streamingResults.length ≤ 100 ∧\n    (o.torrentResults.length = 0 ↔ i.query = \"\") ∧\n    (o.streamingResults.length = 0 ↔ i.query = \"\") ∧\n    (o.torrentResults.length > 0 → i.query ≠ \"\") ∧\n    (o.streamingResults.length > 0 → i.query ≠ \"\")\n\nexample : Spec.pre { query := \"\" } ∧ Spec.post { query := \"\" } { torrentResults := [], streamingResults := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { query := \"best movie to watch tonight\" } ∧ ¬ Spec.post { query := \"best movie to watch tonight\" } { torrentResults := [], streamingResults := [\"movie1\", \"movie2\", \"movie3\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { query := \"best movie to watch tonight\" } ∧ ¬ Spec.post { query := \"best movie to watch tonight\" } { torrentResults := [], streamingResults := [\"movie1\", \"movie2\", \"movie3\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the torrent search and streaming search should share the same search bar, meaning that the torrent results should only be returned when the query is related to torrents, and not when the query is related to streaming content.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 31.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Database of torrent sites can be updated via the internet.",
+      "text_predicate": "Requirement REQ-2 (System Features > Torrent Search > Functional Requirements):\nDatabase of torrent sites can be updated via the internet.\nThis requirement prescribes HOW to build something (a method, algorithm or\ntechnology). Record that in a `-- IMPL:` comment above `def Spec`, and specify\nonly the observable result in `pre`/`post`.",
+      "lean_predicate": "structure Input where\n  sites : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sites : List String\n  deriving DecidableEq, Repr\n\n-- IMPL: The torrent sites database is updated via the internet.\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.sites.length > 0\n  post := fun i o => o.sites.length = i.sites.length ∧\n                     (∀ s ∈ i.sites, o.sites.contains s)\n\nexample : Spec.pre { sites := [\"site1\", \"site2\"] } ∧\n          Spec.post { sites := [\"site1\", \"site2\"] } { sites := [\"site1\", \"site2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { sites := [\"site1\", \"site2\", \"site3\"] } ∧ ¬ Spec.post { sites := [\"site1\", \"site2\", \"site3\"] } { sites := [\"site1\", \"site2\", \"site3\", \"site4\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { sites := [\"site1\", \"site2\", \"site3\"] } ∧ ¬ Spec.post { sites := [\"site1\", \"site2\", \"site3\"] } { sites := [\"site1\", \"site2\", \"site3\", \"site4\"] } := by\n  unfold Spec; decide",
+          "why": "The output should not change the length of the sites list.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "There will be a tick box to allow the user to choose to include torrent searching in the search.",
+      "text_predicate": "Requirement REQ-3 (System Features > Torrent Search > Functional Requirements):\nThere will be a tick box to allow the user to choose to include torrent searching in the search.",
+      "lean_predicate": "structure Input where\n  includeTorrent : Bool\n  query          : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (o.message = \"No results were found.\" ↔ o.results = []) ∧\n    (i.includeTorrent = true →\n      (∀ r ∈ o.results, r.contains i.query) ∧\n      o.results.length ≤ 100) ∧\n    (i.includeTorrent = false →\n      (∀ r ∈ o.results, ¬r.contains i.query) ∧\n      o.results.length ≤ 100)\n\nexample : Spec.pre { includeTorrent := false, query := \"cats\" } ∧ Spec.post { includeTorrent := false, query := \"cats\" } { results := [], message := \"No results were found.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { includeTorrent := false, query := \"example query\" } ∧ ¬ Spec.post { includeTorrent := false, query := \"example query\" } { results := [\"example query\"], message := \"Results found.\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { includeTorrent := false, query := \"example query\" } ∧ ¬ Spec.post { includeTorrent := false, query := \"example query\" } { results := [\"example query\"], message := \"Results found.\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that if includeTorrent is false, then no results in the output should contain the query. The output violates this by containing a result that matches the query.",
+          "outcome": "not usable: Tactic `decide` failed for proposition\n  ¬{ pre := fun i => i.query ≠ \"\",\n          post := fun i o =>\n            (o.message = \"No results were found.\" ↔ o.results = []) ∧\n              (i.includeTorrent = true →\n                  (∀ (r : String), r ∈ o.results → r.contains i.query = true) ∧ o.results.length ≤ 100) ∧\n                (i.includeTorrent = false →\n                  (∀ (r : String), r ∈ o.results → ¬r.contains i.query = true) ∧ o.results.length ≤ 100) }.post\n      { includeTorrent := false, query := \"example query\" }\n      { results := [\"example query\"], message := \"Results found.\" }\nbecause its `Decidable` instance\n  instDecidableNot\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `decEq`, `decidable_of_decidable_of_iff`, `forall_prop_decidable`, `instDecidableAnd`, `instDecidableEqBitVec`, `instDecidableEqBool`, `instDecidableEqFin`, `instDecidableEqList`, `instDecidableEqNat`, `instDecidableEqString`, `instDecidableEqUInt8`, `instDecidableIff`, `instDecidableNot`, `instDecidableOr`, `BitVec.decEq`, `Bool.decEq`, `Classical.propDecidable`, `List.decidableBAll`, `List.instDecidableEqNil`, `Nat.decEq`, `Nat.decLe`, `Nat.decLt`, `String.decEq`, and `UInt8.decEq`, reduction got stuck at the `Decidable` instance\n  match \"example query\".contains { includeTorrent := false, query := \"example query\" }.query, true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 15.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Query will retrieve the no. of seed and peers, size of the file, date posted and a link to the webpage itself.",
+      "text_predicate": "Requirement REQ-4 (System Features > Torrent Search > Functional Requirements):\nQuery will retrieve the no. of seed and peers, size of the file, date posted and a link to the webpage itself.",
+      "lean_predicate": "structure Torrent where\n  seed  : Nat\n  peer  : Nat\n  size  : Nat\n  date  : String\n  link  : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  query          : String\n  torrents       : List Torrent\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results       : List Torrent\n  message       : String\n  deriving DecidableEq, Repr\n\n-- an item may be returned: it matches the query and its fields are non-empty\ndef Wanted (i : Input) (t : Torrent) : Bool :=\n  i.query == \"\" ∨ t.seed ≠ 0 ∨ t.peer ≠ 0 ∨ t.size ≠ 0 ∨ t.date ≠ \"\" ∨ t.link ≠ \"\"\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (∀ t ∈ o.results, t ∈ i.torrents ∧ Wanted i t = true) ∧\n    (o.results.length < 100 → ∀ t ∈ i.torrents, Wanted i t = true → t ∈ o.results) ∧\n    o.results.length ≤ 100 ∧\n    List.Pairwise (fun a b => a.seed ≥ b.seed ∧ a.peer ≥ b.peer ∧ a.size ≥ b.size) o.results ∧\n    (o.message = \"No results were found.\" ↔ o.results = [])\n\nexample : Spec.pre { query := \"cats\", torrents := [{ seed := 10, peer := 20, size := 500, date := \"2023-01-01\", link := \"http://example.com\" },\n                                                    { seed := 0, peer := 0, size := 0, date := \"\", link := \"\" }] } ∧\n          Spec.post { query := \"cats\", torrents := [{ seed := 10, peer := 20, size := 500, date := \"2023-01-01\", link := \"http://example.com\" },\n                                                     { seed := 0, peer := 0, size := 0, date := \"\", link := \"\" }] }\n                    { results := [{ seed := 10, peer := 20, size := 500, date := \"2023-01-01\", link := \"http://example.com\" }],\n                      message := \"\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { query := \"test\", torrents := [{ seed := 1, peer := 2, size := 3, date := \"2023-01-01\", link := \"http://example.com\" }] } ∧ ¬ Spec.post { query := \"test\", torrents := [{ seed := 1, peer := 2, size := 3, date := \"2023-01-01\", link := \"http://example.com\" }] } { results := [{ seed := 1, peer := 2, size := 3, date := \"2023-01-01\", link := \"http://example.com\", extraField := \"invalid\" }], message := \"Results found.\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { query := \"test\", torrents := [{ seed := 1, peer := 2, size := 3, date := \"2023-01-01\", link := \"http://example.com\" }] } ∧ ¬ Spec.post { query := \"test\", torrents := [{ seed := 1, peer := 2, size := 3, date := \"2023-01-01\", link := \"http://example.com\" }] } { results := [{ seed := 1, peer := 2, size := 3, date := \"2023-01-01\", link := \"http://example.com\", extraField := \"invalid\" }], message := \"Results found.\" } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow the output to include fields that are not part of the Torrent structure.",
+          "outcome": "not usable: `extraField` is not a field of structure `Torrent`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 22.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If no results are found on a search it will display a message \"No results were found for this search.\"",
+      "text_predicate": "Requirement REQ-5 (System Features > Torrent Search > Functional Requirements):\nIf no results are found on a search it will display a message \"No results were found for this search.\"",
+      "lean_predicate": "structure Input where\n  query          : String\n  items          : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (o.message = \"No results were found for this search.\" ↔ o.results = []) ∧\n    (∀ it ∈ o.results, it ∈ i.items)\n\nexample : Spec.pre { query := \"cats\", items := [\"cats\", \"dogs\", \"birds\"] } ∧\n          Spec.post { query := \"cats\", items := [\"cats\", \"dogs\", \"birds\"] }\n                    { results := [], message := \"No results were found for this search.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { query := \"test\", items := [\"item1\", \"item2\"] } ∧ ¬ Spec.post { query := \"test\", items := [\"item1\", \"item2\"] } { results := [], message := \"Search completed successfully.\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { query := \"test\", items := [\"item1\", \"item2\"] } ∧ ¬ Spec.post { query := \"test\", items := [\"item1\", \"item2\"] } { results := [], message := \"Search completed successfully.\" } := by\n  unfold Spec; decide",
+          "why": "The output does not display the required message \"No results were found for this search.\" when results are empty",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Results will be arranged in size/date/alphabetical order by clicking on the column headers.",
+      "text_predicate": "Requirement REQ-6 (System Features > Torrent Search > Functional Requirements):\nResults will be arranged in size/date/alphabetical order by clicking on the column headers.",
+      "lean_predicate": "structure Torrent where\n  size   : Nat\n  date   : Nat\n  name   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  torrents : List Torrent\n  deriving DecidableEq, Repr\n\nstructure Output where\n  torrents : List Torrent\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => List.Pairwise (fun a b => a.size ≤ b.size) o.torrents ∧\n                     List.Pairwise (fun a b => a.date ≤ b.date) o.torrents ∧\n                     List.Pairwise (fun a b => a.name ≤ b.name) o.torrents ∧\n                     List.Perm i.torrents o.torrents\n\nexample : Spec.pre { torrents := [{ size := 100, date := 20230101, name := \"a\" },\n                                   { size := 200, date := 20230102, name := \"b\" }] } ∧\n          Spec.post { torrents := [{ size := 100, date := 20230101, name := \"a\" },\n                                   { size := 200, date := 20230102, name := \"b\" }] }\n                    { torrents := [{ size := 100, date := 20230101, name := \"a\" },\n                                   { size := 200, date := 20230102, name := \"b\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { torrents := [{ size := 10, date := 20, name := \"a\" }, { size := 5, date := 15, name := \"b\" }] } ∧ ¬ Spec.post { torrents := [{ size := 10, date := 20, name := \"a\" }, { size := 5, date := 15, name := \"b\" }] } { torrents := [{ size := 5, date := 15, name := \"b\" }, { size := 10, date := 20, name := \"a\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { torrents := [{ size := 10, date := 20, name := \"a\" }, { size := 5, date := 15, name := \"b\" }] } ∧ ¬ Spec.post { torrents := [{ size := 10, date := 20, name := \"a\" }, { size := 5, date := 15, name := \"b\" }] } { torrents := [{ size := 5, date := 15, name := \"b\" }, { size := 10, date := 20, name := \"a\" }] } := by\n  unfold Spec; decide",
+          "why": "The output does not respect the order by size, date, and name as required.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 18.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-1#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Streaming search will share the same search bar with the torrent search.",
+      "text_predicate": "Requirement REQ-1#2 (System Features > Video Stream Search > Functional Requirements):\nStreaming search will share the same search bar with the torrent search.",
+      "lean_predicate": "structure Input where\n  query : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  torrentResults : List String\n  streamResults  : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    o.torrentResults.length = 0 ∨\n    (∀ r ∈ o.torrentResults, r ∈ i.query.toList.map (fun c => c.toString)) ∧\n    o.streamResults.length = 0 ∨\n    (∀ r ∈ o.streamResults, r ∈ i.query.toList.map (fun c => c.toString))\n\nexample : Spec.pre { query := \"example\" } ∧\n          Spec.post { query := \"example\" }\n                    { torrentResults := [], streamResults := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 41.8,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` mentions `o.torrentResults` but still holds when `o.torrentResults` is `[\"#\"]` instead of `[]` for the example input. The requirement says: \"Streaming search will share the same search bar with the torrent search.\" Add a condition on `o.torrentResults` that this requirement fixes. `post` mentions `o.streamResults` but still holds when `o.streamResults` is `[\"#\"]` instead of `[]` for the example input. The requirement says: \"Streaming search will share the same search bar with the torrent search.\" Add a condition on `o.streamResults` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-2#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Database of video hosting and video linking sites can be updated via the internet.",
+      "text_predicate": "Requirement REQ-2#2 (System Features > Video Stream Search > Functional Requirements):\nDatabase of video hosting and video linking sites can be updated via the internet.\nThis requirement prescribes HOW to build something (a method, algorithm or\ntechnology). Record that in a `-- IMPL:` comment above `def Spec`, and specify\nonly the observable result in `pre`/`post`.",
+      "lean_predicate": "structure Input where\n  sites : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  updated : Bool\n  deriving DecidableEq, Repr\n\n-- IMPL: Database update via the internet\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => true\n  post := fun i o => o.updated = true\n\nexample : Spec.pre { sites := [\"site1\", \"site2\"] } ∧\n          Spec.post { sites := [\"site1\", \"site2\"] } { updated := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { sites := [\"example.com\"] } ∧ ¬ Spec.post { sites := [\"example.com\"] } { updated := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { sites := [\"example.com\"] } ∧ ¬ Spec.post { sites := [\"example.com\"] } { updated := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the database can be updated via the internet, but it does not specify what should happen if the update fails.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 6.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-3#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "There will be a tick box to allow the user to choose to include video host searching in the search.",
+      "text_predicate": "Requirement REQ-3#2 (System Features > Video Stream Search > Functional Requirements):\nThere will be a tick box to allow the user to choose to include video host searching in the search.",
+      "lean_predicate": "structure Input where\n  includeHost : Bool\n  query       : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => \n    (o.results.length = 0 ↔ i.includeHost = false) ∧\n    (o.results.length > 0 → i.includeHost = true)\n\nexample : Spec.pre { includeHost := false, query := \"cats\" } ∧\n          Spec.post { includeHost := false, query := \"cats\" } { results := [] } := by\n  unfold Spec; decide\n\nexample : Spec.pre { includeHost := true, query := \"dogs\" } ∧\n          Spec.post { includeHost := true, query := \"dogs\" } { results := [\"host1\", \"host2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { includeHost := false, query := \"test query\" } ∧ ¬ Spec.post { includeHost := false, query := \"test query\" } { results := [\"result 1\", \"result 2\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { includeHost := false, query := \"test query\" } ∧ ¬ Spec.post { includeHost := false, query := \"test query\" } { results := [\"result 1\", \"result 2\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids returning results when includeHost is false",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-4#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "There will be a tick box to allow the user to choose to include video link searching in the search.",
+      "text_predicate": "Requirement REQ-4#2 (System Features > Video Stream Search > Functional Requirements):\nThere will be a tick box to allow the user to choose to include video link searching in the search.",
+      "lean_predicate": "structure Input where\n  includeVideoLinks : Bool\n  query             : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => \n    (o.results.length = 0 ↔ i.includeVideoLinks = false) ∧\n    (o.results.length > 0 → i.includeVideoLinks = true)\n\nexample : Spec.pre { includeVideoLinks := true, query := \"cats\" } ∧\n          Spec.post { includeVideoLinks := true, query := \"cats\" }\n                    { results := [\"video1\", \"video2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { includeVideoLinks := false, query := \"test query\" } ∧ ¬ Spec.post { includeVideoLinks := false, query := \"test query\" } { results := [\"result 1\", \"result 2\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { includeVideoLinks := false, query := \"test query\" } ∧ ¬ Spec.post { includeVideoLinks := false, query := \"test query\" } { results := [\"result 1\", \"result 2\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids returning results when includeVideoLinks is false",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 13.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-5#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Query to video hosting sites will retrieve full video name, length, date posted and a link to the video itself.",
+      "text_predicate": "Requirement REQ-5#2 (System Features > Video Stream Search > Functional Requirements):\nQuery to video hosting sites will retrieve full video name, length, date posted and a link to the video itself.",
+      "lean_predicate": "structure Video where\n  name   : String\n  length : Nat\n  date   : String\n  link   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  query          : String\n  sites          : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List Video\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => \n    (∀ it ∈ o.results, it.name ≠ \"\" ∧ it.length ≠ 0 ∧ it.date ≠ \"\" ∧ it.link ≠ \"\") ∧\n    (∀ it ∈ o.results, it.name = i.query) ∧\n    (o.results.length ≤ 100) ∧\n    List.Perm (i.sites.map (fun s => { name := \"\", length := 0, date := \"\", link := s })) o.results\n\nexample : Spec.pre { query := \"cats\", sites := [] } ∧ Spec.post { query := \"cats\", sites := [] } { results := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { query := \"example query\", sites := [\"site1\", \"site2\"] } ∧ ¬ Spec.post { query := \"example query\", sites := [\"site1\", \"site2\"] } { results := [{ name := \"Video Title\", length := 0, date := \"2023-01-01\", link := \"http://example.com/video1\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { query := \"example query\", sites := [\"site1\", \"site2\"] } ∧ ¬ Spec.post { query := \"example query\", sites := [\"site1\", \"site2\"] } { results := [{ name := \"Video Title\", length := 0, date := \"2023-01-01\", link := \"http://example.com/video1\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the query should retrieve full video name, length, date posted, and a link to the video itself. An output that does not include the video length breaks this requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 15.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "REQ-6#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Query to video link sites will retrieve the show's name, episode name and a link to the webpage itself.",
+      "text_predicate": "Requirement REQ-6#2 (System Features > Video Stream Search > Functional Requirements):\nQuery to video link sites will retrieve the show's name, episode name and a link to the webpage itself.",
+      "lean_predicate": "structure VideoInfo where\n  showName   : String\n  episodeName: String\n  link       : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  query          : String\n  sites          : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results        : List VideoInfo\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\" ∧ i.sites.Nodup\n  post := fun i o => \n    (∀ it ∈ o.results, it.showName ≠ \"\" ∧ it.episodeName ≠ \"\" ∧ it.link ≠ \"\")\n    ∧\n    (∀ it ∈ o.results, it.showName = it.link.splitOn('/').getLast)\n    ∧\n    (∀ it ∈ o.results, it.episodeName = it.link.splitOn('/').getBeforeLast)\n    ∧\n    (∀ it ∈ o.results, it.link ∈ i.sites)\n\nexample : Spec.pre { query := \"Stranger Things\", sites := [\"site1.com\", \"site2.com\"] } ∧\n          Spec.post { query := \"Stranger Things\", sites := [\"site1.com\", \"site2.com\"] }\n                    { results := [{ showName := \"Stranger Things\", episodeName := \"Episode 1\", link := \"site1.com/link1\" },\n                                  { showName := \"Stranger Things\", episodeName := \"Episode 2\", link := \"site2.com/link2\" }] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 47.6,
+      "error": "<generated>:24:52: error: unexpected token '('; expected ')', ',' or ':'\n<generated>:30:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-7#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If no results are found on a search it will display a message \"No results were found for this search.\"",
+      "text_predicate": "Requirement REQ-7#2 (System Features > Video Stream Search > Functional Requirements):\nIf no results are found on a search it will display a message \"No results were found for this search.\"",
+      "lean_predicate": "structure Input where\n  query : String\n  videos : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (o.message = \"No results were found for this search.\" ↔ o.results = []) ∧\n    (∀ v ∈ o.results, v ∈ i.videos ∧ v.contains i.query) ∧\n    o.results.length ≤ 100\n\nexample : Spec.pre { query := \"cats\", videos := [\"cats and dogs\", \"kittens\", \"wild cats\"] } ∧\n          Spec.post { query := \"cats\", videos := [\"cats and dogs\", \"kittens\", \"wild cats\"] }\n                    { results := [], message := \"No results were found for this search.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { query := \"test\", videos := [\"video1\", \"video2\"] } ∧ ¬ Spec.post { query := \"test\", videos := [\"video1\", \"video2\"] } { results := [], message := \"Search completed.\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { query := \"test\", videos := [\"video1\", \"video2\"] } ∧ ¬ Spec.post { query := \"test\", videos := [\"video1\", \"video2\"] } { results := [], message := \"Search completed.\" } := by\n  unfold Spec; decide",
+          "why": "The output does not display the required message \"No results were found for this search.\"",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Results will be arranged in length/date/alphabetical order by clicking on the column headers.",
+      "text_predicate": "Requirement REQ-8 (System Features > Video Stream Search > Functional Requirements):\nResults will be arranged in length/date/alphabetical order by clicking on the column headers.",
+      "lean_predicate": "structure Video where\n  title   : String\n  duration: Nat\n  date    : String\n  order   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  videos  : List Video\n  order   : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List Video\n  deriving DecidableEq, Repr\n\n-- An item is in the results if its order matches the criteria\ndef InResults (i : Input) (v : Video) : Bool :=\n  v.order = i.order\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.order ∈ [\"length\", \"date\", \"title\"]\n  post := fun i o =>\n    List.Pairwise (fun a b => a.order ≤ b.order) o.results ∧\n    (∀ v ∈ o.results, v ∈ i.videos ∧ InResults i v = true)\n\nexample : Spec.pre { videos := [{ title := \"A\", duration := 5, date := \"2023-01-01\", order := \"title\" },\n                                 { title := \"B\", duration := 3, date := \"2023-02-01\", order := \"title\" }],\n                     order := \"title\" } ∧\n          Spec.post { videos := [{ title := \"A\", duration := 5, date := \"2023-01-01\", order := \"title\" },\n                                  { title := \"B\", duration := 3, date := \"2023-02-01\", order := \"title\" }],\n                      order := \"title\" }\n                    { results := [{ title := \"A\", duration := 5, date := \"2023-01-01\", order := \"title\" },\n                                  { title := \"B\", duration := 3, date := \"2023-02-01\", order := \"title\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 65.6,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` mentions `o.results` but still holds when `o.results` is `[]` instead of `[{ title := \"A\", duration := 5, date := \"2023-01-01\", order := \"title\" }, { title := \"B\", duration := 3, date := \"2023-02-01\", order := \"title\" }]` for the example input. The requirement says: \"Results will be arranged in length/date/alphabetical order by clicking on the column headers.\" Add a condition on `o.results` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-1#3",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "Query times will take no longer than 5 seconds to any website.",
+      "text_predicate": "Requirement REQ-1#3 (Other Nonfunctional Requirements > Performance Requirements):\nQuery times will take no longer than 5 seconds to any website.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` <= 5000000 (us, operation: Query times will take no longer than)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros ≤ 5000000\n\nexample : Spec.pre {} ∧ Spec.post {} { elapsedMicros := 4500000 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 5500000, … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 5500000, … } := by\n  unfold Spec; decide",
+          "why": "The output exceeds the 5 seconds (5000000 micros) bound",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-2#3",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "Sending the hyperlink to the default browser will take less than 1 second.",
+      "text_predicate": "Requirement REQ-2#3 (Other Nonfunctional Requirements > Performance Requirements):\nSending the hyperlink to the default browser will take less than 1 second.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 1000000 (us, operation: Sending the hyperlink to the default browser will take less than)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros < 1000000\n\nexample : Spec.pre {} ∧ Spec.post {} { elapsedMicros := 950000 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 1200000, … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 1200000, … } := by\n  unfold Spec; decide",
+          "why": "The output violates the requirement that the operation should take less than 1 second (1000000 microseconds).",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-3#3",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "Loading the program will take less than 10 seconds.",
+      "text_predicate": "Requirement REQ-3#3 (Other Nonfunctional Requirements > Performance Requirements):\nLoading the program will take less than 10 seconds.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 10000000 (us, operation: Loading the program will take less than)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros < 10000000\n\nexample : Spec.pre {} ∧ Spec.post {} { elapsedMicros := 9000000 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 10500000, … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 10500000, … } := by\n  unfold Spec; decide",
+          "why": "The output exceeds the 10 seconds (10000000 micros) bound",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-4#3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Any torrent result with 0 seeds will not be displayed.",
+      "text_predicate": "Requirement REQ-4#3 (Other Nonfunctional Requirements > Performance Requirements):\nAny torrent result with 0 seeds will not be displayed.",
+      "lean_predicate": "structure Torrent where\n  name   : String\n  seeds  : Nat\n  rating : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  torrents : List Torrent\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List Torrent\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => \n    (∀ it ∈ o.results, it ∈ i.torrents ∧ it.seeds ≠ 0) ∧\n    (o.results = [] ↔ i.torrents.all (fun t => t.seeds = 0))\n\nexample : Spec.pre { torrents := [{ name := \"T1\", seeds := 5, rating := 8 }, { name := \"T2\", seeds := 0, rating := 7 }] } ∧ Spec.post { torrents := [{ name := \"T1\", seeds := 5, rating := 8 }, { name := \"T2\", seeds := 0, rating := 7 }] } { results := [{ name := \"T1\", seeds := 5, rating := 8 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { torrents := [{ name := \"Test Torrent\", seeds := 0, rating := 5 }] } ∧ ¬ Spec.post { torrents := [{ name := \"Test Torrent\", seeds := 0, rating := 5 }] } { results := [{ name := \"Test Torrent\", seeds := 0, rating := 5 }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { torrents := [{ name := \"Test Torrent\", seeds := 0, rating := 5 }] } ∧ ¬ Spec.post { torrents := [{ name := \"Test Torrent\", seeds := 0, rating := 5 }] } { results := [{ name := \"Test Torrent\", seeds := 0, rating := 5 }] } := by\n  unfold Spec; decide",
+          "why": "The output displays a torrent with 0 seeds, which the requirement forbids.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 23.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-5#3",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "Sorting results should take less than 0.1 seconds.",
+      "text_predicate": "Requirement REQ-5#3 (Other Nonfunctional Requirements > Performance Requirements):\nSorting results should take less than 0.1 seconds.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 100000 (us, operation: Sorting results should take less than)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros < 100000\n\nexample : Spec.pre {} ∧ Spec.post {} { elapsedMicros := 99999 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 150000, … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 150000, … } := by\n  unfold Spec; decide",
+          "why": "The output violates the requirement that sorting results should take less than 0.1 seconds.",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-6#3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "A results page will display 100 results.",
+      "text_predicate": "Requirement REQ-6#3 (Other Nonfunctional Requirements > Performance Requirements):\nA results page will display 100 results.\nBound: results = 100.",
+      "lean_predicate": "structure Input where\n  results : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.results.length = 100\n  post := fun i o => o.results.length = 100\n\nexample : Spec.pre { results := [\"r1\", \"r2\", \"r3\", \"r4\", \"r5\", \"r6\", \"r7\", \"r8\", \"r9\", \"r10\", \"r11\", \"r12\", \"r13\", \"r14\", \"r15\", \"r16\", \"r17\", \"r18\", \"r19\", \"r20\", \"r21\", \"r22\", \"r23\", \"r24\", \"r25\", \"r26\", \"r27\", \"r28\", \"r29\", \"r30\", \"r31\", \"r32\", \"r33\", \"r34\", \"r35\", \"r36\", \"r37\", \"r38\", \"r39\", \"r40\", \"r41\", \"r42\", \"r43\", \"r44\", \"r45\", \"r46\", \"r47\", \"r48\", \"r49\", \"r50\", \"r51\", \"r52\", \"r53\", \"r54\", \"r55\", \"r56\", \"r57\", \"r58\", \"r59\", \"r60\", \"r61\", \"r62\", \"r63\", \"r64\", \"r65\", \"r66\", \"r67\", \"r68\", \"r69\", \"r70\", \"r71\", \"r72\", \"r73\", \"r74\", \"r75\", \"r76\", \"r77\", \"r78\", \"r79\", \"r80\", \"r81\", \"r82\", \"r83\", \"r84\", \"r85\", \"r86\", \"r87\", \"r88\", \"r89\", \"r90\", \"r91\", \"r92\", \"r93\", \"r94\", \"r95\", \"r96\", \"r97\", \"r98\", \"r99\", \"r100\"] } ∧\n          Spec.post { results := [\"r1\", \"r2\", \"r3\", \"r4\", \"r5\", \"r6\", \"r7\", \"r8\", \"r9\", \"r10\", \"r11\", \"r12\", \"r13\", \"r14\", \"r15\", \"r16\", \"r17\", \"r18\", \"r19\", \"r20\", \"r21\", \"r22\", \"r23\", \"r24\", \"r25\", \"r26\", \"r27\", \"r28\", \"r29\", \"r30\", \"r31\", \"r32\", \"r33\", \"r34\", \"r35\", \"r36\", \"r37\", \"r38\", \"r39\", \"r40\", \"r41\", \"r42\", \"r43\", \"r44\", \"r45\", \"r46\", \"r47\", \"r48\", \"r49\", \"r50\", \"r51\", \"r52\", \"r53\", \"r54\", \"r55\", \"r56\", \"r57\", \"r58\", \"r59\", \"r60\", \"r61\", \"r62\", \"r63\", \"r64\", \"r65\", \"r66\", \"r67\", \"r68\", \"r69\", \"r70\", \"r71\", \"r72\", \"r73\", \"r74\", \"r75\", \"r76\", \"r77\", \"r78\", \"r79\", \"r80\", \"r81\", \"r82\", \"r83\", \"r84\", \"r85\", \"r86\", \"r87\", \"r88\", \"r89\", \"r90\", \"r91\", \"r92\", \"r93\", \"r94\", \"r95\", \"r96\", \"r97\", \"r98\", \"r99\", \"r100\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 133.8,
+      "error": "<generated>:14:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:17:10: error: Application type mismatch: The argument\n  Spec.post\n    {\n      results :=\n        let y :=\n          let y :=\n            let y :=\n              let y := [\"r94\", \"r95\", \"r96\", \"r97\", \"r98\", \"r99\", \"r100\"];\n              \"r88\" :: \"r89\" :: \"r90\" :: \"r91\" :: \"r92\" :: \"r93\" :: y;\n            let y := \"r82\" :: \"r83\" :: \"r84\" :: \"r85\" :: \"r86\" :: \"r87\" :: y;\n            \"r76\" :: \"r77\" :: \"r78\" :: \"r79\" :: \"r80\" :: \"r81\" :: y;\n          let y :=\n            let y := \"r69\" :: \"r70\" :: \"r71\" :: \"r72\" :: \"r73\" :: \"r74\" :: \"r75\" :: y;\n            \"r63\" :: \"r64\" :: \"r65\" :: \"r66\" :: \"r67\" :: \"r68\" :: y;\n          let y := \"r57\" :: \"r58\" :: \"r59\" :: \"r60\" :: \"r61\" :: \"r62\" :: y;\n          \"r51\" :: \"r52\" :: \"r53\" :: \"r54\" :: \"r55\" :: \"r56\" :: y;\n        let y :=\n          let y :=\n            let y := \"r44\" :: \"r45\" :: \"r46\" :: \"r47\" :: \"r48\" :: \"r49\" :: \"r50\" :: y;\n            \"r38\" :: \"r39\" :: \"r40\" :: \"r41\" :: \"r42\" :: \"r43\" :: y;\n          let y := \"r32\" :: \"r33\" :: \"r34\" :: \"r35\" :: \"r36\" :: \"r37\" :: y;\n          \"r26\" :: \"r27\" :: \"r28\" :: \"r29\" :: \"r30\" :: \"r31\" :: y;\n        let y :=\n          let y := \"r19\" :: \"r20\" :: \"r21\" :: \"r22\" :: \"r23\" :: \"r24\" :: \"r25\" :: y;\n          \"r13\" :: \"r14\" :: \"r15\" :: \"r16\" :: \"r17\" :: \"r18\" :: y;\n        let y := \"r7\" :: \"r8\" :: \"r9\" :: \"r10\" :: \"r11\" :: \"r12\" :: y;\n        \"r1\" :: \"r2\" :: \"r3\" :: \"r4\" :: \"r5\" :: \"r6\" :: y }\nhas type\n  Output → Prop\nbut is expected to have type\n  Prop\nin the application\n  Spec.pre\n      {\n        results :=\n          let y :=\n            let y :=\n              let y :=\n                let y := [\"r94\", \"r95\", \"r96\", \"r97\", \"r98\", \"r99\", \"r100\"];\n                \"r88\" :: \"r89\" :: \"r90\" :: \"r91\" :: \"r92\" :: \"r93\" :: y;\n              let y := \"r82\" :: \"r83\" :: \"r84\" :: \"r85\" :: \"r86\" :: \"r87\" :: y;\n              \"r76\" :: \"r77\" :: \"r78\" :: \"r79\" :: \"r80\" :: \"r81\" :: y;\n            let y :=\n              let y := \"r69\" :: \"r70\" :: \"r71\" :: \"r72\" :: \"r73\" :: \"r74\" :: \"r75\" :: y;\n              \"r63\" :: \"r64\" :: \"r65\" :: \"r66\" :: \"r67\" :: \"r68\" :: y;\n            let y := \"r57\" :: \"r58\" :: \"r59\" :: \"r60\" :: \"r61\" :: \"r62\" :: y;\n            \"r51\" :: \"r52\" :: \"r53\" :: \"r54\" :: \"r55\" :: \"r56\" :: y;\n          let y :=\n            let y :=\n              let y := \"r44\" :: \"r45\" :: \"r46\" :: \"r47\" :: \"r48\" :: \"r49\" :: \"r50\" :: y;\n              \"r38\" :: \"r39\" :: \"r40\" :: \"r41\" :: \"r42\" :: \"r43\" :: y;\n            let y := \"r32\" :: \"r33\" :: \"r34\" :: \"r35\" :: \"r36\" :: \"r37\" :: y;\n            \"r26\" :: \"r27\" :: \"r28\" :: \"r29\" :: \"r30\" :: \"r31\" :: y;\n          let y :=\n            let y := \"r19\" :: \"r20\" :: \"r21\" :: \"r22\" :: \"r23\" :: \"r24\" :: \"r25\" :: y;\n            \"r13\" :: \"r14\" :: \"r15\" :: \"r16\" :: \"r17\" :: \"r18\" :: y;\n          let y := \"r7\" :: \"r8\" :: \"r9\" :: \"r10\" :: \"r11\" :: \"r12\" :: y;\n          \"r1\" :: \"r2\" :: \"r3\" :: \"r4\" :: \"r5\" :: \"r6\" :: y } ∧\n    Spec.post\n      {\n        results :=\n          let y :=\n            let y :=\n              let y :=\n                let y := [\"r94\", \"r95\", \"r96\", \"r97\", \"r98\", \"r99\", \"r100\"];\n                \"r88\" :: \"r89\" :: \"r90\" :: \"r91\" :: \"r92\" :: \"r93\" :: y;\n              let y := \"r82\" :: \"r83\" :: \"r84\" :: \"r85\" :: \"r86\" :: \"r87\" :: y;\n              \"r76\" :: \"r77\" :: \"r78\" :: \"r79\" :: \"r80\" :: \"r81\" :: y;\n            let y :=\n              let y := \"r69\" :: \"r70\" :: \"r71\" :: \"r72\" :: \"r73\" :: \"r74\" :: \"r75\" :: y;\n              \"r63\" :: \"r64\" :: \"r65\" :: \"r66\" :: \"r67\" :: \"r68\" :: y;\n            let y := \"r57\" :: \"r58\" :: \"r59\" :: \"r60\" :: \"r61\" :: \"r62\" :: y;\n            \"r51\" :: \"r52\" :: \"r53\" :: \"r54\" :: \"r55\" :: \"r56\" :: y;\n          let y :=\n            let y :=\n              let y := \"r44\" :: \"r45\" :: \"r46\" :: \"r47\" :: \"r48\" :: \"r49\" :: \"r50\" :: y;\n              \"r38\" :: \"r39\" :: \"r40\" :: \"r41\" :: \"r42\" :: \"r43\" :: y;\n            let y := \"r32\" :: \"r33\" :: \"r34\" :: \"r35\" :: \"r36\" :: \"r37\" :: y;\n            \"r26\" :: \"r27\" :: \"r28\" :: \"r29\" :: \"r30\" :: \"r31\" :: y;\n          let y :=\n            let y := \"r19\" :: \"r20\" :: \"r21\" :: \"r22\" :: \"r23\" :: \"r24\" :: \"r25\" :: y;\n            \"r13\" :: \"r14\" :: \"r15\" :: \"r16\" :: \"r17\" :: \"r18\" :: y;\n          let y := \"r7\" :: \"r8\" :: \"r9\" :: \"r10\" :: \"r11\" :: \"r12\" :: y;\n          \"r1\" :: \"r2\" :: \"r3\" :: \"r4\" :: \"r5\" :: \"r6\" :: y }\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "REQ-7#3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Any torrent result with a rating of less than 1 will not be displayed.",
+      "text_predicate": "Requirement REQ-7#3 (Other Nonfunctional Requirements > Performance Requirements):\nAny torrent result with a rating of less than 1 will not be displayed.",
+      "lean_predicate": "structure Torrent where\n  name   : String\n  rating : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  results : List Torrent\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List Torrent\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => ∀ it ∈ o.results, 1 ≤ it.rating\n\nexample : Spec.pre { results := [{ name := \"Torrent1\", rating := 2 },\n                                  { name := \"Torrent2\", rating := 0 }] } ∧\n          Spec.post { results := [{ name := \"Torrent1\", rating := 2 },\n                                   { name := \"Torrent2\", rating := 0 }] }\n                    { results := [{ name := \"Torrent1\", rating := 2 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 33.4,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` mentions `o.results` but still holds when `o.results` is `[]` instead of `[{ name := \"Torrent1\", rating := 2 }]` for the example input. The requirement says: \"Any torrent result with a rating of less than 1 will not be displayed.\" Add a condition on `o.results` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 15,
+    "flag": 1,
+    "fail": 5
+  }
+}
