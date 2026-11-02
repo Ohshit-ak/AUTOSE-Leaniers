@@ -101,6 +101,24 @@ def contains_itself(code: str, name: str) -> bool:
     return False
 
 
+def _uses(code: str, name: str) -> str:
+    """'lines 12, 15' — where `<x>.name` appears in `code`."""
+    lines = [str(k) for k, ln in enumerate(code.splitlines(), 1)
+             if re.search(rf"\.{re.escape(name)}\b|\b{re.escape(name)}\s*:=", ln)]
+    return f"line{'s' * (len(lines) > 1)} {', '.join(lines[:4])}" if lines else "the code"
+
+
+def undeclared_field_hint(fields: dict, struct: str, name: str, code: str) -> str:
+    """A field used but not declared: name it, say where it is used, list the closest
+    declared fields, and ask for a declaration. The harness never inserts it itself."""
+    have = fields.get(struct, [])
+    near = closest(name, have)
+    alt = f" If you meant an existing field: {', '.join(f'`{f}`' for f in near)}." if near else ""
+    return (f"`{name}` is used on {_uses(code, name)} but `structure {struct}` does not declare it "
+            f"(its fields: {', '.join(have) or 'none'}). Add `{name} : <type>` to `structure {struct}` "
+            f"with the type it needs, and give it a value in every `{struct}` record.{alt}")
+
+
 def _field_of_other(fields: dict, struct: str, name: str) -> Optional[str]:
     """Hint when `name` is a field of the *other* record (`i.done` where `done` is in `Output`)."""
     other = {"Input": ("Output", "o"), "Output": ("Input", "i")}.get(struct)
@@ -177,9 +195,7 @@ def hint_for(msg: str, code: str) -> Optional[str]:
             coll = collection_field_hint(code, owner, name)
             if coll:
                 return coll
-            return (f"`{owner}` has no field `{name}`; its fields are: "
-                    f"{', '.join(fields[owner]) or '(none)'}. Add `{name}` to `structure {owner}` "
-                    "or use an existing field.")
+            return undeclared_field_hint(fields, owner, name, code)
         return _did_you_mean(owner, name)
     for old, new in LEAN3_NAMES.items():
         if f"`{old}`" in msg or f".{old}`" in msg:
@@ -199,9 +215,7 @@ def hint_for(msg: str, code: str) -> Optional[str]:
         other = _field_of_other(fields, struct, name)
         if other:
             return other
-        listed = "; ".join(f"`{k}` has {', '.join(v) or '(none)'}" for k, v in fields.items())
-        return (f"`{struct}` has no field `{name}`. {listed}. A value written for `{struct}` may only "
-                f"use `{struct}`'s fields; add `{name}` to `structure {struct}` if the spec needs it.")
+        return undeclared_field_hint(fields, struct, name, code)
     m = re.search(r"Constructor `(\w+)\.mk` has (\d+) explicit field", msg)
     if m:
         name = m.group(1)

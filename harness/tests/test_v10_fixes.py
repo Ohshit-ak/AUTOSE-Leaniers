@@ -289,6 +289,11 @@ class NameLookup(unittest.TestCase):
         from agents.repair import hint_for
         self.assertIn("`allDigits`", hint_for("Unknown identifier `allDigit`", self.CODE))
 
+    def test_undeclared_field_hint_only(self):
+        from agents.repair import hint_for
+        h = hint_for("`bound` is not a field of structure `Input`", self.CODE)
+        self.assertIn("`bound` is used on line 8", h)
+        self.assertIn("Add `bound : <type>` to `structure Input`", h)
 
 
 if __name__ == "__main__":
