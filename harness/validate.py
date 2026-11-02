@@ -347,7 +347,27 @@ def check_housekeeping(code: str) -> List[str]:
         problems.append("`axiom` is not allowed")
     if not re.search(r"^example\b", code, re.MULTILINE):
         problems.append("there must be an `example` proving `Spec.pre i ∧ Spec.post i o`")
+    for f in trivial_nat_bounds(code):
+        problems.append(f"`{f} ≥ 0` is always true for a `Nat` and says nothing; "
+                        "state a real condition on it or drop it")
     return problems
+
+
+_NAT_GE0 = re.compile(r"\b([io])\.(\w+)\s*(?:≥|>=)\s*0\b(?!\.)|\b0\s*(?:≤|<=)\s*([io])\.(\w+)\b")
+
+
+def trivial_nat_bounds(code: str) -> List[str]:
+    """`i.x ≥ 0` / `0 ≤ o.x` on a `Nat` field: always true."""
+    types = field_types(code)
+    out = []
+    for m in _NAT_GE0.finditer(code):
+        side, name = (m.group(1), m.group(2)) if m.group(1) else (m.group(3), m.group(4))
+        struct = "Input" if side == "i" else "Output"
+        if (types.get(struct) or {}).get(name, "").strip() == "Nat":
+            f = f"{side}.{name}"
+            if f not in out:
+                out.append(f)
+    return out
 
 
 def _mutants(value: str, typ: str) -> List[str]:
@@ -383,12 +403,14 @@ def check_vacuity(code: str) -> Tuple[List[str], List[str]]:
     mutants = []
     for f, v in fields.items():
         for m in _mutants(v, out_types.get(f, "")):
-            mutants.append(_literal({**fields, f: m}))
+            if m.strip() != v.strip():
+                mutants.append(_literal({**fields, f: m}))
     if not mutants:
         return [], ["could not test whether `post` rejects anything (no field types to vary)"]
-    claim = " ∧ ".join(f"Spec.post {inp} {m}" for m in mutants)
-    ok = _check_examples(code, [f"example : ¬ ({claim}) := by\n  unfold Spec; decide"])[0]
-    if ok:
+    # One `example` per mutant: a single `¬ (post m1 ∧ post m2 ∧ …)` can exceed what
+    # instance synthesis will build a `Decidable` for, which looked like vacuity.
+    checks = [f"example : ¬ Spec.post {inp} {m} := by\n  unfold Spec; decide" for m in mutants]
+    if any(_check_examples(code, checks)):
         return [], []
     return ["`post` accepted every changed output we tried (each field of the example output "
             "changed in turn), so it does not constrain the output"], []
@@ -558,11 +580,17 @@ def hard_checks(entry: dict):
     return validate
 
 
-def review(code: str, compiled: Optional[bool], entry: dict) -> dict:
-    """Full L0.5 verdict for one spec: {status: pass|flag|fail, problems, flags}."""
+def review(code: str, compiled: Optional[bool], entry: dict,
+           rejects_bad_example: Optional[bool] = None, bad_example: Optional[str] = None) -> dict:
+    """Full L0.5 verdict for one spec: {status: pass|flag|fail, problems, flags}.
+    `rejects_bad_example` is the L0 negative check: False means `post` accepted an
+    output the requirement forbids, so the spec is wrong, not just weak."""
     if not compiled:
         return {"status": "fail", "problems": ["does not compile"], "flags": []}
     problems = check_housekeeping(code)
+    if rejects_bad_example is False:
+        problems.append("`post` accepts an output the requirement forbids"
+                        + (f": {one_line(bad_example)}" if bad_example else ""))
     p, flags = check_parser_facts(code, entry)
     problems += p
     if not problems:
@@ -579,7 +607,8 @@ def review_run(specs: dict, entries: dict) -> dict:
     counts = {"pass": 0, "flag": 0, "fail": 0}
     for r in specs["results"]:
         compiled = r.get("compiles", r["checked"])  # runs before `compiles` existed only have `checked`
-        r["l05"] = review(r["lean_predicate"], compiled, entries.get(r["id"], {}))
+        r["l05"] = review(r["lean_predicate"], compiled, entries.get(r["id"], {}),
+                          r.get("rejects_bad_example"), r.get("bad_example"))
         counts[r["l05"]["status"]] += 1
     specs["l05_summary"] = counts
     return counts

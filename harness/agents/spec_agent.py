@@ -64,6 +64,27 @@ Do not write `import` or `open` lines. `Contract` ALREADY EXISTS; never redefine
   requirement really has none. `post` must describe the required result; do not
   just copy input fields into the output.
 - Choose example values that obviously satisfy `pre` and `post`, so `decide` succeeds.
+- Never write `x ≥ 0` or `0 ≤ x` for a `Nat`: it is always true and says nothing.
+  Likewise a `post` that only says fields are non-empty does not capture a requirement
+  about WHICH values are returned.
+
+## Searching, listing, filtering, sorting, showing results
+When a requirement is about what a search or query returns or what is shown:
+- The data being searched (records, sites, videos, products) is a field of `Input`:
+  `items : List Item` with a helper `structure Item`. `Output` has `results : List Item`.
+- Every result comes from the input and satisfies the conditions:
+  `∀ it ∈ o.results, it ∈ i.items ∧ <conditions>`; and nothing that qualifies is
+  missing: `∀ it ∈ i.items, <conditions> → it ∈ o.results`.
+- "retrieves / shows A, B and C" → `Item` has fields A, B, C, and results are input items.
+- "option / tick box to include X" → a `Bool` field of `Input`; when it is `false`,
+  no result is of kind X.
+- "X will not be displayed / is filtered out" → no result satisfies X.
+- "sorted / arranged by F" → `List.Pairwise (fun a b => a.F ≤ b.F) o.results`.
+- "at most N per page" → `o.results.length ≤ N`.
+- "if nothing is found, show message M" → `(o.message = M ↔ o.results = [])`.
+- Two features that "share one search box" → one `query` field in `Input` that every
+  result list is checked against.
+Put the conditions in a `Bool` helper `def` (there `&&`, `||`, `==`, `!=` are fine).
 
 ## Choosing types (use this table)
 | data in the requirement                         | Lean type                          |
@@ -210,6 +231,49 @@ example : Spec.pre { accounts := [{ username := "sam", password := "pw1" }],
           Spec.post { accounts := [{ username := "sam", password := "pw1" }],
                       username := "sam", password := "pw1" }
                     { signedIn := true } := by
+  unfold Spec; decide
+```
+
+## Template: search results with options, a filter, a limit, an order and a message (compiles as is)
+```lean
+structure Item where
+  name   : String
+  source : String
+  rating : Nat
+  deriving DecidableEq, Repr
+
+structure Input where
+  query          : String
+  items          : List Item
+  includeArchive : Bool
+  deriving DecidableEq, Repr
+
+structure Output where
+  results : List Item
+  message : String
+  deriving DecidableEq, Repr
+
+-- an item may be returned: it matches the query, its source is switched on,
+-- and it is not filtered out (rating 0 is never shown)
+def Wanted (i : Input) (it : Item) : Bool :=
+  it.name == i.query && (i.includeArchive || it.source != "archive") && 0 < it.rating
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.query ≠ ""
+  post := fun i o =>
+    (∀ it ∈ o.results, it ∈ i.items ∧ Wanted i it = true) ∧
+    (o.results.length < 100 → ∀ it ∈ i.items, Wanted i it = true → it ∈ o.results) ∧
+    o.results.length ≤ 100 ∧
+    List.Pairwise (fun a b => a.rating ≥ b.rating) o.results ∧
+    (o.message = "No results were found." ↔ o.results = [])
+
+example : Spec.pre { query := "cats", includeArchive := false,
+                     items := [{ name := "cats", source := "web", rating := 3 },
+                               { name := "cats", source := "archive", rating := 5 }] } ∧
+          Spec.post { query := "cats", includeArchive := false,
+                      items := [{ name := "cats", source := "web", rating := 3 },
+                                { name := "cats", source := "archive", rating := 5 }] }
+                    { results := [{ name := "cats", source := "web", rating := 3 }], message := "" } := by
   unfold Spec; decide
 ```
 

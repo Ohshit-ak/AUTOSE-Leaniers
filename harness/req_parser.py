@@ -52,6 +52,11 @@ EXCLUDED_SECTIONS = (
     "glossary",
 )
 
+# Sections that summarise the product (scope, overview). Their sentences repeat
+# the requirements in general terms, so only the ones with a quantity or a data
+# relation ("the initial inventory will be 100 items") are kept.
+OVERVIEW_SECTIONS = re.compile(r"\b(scope|overview)\b", re.I)
+
 MODAL = re.compile(r"\b(shall|must|will|should|can|(?:is|are) required to)\b", re.I)
 
 # Platform and technology choices: true or false of a deployment, not of the
@@ -87,7 +92,11 @@ STATE_OP = re.compile(
     r"restor(?:e|es|ed)|retriev(?:e|es|ed)|search(?:es|ed)?|confirm(?:s|ed)?|"
     r"confirmation|register(?:s|ed)?|contain(?:s|ed)?|includ(?:e|es|ed)|"
     r"recogniz(?:e|es|ed)|reserv(?:e|es|ed)|approv(?:e|es|ed)|transfer(?:s|red)?|"
-    r"append(?:s|ed)?|unique(?:ly)?|total|number of|sum)\b",
+    r"append(?:s|ed)?|unique(?:ly)?|total|number of|sum|"
+    # filtering, ordering and limiting what is returned or shown
+    r"not be (?:displayed|shown|listed|included|returned)|filter(?:s|ed)?|"
+    r"exclud(?:e|es|ed)|sort(?:s|ed)?|arranged in|order(?:ed)? by|in (?:\w+/)*\w+ order|"
+    r"ascending|descending|alphabetical(?:ly)?)\b",
     re.I,
 )
 DATA_RELATION = re.compile(r"\b(total|number of|sum|unique(?:ly)?)\b", re.I)
@@ -112,7 +121,8 @@ _CMP = (r"(?:(less than|fewer than|under|within|at most|no more than|up to|"
         r"more than|greater than|at least|no less than)\s+)?")
 TIME_RE = re.compile(_CMP + _NUM + r"\s*(ms|milliseconds?|seconds?|secs?|minutes?|mins?|hours?)\b", re.I)
 RATE_RE = re.compile(_NUM + r"\s+([a-z]+)\s+per\s+(second|minute|hour)\b", re.I)
-COUNT_RE = re.compile(_CMP + _NUM + r"\s+(customers|users|products|items|records|requests|orders|sessions)\b", re.I)
+COUNT_RE = re.compile(_CMP + _NUM + r"\s+(customers|users|products|items|records|requests|orders|sessions|results|entries|"
+                      r"rows|pages|files|messages|documents|accounts|transactions|attempts)\b", re.I)
 PERCENT_RE = re.compile(_NUM + r"\s*%")
 
 CMP_SYMBOL = {
@@ -443,6 +453,9 @@ class _Parser:
             return drop(f"vague: {', '.join(vague)}")
         if not (timed or ops):
             return drop("no state change, data relation or quantity to formalise")
+        overview = next((t for _, t in path if OVERVIEW_SECTIONS.search(t)), None)
+        if overview and not (timed or DATA_RELATION.search(text)):
+            return drop(f"overview section ({overview}): no quantity or data relation")
 
         checks = runtime_checks(text, qs)
         item = {
