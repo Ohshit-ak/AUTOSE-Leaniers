@@ -194,5 +194,40 @@ class RuleNegatives(unittest.TestCase):
             neg.call_llm = orig
 
 
+class VacuityFeedback(unittest.TestCase):
+    CODE = """structure Input where
+  q : Nat
+  deriving DecidableEq, Repr
+
+structure Output where
+  results : List Nat
+  shown   : Bool
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun _ => True
+  post := fun i o => o.shown = true ∨ o.shown = false
+
+example : Spec.pre { q := 1 } ∧ Spec.post { q := 1 } { results := [1], shown := true } := by
+  unfold Spec; decide
+"""
+    ENTRY = {"kind": "requirement", "text": "Results with 0 seeds will not be displayed. Each result is shown once."}
+
+    def test_names_fields_and_quotes_requirement(self):
+        import validate
+        msg = validate.vacuity_feedback(self.CODE, ["results", "shown"],
+                                        {"results": ("[1]", "[]"), "shown": ("true", "false")}, self.ENTRY)
+        self.assertIn("`post` never mentions `o.results`", msg)
+        self.assertIn('"Results with 0 seeds will not be displayed."', msg)
+        self.assertIn("`o.shown` is `false` instead of `true`", msg)
+        self.assertIn("Add a condition on `o.results`", msg)
+
+    @unittest.skipUnless(HAS_LEAN, "needs lake")
+    def test_hard_check_uses_detail(self):
+        import validate
+        problems = validate.hard_checks(self.ENTRY)(self.CODE)
+        self.assertTrue(any("never mentions `o.results`" in p for p in problems), problems)
+
+
 if __name__ == "__main__":
     unittest.main()

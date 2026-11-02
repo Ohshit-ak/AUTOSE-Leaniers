@@ -392,19 +392,72 @@ def _mutants(value: str, typ: str) -> List[str]:
     return []
 
 
-def check_vacuity(code: str) -> Tuple[List[str], List[str]]:
-    """(hard problems, flags): `post` must reject some single-field change of the example output."""
+def _words(name: str) -> set:
+    """Lower-case words of an identifier or sentence: `failedAttempts` → {failed, attempts}."""
+    spaced = re.sub(r"([a-z0-9])([A-Z])", r"\1 \2", name)
+    return {w.rstrip("s") for w in re.findall(r"[a-z0-9]+", spaced.lower()) if len(w) > 2}
+
+
+def requirement_sentences(entry: dict) -> List[str]:
+    """The sentences of a parser entry that state what must hold."""
+    if entry.get("kind") == "use_case":
+        parts = list(entry.get("postconditions") or []) + [entry.get("goal") or ""]
+    else:
+        parts = [entry.get("text") or entry.get("description") or ""]
+    out = []
+    for p in parts:
+        out += [x.strip() for x in re.split(r"(?<=[.!?])\s+", p) if x.strip()]
+    return out
+
+
+def _sentence_for(field: str, sentences: List[str]) -> str:
+    """The sentence sharing the most words with the field name, else the first one."""
+    if not sentences:
+        return ""
+    fw = _words(field)
+    return max(sentences, key=lambda t: len(fw & _words(t)))  # ties keep the first
+
+
+def _post_body(code: str) -> str:
+    cb = _clause_body(code, "post")
+    return cb[1] if cb else split_example(code)[0]
+
+
+def vacuity_feedback(code: str, fields: List[str], changed: dict, entry: Optional[dict]) -> str:
+    """Say which output fields `post` leaves free, and quote the requirement for each."""
+    post = _post_body(code)
+    sentences = requirement_sentences(entry or {})
+    lines = []
+    for f in fields:
+        if not re.search(rf"\bo\.{re.escape(f)}\b", post):
+            what = f"`post` never mentions `o.{f}`."
+        else:
+            old, new = changed[f]
+            what = (f"`post` mentions `o.{f}` but still holds when `o.{f}` is `{new}` instead of `{old}` "
+                    "for the example input.")
+        quote = _sentence_for(f, sentences)
+        said = f' The requirement says: "{quote}"' if quote else ""
+        lines.append(f"{what}{said} Add a condition on `o.{f}` that this requirement fixes.")
+    return " ".join(lines)
+
+
+def check_vacuity(code: str, entry: Optional[dict] = None,
+                  detail: bool = False) -> Tuple[List[str], List[str]]:
+    """(hard problems, flags): `post` must reject some single-field change of the example output.
+    With `detail`, the problem names each unconstrained output field and quotes the requirement
+    (repair feedback); otherwise it is one short line (report)."""
     w = example_witness(code)
     out_types = field_types(code).get("Output")
     if not w or not out_types:
         return [], ["could not test whether `post` rejects anything (example not in `Spec.post {…} {…}` form)"]
     inp, out = w
     fields = literal_fields(out)
-    mutants = []
+    mutants, changed = [], {}
     for f, v in fields.items():
         for m in _mutants(v, out_types.get(f, "")):
             if m.strip() != v.strip():
                 mutants.append(_literal({**fields, f: m}))
+                changed.setdefault(f, (v, m))
     if not mutants:
         return [], ["could not test whether `post` rejects anything (no field types to vary)"]
     # One `example` per mutant: a single `¬ (post m1 ∧ post m2 ∧ …)` can exceed what
@@ -412,8 +465,11 @@ def check_vacuity(code: str) -> Tuple[List[str], List[str]]:
     checks = [f"example : ¬ Spec.post {inp} {m} := by\n  unfold Spec; decide" for m in mutants]
     if any(_check_examples(code, checks)):
         return [], []
-    return ["`post` accepted every changed output we tried (each field of the example output "
-            "changed in turn), so it does not constrain the output"], []
+    msg = ("`post` accepted every changed output we tried (each field of the example output "
+           "changed in turn), so it does not constrain the output")
+    if detail:
+        msg += ". " + vacuity_feedback(code, list(changed), changed, entry)
+    return [msg], []
 
 
 def check_parser_facts(code: str, entry: dict) -> Tuple[List[str], List[str]]:
@@ -575,7 +631,7 @@ def hard_checks(entry: dict):
         if problems:
             return problems
         problems += check_parser_facts(code, entry)[0]
-        problems += check_vacuity(code)[0]
+        problems += check_vacuity(code, entry, detail=True)[0]
         return problems
     return validate
 
