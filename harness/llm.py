@@ -3,7 +3,20 @@ import os
 import re
 import time
 
-from config import API_KEY_VARS, API_RETRIES, BASE_URLS, MODELS, TEMPERATURE
+from config import API_KEY_VARS, API_RETRIES, BASE_URLS, MODELS, SEED, SEEDED_PROVIDERS, TEMPERATURE
+
+_seed = SEED
+
+
+def set_seed(seed: int) -> None:
+    """Seed for every following request (providers in SEEDED_PROVIDERS only)."""
+    global _seed
+    _seed = seed
+
+
+def current_seed(model: str):
+    """The seed requests to `model` use, or None if the provider takes no seed."""
+    return _seed if model in SEEDED_PROVIDERS else None
 
 
 def _api_key(provider: str) -> str:
@@ -63,8 +76,9 @@ def _call_llm_once(prompt: str, system: str, model: str, history: list, temperat
             messages.append({"role": "system", "content": system})
         messages += history
         messages.append({"role": "user", "content": prompt})
+        extra = {"seed": _seed} if model in SEEDED_PROVIDERS else {}
         resp = client.chat.completions.create(
-            model=MODELS[model], messages=messages, temperature=temperature
+            model=MODELS[model], messages=messages, temperature=temperature, **extra
         )
         return resp.choices[0].message.content
 

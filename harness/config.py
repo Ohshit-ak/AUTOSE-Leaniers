@@ -12,9 +12,16 @@ FRAMEWORK_PATH = ROOT / "framework"
 MAX_RETRIES = int(os.getenv("CF_MAX_RETRIES", "5"))
 LEAN_TIMEOUT = int(os.getenv("CF_LEAN_TIMEOUT", "60"))
 API_RETRIES = int(os.getenv("CF_API_RETRIES", "6"))  # 5xx / 429 / network errors, with backoff
-TEMPERATURE = 0.2
+TEMPERATURE = float(os.getenv("CF_TEMPERATURE", "0.2"))
 # Used when the repair loop restarts from scratch after the same error twice.
 RESTART_TEMPERATURE = float(os.getenv("CF_RESTART_TEMPERATURE", "0.7"))
+# Sampling seed sent with every request where the provider supports it (local Qwen).
+# `main.py --repeat N` uses SEED, SEED+1, …, one per repetition, so repetitions differ
+# but each one can be reproduced. The llama.cpp server's own `--seed 42` is only its default.
+SEED = int(os.getenv("CF_SEED", "42"))
+SEEDED_PROVIDERS = {"qwen"}
+# Harness version, recorded in every specs.json and used in the default run name.
+HARNESS_VERSION = os.getenv("CF_HARNESS_VERSION", "v9")
 # L0 negative check: after a spec compiles, the model names an output the requirement
 # forbids, and Lean must prove that `post` rejects it (agents/negative.py).
 NEGATIVE_CHECK = os.getenv("CF_NEGATIVE_CHECK", "1") == "1"

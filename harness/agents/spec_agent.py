@@ -297,6 +297,17 @@ IMPL_WORDS = re.compile(r"\bvia\b|\balgorithms?\b|\bby means of\b|\b(?:shall|wil
                         r"\bimplemented (?:in|with|using)\b|\bwritten in\b", re.IGNORECASE)
 
 
+def prompt_hash() -> str:
+    """sha256 (first 12 hex digits) of every fixed prompt L0 sends: the spec system prompt,
+    the repair rules and the negative-check prompts. Recorded per run, so two runs with
+    the same hash used the same prompts."""
+    import hashlib
+    from agents.base import REPAIR_RULES
+    from agents.negative import NEG_PROMPT, NEG_SYSTEM
+    text = "\n\0".join([SYSTEM_PROMPT_SPEC, REPAIR_RULES, NEG_SYSTEM, NEG_PROMPT])
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
+
+
 def run_spec(requirement: str, model: str, validate=None) -> dict:
     """Generate a checked spec. With CF_NEGATIVE_CHECK on, a spec that passes `validate`
     must also reject an output the requirement forbids (agents/negative.py)."""

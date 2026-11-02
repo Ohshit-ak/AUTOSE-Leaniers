@@ -16,6 +16,7 @@ Run from harness/:
     python main.py --kinds data_constraint          # requirement | data_constraint | use_case
     python main.py --resume                         # skip entries that already passed
     python main.py --skip-lean                      # collect specs without Lean (unchecked)
+    python main.py --repeat 3                       # 3 repetitions, seeds CF_SEED, +1, +2
 
 With --model qwen, the local llama.cpp server is started automatically if it is not
 already running (needs a GPU node: srun -p u22 --gres=gpu:1 --pty bash), and stopped
@@ -27,6 +28,8 @@ Outputs, per input document <stem>:
     runs/<stem>/<model>/lean/<id>.lean              each Lean spec as a file
     runs/<stem>/<model>/l05_report.md               L0.5 verdict per entry (pass / flag / fail)
     runs/<stem>/<model>/review.json                 decision per entry (accept / review / redo / exclude)
+With --repeat N the run folder is runs/<stem>/<model>-<version>/rep<k>/ (k = 1 … N), each
+repetition with its own seed. Compare runs with evaluation/compare_runs.py.
 specs.json is rewritten after every entry, so a crash or Ctrl-C loses nothing.
 """
 import argparse
@@ -41,7 +44,7 @@ import time
 import urllib.request
 from pathlib import Path
 
-from config import BASE_URLS, FRAMEWORK_PATH, ROOT
+from config import BASE_URLS, FRAMEWORK_PATH, HARNESS_VERSION, MODELS, ROOT, SEED
 from req_parser import parse_file, to_json
 
 STAGES = ["parse", "spec", "check"]
@@ -130,6 +133,31 @@ def stage_parse(path: Path) -> dict:
 # Stage: spec (L0)
 # ---------------------------------------------------------------------------
 
+def run_dir(stem: str, args) -> Path:
+    """Output folder of this run (and repetition)."""
+    name = args.run_name or (f"{args.model}-{HARNESS_VERSION}" if args.repeat else args.model)
+    d = RUNS_DIR / stem / name
+    return d / f"rep{args.rep}" if args.repeat else d
+
+
+def run_meta(args) -> dict:
+    """What produced a run: enough to tell whether two runs are comparable."""
+    from agents.spec_agent import prompt_hash
+    from config import RESTART_TEMPERATURE, TEMPERATURE
+    from llm import current_seed
+    try:
+        commit = subprocess.run(["git", "rev-parse", "--short", "HEAD"], cwd=ROOT, text=True,
+                                capture_output=True).stdout.strip() or None
+        dirty = bool(subprocess.run(["git", "status", "--porcelain", "harness", "framework"],
+                                    cwd=ROOT, text=True, capture_output=True).stdout.strip())
+    except OSError:
+        commit, dirty = None, None
+    return {"harness_version": HARNESS_VERSION, "model": args.model, "model_id": MODELS.get(args.model),
+            "temperature": TEMPERATURE, "restart_temperature": RESTART_TEMPERATURE,
+            "seed": current_seed(args.model), "repetition": args.rep if args.repeat else None,
+            "prompt_hash": prompt_hash(), "git_commit": commit, "git_dirty": dirty}
+
+
 def _write_json(path: Path, data) -> None:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -179,7 +207,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
     if args.limit:
         items = items[:args.limit]
 
-    out_dir = RUNS_DIR / stem / (args.run_name or args.model)
+    out_dir = run_dir(stem, args)
     lean_dir = out_dir / "lean"
     lean_dir.mkdir(parents=True, exist_ok=True)
     specs_path = out_dir / "specs.json"
@@ -200,7 +228,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
                    "failed": sum(r["checked"] is False for r in ordered),
                    "unchecked": sum(r["checked"] is None for r in ordered)}
         _write_json(specs_path, {"source": doc["source"], "model": args.model,
-                                 "lean_checked": not args.skip_lean,
+                                 "meta": run_meta(args), "lean_checked": not args.skip_lean,
                                  "summary": summary, "results": ordered})
         return summary
 
@@ -246,7 +274,7 @@ def stage_check(doc: dict, stem: str, args) -> dict:
     """Review every spec, write the report and review.json, then apply --on-l0-fail."""
     from validate import review_run, write_report
 
-    out_dir = RUNS_DIR / stem / (args.run_name or args.model)
+    out_dir = run_dir(stem, args)
     specs_path = out_dir / "specs.json"
     if not specs_path.exists():
         _fail(f"no specs to check: {specs_path.relative_to(ROOT)} (run the spec stage first)")
@@ -299,7 +327,12 @@ def main(argv=None) -> int:
     ap.add_argument("--skip-lean", action="store_true", help="do not type-check (specs marked unchecked)")
     ap.add_argument("--on-l0-fail", choices=["stop", "redo", "exclude"], default="stop",
                     help="entries failing L0.5: stop before L1 (default), redo them once, or exclude them")
+    ap.add_argument("--repeat", type=int, metavar="N",
+                    help="run N times with seeds CF_SEED, CF_SEED+1, …; outputs in "
+                         "runs/<doc>/<model>-<version>/rep<k>/")
     args = ap.parse_args(argv)
+    if args.repeat is not None and args.repeat < 1:
+        _fail("--repeat must be at least 1")
 
     paths = [Path(p).resolve() for p in args.inputs] or sorted(REQ_DIR.glob("*.xml"))
     if not paths:
@@ -308,12 +341,18 @@ def main(argv=None) -> int:
     if run_spec_stage:
         preflight(args.model, args.skip_lean)
 
+    from llm import set_seed
     for path in paths:
         doc = stage_parse(path)
-        if run_spec_stage:
-            stage_spec(doc, path.stem, args)
-        if STAGES.index(args.until) >= STAGES.index("check") and not args.skip_lean:
-            stage_check(doc, path.stem, args)
+        for k in range(1, (args.repeat or 1) + 1):
+            args.rep = k
+            set_seed(SEED + k - 1)
+            if args.repeat:
+                print(f"[repeat] {path.stem}: repetition {k}/{args.repeat}, seed {SEED + k - 1}")
+            if run_spec_stage:
+                stage_spec(doc, path.stem, args)
+            if STAGES.index(args.until) >= STAGES.index("check") and not args.skip_lean:
+                stage_check(doc, path.stem, args)
     return 0
 
 
