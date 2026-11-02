@@ -6,7 +6,7 @@ from agents.fixups import apply_fixups
 from agents.repair import earliest_stage, error_signature, format_feedback, parse_errors
 from config import MAX_RETRIES, RESTART_TEMPERATURE, TEMPERATURE
 from lean_runner import HEADER, check_lean
-from llm import call_llm, extract_lean
+from llm import Truncated, call_llm, extract_lean
 
 REPAIR_RULES = """
 
@@ -81,14 +81,27 @@ def _too_long(e: Exception) -> bool:
     return "context" in text and ("exceed" in text or "too long" in text or "maximum" in text)
 
 
+# Stands in for the code of an attempt whose reply was cut off (llm.Truncated).
+TRUNCATED = "-- (reply cut off: truncated)"
+TRUNCATED_NOTE = ("Your previous answer was cut off before it ended because it was too long. "
+                  "Answer again with ONE short ```lean block and no explanation. Never repeat a "
+                  "pattern (e.g. `.1.2.3.4…`); write each condition once.")
+
+
 def _ask(prompt: str, system: str, model: str, history=None, temperature=TEMPERATURE) -> str:
     """call_llm, but a conversation that no longer fits the model's context is retried
-    without its history instead of failing the entry."""
+    without its history instead of failing the entry, and a reply that is cut off
+    (even after llm's retry with more tokens) comes back as TRUNCATED."""
     try:
         return call_llm(prompt, system=system, model=model, history=history, temperature=temperature)
+    except Truncated:
+        return TRUNCATED
     except Exception as e:
         if history and _too_long(e):
-            return call_llm(prompt, system=system, model=model, temperature=temperature)
+            try:
+                return call_llm(prompt, system=system, model=model, temperature=temperature)
+            except Truncated:
+                return TRUNCATED
         raise
 
 
@@ -114,7 +127,7 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
       5. if the same error comes back twice, the model starts over at a higher temperature.
     """
     system = system + REPAIR_RULES
-    code = extract_lean(call_llm(prompt, system=system, model=model))
+    code = extract_lean(_ask(prompt, system, model))
     original, history, last_sig = None, [], None
     locked_defs, locked_example, value_tries = None, "", 0
     searched: set = set()  # definitions the witness search already ran on
@@ -123,6 +136,17 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
     best = None  # (rank, attempt, code, error) of the furthest-reaching attempt
 
     for attempt in range(1, MAX_RETRIES + 1):
+        if code == TRUNCATED:  # never sent to Lean: start over with a request to be brief
+            log.append({"attempt": attempt, "stage": "truncated", "fixups": []})
+            result = {"success": False, "error": "truncated: the reply was cut off at the token limit"}
+            if best is None:
+                best = (RANK_NOT_CHECKED - 1, attempt, "", result["error"])
+            if attempt == MAX_RETRIES:
+                break
+            history, last_sig, locked_defs, value_tries = [], None, None, 0
+            code = extract_lean(_ask(f"{prompt}\n\n{TRUNCATED_NOTE}", system, model,
+                                     temperature=RESTART_TEMPERATURE))
+            continue
         code, fixes = apply_fixups(code)
         if locked_defs is not None:
             code = with_locked_defs(locked_defs, code, locked_example)

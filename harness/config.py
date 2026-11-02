@@ -15,6 +15,11 @@ API_RETRIES = int(os.getenv("CF_API_RETRIES", "6"))  # 5xx / 429 / network error
 TEMPERATURE = float(os.getenv("CF_TEMPERATURE", "0.2"))
 # Used when the repair loop restarts from scratch after the same error twice.
 RESTART_TEMPERATURE = float(os.getenv("CF_RESTART_TEMPERATURE", "0.7"))
+# Reply length. Specs are under ~1000 tokens; a reply that hits MAX_TOKENS is retried once
+# with MAX_TOKENS_RETRY, and if it is still cut off the attempt counts as `truncated`
+# (it is not sent to Lean). Without a limit a runaway reply runs until the context is full.
+MAX_TOKENS = int(os.getenv("CF_MAX_TOKENS", "2048"))
+MAX_TOKENS_RETRY = int(os.getenv("CF_MAX_TOKENS_RETRY", "4096"))
 # Sampling seed sent with every request where the provider supports it (local Qwen).
 # `main.py --repeat N` uses SEED, SEED+1, …, one per repetition, so repetitions differ
 # but each one can be reproduced. The llama.cpp server's own `--seed 42` is only its default.

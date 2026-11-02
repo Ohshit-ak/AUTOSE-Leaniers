@@ -82,5 +82,56 @@ class AlwaysDerive(unittest.TestCase):
         self.assertTrue(check_lean(code)["success"], code)
 
 
+class Extraction(unittest.TestCase):
+    def test_unclosed_fence_and_prose(self):
+        from llm import extract_lean
+        self.assertEqual(extract_lean("Here it is:\n```lean\nstructure A where\n  x : Nat\n"),
+                         "structure A where\n  x : Nat")
+        self.assertEqual(extract_lean("Some prose first.\n-- c\ndef Spec := 1\n```"), "-- c\ndef Spec := 1")
+
+    def test_last_block_with_spec(self):
+        from llm import extract_lean
+        reply = "```lean\ndef a := 1\n```\n```lean\ndef Spec := 2\n```\n```lean\ndef b := 3\n```"
+        self.assertEqual(extract_lean(reply), "def Spec := 2")
+
+    def test_truncation_detection(self):
+        from llm import is_truncated
+        self.assertTrue(is_truncated("```lean\nx", "length"))
+        self.assertFalse(is_truncated("```lean\nx", "stop"))
+        self.assertTrue(is_truncated("```lean\nx", None))
+        self.assertFalse(is_truncated("```lean\nx\n```", None))
+
+    def test_truncated_reply_retried_then_reported(self):
+        import llm
+        calls = []
+
+        def fake(prompt, system, model, history, temperature, max_tokens):
+            calls.append(max_tokens)
+            return "```lean\n.1.2.3", "length"
+        orig = llm._call_llm_once
+        llm._call_llm_once = fake
+        try:
+            with self.assertRaises(llm.Truncated):
+                llm.call_llm("p", model="qwen")
+        finally:
+            llm._call_llm_once = orig
+        self.assertEqual(calls, [llm.MAX_TOKENS, llm.MAX_TOKENS_RETRY])
+
+    def test_loop_does_not_send_truncated_reply_to_lean(self):
+        import agents.base as base
+        replies = iter([base.TRUNCATED, "def Spec := 1\nexample : True := trivial"])
+        checked = []
+        orig_ask, orig_check = base._ask, base.check_lean
+        base._ask = lambda *a, **k: next(replies)
+        base.check_lean = lambda code: checked.append(code) or {"success": True}
+        try:
+            r = base.generate_verified("req", "sys", "qwen")
+        finally:
+            base._ask, base.check_lean = orig_ask, orig_check
+        self.assertTrue(r["success"])
+        self.assertEqual(len(checked), 1)
+        self.assertEqual(r["log"][0]["stage"], "truncated")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -3,7 +3,8 @@ import os
 import re
 import time
 
-from config import API_KEY_VARS, API_RETRIES, BASE_URLS, MODELS, SEED, SEEDED_PROVIDERS, TEMPERATURE
+from config import (API_KEY_VARS, API_RETRIES, BASE_URLS, MAX_TOKENS, MAX_TOKENS_RETRY, MODELS, SEED,
+                    SEEDED_PROVIDERS, TEMPERATURE)
 
 _seed = SEED
 
@@ -33,6 +34,25 @@ class EmptyReply(Exception):
     """The API call succeeded but the reply has no text."""
 
 
+class Truncated(Exception):
+    """The reply was cut off (token limit, or a code fence that never closes), even after
+    one retry with MAX_TOKENS_RETRY. `text` is the cut-off reply."""
+
+    def __init__(self, text: str, max_tokens: int):
+        super().__init__(f"reply cut off at {max_tokens} tokens")
+        self.text, self.max_tokens = text, max_tokens
+
+
+def is_truncated(text: str, finish_reason) -> bool:
+    """Cut off by the token limit. When the provider reports no finish reason, a ``` fence
+    that is opened and never closed counts as cut off too. (A reply that ended normally
+    but forgot its closing fence is complete; `extract_lean` handles it.)"""
+    reason = str(finish_reason).lower() if finish_reason is not None else None
+    if reason is not None and ("length" in reason or "max_tokens" in reason):
+        return True
+    return reason is None and (text or "").count("```") % 2 == 1
+
+
 def _transient(e: Exception) -> bool:
     """Server overload, 5xx, rate limit or network blip: worth retrying."""
     code = getattr(e, "code", None) or getattr(e, "status_code", None)
@@ -49,12 +69,23 @@ def call_llm(prompt: str, system: str = "", model: str = "deepseek",
     `history` is a list of earlier {"role": "user"|"assistant", "content": ...} turns
     that go between the system prompt and `prompt`.
     """
+    text, finish = _call_with_retries(prompt, system, model, history, temperature, MAX_TOKENS)
+    if not is_truncated(text, finish):
+        return text
+    print(f"  reply cut off at {MAX_TOKENS} tokens; retrying once with {MAX_TOKENS_RETRY}")
+    text, finish = _call_with_retries(prompt, system, model, history, temperature, MAX_TOKENS_RETRY)
+    if is_truncated(text, finish):
+        raise Truncated(text, MAX_TOKENS_RETRY)
+    return text
+
+
+def _call_with_retries(prompt, system, model, history, temperature, max_tokens):
     for attempt in range(API_RETRIES + 1):
         try:
-            text = _call_llm_once(prompt, system, model, history or [], temperature)
+            text, finish = _call_llm_once(prompt, system, model, history or [], temperature, max_tokens)
             if not text:  # Gemma sometimes answers with no text at all
                 raise EmptyReply(f"{model} returned no text")
-            return text
+            return text, finish
         except Exception as e:
             if attempt == API_RETRIES or not _transient(e):
                 raise
@@ -63,7 +94,9 @@ def call_llm(prompt: str, system: str = "", model: str = "deepseek",
             time.sleep(wait)
 
 
-def _call_llm_once(prompt: str, system: str, model: str, history: list, temperature: float) -> str:
+def _call_llm_once(prompt: str, system: str, model: str, history: list, temperature: float,
+                   max_tokens: int):
+    """(reply text, finish reason)."""
     if model not in MODELS:
         raise ValueError(f"unknown model {model!r}; choose from {list(MODELS)}")
 
@@ -78,9 +111,10 @@ def _call_llm_once(prompt: str, system: str, model: str, history: list, temperat
         messages.append({"role": "user", "content": prompt})
         extra = {"seed": _seed} if model in SEEDED_PROVIDERS else {}
         resp = client.chat.completions.create(
-            model=MODELS[model], messages=messages, temperature=temperature, **extra
+            model=MODELS[model], messages=messages, temperature=temperature,
+            max_tokens=max_tokens, **extra
         )
-        return resp.choices[0].message.content
+        return resp.choices[0].message.content, resp.choices[0].finish_reason
 
     from google import genai
 
@@ -94,13 +128,18 @@ def _call_llm_once(prompt: str, system: str, model: str, history: list, temperat
     resp = client.models.generate_content(
         model=MODELS[model],
         contents=contents,
-        config={"temperature": temperature},
+        config={"temperature": temperature, "max_output_tokens": max_tokens},
     )
-    return resp.text
+    finish = resp.candidates[0].finish_reason if getattr(resp, "candidates", None) else None
+    return resp.text, finish
 
 
-_FENCE = re.compile(r"```(?:lean4?|Lean)?\s*\n(.*?)```", re.DOTALL)
+_FENCE = re.compile(r"```[ \t]*(?:lean4?|Lean)?[ \t]*\n(.*?)```", re.DOTALL)
+_OPEN_FENCE = re.compile(r"```[ \t]*(?:lean4?|Lean)?[ \t]*\n")
 _THINK = re.compile(r"<think>.*?</think>", re.DOTALL)
+# Lines a Lean file can start with; anything before the first one is prose.
+_LEAN_START = re.compile(r"^(?:(?:structure|def|example|theorem|abbrev|inductive|instance|namespace|"
+                         r"open|set_option|variable|section)\b|--|/-|@\[)", re.MULTILINE)
 
 
 def extract_lean(text: str) -> str:
@@ -108,11 +147,20 @@ def extract_lean(text: str) -> str:
 
     A reply with several blocks is usually a draft followed by a corrected version;
     joining them declares `Input`/`Output`/`Spec` twice. Keep the last block that
-    defines `Spec`, else the last block.
+    defines `Spec`, else the last block. Without closed fences, take what follows an
+    opening fence (or the reply from its first Lean line), drop prose before the code,
+    and remove lines that are only backticks.
     """
-    text = _THINK.sub("", text)
+    text = _THINK.sub("", text or "")
     blocks = [b.strip() for b in _FENCE.findall(text)]
-    if not blocks:
-        return text.strip()
-    with_spec = [b for b in blocks if re.search(r"^def\s+Spec\b", b, re.MULTILINE)]
-    return (with_spec or blocks)[-1]
+    if blocks:
+        with_spec = [b for b in blocks if re.search(r"^def\s+Spec\b", b, re.MULTILINE)]
+        code = (with_spec or blocks)[-1]
+    else:
+        opens = list(_OPEN_FENCE.finditer(text))
+        code = text[opens[-1].end():] if opens else text
+        m = _LEAN_START.search(code)
+        if m:
+            code = code[m.start():]
+    code = "\n".join(ln for ln in code.splitlines() if not re.fullmatch(r"\s*`{3,}\w*\s*", ln))
+    return code.strip()
