@@ -114,6 +114,51 @@ def _rename_keyword_fields(code: str, notes: List[str]) -> str:
     return code
 
 
+_STRUCT_BLOCK = re.compile(r"^structure\s+\w+[^\n]*\bwhere[ \t]*\n((?:[ \t]+\S.*\n?|[ \t]*\n(?=[ \t]+\S))*)"
+                           r"(deriving[^\n]*\n?)?", re.MULTILINE)
+_DERIVE = ("DecidableEq", "Repr")
+
+
+def _always_derive(code: str) -> str:
+    """Every `structure` derives `DecidableEq, Repr` (`decide` needs `DecidableEq` on every
+    record it compares). Missing classes are added to an existing `deriving` line;
+    a structure without one gets `  deriving DecidableEq, Repr`."""
+    def fix(m: re.Match) -> str:
+        block, tail = m.group(0), m.group(2) or ""
+        body = m.group(1)
+        name = re.match(r"structure\s+(\w+)", block).group(1)
+        types = " ".join(re.findall(r"^[ \t]+\w+\s*:\s*(.+)$", body, re.MULTILINE))
+        # Lean cannot derive these; leave the structure to the model and the repair hints.
+        if re.search(rf"→|->|\bFloat\b|\bProp\b|\bType\b|\b{re.escape(name)}\b", types):
+            return block
+        lines = body.splitlines(keepends=True)
+        idx = next((k for k, ln in enumerate(lines) if ln.strip().startswith("deriving")), None)
+        if idx is None and tail:  # `deriving` at column 0 after the fields
+            have = [c.strip() for c in tail.strip()[len("deriving"):].split(",") if c.strip()]
+            missing = [c for c in _DERIVE if c not in have]
+            if not missing:
+                return block
+            new_tail = "deriving " + ", ".join(have + missing) + ("\n" if tail.endswith("\n") else "")
+            return block[:len(block) - len(tail)] + new_tail
+        if idx is not None:
+            ln = lines[idx]
+            indent = ln[:len(ln) - len(ln.lstrip())]
+            have = [c.strip() for c in ln.strip()[len("deriving"):].split(",") if c.strip()]
+            missing = [c for c in _DERIVE if c not in have]
+            if not missing:
+                return block
+            lines[idx] = indent + "deriving " + ", ".join(have + missing) + ("\n" if ln.endswith("\n") else "")
+            return block.replace(body, "".join(lines), 1)
+        # no deriving at all: add one after the last field
+        content = body.rstrip("\n")
+        if not content.strip():
+            return block
+        indent = re.match(r"[ \t]*", content.splitlines()[-1]).group(0) or "  "
+        new_body = content + f"\n{indent}deriving DecidableEq, Repr\n"
+        return block[:m.start(1) - m.start(0)] + new_body + block[m.end(1) - m.start(0):]
+    return _STRUCT_BLOCK.sub(fix, code)
+
+
 def apply_fixups(code: str) -> Tuple[str, List[str]]:
     """Return (fixed code, notes describing each rewrite)."""
     notes: List[str] = []
@@ -154,4 +199,9 @@ def apply_fixups(code: str) -> Tuple[str, List[str]]:
     code = new
 
     code = _rename_keyword_fields(code, notes)
+
+    new = _always_derive(code)
+    if new != code:
+        notes.append("added `deriving DecidableEq, Repr` to every structure")
+    code = new
     return code, notes

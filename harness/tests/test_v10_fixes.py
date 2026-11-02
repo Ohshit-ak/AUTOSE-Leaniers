@@ -50,5 +50,37 @@ class RunFolders(unittest.TestCase):
         llm.set_seed(llm.SEED)
 
 
+class AlwaysDerive(unittest.TestCase):
+    def setUp(self):
+        from agents.fixups import apply_fixups
+        self.fix = lambda c: apply_fixups(c)[0]
+
+    def test_adds_missing_deriving(self):
+        out = self.fix("structure A where\n  x : Nat\n\ndef f := 1\n")
+        self.assertIn("  x : Nat\n  deriving DecidableEq, Repr\n", out)
+
+    def test_completes_existing_deriving(self):
+        out = self.fix("structure B where\n  z : Bool\n  deriving Repr\n")
+        self.assertIn("deriving Repr, DecidableEq", out)
+        out = self.fix("structure C where\n  w : Nat\nderiving DecidableEq\n")
+        self.assertIn("deriving DecidableEq, Repr", out)
+
+    def test_leaves_complete_and_underivable_alone(self):
+        ok = "structure D where\n  q : Nat\n  deriving DecidableEq, Repr\n"
+        self.assertEqual(self.fix(ok), ok)
+        fn = "structure E where\n  f : Nat → Bool\n"
+        self.assertEqual(self.fix(fn), fn)
+        rec = "structure T where\n  kids : List T\n"
+        self.assertEqual(self.fix(rec), rec)
+
+    @unittest.skipUnless(HAS_LEAN, "needs lake")
+    def test_result_compiles(self):
+        from lean_runner import check_lean
+        code = self.fix("structure Item where\n  n : Nat\n\nstructure Input where\n  items : List Item\n"
+                        "  deriving Repr\n\nexample : ({ items := [{ n := 1 }] } : Input) = { items := [{ n := 1 }] } "
+                        ":= by decide\n")
+        self.assertTrue(check_lean(code)["success"], code)
+
+
 if __name__ == "__main__":
     unittest.main()
