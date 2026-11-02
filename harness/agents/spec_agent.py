@@ -119,7 +119,7 @@ These DO NOT exist: `List.forall`, `List.exists`, `List.nth`, `List.nth?`, `List
 `String.substring`, `String.slice`. Do not use `String.all` / `String.any`; use
 `s.toList.all` / `s.toList.any`. Characters a … a+n-1 of `s`: `(s.toList.drop a).take n`.
 `.sum` and `.map` are on lists: `(xs.map (fun x => …)).sum`, never `xs.sum (fun x => …)`.
-Do not split strings (`String.split`, `splitOn`): check characters with `.toList`.
+Text formats: use the ready helpers on `s.toList` (they work with `decide`): `allDigits`, `allAlnum`, `lenBetween lo hi`, `splitOn '/'`, `twoDigitNat`, `isMMYY`, `isMMDDYYYY`; never `String.split`.
 No tuples (`a × b`, `(x, y)`, `.1`/`.2`): use a helper structure with named fields.
 On an `Option`, never use `.get` / `.get!`: use `x.getD d` or compare `x = some v`.
 Comments are `-- …`, never `// …`.
