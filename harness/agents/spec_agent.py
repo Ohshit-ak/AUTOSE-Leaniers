@@ -308,11 +308,12 @@ def prompt_hash() -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()[:12]
 
 
-def run_spec(requirement: str, model: str, validate=None) -> dict:
+def run_spec(requirement: str, model: str, validate=None, entry=None) -> dict:
     """Generate a checked spec. With CF_NEGATIVE_CHECK on, a spec that passes `validate`
-    must also reject an output the requirement forbids (agents/negative.py)."""
+    must also reject an output the requirement forbids (agents/negative.py); for a
+    data-constraint `entry` the forbidden examples come from the parser's rules."""
     from validate import find_witness  # imported here: validate imports agents.base
-    checker = NegativeCheck(requirement, model) if NEGATIVE_CHECK else None
+    checker = NegativeCheck(requirement, model, entry=entry) if NEGATIVE_CHECK else None
 
     def full_check(code: str) -> List[str]:
         problems = validate(code) if validate else []
@@ -324,7 +325,8 @@ def run_spec(requirement: str, model: str, validate=None) -> dict:
                           validate=full_check if (validate or checker) else None,
                           find_witness=find_witness)
     r.update(checker.outcome(r["code"]) if checker
-             else {"rejects_bad_example": None, "bad_example": None})
+             else {"rejects_bad_example": None, "bad_example": None,
+                   "negative_verdict": "unknown", "negative_examples": []})
     return r
 
 

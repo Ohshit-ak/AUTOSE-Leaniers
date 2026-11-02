@@ -9,6 +9,11 @@ reply cannot weaken the claim.
 `NegativeCheck` is a validator for `generate_verified`: a spec that accepts the
 forbidden output gets a repair problem. An unusable example (wrong fields, input
 outside `pre`, API error) never blocks the spec; it is recorded as unknown.
+
+Data constraints get no model call: the harness builds up to MAX_RULE_EXAMPLES
+invalid inputs from the parser's rules (too long, too short, a disallowed character,
+wrong format, above a limit), each with the forbidden output `valid := true`. The
+spec passes only if it rejects every one whose input satisfies `pre`.
 """
 import re
 from typing import List, Optional
@@ -44,6 +49,7 @@ out-of-stock item, OUT says the order WAS placed. Never give the correct output
 Judge OUT by the requirement, not by the spec: if the spec wrongly accepts it,
 that is what we want to find."""
 
+MAX_RULE_EXAMPLES = 3
 _WHY = re.compile(r"^\s*--\s*why:\s*(.+)$", re.MULTILINE)
 _DECIDED_FALSE = "proved that the proposition"
 
@@ -116,18 +122,86 @@ def forbidden_problem(v: dict) -> str:
             "decides it in `Input`. Do not weaken `pre` to exclude this input.")
 
 
+def rule_cases(code: str, entry: dict) -> List[tuple]:
+    """[(input literal, forbidden output literal, why)] built from a data constraint's
+    parser rules, or [] if the rules give none or the spec has another shape."""
+    from validate import _lean_str, data_cases, field_types
+    types = field_types(code)
+    inp, out = types.get("Input", {}), types.get("Output", {})
+    bools = [f for f, t in out.items() if t == "Bool"]
+    if len(out) != 1 or len(bools) != 1:
+        return []
+    b, c = bools[0], entry.get("constraints") or {}
+    if inp.get("value") == "Nat":  # numeric field: only "at most <limit>" is a rule
+        limits = [f for f, t in inp.items() if t == "Nat" and f != "value"]
+        if "max_ref" not in c or len(inp) != 2 or len(limits) != 1:
+            return []
+        return [(f"{{ value := 6, {limits[0]} := 5 }}", f"{{ {b} := true }}",
+                 f"value above the limit ({c['max_ref']})")]
+    strings = [f for f, t in inp.items() if t == "String"]
+    if len(inp) != 1 or len(strings) != 1:
+        return []
+    bad = [(v, why) for v, ok, why in data_cases(c) if not ok][:MAX_RULE_EXAMPLES]
+    return [(f"{{ {strings[0]} := {_lean_str(v)} }}", f"{{ {b} := true }}", why) for v, why in bad]
+
+
+def judge_rule_cases(code: str, cases: List[tuple]) -> dict:
+    """Lean verdict on rule-built cases: rejects (every applicable case rejected),
+    accepts_forbidden (some case accepted), or bad_example (none applicable)."""
+    from validate import example_errors
+    exs = []
+    for inp, out, _ in cases:
+        exs += [f"example : Spec.pre {inp} := by\n  unfold Spec; decide",
+                f"example : ¬ Spec.post {inp} {out} := by\n  unfold Spec; decide"]
+    errs = example_errors(split_example(code)[0], exs)
+    examples, accepted = [], None
+    for k, (inp, out, why) in enumerate(cases):
+        pre_errs, neg_errs = errs[2 * k], errs[2 * k + 1]
+        if pre_errs:
+            outcome = "pre fails" if any(_DECIDED_FALSE in e for e in pre_errs) else "not checkable"
+        elif not neg_errs:
+            outcome = "rejected"
+        elif all(_DECIDED_FALSE in e for e in neg_errs):
+            outcome = "accepted"
+        else:
+            outcome = "not checkable"
+        ex = f"example : Spec.pre {inp} ∧ ¬ Spec.post {inp} {out} := by\n  unfold Spec; decide"
+        examples.append({"example": ex, "why": why, "outcome": outcome})
+        if outcome == "accepted" and accepted is None:
+            accepted = {"example": ex, "why": why, "input": inp, "output": out}
+    if accepted:
+        return {"status": "accepts_forbidden", "error": "", "examples": examples, **accepted}
+    if any(e["outcome"] == "rejected" for e in examples):
+        first = next(e for e in examples if e["outcome"] == "rejected")
+        return {"status": "rejects", "example": first["example"], "why": first["why"], "error": "",
+                "examples": examples}
+    return {"status": "bad_example", "example": None, "error": "no rule-built case applies",
+            "examples": examples}
+
+
 class NegativeCheck:
     """Validator: [] if the spec rejects a forbidden example (or none could be found), else a problem.
 
-    `last` is {code, status, example, …} for the most recent spec judged.
+    `last` is {code, status, example, examples, …} for the most recent spec judged.
+    With a data-constraint `entry`, examples come from its rules (no model call).
     """
 
-    def __init__(self, requirement: str, model: str, attempts: int = NEG_EXAMPLE_ATTEMPTS):
+    def __init__(self, requirement: str, model: str, attempts: int = NEG_EXAMPLE_ATTEMPTS,
+                 entry: Optional[dict] = None):
         self.requirement, self.model, self.attempts = requirement, model, attempts
+        self.entry = entry
         self.last: Optional[dict] = None
         self._caught: Optional[str] = None  # a reply whose example a previous spec accepted
 
     def __call__(self, code: str) -> List[str]:
+        if self.entry and self.entry.get("kind") == "data_constraint":
+            cases = rule_cases(code, self.entry)
+            v = (judge_rule_cases(code, cases) if cases else
+                 {"status": "bad_example", "example": None, "examples": [],
+                  "error": "the parser has no rule to build an invalid value from, or the spec "
+                           "is not one input field and one Bool output"})
+            self.last = {"code": code, **v}
+            return [forbidden_problem(v)] if v["status"] == "accepts_forbidden" else []
         # A repaired spec must first reject the example that caught its predecessor.
         if self._caught:
             v = judge_bad_example(code, self._caught)
@@ -143,6 +217,9 @@ class NegativeCheck:
                 v = {"status": "bad_example", "example": None, "error": f"{type(e).__name__}: {e}"}
                 break
             v = judge_bad_example(code, reply)
+            v["examples"] = [{"example": v.get("example"), "why": v.get("why", ""),
+                              "outcome": {"rejects": "rejected", "accepts_forbidden": "accepted"}
+                              .get(v["status"], "not usable: " + v.get("error", ""))}]
             if v["status"] != "bad_example":
                 break
             ask = (NEG_PROMPT.format(requirement=self.requirement, spec=split_example(code)[0])
@@ -155,8 +232,14 @@ class NegativeCheck:
         return []
 
     def outcome(self, code: str) -> dict:
-        """{rejects_bad_example, bad_example} for `code`: True/False, or None if not judged."""
+        """{rejects_bad_example, bad_example, negative_verdict, negative_examples} for `code`.
+        rejects_bad_example is True/False, or None when unknown (not judged, or no usable example)."""
         if not self.last or self.last["code"] != code:
-            return {"rejects_bad_example": None, "bad_example": None}
-        verdict = {"rejects": True, "accepts_forbidden": False}.get(self.last["status"])
-        return {"rejects_bad_example": verdict, "bad_example": self.last.get("example")}
+            return {"rejects_bad_example": None, "bad_example": None,
+                    "negative_verdict": "unknown", "negative_examples": []}
+        status = self.last["status"]
+        return {"rejects_bad_example": {"rejects": True, "accepts_forbidden": False}.get(status),
+                "bad_example": self.last.get("example"),
+                "negative_verdict": {"rejects": "rejects", "accepts_forbidden": "accepts_forbidden"}
+                .get(status, "unknown"),
+                "negative_examples": self.last.get("examples") or []}

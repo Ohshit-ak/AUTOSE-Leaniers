@@ -133,5 +133,66 @@ class Extraction(unittest.TestCase):
         self.assertEqual(r["log"][0]["stage"], "truncated")
 
 
+DATA_SPEC = """structure Input where
+  raw : String
+  deriving DecidableEq, Repr
+
+structure Output where
+  valid : Bool
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun _ => True
+  post := fun i o => o.valid = true ↔ (1 ≤ i.raw.length ∧ i.raw.length ≤ LIMIT ∧ i.raw.toList.all Char.isAlpha = true)
+
+example : Spec.pre { raw := "ab" } ∧ Spec.post { raw := "ab" } { valid := true } := by
+  unfold Spec; decide
+"""
+DATA_ENTRY = {"id": "DD-x", "kind": "data_constraint", "constraints": {"max_length": 5, "charset": "alphabetic"}}
+
+
+class RuleNegatives(unittest.TestCase):
+    def test_cases_from_rules(self):
+        from agents.negative import rule_cases
+        cases = rule_cases(DATA_SPEC.replace("LIMIT", "5"), DATA_ENTRY)
+        self.assertEqual(len(cases), 2)  # too long, disallowed character (no min length)
+        self.assertTrue(all(out == "{ valid := true }" for _, out, _ in cases))
+        self.assertEqual(rule_cases(DATA_SPEC.replace("raw : String", "raw : String\n  n : Nat"), DATA_ENTRY), [])
+
+    @unittest.skipUnless(HAS_LEAN, "needs lake")
+    def test_verdicts_without_model(self):
+        from agents.negative import NegativeCheck
+        import agents.negative as neg
+        orig = neg.call_llm
+        neg.call_llm = lambda *a, **k: self.fail("data constraints must not call the model")
+        try:
+            good = DATA_SPEC.replace("LIMIT", "5")
+            nc = NegativeCheck("", "qwen", entry=DATA_ENTRY)
+            self.assertEqual(nc(good), [])
+            self.assertEqual(nc.outcome(good)["negative_verdict"], "rejects")
+            loose = DATA_SPEC.replace("LIMIT", "50")  # accepts 6 letters
+            nc = NegativeCheck("", "qwen", entry=DATA_ENTRY)
+            self.assertEqual(len(nc(loose)), 1)
+            o = nc.outcome(loose)
+            self.assertEqual((o["negative_verdict"], o["rejects_bad_example"]), ("accepts_forbidden", False))
+            self.assertEqual(len(o["negative_examples"]), 2)
+        finally:
+            neg.call_llm = orig
+
+    def test_unusable_model_example_is_unknown(self):
+        from agents.negative import NegativeCheck
+        import agents.negative as neg
+        orig = neg.call_llm
+        neg.call_llm = lambda *a, **k: "no records here"
+        try:
+            nc = NegativeCheck("req", "qwen", attempts=1)
+            code = DATA_SPEC.replace("LIMIT", "5")
+            self.assertEqual(nc(code), [])
+            self.assertEqual(nc.outcome(code)["negative_verdict"], "unknown")
+            self.assertIsNone(nc.outcome(code)["rejects_bad_example"])
+        finally:
+            neg.call_llm = orig
+
+
 if __name__ == "__main__":
     unittest.main()

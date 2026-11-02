@@ -173,7 +173,7 @@ def _generate_spec(p: dict, model: str, skip_lean: bool) -> dict:
     from validate import hard_checks
     prompt = p["prompt"]
     if not skip_lean:
-        r = run_spec(prompt, model, validate=hard_checks(p["entry"]))
+        r = run_spec(prompt, model, validate=hard_checks(p["entry"]), entry=p["entry"])
         # `success` also needs the L0.5 checks; record plain compilation separately.
         if r["success"]:
             r["compiles"] = True
@@ -251,6 +251,8 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
             "requirement_text": p["text"], "text_predicate": p["prompt"],
             "lean_predicate": r["code"], "compiles": r.get("compiles"),
             "rejects_bad_example": r.get("rejects_bad_example"), "bad_example": r.get("bad_example"),
+            "negative_verdict": r.get("negative_verdict", "unknown"),
+            "negative_examples": r.get("negative_examples", []),
             "checked": r["success"],
             "attempts": r.get("attempts"), "seconds": secs,
             **({"error": r["error"]} if r.get("error") else {}),
