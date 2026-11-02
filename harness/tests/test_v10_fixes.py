@@ -229,5 +229,25 @@ example : Spec.pre { q := 1 } ∧ Spec.post { q := 1 } { results := [1], shown :
         self.assertTrue(any("never mentions `o.results`" in p for p in problems), problems)
 
 
+class Preconditions(unittest.TestCase):
+    TRIVIAL = "def Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.x = i.x\n"
+
+    def test_parser_cue(self):
+        import req_parser
+        doc = req_parser.parse_bytes(
+            b"<srs><title><t>T</t></title><p id='3'><title>Functions</title><text_body>"
+            b"The system shall encrypt all stored passwords. "
+            b"If the cart is empty, the system shall block checkout.</text_body></p></srs>", "t.xml")
+        flags = {r["text"][:10]: r["has_precondition"] for r in doc["requirements"]}
+        self.assertEqual(flags, {"The system": False, "If the car": True})
+
+    def test_flag_only_with_cue(self):
+        import validate
+        _, f = validate.check_parser_facts(self.TRIVIAL, {"kind": "requirement", "has_precondition": False})
+        self.assertEqual(f, [])
+        _, f = validate.check_parser_facts(self.TRIVIAL, {"kind": "requirement", "has_precondition": True})
+        self.assertEqual(len(f), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

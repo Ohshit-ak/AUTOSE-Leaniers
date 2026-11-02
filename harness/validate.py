@@ -488,8 +488,11 @@ def check_parser_facts(code: str, entry: dict) -> Tuple[List[str], List[str]]:
     if _TRIVIAL_PRE.search(code):
         if entry.get("kind") == "use_case" and entry.get("preconditions"):
             problems.append("the use case has preconditions, but `pre` is `True`; state them in `pre`")
-        elif entry.get("kind") in ("requirement", "use_case"):
-            flags.append("`pre` is `True`: the spec assumes nothing about the input")
+        elif entry.get("kind") == "requirement" and entry.get("has_precondition", True):
+            # the requirement has a condition word (if / when / only / logged in …);
+            # parsed JSON from before v10 has no `has_precondition`, so it is flagged as before
+            flags.append("`pre` is `True`, but the requirement states a condition "
+                         "(if / when / only / unless / logged in …)")
     return problems, flags
 
 

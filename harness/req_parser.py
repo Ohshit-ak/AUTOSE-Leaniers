@@ -99,6 +99,12 @@ STATE_OP = re.compile(
     r"ascending|descending|alphabetical(?:ly)?)\b",
     re.I,
 )
+# Words that make a requirement conditional on the input or the state: `pre` should say
+# something. Without them `pre := True` is expected (e.g. "the system shall encrypt …").
+PRECONDITION_CUE = re.compile(
+    r"\b(if|when|whenever|only|unless|once|provided(?: that)?|as long as|in case|"
+    r"logged[- ]?in|signed[- ]?in|authenticated|authori[sz]ed|registered)\b", re.I)
+
 DATA_RELATION = re.compile(r"\b(total|number of|sum|unique(?:ly)?)\b", re.I)
 # Nouns that look like STATE_OP verbs ("Web Store"); blanked before matching.
 NOT_AN_OP = re.compile(r"\b(?:web|online) store\b", re.I)
@@ -468,6 +474,7 @@ class _Parser:
             "text": text,
             "signals": ops,
             "quantities": qs,
+            "has_precondition": bool(PRECONDITION_CUE.search(text)),
         }
         if checks:
             item["runtime_checks"] = checks
