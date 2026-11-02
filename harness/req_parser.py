@@ -105,6 +105,19 @@ PRECONDITION_CUE = re.compile(
     r"\b(if|when|whenever|only|unless|once|provided(?: that)?|as long as|in case|"
     r"logged[- ]?in|signed[- ]?in|authenticated|authori[sz]ed|registered)\b", re.I)
 
+# UI elements and actions. A sentence that mentions one and has no data or state
+# condition once the UI phrases are removed is dropped as `ui`. "<word> <element>"
+# counts as one phrase ("search bar", "Add button"), so a verb that only names a
+# control is not mistaken for a state change.
+UI_ELEMENT = (r"buttons?|bars?|links?|menus?|tabs?|icons?|pages?|screens?|windows?|dialogs?|"
+              r"form fields?|fields?|text ?box(?:es)?|check ?box(?:es)?|tick ?box(?:es)?|"
+              r"drop[- ]?downs?|column headers?|headers?|toolbars?|sidebars?|panels?")
+_FUNCTION_WORD = r"(?:be|is|are|was|will|can|the|a|an|to|of|for|and|or|with|in|on|at|by|each|every|this|that)"
+UI_PHRASE = re.compile(rf"\b(?:(?:the|a|an|on|each|every)\s+)?(?:(?!{_FUNCTION_WORD}\b)[\w-]+\s+)?"
+                       rf"(?:{UI_ELEMENT})\b", re.I)
+UI_ACTION = re.compile(r"\b(click(?:s|ed|ing)?|press(?:es|ed|ing)?|tap(?:s|ped|ping)?|scroll(?:s|ed|ing)?|"
+                       r"hover(?:s|ed|ing)?|double[- ]click(?:s|ed|ing)?)\b(?:\s+on)?", re.I)
+
 DATA_RELATION = re.compile(r"\b(total|number of|sum|unique(?:ly)?)\b", re.I)
 # Nouns that look like STATE_OP verbs ("Web Store"); blanked before matching.
 NOT_AN_OP = re.compile(r"\b(?:web|online) store\b", re.I)
@@ -457,6 +470,12 @@ class _Parser:
             return drop(f"platform/technology choice: {', '.join(tech)}")
         if vague and not (timed or DATA_RELATION.search(text)):
             return drop(f"vague: {', '.join(vague)}")
+        if not timed and (UI_ACTION.search(text) or UI_PHRASE.search(text)):
+            rest = UI_ACTION.sub(" ", UI_PHRASE.sub(" ", NOT_AN_OP.sub(" ", text)))
+            if not STATE_OP.search(rest):
+                ui = unique_matches(UI_ACTION, text) + unique_matches(UI_PHRASE, text)
+                return drop(f"ui: only about UI elements or actions ({', '.join(ui[:3])}), "
+                            "no data or state condition")
         if not (timed or ops):
             return drop("no state change, data relation or quantity to formalise")
         overview = next((t for _, t in path if OVERVIEW_SECTIONS.search(t)), None)

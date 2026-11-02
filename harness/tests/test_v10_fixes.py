@@ -249,5 +249,27 @@ class Preconditions(unittest.TestCase):
         self.assertEqual(len(f), 1)
 
 
+class UiDrops(unittest.TestCase):
+    def parse(self, *sentences):
+        import req_parser
+        body = " ".join(sentences).encode()
+        doc = req_parser.parse_bytes(b"<srs><title><t>T</t></title><p id='3'><title>Functions</title>"
+                                     b"<text_body>" + body + b"</text_body></p></srs>", "t.xml")
+        return doc
+
+    def test_three_dropped(self):
+        doc = self.parse("There will be a page button for the user to navigate the results.",
+                         "Clicking the search button will open the results page.",
+                         "The user can click on the Help link in the top menu.")
+        self.assertEqual(doc["requirements"], [])
+        self.assertEqual([d["reason"][:3] for d in doc["dropped"]], ["ui:"] * 3)
+
+    def test_three_kept(self):
+        doc = self.parse("Clicking the Add button will add the item to the cart.",
+                         "Results will be sorted by date when the user clicks the column header.",
+                         "The results page will display at most 100 results.")
+        self.assertEqual(len(doc["requirements"]), 3, doc["dropped"])
+
+
 if __name__ == "__main__":
     unittest.main()
