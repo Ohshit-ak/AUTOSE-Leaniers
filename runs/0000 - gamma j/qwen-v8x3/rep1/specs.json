@@ -1,0 +1,2676 @@
+{
+  "source": {
+    "file": "0000 - gamma j.xml",
+    "sha256": "4830091b276df2f7bec48d414533624cffda8bc98ca33abb593d99dc928142d4"
+  },
+  "model": "qwen",
+  "lean_checked": true,
+  "summary": {
+    "total": 75,
+    "compiles": 68,
+    "rejects_bad_example": 47,
+    "checked": 58,
+    "failed": 17,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "1.4/I3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Confirm Orders",
+      "text_predicate": "Requirement 1.4/I3 (Introduction > Project Scope):\nConfirm Orders",
+      "lean_predicate": "structure Order where\n  item : String\n  quantity : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  stockLevels : List Order\n  order : Order\n  deriving DecidableEq, Repr\n\nstructure Output where\n  accepted : Bool\n  quantity : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.order.quantity ≤ i.stockLevels.filter (·.item = i.order.item).sum.quantity\n  post := fun i o => o.accepted = true ↔ i.order.quantity ≤ i.stockLevels.filter (·.item = i.order.item).sum.quantity ∧\n                      o.quantity = min i.order.quantity (i.stockLevels.filter (·.item = i.order.item).sum.quantity)\n\nexample : Spec.pre { stockLevels := [{ item := \"A1\", quantity := 10 },\n                                      { item := \"A2\", quantity := 20 }],\n                     order := { item := \"A1\", quantity := 5 } } ∧\n          Spec.post { stockLevels := [{ item := \"A1\", quantity := 10 },\n                                       { item := \"A2\", quantity := 20 }],\n                      order := { item := \"A1\", quantity := 5 } }\n                    { accepted := true, quantity := 5 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 146.8,
+      "error": "Lean timed out after 60s",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "other",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "1.4/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The initial inventory will be 100 items.",
+      "text_predicate": "Requirement 1.4/S2 (Introduction > Project Scope):\nThe initial inventory will be 100 items.\nBound: items = 100.",
+      "lean_predicate": "structure Input where\n  items : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  items : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.items = 100\n  post := fun i o => o.items = i.items\n\nexample : Spec.pre { items := 100 } ∧ Spec.post { items := 100 } { items := 100 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { items := 100 } ∧ ¬ Spec.post { items := 100 } { items := 99 } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "1.4/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Expandable with unique codes, the owners can purchase to expand the inventory.",
+      "text_predicate": "Requirement 1.4/S3 (Introduction > Project Scope):\nExpandable with unique codes, the owners can purchase to expand the inventory.",
+      "lean_predicate": "structure ItemCode where\n  code : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  uniqueCodes : List ItemCode\n  inventorySize : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  inventorySize : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.uniqueCodes.Nodup\n  post := fun i o => o.inventorySize = i.inventorySize + i.uniqueCodes.length\n\nexample : Spec.pre { uniqueCodes := [{ code := \"A1\" }, { code := \"B2\" }],\n                     inventorySize := 10 } ∧\n          Spec.post { uniqueCodes := [{ code := \"A1\" }, { code := \"B2\" }],\n                      inventorySize := 10 }\n                    { inventorySize := 12 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { uniqueCodes := [ItemCode.code \"A\", ItemCode.code \"A\"], inventorySize := 10 } ∧ ¬ Spec.post { uniqueCodes := [ItemCode.code \"A\", ItemCode.code \"A\"], inventorySize := 10 } { inventorySize := 11 } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 25.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "1.4/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The minimum total inventory will be 20,000 items.",
+      "text_predicate": "Requirement 1.4/S4 (Introduction > Project Scope):\nThe minimum total inventory will be 20,000 items.\nBound: items >= 20000.",
+      "lean_predicate": "structure Input where\n  items : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.items ≥ 20000\n  post := fun i o => Spec.pre i\n\nexample : Spec.pre { items := 20000 } ∧ Spec.post { items := 20000 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 24.0,
+      "error": "<generated>:11:4: error: fail to show termination for\n  Spec\nwith errors\nfailed to infer structural recursion:\nno parameters suitable for structural recursion\n\nwell-founded recursion cannot be used, `Spec` does not take any (non-fixed) arguments\n<generated>:15:40: error: Application type mismatch: The argument\n  Spec.post { items := 20000 }\nhas type\n  Output → Prop\nbut is expected to have type\n  Prop\nin the application\n  Spec.pre { items := 20000 } ∧ Spec.post { items := 20000 }\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.1.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Customers will be able to create accounts to store their customer profiles, configure contact information, view their purchase history, and confirm orders.",
+      "text_predicate": "Requirement 3.1.3/S1 (System Features > Customer Accounts > Functional Requirements):\nCustomers will be able to create accounts to store their customer profiles, configure contact information, view their purchase history, and confirm orders.",
+      "lean_predicate": "structure Account where\n  username : String\n  password : String\n  contactInfo : String\n  purchaseHistory : List String\n  orderConfirmed : Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  username : String\n  password : String\n  contactInfo : String\n  purchaseHistory : List String\n  orderConfirmed : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  username : String\n  password : String\n  contactInfo : String\n  purchaseHistory : List String\n  orderConfirmed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\" ∧ i.contactInfo ≠ \"\"\n  post := fun i o => o.username = i.username ∧\n                     o.password = i.password ∧\n                     o.contactInfo = i.contactInfo ∧\n                     o.purchaseHistory = i.purchaseHistory ∧\n                     o.orderConfirmed = i.orderConfirmed\n\nexample : Spec.pre { username := \"john\", password := \"pass123\", contactInfo := \"info\", purchaseHistory := [], orderConfirmed := false } ∧\n          Spec.post { username := \"john\", password := \"pass123\", contactInfo := \"info\", purchaseHistory := [], orderConfirmed := false }\n                    { username := \"john\", password := \"pass123\", contactInfo := \"info\", purchaseHistory := [], orderConfirmed := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { username := \"testuser\", password := \"testpass\", contactInfo := \"test@example.com\", purchaseHistory := [], orderConfirmed := false } ∧ ¬ Spec.post { username := \"testuser\", password := \"testpass\", contactInfo := \"test@example.com\", purchaseHistory := [], orderConfirmed := false } { username := \"testuser\", password := \"testpass\", contactInfo := \"test@example.com\", purchaseHistory := [], orderConfirmed := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 4,
+      "seconds": 46.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.1.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Customers will be able to register, log in, and log out of their accounts.",
+      "text_predicate": "Requirement 3.1.3/S2 (System Features > Customer Accounts > Functional Requirements):\nCustomers will be able to register, log in, and log out of their accounts.",
+      "lean_predicate": "structure Account where\n  username : String\n  password : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  accounts : List Account\n  username : String\n  password : String\n  action   : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\" ∧ i.action ∈ [\"register\", \"login\", \"logout\"]\n  post := fun i o => \n    match i.action with\n    | \"register\" => o.signedIn = false\n    | \"login\" => \n      if ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password then\n        o.signedIn = true\n      else\n        o.signedIn = false\n    | \"logout\" => o.signedIn = i.signedIn\n\nexample : Spec.pre { accounts := [{ username := \"sam\", password := \"pw1\" }],\n                     username := \"sam\", password := \"pw1\", action := \"login\" } ∧\n          Spec.post { accounts := [{ username := \"sam\", password := \"pw1\" }],\n                      username := \"sam\", password := \"pw1\", action := \"login\" }\n                    { signedIn := true } := by\n  unfold Spec; decide\n\nexample : Spec.pre { accounts := [{ username := \"sam\", password := \"pw1\" }],\n                     username := \"sam\", password := \"pw1\", action := \"logout\" } ∧\n          Spec.post { accounts := [{ username := \"sam\", password := \"pw1\" }],\n                      username := \"sam\", password := \"pw1\", action := \"logout\" }\n                    { signedIn := false } := by\n  unfold Spec; decide\n\nexample : Spec.pre { accounts := [{ username := \"sam\", password := \"pw1\" }],\n                     username := \"sam\", password := \"pw1\", action := \"register\" } ∧\n          Spec.post { accounts := [{ username := \"sam\", password := \"pw1\" }],\n                      username := \"sam\", password := \"pw1\", action := \"register\" }\n                    { signedIn := false } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 70.0,
+      "error": "<generated>:30:33: error(lean.invalidField): Invalid field `signedIn`: The environment does not contain `Input.signedIn`, so it is not possible to project the field `signedIn` from an expression\n  i\nof type `Input`\n<generated>:23:4: error: Failed to compile pattern matching: Stuck at\n  remaining variables: [x✝:(String)]\n  alternatives:\n    |- [\"register\"] => h_1 ()\n    |- [\"login\"] => h_2 ()\n    |- [\"logout\"] => h_3 ()\n  examples:_\n  \n<generated>:32:0: warning: declaration uses `sorry`\n<generated>:39:0: warning: declaration uses `sorry`\n<generated>:46:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.1.3/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Furthermore, Customer profiles will also include payment information, such as the ability to store credit card information, and address information.",
+      "text_predicate": "Requirement 3.1.3/S3 (System Features > Customer Accounts > Functional Requirements):\nFurthermore, Customer profiles will also include payment information, such as the ability to store credit card information, and address information.",
+      "lean_predicate": "structure Input where\n  creditCardNumber : String\n  addressLine1    : String\n  addressLine2    : String\n  city            : String\n  state           : String\n  zipCode         : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  profileUpdated : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.creditCardNumber ≠ \"\" ∧\n                   i.addressLine1 ≠ \"\" ∧\n                   i.addressLine2 ≠ \"\" ∧\n                   i.city ≠ \"\" ∧\n                   i.state ≠ \"\" ∧\n                   i.zipCode ≠ \"\"\n  post := fun i o => o.profileUpdated = true ↔\n                      (i.creditCardNumber = i.creditCardNumber ∧\n                       i.addressLine1 = i.addressLine1 ∧\n                       i.addressLine2 = i.addressLine2 ∧\n                       i.city = i.city ∧\n                       i.state = i.state ∧\n                       i.zipCode = i.zipCode)\n\nexample : Spec.pre { creditCardNumber := \"1234567890123456\", addressLine1 := \"123 Main St\", addressLine2 := \"Apt 4B\", city := \"Anytown\", state := \"CA\", zipCode := \"90210\" } ∧\n          Spec.post { creditCardNumber := \"1234567890123456\", addressLine1 := \"123 Main St\", addressLine2 := \"Apt 4B\", city := \"Anytown\", state := \"CA\", zipCode := \"90210\" }\n                    { profileUpdated := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { creditCardNumber := \"1234567890123456\", addressLine1 := \"123 Main St\", addressLine2 := \"Apt 4B\", city := \"Anytown\", state := \"CA\", zipCode := \"90210\" } ∧ ¬ Spec.post { creditCardNumber := \"1234567890123456\", addressLine1 := \"123 Main St\", addressLine2 := \"Apt 4B\", city := \"Anytown\", state := \"CA\", zipCode := \"90210\" } { profileUpdated := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Products will be stored in multi-tiered categories; a category can contain sub categories or products.",
+      "text_predicate": "Requirement 3.2.3/S1 (System Features > Inventory Management > Functional Requirements):\nProducts will be stored in multi-tiered categories; a category can contain sub categories or products.",
+      "lean_predicate": "structure Category where\n  id     : Nat\n  name   : String\n  parent : Option Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  categories : List Category\n  deriving DecidableEq, Repr\n\nstructure Output where\n  categories : List Category\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.categories.Nodup\n  post := fun i o => o.categories = i.categories ∧\n                     o.categories.Nodup\n\nexample : Spec.pre { categories := [{ id := 1, name := \"Electronics\", parent := none },\n                                     { id := 2, name := \"Computers\", parent := some 1 },\n                                     { id := 3, name := \"Laptops\", parent := some 2 }] } ∧\n          Spec.post { categories := [{ id := 1, name := \"Electronics\", parent := none },\n                                      { id := 2, name := \"Computers\", parent := some 1 },\n                                      { id := 3, name := \"Laptops\", parent := some 2 }] }\n                    { categories := [{ id := 1, name := \"Electronics\", parent := none },\n                                     { id := 2, name := \"Computers\", parent := some 1 },\n                                     { id := 3, name := \"Laptops\", parent := some 2 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { categories := [Category.id 1 name \"Electronics\" parent none, Category.id 2 name \"Cameras\" parent some 1, Category.id 3 name \"DSLRs\" parent some 2] } ∧ ¬ Spec.post { categories := [Category.id 1 name \"Electronics\" parent none, Category.id 2 name \"Cameras\" parent some 1, Category.id 3 name \"DSLRs\" parent some 2] } { categories := [Category.id 1 name \"Electronics\" parent none, Category.id 2 name \"Cameras\" parent some 3, Category.id 3 name \"DSLRs\" parent some 1] } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 18.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The inventory management will allow for administrators to update the categories, the products placed in categories, and the specific product details.",
+      "text_predicate": "Requirement 3.2.3/S2 (System Features > Inventory Management > Functional Requirements):\nThe inventory management will allow for administrators to update the categories, the products placed in categories, and the specific product details.",
+      "lean_predicate": "structure Category where\n  id : Nat\n  name : String\n  products : List Nat\n  deriving DecidableEq, Repr\n\nstructure Product where\n  id : Nat\n  name : String\n  price : Nat\n  inStock : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  categories : List Category\n  products : List Product\n  deriving DecidableEq, Repr\n\nstructure Output where\n  categories : List Category\n  products : List Product\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.categories.Nodup ∧ i.products.Nodup\n  post := fun i o => o.categories = i.categories ∧ o.products = i.products\n\nexample : Spec.pre { categories := [{ id := 1, name := \"Electronics\", products := [101] },\n                                      { id := 2, name := \"Books\", products := [201] }],\n                     products := [{ id := 101, name := \"Phone\", price := 500, inStock := 10 },\n                                  { id := 201, name := \"Book\", price := 20, inStock := 50 }] } ∧\n          Spec.post { categories := [{ id := 1, name := \"Electronics\", products := [101] },\n                                      { id := 2, name := \"Books\", products := [201] }],\n                      products := [{ id := 101, name := \"Phone\", price := 500, inStock := 10 },\n                                   { id := 201, name := \"Book\", price := 20, inStock := 50 }] }\n                    { categories := [{ id := 1, name := \"Electronics\", products := [101] },\n                                     { id := 2, name := \"Books\", products := [201] }],\n                      products := [{ id := 101, name := \"Phone\", price := 500, inStock := 10 },\n                                   { id := 201, name := \"Book\", price := 20, inStock := 50 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { categories := [{ id := 1, name := \"Electronics\", products := [101] }], products := [{ id := 101, name := \"Phone\", price := 500, inStock := 10 }] } ∧ ¬ Spec.post { categories := [{ id := 1, name := \"Electronics\", products := [101] }], products := [{ id := 101, name := \"Phone\", price := 500, inStock := 10 }] } { categories := [{ id := 1, name := \"Electronics\", products := [102] }], products := [{ id := 101, name := \"Phone\", price := 500, inStock := 11 }] } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 19.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.3.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Customers will also be able to add products into the shopping cart.",
+      "text_predicate": "Requirement 3.3.3/S1 (System Features > Shopping Cart > Functional Requirements):\nCustomers will also be able to add products into the shopping cart.",
+      "lean_predicate": "structure Product where\n  id   : Nat\n  name : String\n  price: Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cart    : List Product\n  product : Product\n  deriving DecidableEq, Repr\n\nstructure Output where\n  cart    : List Product\n  added   : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.added = true ↔\n    ∃ p ∈ i.cart, p.id = i.product.id ∨\n    (o.added = false ∧ i.cart.length = o.cart.length)\n\nexample : Spec.pre { cart := [], product := { id := 1, name := \"P1\", price := 100 } } ∧ Spec.post { cart := [], product := { id := 1, name := \"P1\", price := 100 } } { cart := [{ id := 1, name := \"P1\", price := 100 }], added := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { cart := [], product := { id := 1, name := \"Product A\", price := 10 } } ∧ ¬ Spec.post { cart := [], product := { id := 1, name := \"Product A\", price := 10 } } { cart := [{ id := 1, name := \"Product A\", price := 10 }], added := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 13.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "3.3.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The shopping cart will clearly display the number of items in the cart, along with the total cost.",
+      "text_predicate": "Requirement 3.3.3/S2 (System Features > Shopping Cart > Functional Requirements):\nThe shopping cart will clearly display the number of items in the cart, along with the total cost.\nIgnore these non-formal words: clearly.",
+      "lean_predicate": "structure Cart where\n  items : List String\n  totalCost : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  items : List String\n  totalCost : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  itemsCount : Nat\n  totalCost : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.items.length > 0\n  post := fun i o => o.itemsCount = i.items.length ∧ o.totalCost = i.totalCost\n\nexample : Spec.pre { items := [\"item1\", \"item2\"], totalCost := 150 } ∧\n          Spec.post { items := [\"item1\", \"item2\"], totalCost := 150 }\n                    { itemsCount := 2, totalCost := 150 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { items := [\"item1\", \"item2\"], totalCost := 120 } ∧ ¬ Spec.post { items := [\"item1\", \"item2\"], totalCost := 120 } { itemsCount := 2, totalCost := 0 } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.3.3/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The customer will also be able to add to or remove products from the shopping cart prior to checkout and order confirmation.",
+      "text_predicate": "Requirement 3.3.3/S3 (System Features > Shopping Cart > Functional Requirements):\nThe customer will also be able to add to or remove products from the shopping cart prior to checkout and order confirmation.",
+      "lean_predicate": "structure Product where\n  name : String\n  price : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cart : List Product\n  deriving DecidableEq, Repr\n\nstructure Output where\n  cart : List Product\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.cart.Nodup\n  post := fun i o => o.cart = i.cart\n\nexample : Spec.pre { cart := [{ name := \"Apple\", price := 100 }, { name := \"Banana\", price := 50 }] } ∧\n          Spec.post { cart := [{ name := \"Apple\", price := 100 }, { name := \"Banana\", price := 50 }] }\n                    { cart := [{ name := \"Apple\", price := 100 }, { name := \"Banana\", price := 50 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { cart := [{ name := \"Apple\", price := 100 }] } ∧ ¬ Spec.post { cart := [{ name := \"Apple\", price := 100 }] } { cart := [] } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 17.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.4.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Customers will be able to confirm the order after checkout.",
+      "text_predicate": "Requirement 3.4.3/S1 (System Features > Order Confirmation > Functional Requirements):\nCustomers will be able to confirm the order after checkout.",
+      "lean_predicate": "structure Cart where\n  items : List String\n  deriving DecidableEq, Repr\n\nstructure Customer where\n  name : String\n  email : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cart : Cart\n  customer : Customer\n  confirmed : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  cart : Cart\n  customer : Customer\n  confirmed : Bool\n  orderPlaced : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.confirmed = true\n  post := fun i o => o.confirmed = i.confirmed ∧\n                     o.orderPlaced ↔ i.cart.items.Nodup ∧\n                     o.customer = i.customer\n\nexample : Spec.pre { cart := { items := [\"item1\", \"item2\"] }, customer := { name := \"John\", email := \"john@example.com\" }, confirmed := true } ∧\n          Spec.post { cart := { items := [\"item1\", \"item2\"] }, customer := { name := \"John\", email := \"john@example.com\" }, confirmed := true }\n                    { cart := { items := [\"item1\", \"item2\"] }, customer := { name := \"John\", email := \"john@example.com\" }, confirmed := true, orderPlaced := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { cart := { items := [\"item1\", \"item2\", \"item1\"] }, customer := { name := \"John Doe\", email := \"john@example.com\" }, confirmed := true } ∧ ¬ Spec.post { cart := { items := [\"item1\", \"item2\", \"item1\"] }, customer := { name := \"John Doe\", email := \"john@example.com\" }, confirmed := true } { cart := { items := [\"item1\", \"item2\", \"item1\"] }, customer := { name := \"John Doe\", email := \"john@example.com\" }, confirmed := true, orderPlaced := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.4.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the order is incorrect, the customer will be able to revise and update their order.",
+      "text_predicate": "Requirement 3.4.3/S2 (System Features > Order Confirmation > Functional Requirements):\nIf the order is incorrect, the customer will be able to revise and update their order.",
+      "lean_predicate": "structure Input where\n  orderItems : List Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  orderItems : List Nat\n  revised    : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.orderItems.length > 0\n  post := fun i o => o.revised = true ↔\n    ∃ j ∈ i.orderItems, j < 100 ∧\n    o.orderItems = i.orderItems.filter (fun x => x ≥ 100)\n\nexample : Spec.pre { orderItems := [100, 200, 300] } ∧ Spec.post { orderItems := [100, 200, 300] } { orderItems := [200, 300], revised := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { orderItems := [99, 101, 102] } ∧ ¬ Spec.post { orderItems := [99, 101, 102] } { orderItems := [101, 102], revised := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 12.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.4.3/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The customer will then receive a confirmation email with the specific order details.",
+      "text_predicate": "Requirement 3.4.3/S3 (System Features > Order Confirmation > Functional Requirements):\nThe customer will then receive a confirmation email with the specific order details.",
+      "lean_predicate": "structure Order where\n  id     : Nat\n  amount : Nat\n  details: String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  customerEmail : String\n  order         : Order\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sentToCustomer : Bool\n  emailContent   : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.customerEmail ≠ \"\"\n  post := fun i o => (o.sentToCustomer = true ↔\n    i.customerEmail = i.order.details) ∧\n                     (o.emailContent = i.order.details)\n\nexample : Spec.pre { customerEmail := \"customer@example.com\", order := { id := 1, amount := 10, details := \"customer@example.com\" } } ∧\n          Spec.post { customerEmail := \"customer@example.com\", order := { id := 1, amount := 10, details := \"customer@example.com\" } }\n                    { sentToCustomer := true, emailContent := \"customer@example.com\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { customerEmail := \"customer@example.com\", order := { id := 1, amount := 100, details := \"Product A\" } } ∧ ¬ Spec.post { customerEmail := \"customer@example.com\", order := { id := 1, amount := 100, details := \"Product A\" } } { sentToCustomer := true, emailContent := \"\" } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 30.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.5.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Customers will be able to search for products matching their search criteria.",
+      "text_predicate": "Requirement 3.5.3/S2 (System Features > Interface > Functional Requirements):\nCustomers will be able to search for products matching their search criteria.",
+      "lean_predicate": "structure Product where\n  name : String\n  category : String\n  price : Nat\n  deriving DecidableEq, Repr\n\nstructure SearchCriteria where\n  name : Option String\n  category : Option String\n  minPrice : Option Nat\n  maxPrice : Option Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  products : List Product\n  criteria : SearchCriteria\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List Product\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.products.Nodup\n  post := fun i o => o.results.all (fun p => \n    (i.criteria.name = none ∨ i.criteria.name.getD \"\" = p.name) ∧\n    (i.criteria.category = none ∨ i.criteria.category.getD \"\" = p.category) ∧\n    (i.criteria.minPrice = none ∨ p.price ≥ i.criteria.minPrice.getD 0) ∧\n    (i.criteria.maxPrice = none ∨ p.price ≤ i.criteria.maxPrice.getD 10000))\n\nexample : Spec.pre { \n  products := [ { name := \"Laptop\", category := \"Electronics\", price := 500 },\n                { name := \"Keyboard\", category := \"Electronics\", price := 100 },\n                { name := \"Mouse\", category := \"Electronics\", price := 50 } ],\n  criteria := { name := none, category := none, minPrice := some 50, maxPrice := some 300 }\n} ∧\nSpec.post { \n  products := [ { name := \"Laptop\", category := \"Electronics\", price := 500 },\n                { name := \"Keyboard\", category := \"Electronics\", price := 100 },\n                { name := \"Mouse\", category := \"Electronics\", price := 50 } ],\n  criteria := { name := none, category := none, minPrice := some 50, maxPrice := some 300 }\n}\n{ results := [ { name := \"Keyboard\", category := \"Electronics\", price := 100 },\n               { name := \"Mouse\", category := \"Electronics\", price := 50 } ] }\n:= by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 64.6,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "SI-1.2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Through programmatic interface, WebOrder will transmit information of items ordered by customers to the Inventory management system.",
+      "text_predicate": "Requirement SI-1.2 (External Interface Requirements > Software Interfaces > SI-1: WebOrder Browser Interface):\nThrough programmatic interface, WebOrder will transmit information of items ordered by customers to the Inventory management system.",
+      "lean_predicate": "structure Input where\n  itemsOrdered : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  success : Bool\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.itemsOrdered.Nodup\n  post := fun i o => o.success ↔ i.itemsOrdered.length > 0 ∧\n                      o.message = \"Order transmitted successfully\" ∧\n                      o.success = true\n\nexample : Spec.pre { itemsOrdered := [\"item1\", \"item2\"] } ∧\n          Spec.post { itemsOrdered := [\"item1\", \"item2\"] }\n                    { success := true, message := \"Order transmitted successfully\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { itemsOrdered := #[] } ∧ ¬ Spec.post { itemsOrdered := #[] } { success := true, message := \"Order transmitted successfully\" } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "CI-1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The WebOrder system shall send an e-mail confirmation to the customer that the items they ordered will be delivered to the shipping address along with tracking number.",
+      "text_predicate": "Requirement CI-1 (External Interface Requirements > Communications Interfaces):\nThe WebOrder system shall send an e-mail confirmation to the customer that the items they ordered will be delivered to the shipping address along with tracking number.",
+      "lean_predicate": "structure Input where\n  customerEmail : String\n  shippingAddress : String\n  items : List String\n  trackingNumber : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sentEmail : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.customerEmail ≠ \"\" ∧ i.shippingAddress ≠ \"\" ∧ i.items.Nodup ∧ i.trackingNumber ≠ \"\"\n  post := fun i o => o.sentEmail = true ↔\n    (i.customerEmail ≠ \"\" ∧ i.shippingAddress ≠ \"\" ∧ i.items.Nodup ∧ i.trackingNumber ≠ \"\")\n\nexample : Spec.pre { customerEmail := \"customer@example.com\", shippingAddress := \"123 Main St\", items := [\"Item1\", \"Item2\"], trackingNumber := \"1234567890\" } ∧\n          Spec.post { customerEmail := \"customer@example.com\", shippingAddress := \"123 Main St\", items := [\"Item1\", \"Item2\"], trackingNumber := \"1234567890\" }\n                    { sentEmail := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { customerEmail := \"test@example.com\", shippingAddress := \"123 Test St\", items := [\"Item1\"], trackingNumber := \"1234567890\" } ∧ ¬ Spec.post { customerEmail := \"test@example.com\", shippingAddress := \"123 Test St\", items := [\"Item1\"], trackingNumber := \"1234567890\" } { sentEmail := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "CI-2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The WebOrder system shall send an e-mail to System Administrator regarding any technical queries from customers or sales people.",
+      "text_predicate": "Requirement CI-2 (External Interface Requirements > Communications Interfaces):\nThe WebOrder system shall send an e-mail to System Administrator regarding any technical queries from customers or sales people.",
+      "lean_predicate": "structure Input where\n  queryFrom : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  eMailSent : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.queryFrom ≠ \"\"\n  post := fun i o => o.eMailSent = true ↔\n    (i.queryFrom = \"customer\" ∨ i.queryFrom = \"sales person\")\n\nexample : Spec.pre { queryFrom := \"customer\" } ∧\n          Spec.post { queryFrom := \"customer\" }\n                    { eMailSent := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 43.3,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { queryFrom := \"technical query\" } { eMailSent := false }` holds, but the requirement forbids this output for this input (The requirement states that an e-mail should be sent to the System Administrator for technical queries from customers or sales people. The output does not send an e-mail, which is a direct violation of the requirement.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.1/R1",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "Upon the USB being plugged in the system shall be able to be deployed and operational in less than 1 minute.",
+      "text_predicate": "Requirement 5.1/R1 (Quality Attribute Requirements):\nUpon the USB being plugged in the system shall be able to be deployed and operational in less than 1 minute.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 60000000 (us, operation: be deployed and operational)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros < 60000000\n\nexample : Spec.pre {} ∧ Spec.post {} { elapsedMicros := 59999999 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 70000000, … } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "5.1/R2",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The system shall be able to handle 1000 customers logged in concurrently at the same time.",
+      "text_predicate": "Requirement 5.1/R2 (Quality Attribute Requirements):\nThe system shall be able to handle 1000 customers logged in concurrently at the same time.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `concurrentUsers` >= 1000 (customers, operation: handle)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  concurrentUsers : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.concurrentUsers ≥ 1000\n\nexample : Spec.pre {} ∧ Spec.post {} { concurrentUsers := 1000 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { concurrentUsers := 999, … } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "5.1/R3",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The system shall be able to retrieve 200 products per second.",
+      "text_predicate": "Requirement 5.1/R3 (Quality Attribute Requirements):\nThe system shall be able to retrieve 200 products per second.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `perSecond` >= 200 (products/second, operation: retrieve)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  perSecond : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.perSecond ≥ 200\n\nexample : Spec.pre {} ∧ Spec.post {} { perSecond := 201 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { perSecond := 199, … } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "5.1/R4",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The system shall be able to add product to shopping cart in less than 2ms.",
+      "text_predicate": "Requirement 5.1/R4 (Quality Attribute Requirements):\nThe system shall be able to add product to shopping cart in less than 2ms.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 2000 (us, operation: add product to shopping cart)",
+      "lean_predicate": "structure Input where\n  productID : Nat\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.elapsedMicros < 2000\n\nexample : Spec.pre { productID := 123, elapsedMicros := 1999 } ∧\n          Spec.post { productID := 123, elapsedMicros := 1999 } { elapsedMicros := 1999 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { productID := 123, elapsedMicros := 3000 } ∧ ¬ Spec.post { productID := 123, elapsedMicros := 3000 } { elapsedMicros := 3000 } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 4,
+      "seconds": 21.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "5.1/R5",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The system shall be able to search for a specified product in less than 1 second.",
+      "text_predicate": "Requirement 5.1/R5 (Quality Attribute Requirements):\nThe system shall be able to search for a specified product in less than 1 second.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 1000000 (us, operation: search for a specified product)",
+      "lean_predicate": "structure Input where\n  productCode : String\n  productDatabase : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  found : Bool\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.productCode ≠ \"\"\n  post := fun i o => o.found = true ↔\n    ∃ p ∈ i.productDatabase, p = i.productCode ∧\n    o.elapsedMicros < 1000000\n\nexample : Spec.pre { productCode := \"A1\", productDatabase := [\"A1\", \"B2\", \"C3\"] } ∧\n          Spec.post { productCode := \"A1\", productDatabase := [\"A1\", \"B2\", \"C3\"] }\n                    { found := true, elapsedMicros := 999999 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { productCode := \"ABC123\", productDatabase := [\"DEF456\", \"ABC123\", \"GHI789\"] } ∧ ¬ Spec.post { productCode := \"ABC123\", productDatabase := [\"DEF456\", \"ABC123\", \"GHI789\"] } { found := true, elapsedMicros := 1234567 } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 27.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.1/R6",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The system shall be able to email customer and vendor in less than 1 second.",
+      "text_predicate": "Requirement 5.1/R6 (Quality Attribute Requirements):\nThe system shall be able to email customer and vendor in less than 1 second.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 1000000 (us, operation: email customer and vendor)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros < 1000000\n\nexample : Spec.pre {} ∧ Spec.post {} { elapsedMicros := 950000 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 1500000, … } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "5.1/R7",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The system shall be able to validate credit card in less than 2 seconds.",
+      "text_predicate": "Requirement 5.1/R7 (Quality Attribute Requirements):\nThe system shall be able to validate credit card in less than 2 seconds.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 2000000 (us, operation: validate credit card)",
+      "lean_predicate": "structure Input where\n  cardNumber : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid     : Bool\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    o.elapsedMicros < 2000000\n\nexample : Spec.pre { cardNumber := \"1234567890123456\" } ∧\n          Spec.post { cardNumber := \"1234567890123456\" }\n                    { valid := true, elapsedMicros := 1999999 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { cardNumber := \"4111111111111111\" } ∧ ¬ Spec.post { cardNumber := \"4111111111111111\" } { valid := true, elapsedMicros := 5000000 } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 22.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "5.1/R8",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The system shall be able to acquire shipping charges in less than 2 seconds.",
+      "text_predicate": "Requirement 5.1/R8 (Quality Attribute Requirements):\nThe system shall be able to acquire shipping charges in less than 2 seconds.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` < 2000000 (us, operation: acquire shipping charges)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros < 2000000\n\nexample : Spec.pre {} ∧ Spec.post {} { elapsedMicros := 1999999 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 2000001, … } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "5.1/R9",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The system shall be able to restore 1000 records per second.",
+      "text_predicate": "Requirement 5.1/R9 (Quality Attribute Requirements):\nThe system shall be able to restore 1000 records per second.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `perSecond` >= 1000 (records/second, operation: restore)",
+      "lean_predicate": "structure Input where\n  records : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  restored : Nat\n  perSecond : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.records.Nodup\n  post := fun i o => o.restored = i.records.length ∧\n                     o.perSecond ≥ 1000\n\nexample : Spec.pre { records := [\"rec1\", \"rec2\", \"rec3\"] } ∧\n          Spec.post { records := [\"rec1\", \"rec2\", \"rec3\"] }\n                    { restored := 3, perSecond := 1000 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { records := [\"record1\", \"record2\", \"record3\"] } ∧ ¬ Spec.post { records := [\"record1\", \"record2\", \"record3\"] } { restored := 3, perSecond := 500 } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.3/R1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall validate credit cards against fraud.",
+      "text_predicate": "Requirement 5.3/R1 (Quality Attribute Requirements > Security Requirements):\nThe system shall validate credit cards against fraud.",
+      "lean_predicate": "structure CreditCard where\n  number : String\n  cvv    : String\n  fraudulent : Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cards : List CreditCard\n  number : String\n  cvv    : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  reason : Option String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.number ≠ \"\" ∧ i.cvv ≠ \"\"\n  post := fun i o => o.valid ↔\n    ∃ c ∈ i.cards, c.number = i.number ∧ c.cvv = i.cvv ∧ c.fraudulent = true ∧\n    (o.reason = some \"fraud\" ↔\n      ∃ c ∈ i.cards, c.number = i.number ∧ c.cvv = i.cvv ∧ c.fraudulent = true)\n\nexample : Spec.pre { cards := [{ number := \"1234567890123456\", cvv := \"123\", fraudulent := true }],\n                     number := \"1234567890123456\", cvv := \"123\" } ∧\n          Spec.post { cards := [{ number := \"1234567890123456\", cvv := \"123\", fraudulent := true }],\n                      number := \"1234567890123456\", cvv := \"123\" }\n                    { valid := true, reason := some \"fraud\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { cards := [{ number := \"1234567890123456\", cvv := \"123\", fraudulent := true }], number := \"1234567890123456\", cvv := \"123\" } ∧ ¬ Spec.post { cards := [{ number := \"1234567890123456\", cvv := \"123\", fraudulent := true }], number := \"1234567890123456\", cvv := \"123\" } { valid := true, reason := none } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 37.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.3/R3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall encrypt all customer data in database.",
+      "text_predicate": "Requirement 5.3/R3 (Quality Attribute Requirements > Security Requirements):\nThe system shall encrypt all customer data in database.",
+      "lean_predicate": "structure Input where\n  customerData : List String\n  isEncrypted  : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  customerData : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.isEncrypted = true\n  post := fun i o => o.customerData = i.customerData ↔\n                     i.isEncrypted = true\n\nexample : Spec.pre { customerData := [], isEncrypted := true } ∧ Spec.post { customerData := [], isEncrypted := true } { customerData := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { customerData := [\"data1\", \"data2\"], isEncrypted := true } ∧ ¬ Spec.post { customerData := [\"data1\", \"data2\"], isEncrypted := true } { customerData := [\"data1\", \"data2\"], isEncrypted := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 25.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.3/R4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall auto detect IP DOS attacks and block IP automatically.",
+      "text_predicate": "Requirement 5.3/R4 (Quality Attribute Requirements > Security Requirements):\nThe system shall auto detect IP DOS attacks and block IP automatically.",
+      "lean_predicate": "structure Input where\n  ipDOSCount : Nat\n  ip          : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  ipDOSCount : Nat\n  ip         : String\n  blocked    : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.ipDOSCount\n  post := fun i o => (o.blocked = true ↔ i.ipDOSCount ≥ 5) ∧\n                     (o.blocked = true → o.ipDOSCount = i.ipDOSCount + 1) ∧\n                     (o.blocked = false ↔ i.ipDOSCount < 5) ∧\n                     (o.ip = i.ip)\n\nexample : Spec.pre { ipDOSCount := 10, ip := \"192.168.1.1\" } ∧\n          Spec.post { ipDOSCount := 10, ip := \"192.168.1.1\" }\n                    { ipDOSCount := 11, ip := \"192.168.1.1\", blocked := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { ipDOSCount := 6, ip := \"192.168.1.1\" } ∧ ¬ Spec.post { ipDOSCount := 6, ip := \"192.168.1.1\" } { ipDOSCount := 6, ip := \"192.168.1.1\", blocked := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 30.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.3/R5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall detect consecutive failed login attempts.",
+      "text_predicate": "Requirement 5.3/R5 (Quality Attribute Requirements > Security Requirements):\nThe system shall detect consecutive failed login attempts.",
+      "lean_predicate": "structure Account where\n  username : String\n  password : String\n  failedAttempts : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  accounts : List Account\n  username : String\n  password : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  failedAttempts : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\"\n  post := fun i o => (o.signedIn = true ↔\n    ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password ∧\n    a.failedAttempts < 3) ∧\n    (o.failedAttempts = a.failedAttempts + 1)\n\nexample : Spec.pre { accounts := [{ username := \"user1\", password := \"pw1\", failedAttempts := 2 }],\n                     username := \"user1\", password := \"pw1\" } ∧\n          Spec.post { accounts := [{ username := \"user1\", password := \"pw1\", failedAttempts := 2 }],\n                      username := \"user1\", password := \"pw1\" }\n                    { signedIn := false, failedAttempts := 3 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 45.6,
+      "error": "<generated>:26:24: error(lean.unknownIdentifier): Unknown identifier `a.failedAttempts`\n<generated>:28:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.5/R1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall perform searches via Dijkstra's shortest path algorithm.",
+      "text_predicate": "Requirement 5.5/R1 (Quality Attribute Requirements > Efficiency Requirements):\nThe system shall perform searches via Dijkstra's shortest path algorithm.\nThis requirement prescribes HOW to build something (a method, algorithm or\ntechnology). Record that in a `-- IMPL:` comment above `def Spec`, and specify\nonly the observable result in `pre`/`post`.",
+      "lean_predicate": "structure Input where\n  start : Nat\n  end_   : Nat\n  edges : List (Nat × Nat × Nat)\n  deriving DecidableEq, Repr\n\nstructure Output where\n  path : List Nat\n  cost : Nat\n  deriving DecidableEq, Repr\n\n-- IMPL: Dijkstra's shortest path algorithm\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.start ≠ i.end_ ∧ i.edges.Nodup ∧\n                  ∀ (u v w : Nat) ∈ i.edges, u ≠ v ∧ w ≥ 0\n  post := fun i o => o.path.Nodup ∧ o.path.first = i.start ∧ o.path.last = i.end_ ∧\n                     o.cost = o.path.sum (·.2) ∧\n                     o.path.Pairwise (· ≤ ·) ∧\n                     (∃ (p : List Nat) ∈ o.path, p.length = o.path.length)\n\nexample : Spec.pre { start := 0, end_ := 3, edges := [(0, 1, 1), (1, 2, 2), (2, 3, 3)] } ∧\n          Spec.post { start := 0, end_ := 3, edges := [(0, 1, 1), (1, 2, 2), (2, 3, 3)] }\n                    { path := [0, 1, 2, 3], cost := 6 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 47.5,
+      "error": "<generated>:19:33: error: unexpected token '∈'; expected ','\n<generated>:25:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": [
+            "renamed keyword field `end` to `end_`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.5/R2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "For returning customers, the system shall validate 'existing' credit card in system after each log in.",
+      "text_predicate": "Requirement 5.5/R2 (Quality Attribute Requirements > Efficiency Requirements):\nFor returning customers, the system shall validate 'existing' credit card in system after each log in.",
+      "lean_predicate": "structure CreditCard where\n  cardNumber : String\n  expiryDate : String\n  cvv        : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  creditCards : List CreditCard\n  deriving DecidableEq, Repr\n\nstructure Output where\n  validated : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.creditCards.Nodup\n  post := fun i o => o.validated = true ↔\n    ∃ c ∈ i.creditCards, c.cardNumber = \"existing\" ∧\n                         c.expiryDate ≠ \"\" ∧\n                         c.cvv ≠ 0\n\nexample : Spec.pre { creditCards := [{ cardNumber := \"existing\", expiryDate := \"12/23\", cvv := 123 }] } ∧\n          Spec.post { creditCards := [{ cardNumber := \"existing\", expiryDate := \"12/23\", cvv := 123 }] }\n                    { validated := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { creditCards := [{ cardNumber := \"existing\", expiryDate := \"12/23\", cvv := 123 }] } ∧ ¬ Spec.post { creditCards := [{ cardNumber := \"existing\", expiryDate := \"12/23\", cvv := 123 }] } { validated := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.5/R5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall validate email address existence.",
+      "text_predicate": "Requirement 5.5/R5 (Quality Attribute Requirements > Efficiency Requirements):\nThe system shall validate email address existence.",
+      "lean_predicate": "structure Input where\n  email : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  exists_ : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.email ≠ \"\"\n  post := fun i o => o.exists_ = true ↔\n    i.email.toList.all (fun c => c.isAlpha ∨ c.isDigit ∨ c = '@' ∨ c = '.') = true\n\nexample : Spec.pre { email := \"test@example.com\" } ∧\n          Spec.post { email := \"test@example.com\" }\n                    { exists_ := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { email := \"invalidemail\" } ∧ ¬ Spec.post { email := \"invalidemail\" } { exists_ := true } := by\n  unfold Spec; decide",
+      "checked": false,
+      "attempts": 5,
+      "seconds": 33.4,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { email := \"invalidemail\" } { exists_ := true }` holds, but the requirement forbids this output for this input (The requirement states that the system shall validate email address existence. A buggy system might return that the email exists even if it doesn't.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": [
+            "renamed keyword field `exists` to `exists_`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [
+            "renamed keyword field `exists` to `exists_`"
+          ]
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-user-id",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "User ID of the employee /customer of Tool Co Company; minimum 4 to maximum 10 characters (alphabetic or alphanumeric)",
+      "text_predicate": "Data constraint DD-user-id: field `User ID` (User ID of the employee /customer of Tool Co Company; minimum 4 to maximum 10 characters (alphabetic or alphanumeric)).\nConstraints:\n- min_length: 4\n- max_length: 10\n- charset: alphanumeric\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (4 ≤ i.raw.length ∧ i.raw.length ≤ 10 ∧\n     i.raw.toList.all Char.isAlphanum = true)\n\nexample : Spec.pre { raw := \"user12\" } ∧\n          Spec.post { raw := \"user12\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"a1b2c3d4e5f\" } ∧ ¬ Spec.post { raw := \"a1b2c3d4e5f\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 12.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-password",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Password of the employee /customer of Tool Co Company; minimum 4 to maximum 10 characters (alphabetic or alphanumeric)",
+      "text_predicate": "Data constraint DD-password: field `Password` (Password of the employee /customer of Tool Co Company; minimum 4 to maximum 10 characters (alphabetic or alphanumeric)).\nConstraints:\n- min_length: 4\n- max_length: 10\n- charset: alphanumeric\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (4 ≤ i.raw.length ∧ i.raw.length ≤ 10 ∧\n     i.raw.toList.all Char.isAlphanum = true)\n\nexample : Spec.pre { raw := \"a1B2\" } ∧\n          Spec.post { raw := \"a1B2\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"abc\" } ∧ ¬ Spec.post { raw := \"abc\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 12.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-item-name",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Name of the selected item; maximum 50 character alphabetic string",
+      "text_predicate": "Data constraint DD-item-name: field `Item name` (Name of the selected item; maximum 50 character alphabetic string).\nConstraints:\n- max_length: 50\n- charset: alphabetic\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.raw.length ≤ 50) ∧\n    i.raw.toList.all (·.isAlpha) = true\n\nexample : Spec.pre { raw := \"ItemName\" } ∧\n          Spec.post { raw := \"ItemName\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 31.8,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { raw := \"a\" } { valid := true }` holds, but the requirement forbids this output for this input (The output should not be `valid = true` as the item name exceeds the maximum length of 50 characters.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-item-id",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "ID that uniquely identified the selected item; a 7-digit system generated alphanumeric character",
+      "text_predicate": "Data constraint DD-item-id: field `Item ID` (ID that uniquely identified the selected item; a 7-digit system generated alphanumeric character).\nConstraints:\n- exact_length: 7\n- charset: alphanumeric\n- unique: True\n- generated_by: system\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.raw.length = 7) ∧\n    i.raw.toList.all (·.isAlphanum) = true\n\nexample : Spec.pre { raw := \"A1B2C3D\" } ∧\n          Spec.post { raw := \"A1B2C3D\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"abc123\" } ∧ ¬ Spec.post { raw := \"abc123\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-price",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Cost of a single unit of the selected item; in dollars and cents.",
+      "text_predicate": "Data constraint DD-price: field `Price` (Cost of a single unit of the selected item; in dollars and cents.).\nConstraints:\n- type: money\n- precision: cents\nThis field holds a NUMBER: `Input` is `value : Nat` (money in cents, e.g. $12.34 = 1234), `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when the bounds on `i.value` hold. Do not use a `String`.",
+      "lean_predicate": "structure Input where\n  value : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔ 0 ≤ i.value ∧ i.value ≤ 999999\n\nexample : Spec.pre { value := 1234 } ∧\n          Spec.post { value := 1234 }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { value := 1000000 } ∧ ¬ Spec.post { value := 1000000 } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-text-description",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "special description of the selected item; maximum 100 alphabetic characters",
+      "text_predicate": "Data constraint DD-text-description: field `Text description` (special description of the selected item; maximum 100 alphabetic characters).\nConstraints:\n- max_length: 100\n- charset: alphabetic\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (1 ≤ i.raw.length ∧ i.raw.length ≤ 100 ∧\n     i.raw.toList.all (·.isAlpha) = true)\n\nexample : Spec.pre { raw := \"shortdesc\" } ∧\n          Spec.post { raw := \"shortdesc\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { raw := \"a\"repeat 101 } ∧ ¬ Spec.post { raw := \"a\"repeat 101 } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-shipping-price",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Cost for shipping the item to its destination; in dollars and cents",
+      "text_predicate": "Data constraint DD-shipping-price: field `Shipping price` (Cost for shipping the item to its destination; in dollars and cents).\nConstraints:\n- type: money\n- precision: cents\nThis field holds a NUMBER: `Input` is `value : Nat` (money in cents, e.g. $12.34 = 1234), `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when the bounds on `i.value` hold. Do not use a `String`.",
+      "lean_predicate": "structure Input where\n  value : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔ 0 ≤ i.value ∧ i.value ≤ 9999\n\nexample : Spec.pre { value := 500 } ∧\n          Spec.post { value := 500 } { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { value := 10000 } ∧ ¬ Spec.post { value := 10000 } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-quantity",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "the number of units of each selected item that the customer is ordering; default = 1; maximum = quantity presently in inventory",
+      "text_predicate": "Data constraint DD-quantity: field `Quantity` (the number of units of each selected item that the customer is ordering; default = 1; maximum = quantity presently in inventory).\nConstraints:\n- default: 1\n- max_ref: quantity presently in inventory\nThis field holds a NUMBER: `Input` is `value : Nat`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when the bounds on `i.value` hold. Do not use a `String`.",
+      "lean_predicate": "structure Input where\n  value : Nat\n  max_ref : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔ 1 ≤ i.value ∧ i.value ≤ i.max_ref\n\nexample : Spec.pre { value := 5, max_ref := 10 } ∧\n          Spec.post { value := 5, max_ref := 10 } { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { value := 0, max_ref := 10 } ∧ ¬ Spec.post { value := 0, max_ref := 10 } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 11.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-total",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Cost of a single unit of the selected item Number of units of that item selected; in dollars and cents",
+      "text_predicate": "Data constraint DD-total: field `Total` (Cost of a single unit of the selected item Number of units of that item selected; in dollars and cents).\nConstraints:\n- type: money\n- precision: cents\nThis field holds a NUMBER: `Input` is `value : Nat` (money in cents, e.g. $12.34 = 1234), `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when the bounds on `i.value` hold. Do not use a `String`.",
+      "lean_predicate": "structure Input where\n  value : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔ 0 ≤ i.value ∧ i.value ≤ 9999\n\nexample : Spec.pre { value := 1234 } ∧\n          Spec.post { value := 1234 }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { value := 10000 } ∧ ¬ Spec.post { value := 10000 } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-name",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Name of the customer; maximum 100 alphabetic characters",
+      "text_predicate": "Data constraint DD-name: field `Name` (Name of the customer; maximum 100 alphabetic characters).\nConstraints:\n- max_length: 100\n- charset: alphabetic\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.raw.length ≤ 100) ∧\n    i.raw.toList.all (·.isAlpha) = true\n\nexample : Spec.pre { raw := \"JohnDoe\" } ∧\n          Spec.post { raw := \"JohnDoe\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"John Doe123\" } ∧ ¬ Spec.post { raw := \"John Doe123\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-city",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Name of the city for the above address; maximum 20 characters alphabetic string",
+      "text_predicate": "Data constraint DD-city: field `City` (Name of the city for the above address; maximum 20 characters alphabetic string).\nConstraints:\n- max_length: 20\n- charset: alphabetic\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (1 ≤ i.raw.length ∧ i.raw.length ≤ 20 ∧\n     i.raw.toList.all (·.isAlpha) = true)\n\nexample : Spec.pre { raw := \"Springfield\" } ∧\n          Spec.post { raw := \"Springfield\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 34.8,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { raw := \"A\" } { valid := true }` holds, but the requirement forbids this output for this input (The output should be false because the city name exceeds the maximum length of 20 characters.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-state",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Name of the state for the above city; maximum 20 characters alphabetic string",
+      "text_predicate": "Data constraint DD-state: field `State` (Name of the state for the above city; maximum 20 characters alphabetic string).\nConstraints:\n- max_length: 20\n- charset: alphabetic\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (1 ≤ i.raw.length ∧ i.raw.length ≤ 20 ∧\n     i.raw.toList.all (·.isAlpha) = true)\n\nexample : Spec.pre { raw := \"DD-state\" } ∧ Spec.post { raw := \"DD-state\" } { valid := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { raw := \"a\"repeat 21 } ∧ ¬ Spec.post { raw := \"a\"repeat 21 } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 13.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-zip-code",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "The postal code of the above address; 5 digit numeric string",
+      "text_predicate": "Data constraint DD-zip-code: field `Zip code` (The postal code of the above address; 5 digit numeric string).\nConstraints:\n- exact_length: 5\n- charset: numeric\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.raw.length = 5) ∧\n    (i.raw.toList.all (·.isDigit) = true)\n\nexample : Spec.pre { raw := \"12345\" } ∧\n          Spec.post { raw := \"12345\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"1234\" } ∧ ¬ Spec.post { raw := \"1234\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-e-mail-id",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "E-mail address of the customer who is using the Web order system; 50 characters alphanumeric",
+      "text_predicate": "Data constraint DD-e-mail-id: field `E-mail ID` (E-mail address of the customer who is using the Web order system; 50 characters alphanumeric).\nConstraints:\n- exact_length: 50\n- charset: alphanumeric\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    i.raw.length = 50 ∧\n    i.raw.toList.all Char.isAlphanum = true\n\nexample : Spec.pre { raw := \"aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890\" } ∧ Spec.post { raw := \"aBcDeFgHiJkLmNoPqRsTuVwXyZ1234567890\" } { valid := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"a\" } ∧ ¬ Spec.post { raw := \"a\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 21.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-credit-card-no",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Credit card number of the customer; 16 digit numeric string",
+      "text_predicate": "Data constraint DD-credit-card-no: field `Credit Card No.` (Credit card number of the customer; 16 digit numeric string).\nConstraints:\n- exact_length: 16\n- charset: numeric\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.raw.length = 16) ∧\n    (i.raw.toList.all (·.isDigit) = true)\n\nexample : Spec.pre { raw := \"1234567890123456\" } ∧\n          Spec.post { raw := \"1234567890123456\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"123456789012345\" } ∧ ¬ Spec.post { raw := \"123456789012345\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-credit-card-expiry-date",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "The date on the credit card when it will get expired; format MM/YY",
+      "text_predicate": "Data constraint DD-credit-card-expiry-date: field `Credit card expiry date` (The date on the credit card when it will get expired; format MM/YY).\nConstraints:\n- format: MM/YY\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.raw.length = 5 ∧\n     (i.raw.toList.take 2).all (·.isDigit) = true ∧\n     ((i.raw.toList.drop 2).take 2).all (·.isDigit) = true)\n\nexample : Spec.pre { raw := \"12/23\" } ∧ Spec.post { raw := \"12/23\" } { valid := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"1X/2Y\" } ∧ ¬ Spec.post { raw := \"1X/2Y\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 18.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": [
+            "parenthesized a call before `.method` (e.g. `(xs.take 2).all`)"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [
+            "parenthesized a call before `.method` (e.g. `(xs.take 2).all`)"
+          ],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "rejects a valid value \"11/11\" (matches the format MM/YY)"
+        ]
+      }
+    },
+    {
+      "id": "DD-order-no",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Unique confirmation number of the order to the customer; 9 characters alphanumeric",
+      "text_predicate": "Data constraint DD-order-no: field `Order No` (Unique confirmation number of the order to the customer; 9 characters alphanumeric).\nConstraints:\n- exact_length: 9\n- charset: alphanumeric\n- unique: True\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.raw.length = 9) ∧\n    i.raw.toList.all Char.isAlphanum = true\n\nexample : Spec.pre { raw := \"A1B2C3D4E\" } ∧\n          Spec.post { raw := \"A1B2C3D4E\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 28.5,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { raw := \"abc123def\" } { valid := true }` holds, but the requirement forbids this output for this input (The output should be false because the length is not 9 characters). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-tracking-no",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Number to track the order; 20 characters alphanumeric",
+      "text_predicate": "Data constraint DD-tracking-no: field `Tracking No.` (Number to track the order; 20 characters alphanumeric).\nConstraints:\n- exact_length: 20\n- charset: alphanumeric\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    i.raw.length = 20 ∧\n    i.raw.toList.all Char.isAlphanum = true\n\nexample : Spec.pre { raw := \"A1B2C3D4E5F6G7H8I9J0\" } ∧\n          Spec.post { raw := \"A1B2C3D4E5F6G7H8I9J0\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { raw := \"A1B2C3D4E5F6G7H8\" } ∧ ¬ Spec.post { raw := \"A1B2C3D4E5F6G7H8\" } { valid := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 13.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-shipping-date",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Date when the specified order is shipped; format MM/DD/YYYY",
+      "text_predicate": "Data constraint DD-shipping-date: field `Shipping date` (Date when the specified order is shipped; format MM/DD/YYYY).\nConstraints:\n- format: MM/DD/YYYY\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Input where\n  raw : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.raw.length = 10 ∧\n     i.raw.toList.drop 0 (.take 2).all Char.isDigit = true ∧\n     i.raw.toList.drop 2 .take 1 = '/' ∧\n     i.raw.toList.drop 3 (.take 2).all Char.isDigit = true ∧\n     i.raw.toList.drop 5 .take 1 = '/' ∧\n     i.raw.toList.drop 6 (.take 4).all Char.isDigit = true)\n\nexample : Spec.pre { raw := \"12/34/5678\" } ∧\n          Spec.post { raw := \"12/34/5678\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 30.1,
+      "error": "<generated>:16:5: error: Function expected at\n  List.drop 0 i.raw.toList\nbut this term has type\n  List Char\n\nNote: Expected a function because this term is being applied to the argument\n  (.take 2).all\n<generated>:17:5: error: Function expected at\n  List.drop 2 i.raw.toList\nbut this term has type\n  List Char\n\nNote: Expected a function because this term is being applied to the argument\n  .take\n<generated>:18:5: error: Function expected at\n  List.drop 3 i.raw.toList\nbut this term has type\n  List Char\n\nNote: Expected a function because this term is being applied to the argument\n  (.take 2).all\n<generated>:19:5: error: Function expected at\n  List.drop 5 i.raw.toList\nbut this term has type\n  List Char\n\nNote: Expected a function because this term is being applied to the argument\n  .take\n<generated>:20:5: error: Function expected at\n  List.drop 6 i.raw.toList\nbut this term has type\n  List Char\n\nNote: Expected a function because this term is being applied to the argument\n  (.take 4).all\n<generated>:22:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": [
+            "parenthesized a call before `.method` (e.g. `(xs.take 2).all`)"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": [
+            "parenthesized a call before `.method` (e.g. `(xs.take 2).all`)"
+          ]
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "DD-location",
+      "kind": "data_constraint",
+      "verification": "lean",
+      "requirement_text": "Place where the item is kept in the warehouse in the form of (aisle, column, shelf)",
+      "text_predicate": "Data constraint DD-location: field `Location` (Place where the item is kept in the warehouse in the form of (aisle, column, shelf)).\nConstraints:\n- tuple_fields: ['aisle', 'column', 'shelf']\nFollow the text data-field template: `Input` is `raw : String`, `Output` has `valid : Bool`, and `post` says `o.valid = true` exactly when every constraint holds.",
+      "lean_predicate": "structure Account where\n  username : String\n  password : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  accounts : List Account\n  username : String\n  password : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\"\n  post := fun i o => o.signedIn = true ↔\n    ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password\n\nexample : Spec.pre { accounts := [{ username := \"sam\", password := \"pw1\" }],\n                     username := \"sam\", password := \"pw1\" } ∧\n          Spec.post { accounts := [{ username := \"sam\", password := \"pw1\" }],\n                      username := \"sam\", password := \"pw1\" }\n                    { signedIn := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { accounts := [{ username := \"user1\", password := \"pass1\" }], username := \"user1\", password := \"pass2\" } ∧ ¬ Spec.post { accounts := [{ username := \"user1\", password := \"pass1\" }], username := \"user1\", password := \"pass2\" } { signedIn := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 3,
+      "seconds": 458.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "weakened",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "data tests skipped: `Input` is not one `String` field and `Output` one `Bool` field"
+        ]
+      }
+    },
+    {
+      "id": "UC-customer-register-customer",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Register Customer: Register a new customer account with the system.",
+      "text_predicate": "Use case UC-customer-register-customer: Register Customer. Goal: Register a new customer account with the system.\nState-changing steps:\n  4. [system] System validates the customer's information.\n  5. [system] System creates a new account for the Customer.\n  6. [system] System creates a session cookie.\nAlternative flow A:\n  1. [system] System recognizes Customer's cookie.\n  2. [system] Go to Step 7 (Basic Scenario). (continues at end)\nPostconditions:\n  - The Customer registers and creates a new customer account with the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Customer where\n  name : String\n  email : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  name  : String\n  email : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  registered : Bool\n  cookie     : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.name ≠ \"\" ∧ i.email ≠ \"\"\n  post := fun i o => o.registered = true ∧\n                     (o.cookie ≠ \"\" ↔ i.email.contains \"@\")\n\nexample : Spec.pre { name := \"John Doe\", email := \"johndoe@example.com\" } ∧\n          Spec.post { name := \"John Doe\", email := \"johndoe@example.com\" }\n                    { registered := true, cookie := \"abc123\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 29.4,
+      "error": "<generated>:27:15: error: Tactic `decide` failed for proposition\n  { pre := fun i => i.name ≠ \"\" ∧ i.email ≠ \"\",\n          post := fun i o => o.registered = true ∧ (o.cookie ≠ \"\" ↔ i.email.contains \"@\" = true) }.pre\n      { name := \"John Doe\", email := \"johndoe@example.com\" } ∧\n    { pre := fun i => i.name ≠ \"\" ∧ i.email ≠ \"\",\n          post := fun i o => o.registered = true ∧ (o.cookie ≠ \"\" ↔ i.email.contains \"@\" = true) }.post\n      { name := \"John Doe\", email := \"johndoe@example.com\" } { registered := true, cookie := \"abc123\" }\nbecause its `Decidable` instance\n  instDecidableAnd\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `instDecidableAnd`, `instDecidableEqBool`, `instDecidableEqList`, `instDecidableEqString`, `instDecidableIff`, `instDecidableNot`, `instDecidableOr`, `Bool.decEq`, `Classical.propDecidable`, `Nat.decLe`, `Nat.decLt`, and `String.decEq`, reduction got stuck at the `Decidable` instance\n  match { name := \"John Doe\", email := \"johndoe@example.com\" }.email.contains \"@\", true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-customer-login-customer",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Login Customer: Login to a customer account with the system.",
+      "text_predicate": "Use case UC-customer-login-customer: Login Customer. Goal: Login to a customer account with the system.\nPreconditions (`pre` must state these; it must not be `True`):\n  - Customer account must already be registered.\nState-changing steps:\n  3. [system] System verifies the information.\n  4. [system] System creates session cookie.\nAlternative flow A:\n  1. [system] System recognizes the Customer's cookie\n  2. [system] Go to Step 5 (Basic Scenario). (continues at end)\nAlternative flow B:\n  1. [user] Customer enters incorrect login information.\n  3. [user] Customer confirms.\n  4. [system] System sends an email to the registered email address.\n  5. [system] Go to Step 1 (Basic Scenario). (continues at 3)\nPostconditions:\n  - The Customer is logged into the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Account where\n  username : String\n  password : String\n  email    : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  accounts : List Account\n  username : String\n  password : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\" ∧\n                  ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password\n  post := fun i o => o.signedIn = true ∧\n                     (o.signedIn = true ↔\n                      ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password)\n\nexample : Spec.pre { accounts := [{ username := \"john\", password := \"pass123\", email := \"john@example.com\" }],\n                     username := \"john\", password := \"pass123\" } ∧\n          Spec.post { accounts := [{ username := \"john\", password := \"pass123\", email := \"john@example.com\" }],\n                      username := \"john\", password := \"pass123\" }\n                    { signedIn := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 47.0,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { accounts := [{ username := \"test\", password := \"wrong\", email := \"test@example.com\" }], username := \"test\", password := \"wrong\" } { signedIn := true }` holds, but the requirement forbids this output for this input (The system should not allow the customer to be signed in with incorrect credentials.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-customer-edit-customer-details",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Edit Customer Details: Edit the customer account details.",
+      "text_predicate": "Use case UC-customer-edit-customer-details: Edit Customer Details. Goal: Edit the customer account details.\nPreconditions (`pre` must state these; it must not be `True`):\n  - Customer must be logged-in on the system.\nState-changing steps:\n  4. [system] System verifies the changes.\n  5. [system] System stores new account information.\nPostconditions:\n  - The Customer has changed the account details.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Input where\n  signedIn : Bool\n  details  : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  details  : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.signedIn = true\n  post := fun i o => o.signedIn = i.signedIn ∧ o.details = \"new details\" ∧\n                     (o.signedIn = true → i.details ≠ o.details)\n\nexample : Spec.pre { signedIn := true, details := \"old details\" } ∧\n          Spec.post { signedIn := true, details := \"old details\" }\n                    { signedIn := true, details := \"new details\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { signedIn := true, details := \"old details\" } ∧ ¬ Spec.post { signedIn := true, details := \"old details\" } { signedIn := true, details := \"old details\" } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-customer-logout-customer",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Logout Customer: Logout the customer account on the system.",
+      "text_predicate": "Use case UC-customer-logout-customer: Logout Customer. Goal: Logout the customer account on the system.\nPreconditions (`pre` must state these; it must not be `True`):\n  - Customer must be logged-in on the system.\nState-changing steps:\n  2. [system] System terminates the session cookie.\nPostconditions:\n  - The Customer is logged out of the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Input where\n  signedIn : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.signedIn = true\n  post := fun i o => o.signedIn = false\n\nexample : Spec.pre { signedIn := true } ∧\n          Spec.post { signedIn := true }\n                    { signedIn := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { signedIn := true } ∧ ¬ Spec.post { signedIn := true } { signedIn := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 6.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-customer-add-item-to-cart",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Add Item To Cart: Customer adds item(s) in the cart",
+      "text_predicate": "Use case UC-customer-add-item-to-cart: Add Item To Cart. Goal: Customer adds item(s) in the cart\nPreconditions (`pre` must state these; it must not be `True`):\n  - The customer must be logged-in on the system.\nState-changing steps:\n  2. [system] System adds the item(s) to the cart.\n  4. [user] Customer confirms the items in the cart.\n  5. [system] System stores cookie with cart details.\nAlternative flow A:\n  1. [user] Customer terminates the web browser window after adding item(s) to cart.\n  3. [system] System recognizes cookie and goes to step 6 (Basic Scenario) with existing items in cart. (continues at end)\nPostconditions:\n  - The Customer has added item(s) to the shopping cart.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Input where\n  signedIn : Bool\n  items    : List String\n  cookie   : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  items    : List String\n  cookie   : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.signedIn = true\n  post := fun i o => o.signedIn = i.signedIn ∧\n                     o.items = i.items ∧\n                     o.cookie ≠ \"\"\n\nexample : Spec.pre { signedIn := true, items := [\"item1\", \"item2\"], cookie := \"cart123\" } ∧\n          Spec.post { signedIn := true, items := [\"item1\", \"item2\"], cookie := \"cart123\" }\n                    { signedIn := true, items := [\"item1\", \"item2\"], cookie := \"cart123\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { signedIn := true, items := [\"item1\"], cookie := \"cookie_value\" } ∧ ¬ Spec.post { signedIn := true, items := [\"item1\"], cookie := \"cookie_value\" } { signedIn := true, items := [\"item1\"], cookie := \"\" } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 23.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-customer-checkout-an-order",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Checkout An Order: Customer places and confirms an order for the checkout process.",
+      "text_predicate": "Use case UC-customer-checkout-an-order: Checkout An Order. Goal: Customer places and confirms an order for the checkout process.\nPreconditions (`pre` must state these; it must not be `True`):\n  - Customer must be logged-in on the system.\n  - Customer must have item(s) in the shopping cart.\nState-changing steps:\n  2. [system] System calculates order of items in the shopping cart.\n  3. [system] System appends cookie with flag for checkout process.\n  5. [user] Customer confirms account details and payment methods.\n  6. [user] Customer confirms order.\n  7. [system] System stores order confirmation and order details.\n  8. [system] System sends email confirmation to the Customer.\n  9. [system] System appends cookie with flag for completed checkout process.\nAlternative flow A:\n  1. [user] Customer terminates order web browser during order the checkout process.\n  3. [system] System recognizes cookie and goes to step 4 (Basic Scenario). (continues at 5)\nPostconditions:\n  - The Customer has placed and confirmed an order.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Input where\n  signedIn : Bool\n  itemsInCart : List String\n  cookie : Option String\n  terminating : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  cookie : Option String\n  emailSent : Bool\n  orderConfirmed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.signedIn = true ∧ i.itemsInCart.Nodup ∧ i.cookie = none ∧ ¬i.terminating\n  post := fun i o => (o.orderConfirmed = true ↔ ¬i.terminating) ∧\n                     o.signedIn = i.signedIn ∧\n                     o.cookie = some \"checkout\" ∧\n                     o.emailSent = true\n\nexample : Spec.pre { signedIn := true, itemsInCart := [\"item1\"], cookie := none, terminating := false } ∧ Spec.post { signedIn := true, itemsInCart := [\"item1\"], cookie := none, terminating := false } { signedIn := true, cookie := some \"checkout\", emailSent := true, orderConfirmed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { signedIn := true, itemsInCart := [\"item1\"], cookie := none, terminating := false } ∧ ¬ Spec.post { signedIn := true, itemsInCart := [\"item1\"], cookie := none, terminating := false } { signedIn := true, cookie := some \"checkout\", emailSent := true, orderConfirmed := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 5,
+      "seconds": 51.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-administrator-login-administrator",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Login Administrator: Login to an Administrator account with the system.",
+      "text_predicate": "Use case UC-administrator-login-administrator: Login Administrator. Goal: Login to an Administrator account with the system.\nPreconditions (`pre` must state these; it must not be `True`):\n  - Administrator account must already be registered.\nState-changing steps:\n  3. [system] System verifies information.\n  4. [system] System creates session cookie.\nAlternative flow A:\n  1. [system] System recognizes Administrator 's cookie\n  2. [system] Go to Step 5 (Basic Scenario). (continues at end)\nAlternative flow B:\n  1. [user] Administrator enters incorrect login information.\n  3. [user] Administrator confirms.\n  4. [system] System sends email to registered email address.\n  5. [system] Go to Step 1 (Basic Scenario). (continues at 3)\nPostconditions:\n  - The Administrator is logged into the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Input where\n  username : String\n  password : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  cookie   : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\"\n  post := fun i o => o.signedIn = true ∧\n                     (o.cookie ≠ \"\" ↔ i.username = \"admin\" ∧ i.password = \"admin123\")\n\nexample : Spec.pre { username := \"admin\", password := \"admin123\" } ∧\n          Spec.post { username := \"admin\", password := \"admin123\" }\n                    { signedIn := true, cookie := \"abc123\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { username := \"admin\", password := \"wrongpassword\" } ∧ ¬ Spec.post { username := \"admin\", password := \"wrongpassword\" } { signedIn := true, cookie := \"invalidcookie\" } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 12.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-administrator-logout-administrator",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Logout Administrator: Logout the Administrator account on the system.",
+      "text_predicate": "Use case UC-administrator-logout-administrator: Logout Administrator. Goal: Logout the Administrator account on the system.\nPreconditions (`pre` must state these; it must not be `True`):\n  - Administrator must be logged-in on the system.\nState-changing steps:\n  2. [system] System terminates the session cookie.\nPostconditions:\n  - The Administrator is logged out of the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Session where\n  cookie : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  signedIn : Bool\n  cookie   : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  cookie   : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.signedIn = true\n  post := fun i o => (o.signedIn = false ↔ i.signedIn = true) ∧\n                     (o.cookie ≠ i.cookie ↔ i.signedIn = true)\n\nexample : Spec.pre { signedIn := true, cookie := \"abc123\" } ∧\n          Spec.post { signedIn := true, cookie := \"abc123\" }\n                    { signedIn := false, cookie := \"def456\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { signedIn := true, cookie := \"abc123\" } ∧ ¬ Spec.post { signedIn := true, cookie := \"abc123\" } { signedIn := true, cookie := \"abc123\" } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 2,
+      "seconds": 18.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-administrator-add-user",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Add User: Register a new customer, sales person, or administrator account with the system",
+      "text_predicate": "Use case UC-administrator-add-user: Add User. Goal: Register a new customer, sales person, or administrator account with the system\nState-changing steps:\n  3. [system] System validates new user information.\n  4. [system] System creates a new account for the new user with desired privileges.\nPostconditions:\n  - A new customer account is created within the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Account where\n  username : String\n  password : String\n  role     : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  username : String\n  password : String\n  role     : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  username : String\n  password : String\n  role     : String\n  accountCreated : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\" ∧\n                  (i.role = \"customer\" ∨ i.role = \"sales person\" ∨ i.role = \"administrator\")\n  post := fun i o => o.accountCreated = true ∧\n                     o.username = i.username ∧\n                     o.password = i.password ∧\n                     o.role = i.role\n\nexample : Spec.pre { username := \"newuser\", password := \"pass123\", role := \"customer\" } ∧\n          Spec.post { username := \"newuser\", password := \"pass123\", role := \"customer\" }\n                    { accountCreated := true, username := \"newuser\", password := \"pass123\", role := \"customer\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { username := \"newuser\", password := \"pass123\", role := \"customer\" } ∧ ¬ Spec.post { username := \"newuser\", password := \"pass123\", role := \"customer\" } { username := \"newuser\", password := \"pass123\", role := \"customer\", accountCreated := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-administrator-remove-user",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Remove User: Remove a user from the system.",
+      "text_predicate": "Use case UC-administrator-remove-user: Remove User. Goal: Remove a user from the system.\nState-changing steps:\n  4. [system] System confirms deletion of selected user.\nPostconditions:\n  - An account has been deleted within the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure User where\n  username : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  users : List User\n  selectedUsername : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  users : List User\n  deleted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.selectedUsername ≠ \"\"\n  post := fun i o => o.deleted = true ∧\n                     o.users = i.users.filter (·.username ≠ i.selectedUsername)\n\nexample : Spec.pre { users := [{ username := \"alice\" }, { username := \"bob\" }],\n                     selectedUsername := \"bob\" } ∧\n          Spec.post { users := [{ username := \"alice\" }, { username := \"bob\" }],\n                      selectedUsername := \"bob\" }\n                    { users := [{ username := \"alice\" }], deleted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { users := [{ username := \"john\" }, { username := \"jane\" }], selectedUsername := \"john\" } ∧ ¬ Spec.post { users := [{ username := \"john\" }, { username := \"jane\" }], selectedUsername := \"john\" } { users := [{ username := \"john\" }, { username := \"jane\" }], deleted := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-administrator-change-user-properties",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Change User Properties: Alter properties such as passwords and privileges of the user.",
+      "text_predicate": "Use case UC-administrator-change-user-properties: Change User Properties. Goal: Alter properties such as passwords and privileges of the user.\nState-changing steps:\n  4. [system] System alters the user properties.\nPostconditions:\n  - An account has been altered within the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure User where\n  username : String\n  password : String\n  privileges : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  users : List User\n  targetUsername : String\n  newPassword : String\n  newPrivileges : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  users : List User\n  altered : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.targetUsername ≠ \"\" ∧ i.newPassword ≠ \"\" ∧ 0 ≤ i.newPrivileges\n  post := fun i o => o.altered = true ∧\n    ∃ u ∈ i.users, u.username = i.targetUsername ∧\n    (u.password = i.newPassword ∧ u.privileges = i.newPrivileges) ∧\n    o.users.Nodup ∧\n    o.users = i.users.filter (fun u => u.username ≠ i.targetUsername) ++ [u]\n\nexample : Spec.pre { users := [{ username := \"admin\", password := \"pass1\", privileges := 10 }],\n                     targetUsername := \"admin\", newPassword := \"pass2\", newPrivileges := 20 } ∧\n          Spec.post { users := [{ username := \"admin\", password := \"pass2\", privileges := 20 }],\n                      targetUsername := \"admin\", newPassword := \"pass2\", newPrivileges := 20 }\n                    { altered := true, users := [{ username := \"admin\", password := \"pass2\", privileges := 20 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 50.0,
+      "error": "L0.5: The example gives `Spec.pre` and `Spec.post` different input records. Use exactly the same input record in both.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-administrator-install-plug-ins",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Install Plug-ins: Install a new plug-in to the application.",
+      "text_predicate": "Use case UC-administrator-install-plug-ins: Install Plug-ins. Goal: Install a new plug-in to the application.\nState-changing steps:\n  3. [system] System installs plug-in and validates changes.\nPostconditions:\n  - A new plug-in is installed in the application.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Input where\n  installedPlugIns : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  installedPlugIns : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.installedPlugIns = i.installedPlugIns ++ [\"new-plug-in\"]\n\nexample : Spec.pre { installedPlugIns := [\"plug-in1\", \"plug-in2\"] } ∧\n          Spec.post { installedPlugIns := [\"plug-in1\", \"plug-in2\"] }\n                    { installedPlugIns := [\"plug-in1\", \"plug-in2\", \"new-plug-in\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { installedPlugIns := [\"existing-plug-in1\", \"existing-plug-in2\"] } ∧ ¬ Spec.post { installedPlugIns := [\"existing-plug-in1\", \"existing-plug-in2\"] } { installedPlugIns := [\"existing-plug-in1\", \"existing-plug-in2\"] } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`: the spec assumes nothing about the input"
+        ]
+      }
+    },
+    {
+      "id": "UC-administrator-remove-plug-ins",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Remove Plug-ins: Remove a plug-in from the application.",
+      "text_predicate": "Use case UC-administrator-remove-plug-ins: Remove Plug-ins. Goal: Remove a plug-in from the application.\nState-changing steps:\n  3. [system] System removes the plug-in and validates changes.\nPostconditions:\n  - A plug-in is removed from the application.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure PlugIn where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  plugIns : List PlugIn\n  name    : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  plugIns : List PlugIn\n  removed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.name ≠ \"\" ∧ i.plugIns.any (·.name = i.name)\n  post := fun i o => o.removed = true ∧\n                     o.plugIns = i.plugIns.filter (·.name ≠ i.name)\n\nexample : Spec.pre { plugIns := [{ name := \"plugin1\" }, { name := \"plugin2\" }],\n                     name := \"plugin1\" } ∧\n          Spec.post { plugIns := [{ name := \"plugin1\" }, { name := \"plugin2\" }],\n                      name := \"plugin1\" }\n                    { plugIns := [{ name := \"plugin2\" }], removed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { plugIns := [{ name := \"PluginA\" }, { name := \"PluginB\" }], name := \"PluginA\" } ∧ ¬ Spec.post { plugIns := [{ name := \"PluginA\" }, { name := \"PluginB\" }], name := \"PluginA\" } { plugIns := [{ name := \"PluginA\" }, { name := \"PluginB\" }], removed := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-administrator-manage-plug-in-options",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Manage Plug-in Options: Make changes to an installed plug-in.",
+      "text_predicate": "Use case UC-administrator-manage-plug-in-options: Manage Plug-in Options. Goal: Make changes to an installed plug-in.\nState-changing steps:\n  4. [system] System confirms changes with the Administrator.\nPostconditions:\n  - A plug-in's options have successfully been changed.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure PlugInOption where\n  name : String\n  value : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  adminConfirmed : Bool\n  plugInOptions : List PlugInOption\n  deriving DecidableEq, Repr\n\nstructure Output where\n  adminConfirmed : Bool\n  plugInOptions : List PlugInOption\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.adminConfirmed = true\n  post := fun i o => o.adminConfirmed = i.adminConfirmed ∧\n                     o.plugInOptions = i.plugInOptions.map (fun opt => \n                       { name := opt.name, value := \"new_value\" })\n\nexample : Spec.pre { adminConfirmed := true, plugInOptions := [{ name := \"opt1\", value := \"old_value\" }] } ∧\n          Spec.post { adminConfirmed := true, plugInOptions := [{ name := \"opt1\", value := \"new_value\" }] }\n                    { adminConfirmed := true, plugInOptions := [{ name := \"opt1\", value := \"new_value\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 36.1,
+      "error": "L0.5: The example gives `Spec.pre` and `Spec.post` different input records. Use exactly the same input record in both.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-administrator-install-patch-process",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Install patch process: Install patches or software updates to the web store.",
+      "text_predicate": "Use case UC-administrator-install-patch-process: Install patch process. Goal: Install patches or software updates to the web store.\nState-changing steps:\n  3. [system] System automatically installs patches and reinitializes software.\n  4. [system] System confirms that patch has been successfully installed.\nPostconditions:\n  - The web store was successfully updated.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Input where\n  version : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  version : String\n  success : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.version ≠ \"\"\n  post := fun i o => o.success = true ∧ o.version = i.version\n\nexample : Spec.pre { version := \"1.2.3\" } ∧\n          Spec.post { version := \"1.2.3\" } { success := true, version := \"1.2.3\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { version := \"1.0.0\" } ∧ ¬ Spec.post { version := \"1.0.0\" } { version := \"1.0.1\", success := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 4,
+      "seconds": 21.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-sales-person-login-sales-person",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Login Sales Person: Login to an account with the system.",
+      "text_predicate": "Use case UC-sales-person-login-sales-person: Login Sales Person. Goal: Login to an account with the system.\nPreconditions (`pre` must state these; it must not be `True`):\n  - Sales Person account must already be registered.\nState-changing steps:\n  3. [system] System verifies the information.\n  4. [system] System creates session cookie.\nAlternative flow A:\n  1. [system] System recognizes Sales Person's cookie\n  2. [system] Go to Step 5 (Basic Scenario). (continues at end)\nAlternative flow B:\n  1. [user] Sales Person enters incorrect login information.\n  3. [user] Sales Person confirms.\n  4. [system] System sends email to registered email address.\n  5. [system] Go to Step 1 (Basic Scenario). (continues at 3)\nPostconditions:\n  - The Sales Person is logged into the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Account where\n  username : String\n  password : String\n  email    : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  accounts : List Account\n  username : String\n  password : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  cookie   : Option String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.accounts.Nodup ∧\n                 ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password\n  post := fun i o => o.signedIn = true ∧\n                     (o.cookie = some \"session-cookie\" ↔\n                      ∃ a ∈ i.accounts, a.username = i.username ∧ a.password = i.password)\n\nexample : Spec.pre { accounts := [{ username := \"john\", password := \"pass1\", email := \"john@example.com\" }],\n                     username := \"john\", password := \"pass1\" } ∧\n          Spec.post { accounts := [{ username := \"john\", password := \"pass1\", email := \"john@example.com\" }],\n                      username := \"john\", password := \"pass1\" }\n                    { signedIn := true, cookie := some \"session-cookie\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "checked": false,
+      "attempts": 5,
+      "seconds": 56.9,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { accounts := [{ username := \"john\", password := \"wrong\", email := \"john@example.com\" }], username := \"john\", password := \"wrong\" } { signedIn := true, cookie := some \"session-cookie\" }` holds, but the requirement forbids this output for this input (The system should not sign in the user if the password is incorrect). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-sales-person-logout-sales-person",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Logout Sales Person: Logout the Sales Person account on the system.",
+      "text_predicate": "Use case UC-sales-person-logout-sales-person: Logout Sales Person. Goal: Logout the Sales Person account on the system.\nPreconditions (`pre` must state these; it must not be `True`):\n  - Sales Person must be logged-in on the system.\nState-changing steps:\n  2. [system] System terminates the session cookie.\nPostconditions:\n  - The Sales Person is logged out of the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Session where\n  cookie : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  signedIn : Bool\n  cookie   : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signedIn : Bool\n  cookie   : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.signedIn = true\n  post := fun i o => o.signedIn = false ∧ o.cookie = i.cookie\n\nexample : Spec.pre { signedIn := true, cookie := \"abc123\" } ∧\n          Spec.post { signedIn := true, cookie := \"abc123\" }\n                    { signedIn := false, cookie := \"abc123\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { signedIn := true, cookie := \"abc123\" } ∧ ¬ Spec.post { signedIn := true, cookie := \"abc123\" } { signedIn := true, cookie := \"abc123\" } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-sales-person-add-product",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Add Product: Add a product to the system.",
+      "text_predicate": "Use case UC-sales-person-add-product: Add Product. Goal: Add a product to the system.\nState-changing steps:\n  3. [system] System validates the new product information.\n  4. [system] System creates a new product page for the new product.\nPostconditions:\n  - A new product is created within the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Product where\n  name : String\n  price : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  products : List Product\n  newProduct : Product\n  deriving DecidableEq, Repr\n\nstructure Output where\n  products : List Product\n  newProductPageCreated : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.newProduct.name ≠ \"\" ∧ i.newProduct.price ≠ 0\n  post := fun i o => o.products = i.products ++ [i.newProduct] ∧\n                     o.newProductPageCreated = true\n\nexample : Spec.pre { products := [{ name := \"Laptop\", price := 1000 }],\n                     newProduct := { name := \"Mouse\", price := 50 } } ∧\n          Spec.post { products := [{ name := \"Laptop\", price := 1000 }],\n                      newProduct := { name := \"Mouse\", price := 50 } }\n                    { products := [{ name := \"Laptop\", price := 1000 },\n                                   { name := \"Mouse\", price := 50 }],\n                      newProductPageCreated := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { products := [], newProduct := { name := \"Test Product\", price := 100 } } ∧ ¬ Spec.post { products := [], newProduct := { name := \"Test Product\", price := 100 } } { products := [{ name := \"Test Product\", price := 100 }], newProductPageCreated := false } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-sales-person-remove-product",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Remove Product: Remove a product from the system.",
+      "text_predicate": "Use case UC-sales-person-remove-product: Remove Product. Goal: Remove a product from the system.\nState-changing steps:\n  3. [system] System validates the product information.\n  4. [system] System removes the product page and product information from the system.\nPostconditions:\n  - A product is deleted from the system.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Product where\n  name : String\n  price : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  products : List Product\n  nameToRemove : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  products : List Product\n  removed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.nameToRemove ≠ \"\"\n  post := fun i o => o.removed = true ∧\n                     o.products = i.products.filter (fun p => p.name ≠ i.nameToRemove)\n\nexample : Spec.pre { products := [{ name := \"Laptop\", price := 1000 },\n                                   { name := \"Mouse\", price := 50 }],\n                     nameToRemove := \"Laptop\" } ∧\n          Spec.post { products := [{ name := \"Laptop\", price := 1000 },\n                                   { name := \"Mouse\", price := 50 }],\n                      nameToRemove := \"Laptop\" }\n                    { products := [{ name := \"Mouse\", price := 50 }],\n                      removed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { products := [{ name := \"Laptop\", price := 1000 }, { name := \"Mouse\", price := 20 }], nameToRemove := \"Laptop\" } ∧ ¬ Spec.post { products := [{ name := \"Laptop\", price := 1000 }, { name := \"Mouse\", price := 20 }], nameToRemove := \"Laptop\" } { products := [{ name := \"Laptop\", price := 1000 }, { name := \"Mouse\", price := 20 }], removed := true } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "UC-sales-person-update-product-attributes",
+      "kind": "use_case",
+      "verification": "lean",
+      "requirement_text": "Update Product Attributes: Update Product attributes within the system.",
+      "text_predicate": "Use case UC-sales-person-update-product-attributes: Update Product Attributes. Goal: Update Product attributes within the system.\nState-changing steps:\n  4. [system] System validates the product information.\n  5. [system] System updates the product page and product information within the system.\nPostconditions:\n  - The product attributes have been changed.\nFollow the use-case template: `Input` is the state before, `Output` the state after; `pre` comes from the preconditions and `post` from the postconditions, consistent with the steps.",
+      "lean_predicate": "structure Product where\n  name : String\n  price : Nat\n  attributes : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  name : String\n  price : Nat\n  attributes : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  name : String\n  price : Nat\n  attributes : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.attributes ≠ \"\"\n  post := fun i o => o.attributes = i.attributes\n\nexample : Spec.pre { name := \"Laptop\", price := 1000, attributes := \"Fast, 16GB RAM\" } ∧\n          Spec.post { name := \"Laptop\", price := 1000, attributes := \"Fast, 16GB RAM\" }\n                    { name := \"Laptop\", price := 1000, attributes := \"Fast, 16GB RAM\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { name := \"Test Product\", price := 100, attributes := \"New Attribute\" } ∧ ¬ Spec.post { name := \"Test Product\", price := 100, attributes := \"New Attribute\" } { name := \"Test Product\", price := 100, attributes := \"Different Attribute\" } := by\n  unfold Spec; decide",
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 56,
+    "flag": 11,
+    "fail": 8
+  }
+}
