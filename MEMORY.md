@@ -22,7 +22,7 @@ decision someone else would need to know.
 | `harness/agents/coding_agent.py` (L2) | Written, not run. |
 | `harness/main.py` | Single entry point. Stages `parse` → `spec` → `check` (L0) → `graph` → `arch` (L1); `--until graph/arch` read the frozen L0 run and never rerun L0. L2 not wired. Auto-starts the Qwen server. |
 | `harness/reverify.py` | Not started. |
-| `benchmark/` | Empty. Waiting for `benchmark/gammaj/GammaJ_L0.lean` (hand-written gold) to extract `Domain.lean` from. |
+| `benchmark/gammaj/` | `GammaJ_L0.lean`: hand-written gold L0 (31 specs `Spec_<id>` with `_sat` witnesses, ambiguities marked), compiles. `Domain.lean`: **DRAFT, needs human review**, extracted from it (`Product`, `CartLine`, `Cart`, `Account`, `Order`, `qtyOf`, `itemCount`, `totalCost`; adds `deriving DecidableEq, Repr`). |
 | `evaluation/compare_runs.py` | Done (v10; arch mode L1-v1). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. L1 folders get the arch report. |
 | `framework/ContractForge/Strings.lean` | Done (v10), frozen. String-format helpers over `List Char`. |
 | `requirements.txt` | Not created yet. |
@@ -63,7 +63,7 @@ Second document, used to check that harness changes generalise beyond gamma j. R
 
 Branch `l1-graph-contracts`. Reads the frozen L0 run `runs/0000 - gamma j/qwen-v10.1/rep1`;
 L0, the parser and `Strings.lean` are unchanged. **No Qwen results yet**: the runs are in
-`runs/qwen-L1-v1.sbatch` (ada) and gamma j still has no `Domain.lean`.
+`runs/qwen-L1-v1.sbatch` (ada). `benchmark/gammaj/Domain.lean` is a DRAFT until reviewed.
 
 ### Design: the graph decides the proof obligations
 
@@ -110,13 +110,14 @@ they are reported and make the verdict "rejected".
 Prompt hash (`architect_agent.prompt_hash()`) and graph sha are in `arch.json` `meta`.
 
 ### Graph on gamma j (provisional)
-- Without `Domain.lean` (committed `runs/0000 - gamma j/graph/`): 36.2% fields mapped, 8 groups,
-  11 components, 5 cycles (1 merged set).
-- With a scratch domain (Product, CartLine, Cart, Account, Order; not committed): 48.8% mapped;
-  main group 52 operations → `Account` (47, merged from the Account/Order/Product/Password cycle)
-  → `Account2` (5: the sales-person product use cases + CI-1); the other groups are single
-  data-dictionary fields (L1 skips groups with < 2 compiling specs). 15 operations isolated
-  (performance specs, plug-in/patch use cases). Synonyms file: 6 entries.
+- With `benchmark/gammaj/Domain.lean` (committed `runs/0000 - gamma j/graph/`): **47.2% of fields
+  mapped (116/246), 8 groups, 9 components, 6 cycles, 1 merged set**, 184 edges (178 dataflow,
+  6 use-case). Main group 52 operations → `Account` (47, merged from the Account/Order/Product/
+  Password cycle) → `Account2` (5: the sales-person product use cases + CI-1; named after
+  account because their `name` field maps to `Account.name`, the only `name` in the domain).
+  The other 7 groups are single data-dictionary fields (L1 skips groups with < 2 compiling
+  specs). 15 operations isolated (performance specs, plug-in/patch use cases). Synonyms: 6.
+  (Without Domain.lean: 36.2% mapped; with a scratch domain: 48.8%.)
 - Real cycles exist (checkout writes an order, profile 3.1.3/S1 reads purchase history;
   checkout's precondition needs login). Unmapped fields are mostly session state (`signedIn`,
   `cookie`, `logged`) that no Domain type holds.
@@ -274,8 +275,7 @@ Report as mean (min–max): trace %, PO1 %, PO2, attempts, tool calls, failures 
 
 ## Next steps
 
-0. **L1:** add `benchmark/gammaj/GammaJ_L0.lean`, extract `Domain.lean` (DRAFT, review it),
-   rerun `--until graph`, then submit `runs/qwen-L1-v1.sbatch` on ada; compare graph vs no-graph;
+0. **L1:** review `benchmark/gammaj/Domain.lean` (then mark it REVIEWED), then submit `runs/qwen-L1-v1.sbatch` on ada; compare graph vs no-graph;
    if Qwen proves no PO2, run Gemma once (`--model gemma --run-name gemma-L1-v1`). Fill *L1 → Results*.
 
 1. Revoke the leaked Gemini key.

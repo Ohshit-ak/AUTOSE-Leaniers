@@ -9,8 +9,8 @@
     "parsed_sha": "0e9a764837ed",
     "l0_run": "runs/0000 - gamma j/qwen-v10.1/rep1",
     "l0_specs_sha": "308e94e65f69",
-    "domain": null,
-    "domain_sha": null,
+    "domain": "benchmark/gammaj/Domain.lean",
+    "domain_sha": "2c851b2813fe",
     "synonyms": "Requirements/synonyms/0000 - gamma j.json",
     "synonyms_sha": "18166396c2ce",
     "synonyms_size": 6
@@ -28,15 +28,22 @@
     {
       "term": "account",
       "names": [
-        "account"
+        "account",
+        "Account"
       ],
       "sources": [
-        "synonyms file"
+        "synonyms file",
+        "Domain.lean"
       ],
       "used": true,
       "attributes": [
+        "billing",
         "credit card",
         "e mail id",
+        "email",
+        "name",
+        "password",
+        "shipping",
         "user id"
       ]
     },
@@ -105,6 +112,31 @@
       ],
       "used": false,
       "attributes": []
+    },
+    {
+      "term": "cart",
+      "names": [
+        "Cart"
+      ],
+      "sources": [
+        "Domain.lean"
+      ],
+      "used": true,
+      "attributes": []
+    },
+    {
+      "term": "cart line",
+      "names": [
+        "CartLine"
+      ],
+      "sources": [
+        "Domain.lean"
+      ],
+      "used": false,
+      "attributes": [
+        "product",
+        "qty"
+      ]
     },
     {
       "term": "city",
@@ -286,13 +318,18 @@
     {
       "term": "order",
       "names": [
-        "order"
+        "order",
+        "Order"
       ],
       "sources": [
-        "synonyms file"
+        "synonyms file",
+        "Domain.lean"
       ],
       "used": true,
-      "attributes": []
+      "attributes": [
+        "line",
+        "total"
+      ]
     },
     {
       "term": "out stock",
@@ -363,15 +400,19 @@
     {
       "term": "product",
       "names": [
-        "product"
+        "product",
+        "Product"
       ],
       "sources": [
-        "synonyms file"
+        "synonyms file",
+        "Domain.lean"
       ],
       "used": true,
       "attributes": [
+        "id",
         "item id",
         "item name",
+        "price",
         "text description"
       ]
     },
@@ -584,7 +625,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "1.4/S3",
@@ -631,7 +672,7 @@
       "entities_written": [
         "product"
       ],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "1.4/S4",
@@ -667,7 +708,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "3.1.3/S1",
@@ -678,6 +719,22 @@
       "l05": "pass",
       "text": "Customers will be able to create accounts to store their customer profiles, configure contact information, view their purchase history, and confirm orders.",
       "reads": [
+        {
+          "field": "email",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "email"
+        },
+        {
+          "field": "name",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "name"
+        },
         {
           "field": "orderStatus",
           "type": "String",
@@ -723,21 +780,12 @@
         },
         {
           "side": "input",
-          "field": "email",
-          "type": "String"
-        },
-        {
-          "side": "input",
-          "field": "name",
-          "type": "String"
-        },
-        {
-          "side": "input",
           "field": "phone",
           "type": "String"
         }
       ],
       "entities_read": [
+        "account",
         "order"
       ],
       "entities_written": [
@@ -909,7 +957,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "3.3.3/S1",
@@ -923,10 +971,10 @@
         {
           "field": "cart",
           "type": "List Product",
-          "entity": "product",
-          "rule": "type",
+          "entity": "cart",
+          "rule": "name",
           "via": "name",
-          "term": "product"
+          "term": "cart"
         },
         {
           "field": "productToAdd",
@@ -941,21 +989,22 @@
         {
           "field": "cart",
           "type": "List Product",
-          "entity": "product",
-          "rule": "type",
+          "entity": "cart",
+          "rule": "name",
           "via": "name",
-          "term": "product"
+          "term": "cart"
         }
       ],
       "results": [],
       "unmapped": [],
       "entities_read": [
+        "cart",
         "product"
       ],
       "entities_written": [
-        "product"
+        "cart"
       ],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "3.3.3/S2",
@@ -984,20 +1033,22 @@
           "rule": "first word",
           "via": "synonym",
           "term": "item"
-        }
-      ],
-      "unmapped": [
+        },
         {
-          "side": "output",
           "field": "totalCost",
-          "type": "Nat"
+          "type": "Nat",
+          "entity": "order",
+          "rule": "first word",
+          "via": "attribute",
+          "term": "total"
         }
       ],
+      "unmapped": [],
       "entities_read": [
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "3.3.3/S3",
@@ -1011,18 +1062,18 @@
         {
           "field": "cart",
           "type": "List Product",
-          "entity": "product",
-          "rule": "type",
+          "entity": "cart",
+          "rule": "name",
           "via": "name",
-          "term": "product"
+          "term": "cart"
         },
         {
           "field": "cart",
           "type": "List Product",
-          "entity": "product",
-          "rule": "type",
+          "entity": "cart",
+          "rule": "name",
           "via": "name",
-          "term": "product",
+          "term": "cart",
           "copied": true
         }
       ],
@@ -1030,10 +1081,10 @@
       "results": [],
       "unmapped": [],
       "entities_read": [
-        "product"
+        "cart"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "3.4.3/S1",
@@ -1043,7 +1094,16 @@
       "checked": true,
       "l05": "flag",
       "text": "Customers will be able to confirm the order after checkout.",
-      "reads": [],
+      "reads": [
+        {
+          "field": "cart",
+          "type": "Cart",
+          "entity": "cart",
+          "rule": "name",
+          "via": "name",
+          "term": "cart"
+        }
+      ],
       "writes": [
         {
           "field": "order",
@@ -1055,14 +1115,10 @@
         }
       ],
       "results": [],
-      "unmapped": [
-        {
-          "side": "input",
-          "field": "cart",
-          "type": "Cart"
-        }
+      "unmapped": [],
+      "entities_read": [
+        "cart"
       ],
-      "entities_read": [],
       "entities_written": [
         "order"
       ],
@@ -1124,10 +1180,10 @@
         {
           "field": "orderId",
           "type": "Nat",
-          "entity": "order",
-          "rule": "first word",
-          "via": "name",
-          "term": "order"
+          "entity": "product",
+          "rule": "last word",
+          "via": "attribute",
+          "term": "id"
         }
       ],
       "writes": [
@@ -1149,7 +1205,7 @@
         }
       ],
       "entities_read": [
-        "order"
+        "product"
       ],
       "entities_written": [
         "order"
@@ -1203,7 +1259,7 @@
       "entities_written": [
         "product"
       ],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "5.1/R1",
@@ -1336,7 +1392,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "5.1/R6",
@@ -1670,7 +1726,7 @@
       "entities_written": [
         "product"
       ],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "5.5/R2",
@@ -1732,23 +1788,30 @@
       "checked": true,
       "l05": "pass",
       "text": "The system shall validate email address existence.",
-      "reads": [],
+      "reads": [
+        {
+          "field": "email",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "email"
+        }
+      ],
       "writes": [],
       "results": [],
       "unmapped": [
-        {
-          "side": "input",
-          "field": "email",
-          "type": "String"
-        },
         {
           "side": "output",
           "field": "exists_",
           "type": "Bool"
         }
       ],
-      "entities_read": [],
-      "entities_written": []
+      "entities_read": [
+        "account"
+      ],
+      "entities_written": [],
+      "component": "Account"
     },
     {
       "id": "CI-1",
@@ -1763,9 +1826,9 @@
           "field": "customerEmail",
           "type": "String",
           "entity": "account",
-          "rule": "first word",
-          "via": "synonym",
-          "term": "customer"
+          "rule": "last word",
+          "via": "attribute",
+          "term": "email"
         },
         {
           "field": "items",
@@ -1774,6 +1837,14 @@
           "rule": "name",
           "via": "synonym",
           "term": "item"
+        },
+        {
+          "field": "shippingAddr",
+          "type": "String",
+          "entity": "account",
+          "rule": "first word",
+          "via": "attribute",
+          "term": "shipping"
         },
         {
           "field": "trackingNum",
@@ -1785,26 +1856,24 @@
         }
       ],
       "writes": [],
-      "results": [],
-      "unmapped": [
+      "results": [
         {
-          "side": "input",
-          "field": "shippingAddr",
-          "type": "String"
-        },
-        {
-          "side": "output",
           "field": "sentEmail",
-          "type": "Bool"
+          "type": "Bool",
+          "entity": "account",
+          "rule": "last word",
+          "via": "attribute",
+          "term": "email"
         }
       ],
+      "unmapped": [],
       "entities_read": [
         "account",
         "product",
         "track"
       ],
       "entities_written": [],
-      "component": "Track"
+      "component": "Account2"
     },
     {
       "id": "CI-2",
@@ -2000,7 +2069,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "DD-item-name",
@@ -2033,7 +2102,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "DD-location",
@@ -2198,7 +2267,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "DD-quantity",
@@ -2239,7 +2308,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "DD-shipping-date",
@@ -2371,7 +2440,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "DD-total",
@@ -2404,7 +2473,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "DD-tracking-no",
@@ -2437,7 +2506,7 @@
         "track"
       ],
       "entities_written": [],
-      "component": "Track"
+      "component": "Account2"
     },
     {
       "id": "DD-user-id",
@@ -2547,7 +2616,7 @@
       "entities_written": [
         "product"
       ],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "UC-administrator-add-user",
@@ -2771,6 +2840,14 @@
       "text": "Login Administrator: Login to an Administrator account with the system.",
       "reads": [
         {
+          "field": "email",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "email"
+        },
+        {
           "field": "password",
           "type": "String",
           "entity": "password",
@@ -2782,11 +2859,6 @@
       "writes": [],
       "results": [],
       "unmapped": [
-        {
-          "side": "input",
-          "field": "email",
-          "type": "String"
-        },
         {
           "side": "input",
           "field": "failedAttempts",
@@ -2824,10 +2896,11 @@
         }
       ],
       "entities_read": [
+        "account",
         "password"
       ],
       "entities_written": [],
-      "component": "Password"
+      "component": "Account"
     },
     {
       "id": "UC-administrator-logout-administrator",
@@ -2864,7 +2937,7 @@
       ],
       "entities_read": [],
       "entities_written": [],
-      "component": "Password"
+      "component": "Account"
     },
     {
       "id": "UC-administrator-manage-plug-in-options",
@@ -2900,15 +2973,19 @@
       "checked": true,
       "l05": "pass",
       "text": "Remove Plug-ins: Remove a plug-in from the application.",
-      "reads": [],
+      "reads": [
+        {
+          "field": "name",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "name"
+        }
+      ],
       "writes": [],
       "results": [],
       "unmapped": [
-        {
-          "side": "input",
-          "field": "name",
-          "type": "String"
-        },
         {
           "side": "input",
           "field": "plugIns",
@@ -2920,8 +2997,11 @@
           "type": "List PlugIn"
         }
       ],
-      "entities_read": [],
-      "entities_written": []
+      "entities_read": [
+        "account"
+      ],
+      "entities_written": [],
+      "component": "Account"
     },
     {
       "id": "UC-administrator-remove-user",
@@ -3025,7 +3105,7 @@
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account"
     },
     {
       "id": "UC-customer-checkout-an-order",
@@ -3035,7 +3115,25 @@
       "checked": false,
       "l05": "fail",
       "text": "Checkout An Order: Customer places and confirms an order for the checkout process.",
-      "reads": [],
+      "reads": [
+        {
+          "field": "cart",
+          "type": "List String",
+          "entity": "cart",
+          "rule": "name",
+          "via": "name",
+          "term": "cart"
+        },
+        {
+          "field": "cart",
+          "type": "List String",
+          "entity": "cart",
+          "rule": "name",
+          "via": "name",
+          "term": "cart",
+          "copied": true
+        }
+      ],
       "writes": [
         {
           "field": "order",
@@ -3046,26 +3144,20 @@
           "term": "order"
         }
       ],
-      "results": [],
+      "results": [
+        {
+          "field": "emailSent",
+          "type": "Bool",
+          "entity": "account",
+          "rule": "first word",
+          "via": "attribute",
+          "term": "email"
+        }
+      ],
       "unmapped": [
         {
           "side": "input",
-          "field": "cart",
-          "type": "List String"
-        },
-        {
-          "side": "input",
           "field": "signedIn",
-          "type": "Bool"
-        },
-        {
-          "side": "output",
-          "field": "cart",
-          "type": "List String"
-        },
-        {
-          "side": "output",
-          "field": "emailSent",
           "type": "Bool"
         },
         {
@@ -3074,7 +3166,9 @@
           "type": "Bool"
         }
       ],
-      "entities_read": [],
+      "entities_read": [
+        "cart"
+      ],
       "entities_written": [
         "order"
       ],
@@ -3147,6 +3241,14 @@
           "term": "account"
         },
         {
+          "field": "email",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "email"
+        },
+        {
           "field": "password",
           "type": "String",
           "entity": "password",
@@ -3158,11 +3260,6 @@
       "writes": [],
       "results": [],
       "unmapped": [
-        {
-          "side": "input",
-          "field": "email",
-          "type": "String"
-        },
         {
           "side": "input",
           "field": "username",
@@ -3221,20 +3318,27 @@
       "checked": true,
       "l05": "pass",
       "text": "Register Customer: Register a new customer account with the system.",
-      "reads": [],
+      "reads": [
+        {
+          "field": "email",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "email"
+        },
+        {
+          "field": "name",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "name"
+        }
+      ],
       "writes": [],
       "results": [],
       "unmapped": [
-        {
-          "side": "input",
-          "field": "email",
-          "type": "String"
-        },
-        {
-          "side": "input",
-          "field": "name",
-          "type": "String"
-        },
         {
           "side": "output",
           "field": "cookie",
@@ -3246,7 +3350,9 @@
           "type": "Bool"
         }
       ],
-      "entities_read": [],
+      "entities_read": [
+        "account"
+      ],
       "entities_written": [],
       "component": "Account"
     },
@@ -3258,7 +3364,42 @@
       "checked": true,
       "l05": "pass",
       "text": "Add Product: Add a product to the system.",
-      "reads": [],
+      "reads": [
+        {
+          "field": "name",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "name"
+        },
+        {
+          "field": "price",
+          "type": "Nat",
+          "entity": "product",
+          "rule": "name",
+          "via": "attribute",
+          "term": "price"
+        },
+        {
+          "field": "name",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "name",
+          "copied": true
+        },
+        {
+          "field": "price",
+          "type": "Nat",
+          "entity": "product",
+          "rule": "name",
+          "via": "attribute",
+          "term": "price",
+          "copied": true
+        }
+      ],
       "writes": [],
       "results": [],
       "unmapped": [
@@ -3268,33 +3409,17 @@
           "type": "String"
         },
         {
-          "side": "input",
-          "field": "name",
-          "type": "String"
-        },
-        {
-          "side": "input",
-          "field": "price",
-          "type": "Nat"
-        },
-        {
           "side": "output",
           "field": "description",
           "type": "String"
-        },
-        {
-          "side": "output",
-          "field": "name",
-          "type": "String"
-        },
-        {
-          "side": "output",
-          "field": "price",
-          "type": "Nat"
         }
       ],
-      "entities_read": [],
-      "entities_written": []
+      "entities_read": [
+        "account",
+        "product"
+      ],
+      "entities_written": [],
+      "component": "Account2"
     },
     {
       "id": "UC-sales-person-login-sales-person",
@@ -3306,6 +3431,14 @@
       "text": "Login Sales Person: Login to an account with the system.",
       "reads": [
         {
+          "field": "email",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "email"
+        },
+        {
           "field": "password",
           "type": "String",
           "entity": "password",
@@ -3315,13 +3448,17 @@
         }
       ],
       "writes": [],
-      "results": [],
-      "unmapped": [
+      "results": [
         {
-          "side": "input",
-          "field": "email",
-          "type": "String"
-        },
+          "field": "emailSent",
+          "type": "Bool",
+          "entity": "account",
+          "rule": "first word",
+          "via": "attribute",
+          "term": "email"
+        }
+      ],
+      "unmapped": [
         {
           "side": "input",
           "field": "username",
@@ -3334,16 +3471,12 @@
         },
         {
           "side": "output",
-          "field": "emailSent",
-          "type": "Bool"
-        },
-        {
-          "side": "output",
           "field": "loggedIn",
           "type": "Bool"
         }
       ],
       "entities_read": [
+        "account",
         "password"
       ],
       "entities_written": [],
@@ -3395,6 +3528,22 @@
       "text": "Remove Product: Remove a product from the system.",
       "reads": [
         {
+          "field": "name",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "name"
+        },
+        {
+          "field": "price",
+          "type": "Nat",
+          "entity": "product",
+          "rule": "name",
+          "via": "attribute",
+          "term": "price"
+        },
+        {
           "field": "products",
           "type": "List Product",
           "entity": "product",
@@ -3414,23 +3563,13 @@
       ],
       "writes": [],
       "results": [],
-      "unmapped": [
-        {
-          "side": "input",
-          "field": "name",
-          "type": "String"
-        },
-        {
-          "side": "input",
-          "field": "price",
-          "type": "Nat"
-        }
-      ],
+      "unmapped": [],
       "entities_read": [
+        "account",
         "product"
       ],
       "entities_written": [],
-      "component": "Product"
+      "component": "Account2"
     },
     {
       "id": "UC-sales-person-update-product-attributes",
@@ -3440,20 +3579,45 @@
       "checked": true,
       "l05": "pass",
       "text": "Update Product Attributes: Update Product attributes within the system.",
-      "reads": [],
+      "reads": [
+        {
+          "field": "name",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "name"
+        },
+        {
+          "field": "price",
+          "type": "Nat",
+          "entity": "product",
+          "rule": "name",
+          "via": "attribute",
+          "term": "price"
+        },
+        {
+          "field": "name",
+          "type": "String",
+          "entity": "account",
+          "rule": "name",
+          "via": "attribute",
+          "term": "name",
+          "copied": true
+        },
+        {
+          "field": "price",
+          "type": "Nat",
+          "entity": "product",
+          "rule": "name",
+          "via": "attribute",
+          "term": "price",
+          "copied": true
+        }
+      ],
       "writes": [],
       "results": [],
       "unmapped": [
-        {
-          "side": "input",
-          "field": "name",
-          "type": "String"
-        },
-        {
-          "side": "input",
-          "field": "price",
-          "type": "Nat"
-        },
         {
           "side": "input",
           "field": "rating",
@@ -3462,16 +3626,6 @@
         {
           "side": "input",
           "field": "stock",
-          "type": "Nat"
-        },
-        {
-          "side": "output",
-          "field": "name",
-          "type": "String"
-        },
-        {
-          "side": "output",
-          "field": "price",
           "type": "Nat"
         },
         {
@@ -3485,8 +3639,12 @@
           "type": "Nat"
         }
       ],
-      "entities_read": [],
-      "entities_written": []
+      "entities_read": [
+        "account",
+        "product"
+      ],
+      "entities_written": [],
+      "component": "Account2"
     }
   ],
   "edges": [
@@ -3545,11 +3703,6 @@
         {
           "kind": "dataflow",
           "entity": "product",
-          "reason": "1.4/S3 writes product (`o.inventory`), 3.3.3/S1 reads it (`i.cart`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
           "reason": "1.4/S3 writes product (`o.inventory`), 3.3.3/S1 reads it (`i.productToAdd`)"
         }
       ]
@@ -3567,17 +3720,12 @@
     },
     {
       "src": "1.4/S3",
-      "dst": "3.3.3/S3",
+      "dst": "3.4.3/S3",
       "reasons": [
         {
           "kind": "dataflow",
           "entity": "product",
-          "reason": "1.4/S3 writes product (`o.inventory`), 3.3.3/S3 reads it (`i.cart`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "1.4/S3 writes product (`o.inventory`), 3.3.3/S3 reads it (`i.cart`)"
+          "reason": "1.4/S3 writes product (`o.inventory`), 3.4.3/S3 reads it (`i.orderId`)"
         }
       ]
     },
@@ -3730,8 +3878,29 @@
     },
     {
       "src": "1.4/S3",
+      "dst": "UC-sales-person-add-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "1.4/S3 writes product (`o.inventory`), UC-sales-person-add-product reads it (`i.price`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "1.4/S3 writes product (`o.inventory`), UC-sales-person-add-product reads it (`i.price`)"
+        }
+      ]
+    },
+    {
+      "src": "1.4/S3",
       "dst": "UC-sales-person-remove-product",
       "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "1.4/S3 writes product (`o.inventory`), UC-sales-person-remove-product reads it (`i.price`)"
+        },
         {
           "kind": "dataflow",
           "entity": "product",
@@ -3741,6 +3910,22 @@
           "kind": "dataflow",
           "entity": "product",
           "reason": "1.4/S3 writes product (`o.inventory`), UC-sales-person-remove-product reads it (`i.products`)"
+        }
+      ]
+    },
+    {
+      "src": "1.4/S3",
+      "dst": "UC-sales-person-update-product-attributes",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "1.4/S3 writes product (`o.inventory`), UC-sales-person-update-product-attributes reads it (`i.price`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "1.4/S3 writes product (`o.inventory`), UC-sales-person-update-product-attributes reads it (`i.price`)"
         }
       ]
     },
@@ -3822,12 +4007,28 @@
     },
     {
       "src": "3.1.3/S1",
+      "dst": "5.5/R5",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), 5.5/R5 reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "3.1.3/S1",
       "dst": "CI-1",
       "reasons": [
         {
           "kind": "dataflow",
           "entity": "account",
           "reason": "3.1.3/S1 writes account (`o.profile`), CI-1 reads it (`i.customerEmail`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), CI-1 reads it (`i.shippingAddr`)"
         }
       ]
     },
@@ -3888,6 +4089,28 @@
     },
     {
       "src": "3.1.3/S1",
+      "dst": "UC-administrator-login-administrator",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-administrator-login-administrator reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "3.1.3/S1",
+      "dst": "UC-administrator-remove-plug-ins",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-administrator-remove-plug-ins reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "3.1.3/S1",
       "dst": "UC-administrator-remove-user",
       "reasons": [
         {
@@ -3921,76 +4144,81 @@
           "kind": "dataflow",
           "entity": "account",
           "reason": "3.1.3/S1 writes account (`o.profile`), UC-customer-login-customer reads it (`i.account`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "1.4/S2",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 1.4/S2 reads it (`i.items`)"
         },
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 1.4/S2 reads it (`i.items`)"
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-customer-login-customer reads it (`i.email`)"
         }
       ]
     },
     {
-      "src": "3.3.3/S1",
-      "dst": "1.4/S3",
+      "src": "3.1.3/S1",
+      "dst": "UC-customer-register-customer",
       "reasons": [
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 1.4/S3 reads it (`i.inventory`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "1.4/S4",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 1.4/S4 reads it (`i.items`)"
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-customer-register-customer reads it (`i.email`)"
         },
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 1.4/S4 reads it (`i.items`)"
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-customer-register-customer reads it (`i.name`)"
         }
       ]
     },
     {
-      "src": "3.3.3/S1",
-      "dst": "3.2.3/S2",
+      "src": "3.1.3/S1",
+      "dst": "UC-sales-person-add-product",
       "reasons": [
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 3.2.3/S2 reads it (`i.products`)"
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-sales-person-add-product reads it (`i.name`)"
         },
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 3.2.3/S2 reads it (`i.products`)"
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-sales-person-add-product reads it (`i.name`)"
         }
       ]
     },
     {
-      "src": "3.3.3/S1",
-      "dst": "3.3.3/S2",
+      "src": "3.1.3/S1",
+      "dst": "UC-sales-person-login-sales-person",
       "reasons": [
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 3.3.3/S2 reads it (`i.items`)"
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-sales-person-login-sales-person reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "3.1.3/S1",
+      "dst": "UC-sales-person-remove-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-sales-person-remove-product reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "3.1.3/S1",
+      "dst": "UC-sales-person-update-product-attributes",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-sales-person-update-product-attributes reads it (`i.name`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "3.1.3/S1 writes account (`o.profile`), UC-sales-person-update-product-attributes reads it (`i.name`)"
         }
       ]
     },
@@ -4000,176 +4228,40 @@
       "reasons": [
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 3.3.3/S3 reads it (`i.cart`)"
+          "entity": "cart",
+          "reason": "3.3.3/S1 writes cart (`o.cart`), 3.3.3/S3 reads it (`i.cart`)"
         },
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 3.3.3/S3 reads it (`i.cart`)"
+          "entity": "cart",
+          "reason": "3.3.3/S1 writes cart (`o.cart`), 3.3.3/S3 reads it (`i.cart`)"
         }
       ]
     },
     {
       "src": "3.3.3/S1",
-      "dst": "3.5.3/S2",
+      "dst": "3.4.3/S1",
       "reasons": [
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 3.5.3/S2 reads it (`i.products`)"
+          "entity": "cart",
+          "reason": "3.3.3/S1 writes cart (`o.cart`), 3.4.3/S1 reads it (`i.cart`)"
         }
       ]
     },
     {
       "src": "3.3.3/S1",
-      "dst": "5.1/R5",
+      "dst": "UC-customer-checkout-an-order",
       "reasons": [
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 5.1/R5 reads it (`i.items`)"
+          "entity": "cart",
+          "reason": "3.3.3/S1 writes cart (`o.cart`), UC-customer-checkout-an-order reads it (`i.cart`)"
         },
         {
           "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 5.1/R5 reads it (`i.product`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "5.5/R1",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), 5.5/R1 reads it (`i.items`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "CI-1",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), CI-1 reads it (`i.items`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "DD-item-id",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), DD-item-id reads it (`i.raw`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "DD-item-name",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), DD-item-name reads it (`i.raw`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "DD-price",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), DD-price reads it (`i.value`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "DD-quantity",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), DD-quantity reads it (`i.max_ref`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), DD-quantity reads it (`i.value`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "DD-text-description",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), DD-text-description reads it (`i.raw`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "DD-total",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), DD-total reads it (`i.value`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "SI-1.2",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), SI-1.2 reads it (`i.orderedItems`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "UC-customer-add-item-to-cart",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), UC-customer-add-item-to-cart reads it (`i.items`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), UC-customer-add-item-to-cart reads it (`i.items`)"
-        }
-      ]
-    },
-    {
-      "src": "3.3.3/S1",
-      "dst": "UC-sales-person-remove-product",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), UC-sales-person-remove-product reads it (`i.products`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.3.3/S1 writes product (`o.cart`), UC-sales-person-remove-product reads it (`i.products`)"
+          "entity": "cart",
+          "reason": "3.3.3/S1 writes cart (`o.cart`), UC-customer-checkout-an-order reads it (`i.cart`)"
         }
       ]
     },
@@ -4213,17 +4305,6 @@
     },
     {
       "src": "3.4.3/S1",
-      "dst": "3.4.3/S3",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "order",
-          "reason": "3.4.3/S1 writes order (`o.order`), 3.4.3/S3 reads it (`i.orderId`)"
-        }
-      ]
-    },
-    {
-      "src": "3.4.3/S1",
       "dst": "DD-order-no",
       "reasons": [
         {
@@ -4257,17 +4338,6 @@
           "kind": "dataflow",
           "entity": "order",
           "reason": "3.4.3/S2 writes order (`o.order`), 3.1.3/S1 reads it (`i.purchaseHistory`)"
-        }
-      ]
-    },
-    {
-      "src": "3.4.3/S2",
-      "dst": "3.4.3/S3",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "order",
-          "reason": "3.4.3/S2 writes order (`o.order`), 3.4.3/S3 reads it (`i.orderId`)"
         }
       ]
     },
@@ -4397,11 +4467,6 @@
         {
           "kind": "dataflow",
           "entity": "product",
-          "reason": "3.5.3/S2 writes product (`o.results`), 3.3.3/S1 reads it (`i.cart`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
           "reason": "3.5.3/S2 writes product (`o.results`), 3.3.3/S1 reads it (`i.productToAdd`)"
         }
       ]
@@ -4419,17 +4484,12 @@
     },
     {
       "src": "3.5.3/S2",
-      "dst": "3.3.3/S3",
+      "dst": "3.4.3/S3",
       "reasons": [
         {
           "kind": "dataflow",
           "entity": "product",
-          "reason": "3.5.3/S2 writes product (`o.results`), 3.3.3/S3 reads it (`i.cart`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "3.5.3/S2 writes product (`o.results`), 3.3.3/S3 reads it (`i.cart`)"
+          "reason": "3.5.3/S2 writes product (`o.results`), 3.4.3/S3 reads it (`i.orderId`)"
         }
       ]
     },
@@ -4571,8 +4631,29 @@
     },
     {
       "src": "3.5.3/S2",
+      "dst": "UC-sales-person-add-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "3.5.3/S2 writes product (`o.results`), UC-sales-person-add-product reads it (`i.price`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "3.5.3/S2 writes product (`o.results`), UC-sales-person-add-product reads it (`i.price`)"
+        }
+      ]
+    },
+    {
+      "src": "3.5.3/S2",
       "dst": "UC-sales-person-remove-product",
       "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "3.5.3/S2 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.price`)"
+        },
         {
           "kind": "dataflow",
           "entity": "product",
@@ -4582,6 +4663,38 @@
           "kind": "dataflow",
           "entity": "product",
           "reason": "3.5.3/S2 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.products`)"
+        }
+      ]
+    },
+    {
+      "src": "3.5.3/S2",
+      "dst": "UC-sales-person-update-product-attributes",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "3.5.3/S2 writes product (`o.results`), UC-sales-person-update-product-attributes reads it (`i.price`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "3.5.3/S2 writes product (`o.results`), UC-sales-person-update-product-attributes reads it (`i.price`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
+      "dst": "3.1.3/S1",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), 3.1.3/S1 reads it (`i.email`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), 3.1.3/S1 reads it (`i.name`)"
         }
       ]
     },
@@ -4652,12 +4765,28 @@
     },
     {
       "src": "5.3/R5",
+      "dst": "5.5/R5",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), 5.5/R5 reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
       "dst": "CI-1",
       "reasons": [
         {
           "kind": "dataflow",
           "entity": "account",
           "reason": "5.3/R5 writes account (`o.accounts`), CI-1 reads it (`i.customerEmail`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), CI-1 reads it (`i.shippingAddr`)"
         }
       ]
     },
@@ -4718,6 +4847,28 @@
     },
     {
       "src": "5.3/R5",
+      "dst": "UC-administrator-login-administrator",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-administrator-login-administrator reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
+      "dst": "UC-administrator-remove-plug-ins",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-administrator-remove-plug-ins reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
       "dst": "UC-administrator-remove-user",
       "reasons": [
         {
@@ -4751,6 +4902,81 @@
           "kind": "dataflow",
           "entity": "account",
           "reason": "5.3/R5 writes account (`o.accounts`), UC-customer-login-customer reads it (`i.account`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-customer-login-customer reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
+      "dst": "UC-customer-register-customer",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-customer-register-customer reads it (`i.email`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-customer-register-customer reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
+      "dst": "UC-sales-person-add-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-sales-person-add-product reads it (`i.name`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-sales-person-add-product reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
+      "dst": "UC-sales-person-login-sales-person",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-sales-person-login-sales-person reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
+      "dst": "UC-sales-person-remove-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-sales-person-remove-product reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "5.3/R5",
+      "dst": "UC-sales-person-update-product-attributes",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-sales-person-update-product-attributes reads it (`i.name`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "5.3/R5 writes account (`o.accounts`), UC-sales-person-update-product-attributes reads it (`i.name`)"
         }
       ]
     },
@@ -4820,11 +5046,6 @@
         {
           "kind": "dataflow",
           "entity": "product",
-          "reason": "5.5/R1 writes product (`o.results`), 3.3.3/S1 reads it (`i.cart`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
           "reason": "5.5/R1 writes product (`o.results`), 3.3.3/S1 reads it (`i.productToAdd`)"
         }
       ]
@@ -4842,17 +5063,12 @@
     },
     {
       "src": "5.5/R1",
-      "dst": "3.3.3/S3",
+      "dst": "3.4.3/S3",
       "reasons": [
         {
           "kind": "dataflow",
           "entity": "product",
-          "reason": "5.5/R1 writes product (`o.results`), 3.3.3/S3 reads it (`i.cart`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "5.5/R1 writes product (`o.results`), 3.3.3/S3 reads it (`i.cart`)"
+          "reason": "5.5/R1 writes product (`o.results`), 3.4.3/S3 reads it (`i.orderId`)"
         }
       ]
     },
@@ -4994,8 +5210,29 @@
     },
     {
       "src": "5.5/R1",
+      "dst": "UC-sales-person-add-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "5.5/R1 writes product (`o.results`), UC-sales-person-add-product reads it (`i.price`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "5.5/R1 writes product (`o.results`), UC-sales-person-add-product reads it (`i.price`)"
+        }
+      ]
+    },
+    {
+      "src": "5.5/R1",
       "dst": "UC-sales-person-remove-product",
       "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "5.5/R1 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.price`)"
+        },
         {
           "kind": "dataflow",
           "entity": "product",
@@ -5005,6 +5242,22 @@
           "kind": "dataflow",
           "entity": "product",
           "reason": "5.5/R1 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.products`)"
+        }
+      ]
+    },
+    {
+      "src": "5.5/R1",
+      "dst": "UC-sales-person-update-product-attributes",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "5.5/R1 writes product (`o.results`), UC-sales-person-update-product-attributes reads it (`i.price`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "5.5/R1 writes product (`o.results`), UC-sales-person-update-product-attributes reads it (`i.price`)"
         }
       ]
     },
@@ -5074,11 +5327,6 @@
         {
           "kind": "dataflow",
           "entity": "product",
-          "reason": "SI-1.2 writes product (`o.updatedItems`), 3.3.3/S1 reads it (`i.cart`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
           "reason": "SI-1.2 writes product (`o.updatedItems`), 3.3.3/S1 reads it (`i.productToAdd`)"
         }
       ]
@@ -5096,17 +5344,12 @@
     },
     {
       "src": "SI-1.2",
-      "dst": "3.3.3/S3",
+      "dst": "3.4.3/S3",
       "reasons": [
         {
           "kind": "dataflow",
           "entity": "product",
-          "reason": "SI-1.2 writes product (`o.updatedItems`), 3.3.3/S3 reads it (`i.cart`)"
-        },
-        {
-          "kind": "dataflow",
-          "entity": "product",
-          "reason": "SI-1.2 writes product (`o.updatedItems`), 3.3.3/S3 reads it (`i.cart`)"
+          "reason": "SI-1.2 writes product (`o.updatedItems`), 3.4.3/S3 reads it (`i.orderId`)"
         }
       ]
     },
@@ -5248,8 +5491,29 @@
     },
     {
       "src": "SI-1.2",
+      "dst": "UC-sales-person-add-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "SI-1.2 writes product (`o.updatedItems`), UC-sales-person-add-product reads it (`i.price`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "SI-1.2 writes product (`o.updatedItems`), UC-sales-person-add-product reads it (`i.price`)"
+        }
+      ]
+    },
+    {
+      "src": "SI-1.2",
       "dst": "UC-sales-person-remove-product",
       "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "SI-1.2 writes product (`o.updatedItems`), UC-sales-person-remove-product reads it (`i.price`)"
+        },
         {
           "kind": "dataflow",
           "entity": "product",
@@ -5259,6 +5523,22 @@
           "kind": "dataflow",
           "entity": "product",
           "reason": "SI-1.2 writes product (`o.updatedItems`), UC-sales-person-remove-product reads it (`i.products`)"
+        }
+      ]
+    },
+    {
+      "src": "SI-1.2",
+      "dst": "UC-sales-person-update-product-attributes",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "SI-1.2 writes product (`o.updatedItems`), UC-sales-person-update-product-attributes reads it (`i.price`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "product",
+          "reason": "SI-1.2 writes product (`o.updatedItems`), UC-sales-person-update-product-attributes reads it (`i.price`)"
         }
       ]
     },
@@ -5394,23 +5674,28 @@
     },
     {
       "src": "UC-customer-checkout-an-order",
-      "dst": "3.4.3/S3",
-      "reasons": [
-        {
-          "kind": "dataflow",
-          "entity": "order",
-          "reason": "UC-customer-checkout-an-order writes order (`o.order`), 3.4.3/S3 reads it (`i.orderId`)"
-        }
-      ]
-    },
-    {
-      "src": "UC-customer-checkout-an-order",
       "dst": "DD-order-no",
       "reasons": [
         {
           "kind": "dataflow",
           "entity": "order",
           "reason": "UC-customer-checkout-an-order writes order (`o.order`), DD-order-no reads it (`i.raw`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
+      "dst": "3.1.3/S1",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), 3.1.3/S1 reads it (`i.email`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), 3.1.3/S1 reads it (`i.name`)"
         }
       ]
     },
@@ -5492,12 +5777,28 @@
     },
     {
       "src": "UC-customer-edit-customer-details",
+      "dst": "5.5/R5",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), 5.5/R5 reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
       "dst": "CI-1",
       "reasons": [
         {
           "kind": "dataflow",
           "entity": "account",
           "reason": "UC-customer-edit-customer-details writes account (`o.changes`), CI-1 reads it (`i.customerEmail`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), CI-1 reads it (`i.shippingAddr`)"
         }
       ]
     },
@@ -5558,6 +5859,28 @@
     },
     {
       "src": "UC-customer-edit-customer-details",
+      "dst": "UC-administrator-login-administrator",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-administrator-login-administrator reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
+      "dst": "UC-administrator-remove-plug-ins",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-administrator-remove-plug-ins reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
       "dst": "UC-administrator-remove-user",
       "reasons": [
         {
@@ -5580,6 +5903,81 @@
           "kind": "dataflow",
           "entity": "account",
           "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-customer-login-customer reads it (`i.account`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-customer-login-customer reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
+      "dst": "UC-customer-register-customer",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-customer-register-customer reads it (`i.email`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-customer-register-customer reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
+      "dst": "UC-sales-person-add-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-add-product reads it (`i.name`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-add-product reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
+      "dst": "UC-sales-person-login-sales-person",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-login-sales-person reads it (`i.email`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
+      "dst": "UC-sales-person-remove-product",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-remove-product reads it (`i.name`)"
+        }
+      ]
+    },
+    {
+      "src": "UC-customer-edit-customer-details",
+      "dst": "UC-sales-person-update-product-attributes",
+      "reasons": [
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-update-product-attributes reads it (`i.name`)"
+        },
+        {
+          "kind": "dataflow",
+          "entity": "account",
+          "reason": "UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-update-product-attributes reads it (`i.name`)"
         }
       ]
     },
@@ -5636,7 +6034,7 @@
   ],
   "groups": [
     {
-      "id": "ProductSys",
+      "id": "AccountSys",
       "operations": [
         "1.4/S2",
         "1.4/S3",
@@ -5658,6 +6056,7 @@
         "5.3/R5",
         "5.5/R1",
         "5.5/R2",
+        "5.5/R5",
         "CI-1",
         "DD-credit-card-no",
         "DD-e-mail-id",
@@ -5677,6 +6076,7 @@
         "UC-administrator-change-user-properties",
         "UC-administrator-login-administrator",
         "UC-administrator-logout-administrator",
+        "UC-administrator-remove-plug-ins",
         "UC-administrator-remove-user",
         "UC-customer-add-item-to-cart",
         "UC-customer-checkout-an-order",
@@ -5684,53 +6084,74 @@
         "UC-customer-login-customer",
         "UC-customer-logout-customer",
         "UC-customer-register-customer",
+        "UC-sales-person-add-product",
         "UC-sales-person-login-sales-person",
-        "UC-sales-person-remove-product"
+        "UC-sales-person-remove-product",
+        "UC-sales-person-update-product-attributes"
       ],
       "components": [
         "Account",
-        "Product",
-        "Track",
-        "Password"
+        "Account2"
       ],
       "split": "louvain",
       "component_edges": [
         {
           "src": "Account",
-          "dst": "Password",
-          "reasons": [
-            "UC-administrator-change-user-properties → UC-administrator-login-administrator: UC-administrator-change-user-properties writes password (`o.password`), UC-administrator-login-administrator reads it (`i.password`)"
-          ]
-        },
-        {
-          "src": "Account",
-          "dst": "Product",
-          "reasons": [
-            "3.4.3/S1 → 1.4/S3: 3.4.3/S1 writes order (`o.order`), 1.4/S3 reads it (`i.purchases`)",
-            "3.4.3/S2 → 1.4/S3: 3.4.3/S2 writes order (`o.order`), 1.4/S3 reads it (`i.purchases`)",
-            "3.4.3/S3 → 1.4/S3: 3.4.3/S3 writes order (`o.details`), 1.4/S3 reads it (`i.purchases`)",
-            "UC-customer-checkout-an-order → 1.4/S3: UC-customer-checkout-an-order writes order (`o.order`), 1.4/S3 reads it (`i.purchases`)",
-            "UC-customer-login-customer → UC-customer-add-item-to-cart: \"The Customer is logged into the system.\" establishes the precondition \"The customer must be logged-in on the system.\""
-          ]
-        },
-        {
-          "src": "Account",
-          "dst": "Track",
-          "reasons": [
-            "3.1.3/S1 → CI-1: 3.1.3/S1 writes account (`o.profile`), CI-1 reads it (`i.customerEmail`)",
-            "5.3/R5 → CI-1: 5.3/R5 writes account (`o.accounts`), CI-1 reads it (`i.customerEmail`)",
-            "UC-customer-edit-customer-details → CI-1: UC-customer-edit-customer-details writes account (`o.changes`), CI-1 reads it (`i.customerEmail`)"
-          ]
-        },
-        {
-          "src": "Product",
-          "dst": "Track",
+          "dst": "Account2",
           "reasons": [
             "1.4/S3 → CI-1: 1.4/S3 writes product (`o.inventory`), CI-1 reads it (`i.items`)",
-            "3.3.3/S1 → CI-1: 3.3.3/S1 writes product (`o.cart`), CI-1 reads it (`i.items`)",
+            "1.4/S3 → UC-sales-person-add-product: 1.4/S3 writes product (`o.inventory`), UC-sales-person-add-product reads it (`i.price`)",
+            "1.4/S3 → UC-sales-person-add-product: 1.4/S3 writes product (`o.inventory`), UC-sales-person-add-product reads it (`i.price`)",
+            "1.4/S3 → UC-sales-person-remove-product: 1.4/S3 writes product (`o.inventory`), UC-sales-person-remove-product reads it (`i.price`)",
+            "1.4/S3 → UC-sales-person-remove-product: 1.4/S3 writes product (`o.inventory`), UC-sales-person-remove-product reads it (`i.products`)",
+            "1.4/S3 → UC-sales-person-remove-product: 1.4/S3 writes product (`o.inventory`), UC-sales-person-remove-product reads it (`i.products`)",
+            "1.4/S3 → UC-sales-person-update-product-attributes: 1.4/S3 writes product (`o.inventory`), UC-sales-person-update-product-attributes reads it (`i.price`)",
+            "1.4/S3 → UC-sales-person-update-product-attributes: 1.4/S3 writes product (`o.inventory`), UC-sales-person-update-product-attributes reads it (`i.price`)",
+            "3.1.3/S1 → CI-1: 3.1.3/S1 writes account (`o.profile`), CI-1 reads it (`i.customerEmail`)",
+            "3.1.3/S1 → CI-1: 3.1.3/S1 writes account (`o.profile`), CI-1 reads it (`i.shippingAddr`)",
+            "3.1.3/S1 → UC-sales-person-add-product: 3.1.3/S1 writes account (`o.profile`), UC-sales-person-add-product reads it (`i.name`)",
+            "3.1.3/S1 → UC-sales-person-add-product: 3.1.3/S1 writes account (`o.profile`), UC-sales-person-add-product reads it (`i.name`)",
+            "3.1.3/S1 → UC-sales-person-remove-product: 3.1.3/S1 writes account (`o.profile`), UC-sales-person-remove-product reads it (`i.name`)",
+            "3.1.3/S1 → UC-sales-person-update-product-attributes: 3.1.3/S1 writes account (`o.profile`), UC-sales-person-update-product-attributes reads it (`i.name`)",
+            "3.1.3/S1 → UC-sales-person-update-product-attributes: 3.1.3/S1 writes account (`o.profile`), UC-sales-person-update-product-attributes reads it (`i.name`)",
             "3.5.3/S2 → CI-1: 3.5.3/S2 writes product (`o.results`), CI-1 reads it (`i.items`)",
+            "3.5.3/S2 → UC-sales-person-add-product: 3.5.3/S2 writes product (`o.results`), UC-sales-person-add-product reads it (`i.price`)",
+            "3.5.3/S2 → UC-sales-person-add-product: 3.5.3/S2 writes product (`o.results`), UC-sales-person-add-product reads it (`i.price`)",
+            "3.5.3/S2 → UC-sales-person-remove-product: 3.5.3/S2 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.price`)",
+            "3.5.3/S2 → UC-sales-person-remove-product: 3.5.3/S2 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.products`)",
+            "3.5.3/S2 → UC-sales-person-remove-product: 3.5.3/S2 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.products`)",
+            "3.5.3/S2 → UC-sales-person-update-product-attributes: 3.5.3/S2 writes product (`o.results`), UC-sales-person-update-product-attributes reads it (`i.price`)",
+            "3.5.3/S2 → UC-sales-person-update-product-attributes: 3.5.3/S2 writes product (`o.results`), UC-sales-person-update-product-attributes reads it (`i.price`)",
+            "5.3/R5 → CI-1: 5.3/R5 writes account (`o.accounts`), CI-1 reads it (`i.customerEmail`)",
+            "5.3/R5 → CI-1: 5.3/R5 writes account (`o.accounts`), CI-1 reads it (`i.shippingAddr`)",
+            "5.3/R5 → UC-sales-person-add-product: 5.3/R5 writes account (`o.accounts`), UC-sales-person-add-product reads it (`i.name`)",
+            "5.3/R5 → UC-sales-person-add-product: 5.3/R5 writes account (`o.accounts`), UC-sales-person-add-product reads it (`i.name`)",
+            "5.3/R5 → UC-sales-person-remove-product: 5.3/R5 writes account (`o.accounts`), UC-sales-person-remove-product reads it (`i.name`)",
+            "5.3/R5 → UC-sales-person-update-product-attributes: 5.3/R5 writes account (`o.accounts`), UC-sales-person-update-product-attributes reads it (`i.name`)",
+            "5.3/R5 → UC-sales-person-update-product-attributes: 5.3/R5 writes account (`o.accounts`), UC-sales-person-update-product-attributes reads it (`i.name`)",
             "5.5/R1 → CI-1: 5.5/R1 writes product (`o.results`), CI-1 reads it (`i.items`)",
-            "SI-1.2 → CI-1: SI-1.2 writes product (`o.updatedItems`), CI-1 reads it (`i.items`)"
+            "5.5/R1 → UC-sales-person-add-product: 5.5/R1 writes product (`o.results`), UC-sales-person-add-product reads it (`i.price`)",
+            "5.5/R1 → UC-sales-person-add-product: 5.5/R1 writes product (`o.results`), UC-sales-person-add-product reads it (`i.price`)",
+            "5.5/R1 → UC-sales-person-remove-product: 5.5/R1 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.price`)",
+            "5.5/R1 → UC-sales-person-remove-product: 5.5/R1 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.products`)",
+            "5.5/R1 → UC-sales-person-remove-product: 5.5/R1 writes product (`o.results`), UC-sales-person-remove-product reads it (`i.products`)",
+            "5.5/R1 → UC-sales-person-update-product-attributes: 5.5/R1 writes product (`o.results`), UC-sales-person-update-product-attributes reads it (`i.price`)",
+            "5.5/R1 → UC-sales-person-update-product-attributes: 5.5/R1 writes product (`o.results`), UC-sales-person-update-product-attributes reads it (`i.price`)",
+            "SI-1.2 → CI-1: SI-1.2 writes product (`o.updatedItems`), CI-1 reads it (`i.items`)",
+            "SI-1.2 → UC-sales-person-add-product: SI-1.2 writes product (`o.updatedItems`), UC-sales-person-add-product reads it (`i.price`)",
+            "SI-1.2 → UC-sales-person-add-product: SI-1.2 writes product (`o.updatedItems`), UC-sales-person-add-product reads it (`i.price`)",
+            "SI-1.2 → UC-sales-person-remove-product: SI-1.2 writes product (`o.updatedItems`), UC-sales-person-remove-product reads it (`i.price`)",
+            "SI-1.2 → UC-sales-person-remove-product: SI-1.2 writes product (`o.updatedItems`), UC-sales-person-remove-product reads it (`i.products`)",
+            "SI-1.2 → UC-sales-person-remove-product: SI-1.2 writes product (`o.updatedItems`), UC-sales-person-remove-product reads it (`i.products`)",
+            "SI-1.2 → UC-sales-person-update-product-attributes: SI-1.2 writes product (`o.updatedItems`), UC-sales-person-update-product-attributes reads it (`i.price`)",
+            "SI-1.2 → UC-sales-person-update-product-attributes: SI-1.2 writes product (`o.updatedItems`), UC-sales-person-update-product-attributes reads it (`i.price`)",
+            "UC-customer-edit-customer-details → CI-1: UC-customer-edit-customer-details writes account (`o.changes`), CI-1 reads it (`i.customerEmail`)",
+            "UC-customer-edit-customer-details → CI-1: UC-customer-edit-customer-details writes account (`o.changes`), CI-1 reads it (`i.shippingAddr`)",
+            "UC-customer-edit-customer-details → UC-sales-person-add-product: UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-add-product reads it (`i.name`)",
+            "UC-customer-edit-customer-details → UC-sales-person-add-product: UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-add-product reads it (`i.name`)",
+            "UC-customer-edit-customer-details → UC-sales-person-remove-product: UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-remove-product reads it (`i.name`)",
+            "UC-customer-edit-customer-details → UC-sales-person-update-product-attributes: UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-update-product-attributes reads it (`i.name`)",
+            "UC-customer-edit-customer-details → UC-sales-person-update-product-attributes: UC-customer-edit-customer-details writes account (`o.changes`), UC-sales-person-update-product-attributes reads it (`i.name`)"
           ]
         }
       ],
@@ -5738,44 +6159,48 @@
       "cycles": [
         [
           "Account",
-          "Account2"
-        ],
-        [
-          "Account",
           "Password"
         ],
         [
+          "Order",
+          "Product"
+        ],
+        [
           "Account",
-          "Account2",
+          "Password",
           "Order"
         ],
         [
           "Account",
           "Password",
-          "Account2"
+          "Product"
         ],
         [
           "Account",
           "Password",
-          "Account2",
+          "Order",
+          "Product"
+        ],
+        [
+          "Account",
+          "Password",
+          "Product",
           "Order"
         ]
       ],
       "merged_cycles": [
         [
           "Account",
-          "Account2",
           "Order",
-          "Password"
+          "Password",
+          "Product"
         ]
       ],
       "order": [
         "Account",
-        "Password",
-        "Product",
-        "Track"
+        "Account2"
       ],
-      "status": "cyclic: 5 cycle(s); 1 set(s) of components merged"
+      "status": "cyclic: 6 cycle(s); 1 set(s) of components merged"
     },
     {
       "id": "CitySys",
@@ -5907,27 +6332,49 @@
   "components": [
     {
       "id": "Account",
-      "group": "ProductSys",
+      "group": "AccountSys",
       "operations": [
+        "1.4/S2",
+        "1.4/S3",
+        "1.4/S4",
         "3.1.3/S1",
         "3.1.3/S2",
         "3.1.3/S3",
+        "3.2.3/S2",
+        "3.3.3/S1",
+        "3.3.3/S2",
+        "3.3.3/S3",
         "3.4.3/S1",
         "3.4.3/S2",
         "3.4.3/S3",
+        "3.5.3/S2",
+        "5.1/R5",
         "5.3/R1",
         "5.3/R3",
         "5.3/R5",
+        "5.5/R1",
         "5.5/R2",
+        "5.5/R5",
         "DD-credit-card-no",
         "DD-e-mail-id",
+        "DD-item-id",
+        "DD-item-name",
         "DD-name",
         "DD-order-no",
         "DD-password",
+        "DD-price",
+        "DD-quantity",
+        "DD-text-description",
+        "DD-total",
         "DD-user-id",
+        "SI-1.2",
         "UC-administrator-add-user",
         "UC-administrator-change-user-properties",
+        "UC-administrator-login-administrator",
+        "UC-administrator-logout-administrator",
+        "UC-administrator-remove-plug-ins",
         "UC-administrator-remove-user",
+        "UC-customer-add-item-to-cart",
         "UC-customer-checkout-an-order",
         "UC-customer-edit-customer-details",
         "UC-customer-login-customer",
@@ -5936,23 +6383,44 @@
         "UC-sales-person-login-sales-person"
       ],
       "operations_lean": [
+        "1.4/S2",
+        "1.4/S3",
+        "1.4/S4",
         "3.1.3/S1",
         "3.1.3/S2",
         "3.1.3/S3",
+        "3.2.3/S2",
+        "3.3.3/S1",
+        "3.3.3/S2",
+        "3.3.3/S3",
         "3.4.3/S1",
         "3.4.3/S2",
         "3.4.3/S3",
+        "3.5.3/S2",
+        "5.1/R5",
         "5.3/R3",
         "5.3/R5",
+        "5.5/R5",
         "DD-credit-card-no",
         "DD-e-mail-id",
+        "DD-item-id",
+        "DD-item-name",
         "DD-name",
         "DD-order-no",
         "DD-password",
+        "DD-price",
+        "DD-quantity",
+        "DD-text-description",
+        "DD-total",
         "DD-user-id",
+        "SI-1.2",
         "UC-administrator-add-user",
         "UC-administrator-change-user-properties",
+        "UC-administrator-login-administrator",
+        "UC-administrator-logout-administrator",
+        "UC-administrator-remove-plug-ins",
         "UC-administrator-remove-user",
+        "UC-customer-add-item-to-cart",
         "UC-customer-edit-customer-details",
         "UC-customer-login-customer",
         "UC-customer-logout-customer",
@@ -5961,98 +6429,40 @@
       ],
       "entities_read": [
         "account",
+        "cart",
         "order",
-        "password"
+        "password",
+        "product"
       ],
       "entities_written": [
         "account",
+        "cart",
         "order",
-        "password"
-      ]
-    },
-    {
-      "id": "Product",
-      "group": "ProductSys",
-      "operations": [
-        "1.4/S2",
-        "1.4/S3",
-        "1.4/S4",
-        "3.2.3/S2",
-        "3.3.3/S1",
-        "3.3.3/S2",
-        "3.3.3/S3",
-        "3.5.3/S2",
-        "5.1/R5",
-        "5.5/R1",
-        "DD-item-id",
-        "DD-item-name",
-        "DD-price",
-        "DD-quantity",
-        "DD-text-description",
-        "DD-total",
-        "SI-1.2",
-        "UC-customer-add-item-to-cart",
-        "UC-sales-person-remove-product"
-      ],
-      "operations_lean": [
-        "1.4/S2",
-        "1.4/S3",
-        "1.4/S4",
-        "3.2.3/S2",
-        "3.3.3/S1",
-        "3.3.3/S2",
-        "3.3.3/S3",
-        "3.5.3/S2",
-        "5.1/R5",
-        "DD-item-id",
-        "DD-item-name",
-        "DD-price",
-        "DD-quantity",
-        "DD-text-description",
-        "DD-total",
-        "SI-1.2",
-        "UC-customer-add-item-to-cart",
-        "UC-sales-person-remove-product"
-      ],
-      "entities_read": [
-        "order",
-        "product"
-      ],
-      "entities_written": [
+        "password",
         "product"
       ]
     },
     {
-      "id": "Track",
-      "group": "ProductSys",
+      "id": "Account2",
+      "group": "AccountSys",
       "operations": [
         "CI-1",
-        "DD-tracking-no"
+        "DD-tracking-no",
+        "UC-sales-person-add-product",
+        "UC-sales-person-remove-product",
+        "UC-sales-person-update-product-attributes"
       ],
       "operations_lean": [
         "CI-1",
-        "DD-tracking-no"
+        "DD-tracking-no",
+        "UC-sales-person-add-product",
+        "UC-sales-person-remove-product",
+        "UC-sales-person-update-product-attributes"
       ],
       "entities_read": [
         "account",
         "product",
         "track"
-      ],
-      "entities_written": []
-    },
-    {
-      "id": "Password",
-      "group": "ProductSys",
-      "operations": [
-        "UC-administrator-login-administrator",
-        "UC-administrator-logout-administrator"
-      ],
-      "operations_lean": [
-        "UC-administrator-login-administrator",
-        "UC-administrator-logout-administrator"
-      ],
-      "entities_read": [
-        "password"
       ],
       "entities_written": []
     },
@@ -6160,33 +6570,17 @@
     "5.1/R8",
     "5.1/R9",
     "5.3/R4",
-    "5.5/R5",
     "CI-2",
     "UC-administrator-install-patch-process",
     "UC-administrator-install-plug-ins",
     "UC-administrator-manage-plug-in-options",
-    "UC-administrator-remove-plug-ins",
-    "UC-sales-person-add-product",
-    "UC-sales-person-logout-sales-person",
-    "UC-sales-person-update-product-attributes"
+    "UC-sales-person-logout-sales-person"
   ],
   "unmapped_fields": [
     {
       "operation": "3.1.3/S1",
       "side": "input",
       "field": "address",
-      "type": "String"
-    },
-    {
-      "operation": "3.1.3/S1",
-      "side": "input",
-      "field": "email",
-      "type": "String"
-    },
-    {
-      "operation": "3.1.3/S1",
-      "side": "input",
-      "field": "name",
       "type": "String"
     },
     {
@@ -6242,18 +6636,6 @@
       "side": "output",
       "field": "categories",
       "type": "List Category"
-    },
-    {
-      "operation": "3.3.3/S2",
-      "side": "output",
-      "field": "totalCost",
-      "type": "Nat"
-    },
-    {
-      "operation": "3.4.3/S1",
-      "side": "input",
-      "field": "cart",
-      "type": "Cart"
     },
     {
       "operation": "3.4.3/S2",
@@ -6443,26 +6825,8 @@
     },
     {
       "operation": "5.5/R5",
-      "side": "input",
-      "field": "email",
-      "type": "String"
-    },
-    {
-      "operation": "5.5/R5",
       "side": "output",
       "field": "exists_",
-      "type": "Bool"
-    },
-    {
-      "operation": "CI-1",
-      "side": "input",
-      "field": "shippingAddr",
-      "type": "String"
-    },
-    {
-      "operation": "CI-1",
-      "side": "output",
-      "field": "sentEmail",
       "type": "Bool"
     },
     {
@@ -6726,12 +7090,6 @@
     {
       "operation": "UC-administrator-login-administrator",
       "side": "input",
-      "field": "email",
-      "type": "String"
-    },
-    {
-      "operation": "UC-administrator-login-administrator",
-      "side": "input",
       "field": "failedAttempts",
       "type": "Nat"
     },
@@ -6810,12 +7168,6 @@
     {
       "operation": "UC-administrator-remove-plug-ins",
       "side": "input",
-      "field": "name",
-      "type": "String"
-    },
-    {
-      "operation": "UC-administrator-remove-plug-ins",
-      "side": "input",
       "field": "plugIns",
       "type": "List PlugIn"
     },
@@ -6864,25 +7216,7 @@
     {
       "operation": "UC-customer-checkout-an-order",
       "side": "input",
-      "field": "cart",
-      "type": "List String"
-    },
-    {
-      "operation": "UC-customer-checkout-an-order",
-      "side": "input",
       "field": "signedIn",
-      "type": "Bool"
-    },
-    {
-      "operation": "UC-customer-checkout-an-order",
-      "side": "output",
-      "field": "cart",
-      "type": "List String"
-    },
-    {
-      "operation": "UC-customer-checkout-an-order",
-      "side": "output",
-      "field": "emailSent",
       "type": "Bool"
     },
     {
@@ -6902,12 +7236,6 @@
       "side": "output",
       "field": "signedIn",
       "type": "Bool"
-    },
-    {
-      "operation": "UC-customer-login-customer",
-      "side": "input",
-      "field": "email",
-      "type": "String"
     },
     {
       "operation": "UC-customer-login-customer",
@@ -6941,18 +7269,6 @@
     },
     {
       "operation": "UC-customer-register-customer",
-      "side": "input",
-      "field": "email",
-      "type": "String"
-    },
-    {
-      "operation": "UC-customer-register-customer",
-      "side": "input",
-      "field": "name",
-      "type": "String"
-    },
-    {
-      "operation": "UC-customer-register-customer",
       "side": "output",
       "field": "cookie",
       "type": "String"
@@ -6971,38 +7287,8 @@
     },
     {
       "operation": "UC-sales-person-add-product",
-      "side": "input",
-      "field": "name",
-      "type": "String"
-    },
-    {
-      "operation": "UC-sales-person-add-product",
-      "side": "input",
-      "field": "price",
-      "type": "Nat"
-    },
-    {
-      "operation": "UC-sales-person-add-product",
       "side": "output",
       "field": "description",
-      "type": "String"
-    },
-    {
-      "operation": "UC-sales-person-add-product",
-      "side": "output",
-      "field": "name",
-      "type": "String"
-    },
-    {
-      "operation": "UC-sales-person-add-product",
-      "side": "output",
-      "field": "price",
-      "type": "Nat"
-    },
-    {
-      "operation": "UC-sales-person-login-sales-person",
-      "side": "input",
-      "field": "email",
       "type": "String"
     },
     {
@@ -7016,12 +7302,6 @@
       "side": "output",
       "field": "cookie",
       "type": "Option String"
-    },
-    {
-      "operation": "UC-sales-person-login-sales-person",
-      "side": "output",
-      "field": "emailSent",
-      "type": "Bool"
     },
     {
       "operation": "UC-sales-person-login-sales-person",
@@ -7054,30 +7334,6 @@
       "type": "Bool"
     },
     {
-      "operation": "UC-sales-person-remove-product",
-      "side": "input",
-      "field": "name",
-      "type": "String"
-    },
-    {
-      "operation": "UC-sales-person-remove-product",
-      "side": "input",
-      "field": "price",
-      "type": "Nat"
-    },
-    {
-      "operation": "UC-sales-person-update-product-attributes",
-      "side": "input",
-      "field": "name",
-      "type": "String"
-    },
-    {
-      "operation": "UC-sales-person-update-product-attributes",
-      "side": "input",
-      "field": "price",
-      "type": "Nat"
-    },
-    {
       "operation": "UC-sales-person-update-product-attributes",
       "side": "input",
       "field": "rating",
@@ -7087,18 +7343,6 @@
       "operation": "UC-sales-person-update-product-attributes",
       "side": "input",
       "field": "stock",
-      "type": "Nat"
-    },
-    {
-      "operation": "UC-sales-person-update-product-attributes",
-      "side": "output",
-      "field": "name",
-      "type": "String"
-    },
-    {
-      "operation": "UC-sales-person-update-product-attributes",
-      "side": "output",
-      "field": "price",
       "type": "Nat"
     },
     {
@@ -7117,18 +7361,18 @@
   "metrics": {
     "operations": 74,
     "fields": 246,
-    "fields_mapped": 89,
-    "pct_fields_mapped": 36.2,
-    "entities": 46,
-    "entities_used": 12,
-    "edges": 169,
-    "edges_dataflow": 163,
+    "fields_mapped": 116,
+    "pct_fields_mapped": 47.2,
+    "entities": 48,
+    "entities_used": 13,
+    "edges": 184,
+    "edges_dataflow": 178,
     "edges_usecase": 6,
     "groups": 8,
-    "components": 11,
-    "cycles": 5,
+    "components": 9,
+    "cycles": 6,
     "cyclic_groups": 1,
     "merged_component_sets": 1,
-    "isolated_operations": 19
+    "isolated_operations": 15
   }
 }
