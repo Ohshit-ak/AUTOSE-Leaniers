@@ -210,10 +210,7 @@ class ArchSession:
                     f"No `{component}_pre_<op>`/`{component}_post_<op>` definitions found. Expected:\n"
                     + A.owned_signatures(component, [o for o in self.l0 if self.owner.get(o) == component])}
         ctx = self.op_context(ops)
-        r = check_lean(ctx + "\n\n" + code)
-        if not r["success"]:
-            return {"ok": False, "stage": "lean", "error": r["error"], "context": ctx,
-                    "text": format_feedback(code, r["error"], ctx[len(HEADER):] if ctx.startswith(HEADER) else ctx)}
+        prefix = ctx + "\n\n" + code
         names, per_op, lines = set(def_names(code)), {}, []
         unfold = ", ".join(def_names(code))
         examples, index = [], []
@@ -242,12 +239,29 @@ class ArchSession:
                     examples.append(f"example : ¬ {post} {inp} {mut} := {tac}"); index.append((op, "c-mut"))
                     examples.append(f"example : ¬ L0_{s}.Spec.post {inp} {mut} := by simp only [L0_{s}.Spec] <;> decide")
                     index.append((op, "l0-mut"))
+        # One Lean run: the code, then every example. Errors are attributed by line.
+        r = check_lean(prefix + ("\n\n" + "\n\n".join(examples) if examples else ""))
+        errs = [] if r["success"] else parse_errors(r["error"])
+        first = HEADER.count("\n") + prefix.count("\n") + 3
+        if not r["success"] and (not errs or any(e["line"] < first for e in errs)):
+            r0 = r if not examples else check_lean(prefix)  # clean feedback without the examples
+            if not r0["success"]:
+                return {"ok": False, "stage": "lean", "error": r0["error"],
+                        "text": format_feedback(code, r0["error"], ctx)}
         if examples:
-            from validate import example_errors
-            errs = example_errors(ctx + "\n\n" + code, examples)
-            for (op, kind), e in zip(index, errs):
-                info = per_op[op]
-                ok = not e
+            starts, line = [], first
+            for ex in examples:
+                starts.append(line)
+                line += ex.count("\n") + 2
+            failed = [False] * len(examples)
+            if not r["success"] and not errs:  # e.g. a timeout: no example counts as passing
+                failed = [True] * len(examples)
+            for e in errs:
+                k = max((i for i, st in enumerate(starts) if e["line"] >= st), default=None)
+                if k is not None:
+                    failed[k] = True
+            for (op, kind), bad_ex in zip(index, failed):
+                info, ok = per_op[op], not bad_ex
                 if kind == "pre":
                     info["pre_holds"] = ok
                 elif kind == "post":
@@ -298,37 +312,73 @@ class ArchSession:
             out[part] = A.theorem(st[part], proof)
         return out
 
+    def check_traces(self, component: str, ops: Sequence[str], proofs: Optional[Dict[str, Dict[str, str]]] = None) -> dict:
+        """Trace obligations of several operations of one component in one Lean run (errors
+        attributed by line). `proofs` = {op: {"pre"/"post": proof body}} replaces the automatic
+        proof; a model proof that fails is retried with the automatic one."""
+        code = self._component_defs(component)
+        if not code:
+            return {"ok": False, "text": f"No contract code for `{component}` yet: call check_contract first.",
+                    "parts": {}}
+        for op, ps in (proofs or {}).items():
+            for part, body in ps.items():
+                if body:
+                    self.proofs[f"trace_{part}:{component}:{op}"] = body
+        ctx = self.op_context(self._ops_in(component, code) or list(ops))
+        prefix = ctx + "\n\n" + code
+        todo = [(op, part) for op in ops for part in ("pre", "post")]
+        outcome: Dict[Tuple[str, str], Tuple[bool, str, List[str]]] = {}
+        for round_ in ("given", "auto"):
+            if round_ == "auto":  # failed model proofs: try the automatic proof instead
+                todo = [(op, p) for (op, p), (ok, by, _) in outcome.items() if not ok and by == "model"]
+                if not todo:
+                    break
+            thms, keys = [], []
+            for op, part in todo:
+                key = f"trace_{part}:{component}:{op}"
+                auto = round_ == "auto" or key not in self.proofs
+                body = A.auto_trace_proof(component, op, def_names(code)) if auto else self.proofs[key]
+                thms.append(A.theorem(A.trace_statements(component, op)[part], body))
+                keys.append((op, part, "auto" if auto else "model"))
+            r = check_lean(prefix + "\n\n" + "\n\n".join(thms))
+            errs = [] if r["success"] else parse_errors(r["error"])
+            first = HEADER.count("\n") + prefix.count("\n") + 3
+            starts, line = [], first
+            for t in thms:
+                starts.append(line)
+                line += t.count("\n") + 2
+            msgs = [[] for _ in thms]
+            context_error = not r["success"] and (not errs or any(e["line"] < first for e in errs))
+            for e in errs:
+                k = max((i for i, st in enumerate(starts) if e["line"] >= st), default=None)
+                if k is not None:
+                    msgs[k].append(_trim(e["msg"]))
+            for (op, part, by), m in zip(keys, msgs):
+                ok = r["success"] or (not m and not context_error)
+                if context_error and not m:
+                    m = _errors(r["error"])
+                if round_ == "auto" and ok:
+                    self.proofs.pop(f"trace_{part}:{component}:{op}", None)
+                outcome[(op, part)] = (ok, by, m[:MAX_ERRORS])
+        out, texts = {}, []
+        for (op, part), (ok, by, m) in sorted(outcome.items()):
+            key = f"trace_{part}:{component}:{op}"
+            res = self.results.setdefault(key, {"attempts": 0})
+            res.update(proved=ok, by=by, errors=[] if ok else m)
+            res["attempts"] += 1
+            out[(op, part)] = ok
+            texts.append(f"{op} trace {part}: " + ("proved" if ok else "NOT proved:\n"
+                                                   + "\n".join(f"  - {e}" for e in m)))
+        return {"ok": all(out.values()), "text": "\n".join(texts), "parts": out}
+
     def check_trace(self, component: str, operation: str, proof_pre: str = "", proof_post: str = "") -> dict:
         """Does the contract cover that L0 spec (assume no more, guarantee at least as much)?
         The statements are the harness's; a proof body given here replaces the automatic one."""
         if self.owner.get(operation) != component:
-            return {"ok": False, "text": f"`{operation}` is not owned by `{component}`."}
-        code = self._component_defs(component)
-        if not code:
-            return {"ok": False, "text": f"No contract code for `{component}` yet: call check_contract first."}
-        ctx = self.op_context(self._ops_in(component, code) or [operation])
-        out, texts = {}, []
-        for part, given in (("pre", proof_pre), ("post", proof_post)):
-            key = f"trace_{part}:{component}:{operation}"
-            if given:
-                self.proofs[key] = given
-            thm = self.trace_theorems(component, operation)[part]
-            r = check_lean(ctx + "\n\n" + code + "\n\n" + thm)
-            by = "model" if key in self.proofs else "auto"
-            if not r["success"] and by == "model":  # a model proof that fails: the automatic one may not
-                auto = A.theorem(A.trace_statements(component, operation)[part],
-                                 A.auto_trace_proof(component, operation, def_names(code)))
-                r2 = check_lean(ctx + "\n\n" + code + "\n\n" + auto)
-                if r2["success"]:
-                    del self.proofs[key]
-                    r, by = r2, "auto"
-            res = self.results.setdefault(key, {"attempts": 0})
-            res.update(proved=r["success"], by=by, errors=[] if r["success"] else _errors(r["error"]))
-            res["attempts"] += 1
-            out[part] = r["success"]
-            texts.append(f"trace {part}: " + ("proved" if r["success"] else
-                                               "NOT proved:\n" + "\n".join(f"  - {e}" for e in res["errors"])))
-        return {"ok": all(out.values()), "text": "\n".join(texts), "parts": out}
+            return {"ok": False, "text": f"`{operation}` is not owned by `{component}`.", "parts": {}}
+        r = self.check_traces(component, [operation], {operation: {"pre": proof_pre, "post": proof_post}})
+        r["parts"] = {part: ok for (_, part), ok in r["parts"].items()}
+        return r
 
     def _full_text(self, upto: Optional[int] = None, with_traces: bool = True) -> str:
         """Locked context + contract code, contract definitions and proved trace theorems of
@@ -464,9 +514,9 @@ class ArchSession:
             contracts[cid] = {"ok": r["ok"], "ops": r.get("ops", {}), "text": r["text"][:500]}
             if code:
                 self.code[cid] = code
-                for op in c["operations"]:
-                    k = f"trace_{{}}:{cid}:{op}"
-                    self.check_trace(cid, op, old_proofs.get(k.format("pre"), ""), old_proofs.get(k.format("post"), ""))
+                given = {op: {p: old_proofs.get(f"trace_{p}:{cid}:{op}", "") for p in ("pre", "post")}
+                         for op in c["operations"]}
+                self.check_traces(cid, c["operations"], given)
         for a, b in zip(self.order, self.order[1:]):
             self.check_po1(a, b, old_proofs.get(f"po1:{a}:{b}", ""))
         if len(self.order) >= 1 and all(self.code.get(c) for c in self.order):
