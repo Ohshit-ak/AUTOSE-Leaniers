@@ -5,7 +5,12 @@ Stages run in order up to --until:
     spec    L0: one Lean spec (pre/post predicates) per requirements entry
     check   L0.5: rule-based checks that each spec is not empty or wrong (validate.py);
             writes a report and review.json with a decision per entry
-    (L1 architect and L2 coding stages are not wired in yet)
+    graph   L1: deterministic requirements graph from the parsed SRS + a frozen L0 run +
+            benchmark/<doc>/Domain.lean (req_graph.py, no model) → runs/<stem>/graph/
+    arch    L1: per component group, component contracts + trace/PO1/PO2 proofs
+            (agents/architect_agent.py) → runs/<stem>/<model>-L1-v1/rep<k>/arch/<group>/
+--until graph / --until arch do NOT rerun L0: they read the frozen L0 run (--l0-run,
+default runs/<stem>/qwen-v10.1/rep1). L2 is not wired in yet.
 
 Run from harness/:
     python main.py                                  # every XML in Requirements/, model qwen
@@ -17,6 +22,10 @@ Run from harness/:
     python main.py --resume                         # skip entries that already passed
     python main.py --skip-lean                      # collect specs without Lean (unchecked)
     python main.py --repeat 3                       # 3 repetitions, seeds CF_SEED, +1, +2
+    python main.py "../Requirements/0000 - gamma j.xml" --until graph       # graph only, no model
+    python main.py "../Requirements/0000 - gamma j.xml" --until arch --repeat 3            # L1
+    python main.py "../Requirements/0000 - gamma j.xml" --until arch --no-graph --repeat 3 # baseline
+    python main.py … --until arch --component AccountSys    # one component group only
 
 With --model qwen, the local llama.cpp server is started automatically if it is not
 already running (needs a GPU node: srun -p u22 --gres=gpu:1 --pty bash), and stopped
@@ -47,7 +56,9 @@ from pathlib import Path
 from config import BASE_URLS, FRAMEWORK_PATH, HARNESS_VERSION, MODELS, ROOT, SEED
 from req_parser import parse_file, to_json
 
-STAGES = ["parse", "spec", "check"]
+STAGES = ["parse", "spec", "check", "graph", "arch"]
+L1_STAGES = {"graph", "arch"}
+L1_VERSION = "L1-v1"
 REQ_DIR = ROOT / "Requirements"
 PARSED_DIR = REQ_DIR / "parsed"
 RUNS_DIR = ROOT / "runs"
@@ -314,6 +325,100 @@ def stage_check(doc: dict, stem: str, args) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Stages: graph and arch (L1). They read a frozen L0 run and never change it.
+# ---------------------------------------------------------------------------
+
+def l0_run_dir(stem: str, args) -> Path:
+    if args.l0_run:
+        return Path(args.l0_run).resolve()
+    from req_graph import DEFAULT_L0_RUN
+    return RUNS_DIR / stem / DEFAULT_L0_RUN
+
+
+def stage_graph(stem: str, args) -> dict:
+    import req_graph
+    g = req_graph.run(stem, l0_run_dir(stem, args))
+    m = g["metrics"]
+    print(f"[graph] {stem}: {m['pct_fields_mapped']}% fields mapped, {m['groups']} groups, "
+          f"{m['components']} components, {m['cycles']} cycles ({m['merged_component_sets']} merged) "
+          f"-> {(RUNS_DIR / stem / 'graph' / 'graph.json').relative_to(ROOT)}")
+    if not g["inputs"]["domain"]:
+        print(f"[graph] warning: no {req_graph.benchmark_dir(stem).relative_to(ROOT)}/Domain.lean; "
+              "entities come from the SRS only")
+    return g
+
+
+def arch_run_dir(stem: str, args) -> Path:
+    name = args.run_name or f"{args.model}-{L1_VERSION}" + ("-nograph" if args.no_graph else "")
+    d = RUNS_DIR / stem / name
+    return d / f"rep{args.rep}" if args.repeat else d
+
+
+def arch_meta(stem: str, args, graph_path: Path) -> dict:
+    from agents.architect_agent import prompt_hash
+    meta = run_meta(args)
+    meta.update(harness_version=L1_VERSION, prompt_hash=prompt_hash(),
+                l0_prompt_hash=meta.get("prompt_hash"), graph_sha=_sha(graph_path),
+                l0_run=str(l0_run_dir(stem, args).relative_to(ROOT)),
+                graph_mode="no-graph" if args.no_graph else "graph", arch_mode=args.arch_mode)
+    return meta
+
+
+def _sha(path: Path):
+    import hashlib
+    return hashlib.sha256(path.read_bytes()).hexdigest()[:12] if path.exists() else None
+
+
+def stage_arch(stem: str, args) -> dict:
+    """L1 for every group with at least two compiling L0 specs (or only --component)."""
+    import req_graph
+    from agents.architect_agent import run_group
+    graph_path = RUNS_DIR / stem / "graph" / "graph.json"
+    if not graph_path.exists():
+        stage_graph(stem, args)
+    graph = json.loads(graph_path.read_text(encoding="utf-8"))
+    l0_dir = l0_run_dir(stem, args)
+    specs = json.loads((l0_dir / "specs.json").read_text(encoding="utf-8"))
+    l0 = {r["id"]: r["lean_predicate"] for r in specs["results"] if r.get("compiles")}
+    texts = {r["id"]: " ".join((r.get("requirement_text") or "").split()) for r in specs["results"]}
+    domain_path = req_graph.benchmark_dir(stem) / "Domain.lean"
+    domain = domain_path.read_text(encoding="utf-8") if domain_path.exists() else None
+    groups = [g for g in graph["groups"] if sum(o in l0 for o in g["operations"]) >= 2]
+    if args.component:
+        groups = [g for g in graph["groups"] if g["id"] in args.component
+                  or set(args.component) & set(g["components"])]
+    out_dir = arch_run_dir(stem, args) / "arch"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    meta = arch_meta(stem, args, graph_path)
+    summary = {"meta": meta, "groups": {}}
+    for g in groups:
+        print(f"[arch] {g['id']}: {sum(o in l0 for o in g['operations'])} operations, "
+              f"{'model decomposes' if args.no_graph else ' → '.join(g['order'])}")
+        t0 = time.time()
+        try:
+            r = run_group(graph, g["id"], l0, domain, args.model, no_graph=args.no_graph,
+                          mode=args.arch_mode, l0_texts=texts)
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:  # one group must not stop the run
+            r = {"arch": "", "record": {"group": g["id"], "verdict": f"crashed: {type(e).__name__}: {e}",
+                                        "seconds": round(time.time() - t0, 1)}}
+        r["record"]["meta"] = meta
+        gdir = out_dir / g["id"]
+        gdir.mkdir(parents=True, exist_ok=True)
+        (gdir / "Arch.lean").write_text(r["arch"], encoding="utf-8")
+        _write_json(gdir / "arch.json", r["record"])
+        proved = r["record"].get("proved", {})
+        summary["groups"][g["id"]] = {"verdict": r["record"].get("verdict"),
+                                      "proved": sum(proved.values()), "obligations": len(proved),
+                                      "seconds": r["record"].get("seconds")}
+        _write_json(out_dir / "summary.json", summary)
+        print(f"[arch] {g['id']}: {r['record'].get('verdict')}, {sum(proved.values())}/{len(proved)} "
+              f"obligations proved, {r['record'].get('seconds')}s -> {gdir.relative_to(ROOT)}")
+    return summary
+
+
+# ---------------------------------------------------------------------------
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="ContractForge pipeline")
@@ -332,6 +437,14 @@ def main(argv=None) -> int:
     ap.add_argument("--repeat", type=int, metavar="N",
                     help="run N times with seeds CF_SEED, CF_SEED+1, …; outputs in "
                          "runs/<doc>/<model>-<version>/rep<k>/")
+    ap.add_argument("--l0-run", help="L1: frozen L0 run folder with specs.json "
+                                       "(default runs/<doc>/qwen-v10.1/rep1)")
+    ap.add_argument("--component", nargs="+", metavar="ID", help="L1: only these groups (or groups "
+                                                                   "containing these components)")
+    ap.add_argument("--no-graph", action="store_true",
+                    help="L1 baseline: the model decomposes each group itself (no components/edges/order)")
+    ap.add_argument("--arch-mode", choices=["pipeline", "agent"], default=os.getenv("CF_ARCH_MODE", "pipeline"),
+                    help="L1: the harness calls the tools (pipeline) or the model does (agent)")
     args = ap.parse_args(argv)
     if args.repeat is not None and args.repeat < 1:
         _fail("--repeat must be at least 1")
@@ -339,12 +452,26 @@ def main(argv=None) -> int:
     paths = [Path(p).resolve() for p in args.inputs] or sorted(REQ_DIR.glob("*.xml"))
     if not paths:
         _fail(f"no requirements XML found in {REQ_DIR}")
-    run_spec_stage = STAGES.index(args.until) >= STAGES.index("spec")
-    if run_spec_stage:
+    l1 = args.until in L1_STAGES
+    run_spec_stage = not l1 and STAGES.index(args.until) >= STAGES.index("spec")
+    if run_spec_stage or args.until == "arch":
         preflight(args.model, args.skip_lean)
 
     from llm import set_seed
     for path in paths:
+        if l1:  # L0 is frozen: read the parsed JSON and the L0 run, never regenerate them
+            if not (PARSED_DIR / f"{path.stem}.json").exists():
+                stage_parse(path)
+            stage_graph(path.stem, args)
+            if args.until == "graph":
+                continue
+            for k in range(1, (args.repeat or 1) + 1):
+                args.rep = k
+                set_seed(SEED + k - 1)
+                if args.repeat:
+                    print(f"[repeat] {path.stem}: L1 repetition {k}/{args.repeat}, seed {SEED + k - 1}")
+                stage_arch(path.stem, args)
+            continue
         doc = stage_parse(path)
         for k in range(1, (args.repeat or 1) + 1):
             args.rep = k
