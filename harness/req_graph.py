@@ -190,6 +190,9 @@ def build_vocabulary(doc: dict, domain_code: Optional[str], synonyms: dict) -> V
             for f in sorted(fields):
                 if ent and norm(f):
                     v.attributes[norm(f)].add(ent)
+        # Type abbreviations name entities too (`abbrev Cart := List CartLine`).
+        for name in sorted(re.findall(r"^abbrev\s+([A-Z]\w*)\s*:=", domain_code, re.MULTILINE)):
+            v.add_entity(name, "Domain.lean")
     for g in doc.get("glossary", []):
         m = _GLOSSARY_SYN.search(g.get("meaning", ""))
         if m:
