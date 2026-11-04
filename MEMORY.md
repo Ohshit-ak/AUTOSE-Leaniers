@@ -4,7 +4,7 @@ A running log of where ContractForge stands, why things are the way they are,
 and what comes next. Update it whenever you finish a piece of work or make a
 decision someone else would need to know.
 
-## Status (2026-11-02)
+## Status (2026-11-04)
 
 | Part | State |
 |------|-------|
@@ -15,11 +15,15 @@ decision someone else would need to know.
 | Repo-root Lake workspace | Added 2026-10-31 (committed in c77afe4): `lakefile.lean` (`require contractforge from "framework"`), `lean-toolchain`, `lake-manifest.json`, so editors resolve `import ContractForge` for files under `runs/`. |
 | `harness/req_parser.py` | Done (2026-10-28). SRS XML → requirements JSON, deterministic, no LLM. Tests in `harness/tests/`. |
 | `harness/agents/spec_agent.py` (L0) | Done. Prompt hardened 2026-10-30 (see *Decisions*). Builds prompts from parser JSON (`spec_prompts`, `run_spec_from_json`). |
-| `harness/agents/` (L1/L2) | Written, not yet run end to end. |
-| `harness/main.py` | Single entry point. Stages `parse` → `spec` (L0) work; L1/L2 not wired yet. Auto-starts the Qwen server. |
+| `harness/agents/` L1 (`architect_agent.py`, `arch_tools.py`) | **Done, L1-v1 (2026-11-04)**, branch `l1-graph-contracts`. Pipeline mode (default) and agent mode; graph and `--no-graph`. Tested on a toy and with a copy-the-L0 fake model on gamma j; **not yet run with Qwen** (`runs/qwen-L1-v1.sbatch`). See *L1*. |
+| `harness/req_graph.py` | Done (L1-v1). Deterministic requirements graph, no LLM; spaCy `en_core_web_sm` 3.8. |
+| `harness/arch_lean.py` | Done (L1-v1). All L1 Lean the harness writes (message type, SystemSpec, contracts, statements, auto-proofs). |
+| `framework/ContractForge/Chain.lean` | Done (L1-v1). `compat_seq`, `chain3_sound`; existing definitions unchanged. |
+| `harness/agents/coding_agent.py` (L2) | Written, not run. |
+| `harness/main.py` | Single entry point. Stages `parse` → `spec` → `check` (L0) → `graph` → `arch` (L1); `--until graph/arch` read the frozen L0 run and never rerun L0. L2 not wired. Auto-starts the Qwen server. |
 | `harness/reverify.py` | Not started. |
-| `benchmark/` | Empty directory. |
-| `evaluation/compare_runs.py` | Done (v10). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. |
+| `benchmark/` | Empty. Waiting for `benchmark/gammaj/GammaJ_L0.lean` (hand-written gold) to extract `Domain.lean` from. |
+| `evaluation/compare_runs.py` | Done (v10; arch mode L1-v1). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. L1 folders get the arch report. |
 | `framework/ContractForge/Strings.lean` | Done (v10), frozen. String-format helpers over `List Char`. |
 | `requirements.txt` | Not created yet. |
 
@@ -54,6 +58,108 @@ Second document, used to check that harness changes generalise beyond gamma j. R
 | Qwen 2.5 7B, v9 code | 21 | **17/21 compile, 13/21 checked**; **L0.5: 9 pass, 4 flagged, 8 fail**; `rejects_bad_example` 9 true, 1 false, 11 null | `runs/2009 - video search/qwen-v9/` (+ `comparison.md` vs v8) | 2026-11-02, 10 min, 2.71 attempts per entry. Parser change: 3 scope sentences dropped, 5 filter/sort/limit requirements added (REQ-6, REQ-8, REQ-4#3, REQ-6#3, REQ-7#3), and all 5 fail L0.5 (2 don't compile, 3 have a `post` that doesn't constrain the output). On the 16 entries in both runs: checked 13 → 13, L0.5 pass 5 → 9, fail 2 → 3. So the prompt makes the specs stronger, but the new sort/filter/"display N" requirements are still not solved. |
 | Qwen 2.5 7B, v10 (seed 42, single run) | 21 | **19/21 compile, 16/21 checked**; **L0.5 15 pass, 1 flag, 5 fail**; `rejects_bad_example` 10 true | `runs/2009 - video search/qwen-v10/rep1` (+ `comparison.md` vs v8) | 2026-11-02. **Not truly held out**: this SRS was looked at while writing v9. Single run, so no spread; differences to v8 (7/9/3) cannot be called real. |
 | Qwen 2.5 7B, v10.1 (seed 42, single run) | 21 | **19/21 compile, 16/21 checked**; **L0.5 15 / 1 / 5** | `runs/2009 - video search/qwen-v10.1/rep1` (+ `comparison.md` vs v8) | 2026-11-02. Same totals as v10. Same caveats (seen during v9, single run). |
+
+## L1: requirements graph → contracts (L1-v1, 2026-11-04)
+
+Branch `l1-graph-contracts`. Reads the frozen L0 run `runs/0000 - gamma j/qwen-v10.1/rep1`;
+L0, the parser and `Strings.lean` are unchanged. **No Qwen results yet**: the runs are in
+`runs/qwen-L1-v1.sbatch` (ada) and gamma j still has no `Domain.lean`.
+
+### Design: the graph decides the proof obligations
+
+| Graph (`req_graph.py`) | Lean (`arch_lean.py`, written by the harness) |
+|---|---|
+| shared entity (Domain.lean structures + fields, data dictionary, glossary, actors, synonyms) | vocabulary for mapping fields; Domain.lean is in the locked context (namespace `Domain`) |
+| operation = one compiling L0 spec | `namespace L0_<op>` (spec without its `example`); `req_<op>`/`res_<op>` constructors of `<G>Msg` |
+| group = connected part of the operation–entity projection (+ use-case links) | one system: `<G>Msg`, locked `<G>SystemSpec : Contract Msg Msg` (one `match` case per L0 spec = their conjunction) |
+| component (group, or recursive Louvain seed 42 above `CF_GRAPH_MAX_COMPONENT`=8 ops) | `<C>Contract : Contract Msg Msg`: owned requests use the model's `<C>_pre_<op>`/`<C>_post_<op>`, anything else passes through unchanged |
+| L0 specs in a component | trace obligations `trace_pre/post_<C>_<op>`: `pre` assumes no more than the L0 `pre`; under it `post` implies the L0 `post` |
+| topological order of the components | the chain `((c₁.seq c₂).seq c₃)…`; PO1 `po1_<A>_<B>` per consecutive pair; PO2 `po2_<G>` |
+| cycles between components | listed in graph.json, then each strongly connected set is merged into one component |
+| requirement → L0 spec → component → contract | `arch.json` (operations, owner, obligations) for re-verification |
+
+Every statement (trace, PO1, PO2, `system_sound_<G>`) is written by the harness; the model
+only writes the two definitions per operation (and proof bodies if the harness's own proofs
+fail). PO1/PO2 auto-proofs are generated per message constructor from the ownership map and
+use only definitional steps (`cases`/`obtain`/`exact`) plus the trace lemmas, so they scale:
+all 67 compiling gamma-j specs as one system check in ~12 s.
+
+### Tools (`agents/arch_tools.py`, deterministic, no LLM)
+`get_graph_summary`, `get_component`, `get_l0_spec`, `get_domain_types`, `lookup_name`,
+`check_lean`, `check_contract` (compiles; satisfiable and `pre` true on the L0 example's own
+literals; not vacuous = rejects some mutated output that the L0 `post` rejects; one Lean run),
+`check_trace` (batched per component), `check_po1`, `check_po2`, `submit_architecture` (re-hashes
+the locked context, discards earlier results and reruns everything, compiles the whole
+`Arch.lean`). Model code may only add `def`s named `<C>_…`: no `sorry`/`admit`/`axiom`/
+`native_decide`, no structures/instances/namespaces/options/macros, no reference to `L0_*.Spec`.
+Operations the model never got right get placeholder defs (`False`) so the file still compiles;
+they are reported and make the verdict "rejected".
+
+### Modes
+- **pipeline (default, `CF_ARCH_MODE`)**: per component in chain order, per operation:
+  `generate_verified` with `check_contract` + `check_trace` as validator (only that operation's
+  L0 spec as context, so cost does not grow with component size), then batched traces, model
+  proof attempts if needed (`CF_ARCH_PROOF_RETRIES`=2), PO1, PO2, submit.
+- **agent (`--arch-mode agent`)**: the model calls the tools (`llm.call_llm_tools`); needs
+  llama-server with `--jinja` (`CF_QWEN_JINJA=1`). Budget `CF_ARCH_MAX_TOOL_CALLS`=40 (agent mode
+  only). 3 malformed calls or the same call 3× → falls back to pipeline (`mode_used` records it).
+- **no-graph (`--no-graph`)**: the model gets all L0 specs of the group (fields + requirement
+  sentence) and returns a JSON decomposition; checked (every operation exactly once, ≥ 2
+  components, CamelCase names), then the same pipeline and checks.
+
+Prompt hash (`architect_agent.prompt_hash()`) and graph sha are in `arch.json` `meta`.
+
+### Graph on gamma j (provisional)
+- Without `Domain.lean` (committed `runs/0000 - gamma j/graph/`): 36.2% fields mapped, 8 groups,
+  11 components, 5 cycles (1 merged set).
+- With a scratch domain (Product, CartLine, Cart, Account, Order; not committed): 48.8% mapped;
+  main group 52 operations → `Account` (47, merged from the Account/Order/Product/Password cycle)
+  → `Account2` (5: the sales-person product use cases + CI-1); the other groups are single
+  data-dictionary fields (L1 skips groups with < 2 compiling specs). 15 operations isolated
+  (performance specs, plug-in/patch use cases). Synonyms file: 6 entries.
+- Real cycles exist (checkout writes an order, profile 3.1.3/S1 reads purchase history;
+  checkout's precondition needs login). Unmapped fields are mostly session state (`signedIn`,
+  `cookie`, `logged`) that no Domain type holds.
+
+### Validation without a model
+- Tests: `test_req_graph.py` (10: determinism across hash seeds, write→read edge, copies are
+  reads, Bool results, unmapped fields, type/synonym mapping, Louvain size, cycle merge, order,
+  precondition link `log in` ≠ `log out`), `test_arch.py` (12: every tool on a toy shop, a correct
+  2-component architecture passes everything, rejects a changed Domain, a vacuous contract, an
+  unprovable PO1, a single-component decomposition, placeholders). Whole suite: 98 tests pass.
+- Dry run on the real rep1 specs with a fake model that copies each L0 `pre`/`post`: main group
+  accepted, 98/98 obligations, 5.4 min; `Arch.lean` compiles standalone from the repo root
+  (99 theorems). No-graph with a fake half/half split: accepted, 98/98. This tests the
+  plumbing only.
+
+### Results
+Pending (ada): graph ×3 and no-graph ×3 (seeds 42–44), tool smoke test, agent ×1 if it passes.
+Compare: `python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-L1-v1-nograph" "runs/0000 - gamma j/qwen-L1-v1"`.
+Report as mean (min–max): trace %, PO1 %, PO2, attempts, tool calls, failures by stage.
+
+### Changes from the L1 task prompt (agreed with Akshith where marked)
+1. (agreed) Contracts are over a harness-generated message type, not a shared `World` record:
+   one `World → World` step cannot satisfy conflicting operations (login/logout), a start-to-end
+   conjunction breaks down a chain, and lifting L0 types to `World` needs model-written maps that
+   would shape `SystemSpec`. Domain types are the graph's vocabulary, not contract types.
+2. (agreed) `SystemSpec` is harness-generated from the L0 specs (conjunction as a `match`).
+3. (agreed) An output field only copied from the input (`o.f = i.f`) is a read.
+4. (agreed) Cyclic component groups are merged, not stopped: stopping left gamma j nothing to run.
+5. A write needs entity-level evidence (field name/type names the entity); `Bool` results and
+   attribute-only matches are results. Without this most edges were spurious (`emailSent`).
+6. PO1 is proved for consecutive chain pairs (what soundness needs), not per graph edge; edges
+   and their reasons stay in graph.json.
+7. Contracts may not reference `L0_*.Spec` (else every contract is a trivial copy).
+8. The harness tries its own proofs first; PO1/PO2 then follow mechanically from the traces,
+   so PO1/PO2 % mostly measure trace %.
+9. `--component` selects a group (a system); outputs are per group: `arch/<group>/`.
+
+### Open problems
+- A contract equal to the L0 conditions makes all obligations easy; nothing yet rewards a
+  contract that says more than the requirement or relates operations to each other.
+- 7 L0 specs do not compile (incl. checkout) and are excluded from L1.
+- Graph quality depends on Domain.lean and the synonyms file; session state has no entity.
+- Louvain splits only groups > 8 operations, and merging cycles can undo most of the split.
 
 ## Decisions
 
@@ -138,6 +244,15 @@ Second document, used to check that harness changes generalise beyond gamma j. R
 
 ## Gotchas
 
+- **L1 needs spaCy**: `python -m pip install spacy && python -m spacy download en_core_web_sm`
+  (`runs/qwen-L1-v1.sbatch` installs it). graph.json records the versions; a different model can
+  change lemmas and so the graph.
+- spaCy lemmatises `id` to `i`: req_graph leaves words of ≤ 3 letters alone.
+- `maxHeartbeats` is per declaration: a `simp` per `match` branch over a large inductive is
+  quadratic and timed out PO1/PO2 at 67 operations. Generated PO proofs use `cases`/`exact` only.
+- In generated proofs pass `i`/`o` explicitly: with `pre := fun _ => True` Lean cannot infer `_`.
+- `obtain ⟨_, rfl, _⟩ := h` also succeeds on a plain equality; put `subst`/`cases` first.
+
 - Run harness code from inside `harness/` (modules import each other as `from config import ...`).
 - Run `lake build` in `framework/` once before the harness, or `import ContractForge` won't resolve (`main.py` builds it on first run).
 - **`lake env lean <file>` only uses the Lake project in the current directory.** Run inside `runs/.../lean/` it finds none and fails with "unknown module prefix 'ContractForge'". Run from the repo root or `framework/`, or use `lake -d <repo root> env lean <file>`. In VS Code, open the repo root folder (the root `lakefile.lean` makes the infoview resolve the import) and restart the Lean server.
@@ -158,6 +273,10 @@ Second document, used to check that harness changes generalise beyond gamma j. R
 - **Default `lake` on ada is Lean 4.35.0**; inside `framework/`, elan switches to 4.29.1 from `lean-toolchain`.
 
 ## Next steps
+
+0. **L1:** add `benchmark/gammaj/GammaJ_L0.lean`, extract `Domain.lean` (DRAFT, review it),
+   rerun `--until graph`, then submit `runs/qwen-L1-v1.sbatch` on ada; compare graph vs no-graph;
+   if Qwen proves no PO2, run Gemma once (`--model gemma --run-name gemma-L1-v1`). Fill *L1 → Results*.
 
 1. Revoke the leaked Gemini key.
 1. **L0 is frozen at v10.1.** Open L0 issues, for after the freeze or a v11: the run-to-run compile failures (`5.5/R1` Decidable on a structure, `DD-shipping-date` and `DD-credit-card-expiry-date` date formats, `DD-location`, `UC-customer-checkout-an-order` writing `Spec.post {…}` with one record that mixes input and output fields — the `_field_of_other` hint misreads that as `i.x` vs `o.x`). Get a truly held-out SRS (video search was seen during v9). Compare runs only with `evaluation/compare_runs.py` over ≥3 reps.

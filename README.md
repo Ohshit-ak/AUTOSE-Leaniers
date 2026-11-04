@@ -41,7 +41,8 @@ AUTOSE-Leaniers/
 │   │   ├── Contract.lean   # Contract type, PO1/PO2/PO3 definitions, seq composition
 │   │   ├── Soundness.lean  # seq_sound, refines_sound, system_sound
 │   │   ├── Strings.lean    # decidable string-format helpers for specs (allDigits, isMMYY, …)
-│   │   └── Tactics.lean    # discharge_po tactic
+│   │   ├── Tactics.lean    # discharge_po tactic
+│   │   └── Chain.lean      # compat_seq, chain3_sound: chains of n components (L1)
 │   └── Test.lean           # smoke test
 │
 ├── harness/                # Python orchestration
@@ -95,6 +96,8 @@ contents of `benchmark/` and the rest of `evaluation/` (see [MEMORY.md](MEMORY.m
 | Change how Lean is invoked or errors are reported | [harness/lean_runner.py](harness/lean_runner.py) |
 | Edit an agent's system prompt | [harness/agents/](harness/agents/) |
 | Change the retry/repair loop | [harness/agents/base.py](harness/agents/base.py) |
+| Change how the requirements graph is built (L1) | [harness/req_graph.py](harness/req_graph.py) |
+| Change the L1 tools, checks or generated Lean | [harness/agents/arch_tools.py](harness/agents/arch_tools.py), [harness/arch_lean.py](harness/arch_lean.py) |
 
 ### Proof obligations
 
@@ -141,7 +144,8 @@ Python 3.10+. Use a venv (or your existing conda env):
 ```bash
 python -m venv venv
 source venv/bin/activate
-pip install google-genai openai python-dotenv
+pip install google-genai openai python-dotenv networkx spacy
+python -m spacy download en_core_web_sm   # L1 requirements graph
 ```
 
 ### 3. API keys
@@ -266,7 +270,7 @@ Lean's error message. A `sorry` counts as a failure. (Next to a real error, Lean
 `main.py` parses every SRS XML in `Requirements/`, generates one Lean spec (L0)
 per requirement, data constraint and use case, and then checks the specs (L0.5,
 `validate.py`): no empty `post`, runtime bounds present, data-field specs accept and
-reject values built from the parser's rules. L1/L2 are not wired in yet.
+reject values built from the parser's rules. L1 (`graph`, `arch`) is described below; L2 is not wired in yet.
 
 ```bash
 python main.py                                    # all XMLs, model qwen (or $CF_MODEL)
@@ -332,7 +336,7 @@ reply forms, numeric data tests, fixups and repair hints) and the v9 changes (`t
 filter/sort/limit parsing, scope-section drops, `Nat ≥ 0`, per-mutant vacuity, the search template) and the v10 changes
 (`test_v10_fixes.py`: seeds and run metadata, truncation, deriving fixup, rule-based negative cases, vacuity feedback,
 `has_precondition`, UI drops, `ContractForge.Strings`, name suggestions, field and function-misuse hints). Tests that run Lean are skipped
-if `lake` is missing.
+if `lake` is missing. L1: `test_req_graph.py` (graph determinism, edges, cycles, unmapped fields; needs spaCy) and `test_arch.py` (every L1 tool on a toy shop, a correct architecture, and the cases the harness rejects).
 
 ### L1: requirements graph → contracts (`--until graph`, `--until arch`)
 
