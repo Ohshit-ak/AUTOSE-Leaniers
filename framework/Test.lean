@@ -32,3 +32,7 @@ structure DateIn where
 def dateOk : Contract DateIn Bool := { pre := fun _ => True, post := fun i v => (v = true ↔ isMMYY i.raw.toList = true) }
 example : dateOk.pre { raw := "01/30" } ∧ dateOk.post { raw := "01/30" } true := by
   unfold dateOk; decide
+
+-- Chains (ContractForge/Chain.lean): PO1 of consecutive components gives PO1 of the chain.
+example : Contract.Compatible (incC.seq incC) incC :=
+  Contract.compat_seq (by unfold incC; discharge_po) (by unfold incC; discharge_po)
