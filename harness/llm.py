@@ -134,6 +134,32 @@ def _call_llm_once(prompt: str, system: str, model: str, history: list, temperat
     return resp.text, finish
 
 
+
+def call_llm_tools(messages: list, tools: list, model: str, temperature: float = TEMPERATURE) -> dict:
+    """One chat turn with tool definitions (OpenAI-compatible providers only). Returns
+    {"content", "tool_calls": [{"id", "name", "arguments" (raw JSON text)}], "finish_reason"}.
+    Local Qwen needs llama-server started with `--jinja` (CF_QWEN_JINJA=1 in
+    scripts/start_qwen_server.sh) to parse tool calls."""
+    if model not in BASE_URLS:
+        raise NotImplementedError(f"tool calling is not wired for {model}")
+    from openai import OpenAI
+    client = OpenAI(api_key=_api_key(model), base_url=BASE_URLS[model])
+    extra = {"seed": _seed} if model in SEEDED_PROVIDERS else {}
+    for attempt in range(API_RETRIES + 1):
+        try:
+            resp = client.chat.completions.create(model=MODELS[model], messages=messages, tools=tools,
+                                                  tool_choice="auto", temperature=temperature,
+                                                  max_tokens=MAX_TOKENS_RETRY, **extra)
+            break
+        except Exception as e:
+            if attempt == API_RETRIES or not _transient(e):
+                raise
+            time.sleep(min(10 * 2 ** attempt, 120))
+    msg = resp.choices[0].message
+    calls = [{"id": c.id, "name": c.function.name, "arguments": c.function.arguments or "{}"}
+             for c in (msg.tool_calls or [])]
+    return {"content": msg.content or "", "tool_calls": calls, "finish_reason": resp.choices[0].finish_reason}
+
 _FENCE = re.compile(r"```[ \t]*(?:lean4?|Lean)?[ \t]*\n(.*?)```", re.DOTALL)
 _OPEN_FENCE = re.compile(r"```[ \t]*(?:lean4?|Lean)?[ \t]*\n")
 _THINK = re.compile(r"<think>.*?</think>", re.DOTALL)

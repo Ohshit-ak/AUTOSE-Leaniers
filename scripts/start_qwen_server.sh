@@ -12,6 +12,8 @@
 #   CF_LLAMA_SERVER  llama-server binary          CF_QWEN_GGUF  first shard of the model
 #   CF_QWEN_HOST     bind address (127.0.0.1)     CF_QWEN_PORT  port (8082)
 #   CF_QWEN_CTX      context size (16384; repair conversations need more than 8192)          CF_QWEN_NGL   layers offloaded to the GPU (99 = all)
+#   CF_QWEN_JINJA    1 = start with --jinja (the model's own chat template), needed for tool calls
+#                    (L1 agent mode). Off by default so L0 runs keep the server setup they were frozen with.
 set -euo pipefail
 
 GGUF="${CF_QWEN_GGUF:-$HOME/llm-models/qwen2.5-7b-instruct/qwen2.5-7b-instruct-q4_k_m-00001-of-00002.gguf}"
@@ -25,5 +27,7 @@ SERVER="${CF_LLAMA_SERVER:-$HOME/build/llama.cpp/build-cuda/bin/llama-server}"
 [[ -f "$GGUF" ]] || { echo "model not found: $GGUF (set CF_QWEN_GGUF)" >&2; exit 1; }
 
 echo "serving $GGUF at http://$HOST:$PORT/v1"
+JINJA=()
+[[ "${CF_QWEN_JINJA:-0}" == "1" ]] && JINJA=(--jinja)
 exec "$SERVER" -m "$GGUF" --alias qwen2.5-7b-instruct --host "$HOST" --port "$PORT" \
-     -c "$CTX" -ngl "$NGL" --seed 42
+     -c "$CTX" -ngl "$NGL" --seed 42 "${JINJA[@]}"
