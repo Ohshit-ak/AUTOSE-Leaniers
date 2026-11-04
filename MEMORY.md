@@ -22,7 +22,7 @@ decision someone else would need to know.
 | `harness/agents/coding_agent.py` (L2) | Written, not run. |
 | `harness/main.py` | Single entry point. Stages `parse` → `spec` → `check` (L0) → `graph` → `arch` (L1); `--until graph/arch` read the frozen L0 run and never rerun L0. L2 not wired. Auto-starts the Qwen server. |
 | `harness/reverify.py` | Not started. |
-| `benchmark/gammaj/` | `GammaJ_L0.lean`: hand-written gold L0 (31 specs `Spec_<id>` with `_sat` witnesses, ambiguities marked), compiles. `Domain.lean`: **DRAFT, needs human review**, extracted from it (`Product`, `CartLine`, `Cart`, `Account`, `Order`, `qtyOf`, `itemCount`, `totalCost`; adds `deriving DecidableEq, Repr`). |
+| `benchmark/gammaj/` | `GammaJ_L0.lean`: hand-written gold L0 (25 specs `Spec_<id>` (16 data dictionary, 3 cart, 4 use case, 1 business rule, 1 security), all with `_sat` witnesses, ambiguities marked), compiles. `Domain.lean`: **DRAFT, needs human review**, extracted from it (`Product`, `CartLine`, `Cart`, `Account`, `Order`, `qtyOf`, `itemCount`, `totalCost`; adds `deriving DecidableEq, Repr`). |
 | `evaluation/compare_runs.py` | Done (v10; arch mode L1-v1). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. L1 folders get the arch report. |
 | `framework/ContractForge/Strings.lean` | Done (v10), frozen. String-format helpers over `List Char`. |
 | `requirements.txt` | Not created yet. |
