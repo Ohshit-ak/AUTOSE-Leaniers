@@ -45,7 +45,9 @@ AUTOSE-Leaniers/
 │   └── Test.lean           # smoke test
 │
 ├── harness/                # Python orchestration
-│   ├── main.py             # pipeline entry point: parse → spec (L0)
+│   ├── main.py             # pipeline entry point: parse → spec (L0) → check → graph → arch (L1)
+│   ├── req_graph.py        # L1: deterministic requirements graph (no LLM)
+│   ├── arch_lean.py        # L1: harness-written Lean (message type, SystemSpec, PO statements)
 │   ├── config.py           # models, API keys, retry/timeout settings
 │   ├── llm.py              # call_llm(): DeepSeek / Groq / Gemma / Qwen; extract_lean()
 │   ├── lean_runner.py      # check_lean(): type-checks code against the framework
@@ -57,7 +59,8 @@ AUTOSE-Leaniers/
 │       ├── repair.py           # Lean errors → short feedback + fix hints
 │       ├── fixups.py           # mechanical syntax fixes before each check
 │       ├── spec_agent.py       # L0: requirement → spec
-│       ├── architect_agent.py  # L1: spec → contracts + PO1/PO2
+│       ├── arch_tools.py       # L1: the architect's tools (checks, obligations, submit)
+│       ├── architect_agent.py  # L1: group → component contracts + trace/PO1/PO2
 │       └── coding_agent.py     # L2: contract → impl + PO3
 │
 ├── scripts/
@@ -331,33 +334,30 @@ filter/sort/limit parsing, scope-section drops, `Nat ≥ 0`, per-mutant vacuity,
 `has_precondition`, UI drops, `ContractForge.Strings`, name suggestions, field and function-misuse hints). Tests that run Lean are skipped
 if `lake` is missing.
 
-### Run the agents step by step
+### L1: requirements graph → contracts (`--until graph`, `--until arch`)
 
-To use the agents directly (e.g. to try L1/L2 before they are in `main.py`):
+L1 reads the **frozen** L0 run (default `runs/<doc>/qwen-v10.1/rep1`, change with `--l0-run`)
+and never reruns L0. Needs spaCy: `python -m pip install spacy && python -m spacy download en_core_web_sm`.
 
-```python
-from agents.spec_agent import run_spec
-from agents.architect_agent import run_architect, extract_contracts
-from agents.coding_agent import run_coder
-
-model = "deepseek"
-
-spec = run_spec("A function that returns a sorted permutation of a list of naturals", model)
-assert spec["success"], spec.get("error")
-
-arch = run_architect(spec["code"], model)
-assert arch["success"], arch.get("error")
-
-locked = spec["code"] + "\n\n" + arch["code"]
-for name in extract_contracts(arch["code"]):
-    result = run_coder(name, locked, model)
-    print(name, "OK" if result["success"] else "FAILED", f"({result['attempts']} attempts)")
+```bash
+cd harness
+python main.py "../Requirements/0000 - gamma j.xml" --until graph                  # no model
+python main.py "../Requirements/0000 - gamma j.xml" --until arch --repeat 3        # graph mode
+python main.py "../Requirements/0000 - gamma j.xml" --until arch --repeat 3 --no-graph  # baseline
+python main.py … --until arch --component AccountSys      # one group
+python main.py … --until arch --arch-mode agent           # model calls the tools (needs CF_QWEN_JINJA=1)
+cd .. && python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-L1-v1-nograph" "runs/0000 - gamma j/qwen-L1-v1"
 ```
 
-Every agent returns `{"success", "code", "attempts"}`, plus `"error"` on failure.
-On a failed check, the agent sends Lean's error back to the model and retries,
-up to `CF_MAX_RETRIES` times. If every attempt fails, `code` is the attempt that got
-furthest. Only the last ```lean block that defines `Spec` is taken from each reply.
+| Step | What | Where |
+|------|------|-------|
+| graph | `req_graph.py`, no model: entities (Domain.lean, data dictionary, glossary, actors, `Requirements/synonyms/<doc>.json`), one operation per L0 spec (Input fields = reads, Output fields = writes unless only copied or a `Bool` result), write→read and use-case edges, groups (connected), components (Louvain if > `CF_GRAPH_MAX_COMPONENT`=8 ops), cycles listed then merged, topological order | `runs/<doc>/graph/graph.json`, `graph.png` |
+| arch | per group with ≥ 2 compiling L0 specs: the harness writes a message type (`req_<op>`/`res_<op>`), a locked `SystemSpec` (one case per L0 spec), every theorem statement; the model writes `<C>_pre_<op>`/`<C>_post_<op>` per operation. Checks: compiles, satisfiable on the L0 example, not vacuous, trace (covers the L0 spec), PO1 per consecutive pair, PO2 for the chain, `system_sound_<G>` | `runs/<doc>/<model>-L1-v1[-nograph]/rep<k>/arch/<group>/Arch.lean`, `arch.json`, `arch/summary.json` |
+
+`Arch.lean` compiles on its own from the repo root (`lake env lean "runs/…/Arch.lean"`);
+obligations that were not proved are comments starting `-- NOT PROVED:`. `arch.json` has the
+model's code, every obligation (proved, by `auto`/`model`, attempts, errors), contract checks,
+the tool-call log, the mode used and `meta`. Design and results: MEMORY.md (*L1*).
 
 ### Writing Lean against the framework
 
