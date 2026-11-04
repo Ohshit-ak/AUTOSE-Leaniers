@@ -13,9 +13,15 @@ difference counts as real only if the means differ by more than the spread
 (max − min) of either run; with a single repetition there is no spread, so
 nothing can be called real.
 Per entry it prints how many repetitions passed L0.5 in A and in B.
+
+L1 runs (folders with rep*/arch/ or arch/, written by `main.py --until arch`) get the arch
+report instead: compiles, contracts satisfiable / non-vacuous, trace obligations proved,
+PO1 proved per consecutive pair, PO2 proved, attempts, tool calls, failures by stage, and
+the most common error per stage. A and B may be graph and --no-graph runs.
 """
 import argparse
 import json
+import re
 import statistics
 import sys
 from pathlib import Path
@@ -139,13 +145,114 @@ def report(dir_a: Path, dir_b: Path) -> str:
     return "\n".join(out) + "\n"
 
 
+# ---------------------------------------------------------------------------
+# L1 (arch) runs
+# ---------------------------------------------------------------------------
+
+def is_arch_run(run: Path) -> bool:
+    return (run / "arch" / "summary.json").exists() or any(run.glob("rep*/arch/summary.json"))
+
+
+def load_arch_reps(run: Path) -> list:
+    """[{group: arch.json}] per repetition."""
+    dirs = [run / "arch"] if (run / "arch").exists() else sorted(
+        (p for p in run.glob("rep*/arch")), key=lambda p: int("".join(c for c in p.parent.name if c.isdigit()) or 0))
+    return [{p.parent.name: json.loads(p.read_text(encoding="utf-8")) for p in d.glob("*/arch.json")} for d in dirs]
+
+
+def _stage(entry: dict) -> list:
+    """Failed stages of one operation's attempts (generate_verified log)."""
+    return [x["stage"] for x in entry.get("log", []) if x.get("stage") not in ("ok", "returned")]
+
+
+def arch_metrics(groups: dict) -> dict:
+    ops = [op for g in groups.values() for op in g.get("operations", {}).values()]
+    contracts = [i for g in groups.values() for c in (g.get("contracts") or {}).values()
+                 for i in (c.get("ops") or {}).values()]
+    proved = {k: v for g in groups.values() for k, v in ((g["group"] + "/" + k, v) for k, v in
+                                                         (g.get("proved") or {}).items())}
+    tr = [v for k, v in proved.items() if "/trace_" in k]
+    po1 = [v for k, v in proved.items() if "/po1:" in k]
+    po2 = [v for k, v in proved.items() if k.endswith("/po2")]
+    sat = [i["satisfiable"] for i in contracts if i.get("satisfiable") is not None]
+    vac = [i["vacuous"] for i in contracts if i.get("vacuous") is not None]
+    stages = {}
+    for op in ops:
+        for st in _stage(op):
+            stages[st] = stages.get(st, 0) + 1
+    pct = lambda xs: round(100 * sum(xs) / len(xs), 1) if xs else 0.0  # noqa: E731
+    m = {
+        "groups": len(groups),
+        "groups accepted": sum(g.get("verdict") == "accepted" for g in groups.values()),
+        "Arch.lean compiles": sum(bool(g.get("arch_compiles")) for g in groups.values()),
+        "components": sum(len(g.get("order") or []) for g in groups.values()),
+        "operations": len(ops),
+        "contracts satisfiable %": pct(sat),
+        "contracts non-vacuous %": pct([not v for v in vac]),
+        "placeholders (no contract)": sum(len(g.get("placeholders") or []) for g in groups.values()),
+        "trace proved %": pct(tr),
+        "PO1 proved %": pct(po1),
+        "PO1 pairs": len(po1),
+        "PO2 proved": sum(po2),
+        "mean attempts per operation": round(sum(o.get("attempts", 0) for o in ops) / len(ops), 2) if ops else 0,
+        "tool calls": sum(g.get("n_tool_calls", 0) for g in groups.values()),
+        "minutes": round(sum(g.get("seconds", 0) for g in groups.values()) / 60, 1),
+    }
+    for st in ("syntax", "names", "types", "proof", "check", "other", "truncated", "weakened"):
+        m[f"failed attempts: {st}"] = stages.get(st, 0)
+    return m
+
+
+ARCH_LOWER_BETTER = {"placeholders (no contract)", "mean attempts per operation", "tool calls", "minutes"} | {
+    f"failed attempts: {st}" for st in ("syntax", "names", "types", "proof", "check", "other", "truncated", "weakened")}
+LOWER_BETTER |= ARCH_LOWER_BETTER
+
+
+def arch_errors(reps: list, n: int = 3) -> list:
+    """Most common first error lines of failed obligations, with one example each."""
+    count, example = {}, {}
+    for groups in reps:
+        for g in groups.values():
+            for k, o in (g.get("obligations") or {}).items():
+                for e in (o.get("errors") or [])[:1]:
+                    key = re.sub(r"`[^`]*`|\d+", "_", e.splitlines()[0])[:90]
+                    count[key] = count.get(key, 0) + 1
+                    example.setdefault(key, f"{g['group']} {k}: {e.splitlines()[0][:160]}")
+    return [(c, k, example[k]) for k, c in sorted(count.items(), key=lambda x: -x[1])[:n]]
+
+
+def arch_report(dir_a: Path, dir_b: Path) -> str:
+    A, B = load_arch_reps(dir_a), load_arch_reps(dir_b)
+    ra, rb = len(A), len(B)
+    ma, mb = [arch_metrics(r) for r in A], [arch_metrics(r) for r in B]
+    meta = lambda reps: next((g.get("meta") for r in reps for g in r.values() if g.get("meta")), {})  # noqa: E731
+    out = [f"# L1: `{dir_a.name}` ({ra} reps) vs `{dir_b.name}` ({rb} reps)", ""]
+    for tag, reps in (("A", A), ("B", B)):
+        m = meta(reps)
+        out.append(f"- {tag}: graph mode `{m.get('graph_mode')}`, arch mode `{m.get('arch_mode')}`, model "
+                   f"`{m.get('model_id')}`, prompt `{m.get('prompt_hash')}`, graph `{m.get('graph_sha')}`, "
+                   f"commit `{m.get('git_commit')}`; modes used "
+                   f"{sorted({g.get('mode_used') for r in reps for g in r.values()})}")
+    out += ["", "Mean (min–max) over repetitions; a difference is real only beyond the spread.", "",
+            f"| metric | A | B | Δ mean | verdict |", "|---|---|---|---|---|"]
+    for name in ma[0] if ma else []:
+        a = summarize([m[name] for m in ma])
+        b = summarize([m[name] for m in mb]) if mb else (0, 0, 0)
+        v = verdict(name, a, b, ra, rb)
+        out.append(f"| {name} | {fmt(*a, ra)} | {fmt(*b, rb)} | {b[0] - a[0]:+.2f} | {v} |")
+    for tag, reps in (("A", A), ("B", B)):
+        out += ["", f"## Most common obligation errors in {tag}", ""]
+        out += [f"- {c}× `{k}` — e.g. {ex}" for c, k, ex in arch_errors(reps)] or ["- none"]
+    return "\n".join(out) + "\n"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("a", type=Path, help="run folder (before)")
     ap.add_argument("b", type=Path, help="run folder (after)")
     ap.add_argument("-o", "--out", type=Path, help="write the report here (default: stdout)")
     args = ap.parse_args(argv)
-    text = report(args.a, args.b)
+    text = arch_report(args.a, args.b) if is_arch_run(args.a) else report(args.a, args.b)
     if args.out:
         args.out.write_text(text, encoding="utf-8")
         print(args.out)
