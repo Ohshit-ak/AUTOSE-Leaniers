@@ -32,7 +32,7 @@ def check_lean(code: str) -> dict:
     try:
         result = subprocess.run(
             ["lake", "env", "lean", filepath],
-            capture_output=True, text=True, timeout=LEAN_TIMEOUT, cwd=FRAMEWORK_PATH,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=LEAN_TIMEOUT, cwd=FRAMEWORK_PATH,
         )
     except subprocess.TimeoutExpired:
         return {"success": False, "error": f"Lean timed out after {LEAN_TIMEOUT}s"}
@@ -89,7 +89,7 @@ def core_names() -> dict:
         filepath = f.name
     try:
         result = subprocess.run(["lake", "env", "lean", filepath], capture_output=True,
-                                text=True, timeout=300, cwd=FRAMEWORK_PATH)
+                                text=True, encoding="utf-8", errors="replace", timeout=300, cwd=FRAMEWORK_PATH)
     finally:
         os.unlink(filepath)
     names = {ns: [] for ns in NAME_SPACES}

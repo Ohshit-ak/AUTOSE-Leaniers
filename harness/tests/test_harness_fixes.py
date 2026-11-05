@@ -259,6 +259,7 @@ class SorryDetection(unittest.TestCase):
         self.assertTrue(check_lean("example : 1 = 1 := rfl")["success"])
 
 
+@unittest.skipUnless(shutil.which("lake"), "needs Lean (lake)")
 class TestHarnessFixes(unittest.TestCase):
     def test_utf8_lean_check(self):
         import lean_runner
