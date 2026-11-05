@@ -476,6 +476,10 @@ def stage_code(stem: str, args) -> dict:
             arch_json_path = gdir / "arch.json"
             arch_rec = json.loads(arch_json_path.read_text(encoding="utf-8")) if arch_json_path.exists() else {}
 
+            if arch_rec.get("verdict") not in ("accepted", None):
+                print(f"[code] {group_id}: skipped (L1 verdict: {arch_rec.get('verdict')})")
+                continue
+
             comps = arch_rec.get("order") or []
             contracts = arch_rec.get("contracts") or {}
             all_ops = list(arch_rec.get("operations", {}).keys())
@@ -511,7 +515,7 @@ def stage_code(stem: str, args) -> dict:
                 system_impl = ""
                 sound_inst = ""
 
-            full_impl = "\n\n".join([arch_code] + comp_codes + ([system_impl, sound_inst] if system_impl else [])) + "\n"
+            full_impl = "\n\n".join([arch_code.strip()] + comp_codes + ([system_impl, sound_inst] if system_impl else [])) + "\n"
             (g_out / "Impl.lean").write_text(full_impl, encoding="utf-8")
 
             if not args.skip_lean and all_comps_ok and comps:

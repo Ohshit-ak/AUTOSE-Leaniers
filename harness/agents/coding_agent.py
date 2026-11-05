@@ -159,7 +159,7 @@ def run_component_coder(
 
     parts = [ops_dict[op]["code"].strip() for op in sorted_owned if ops_dict[op].get("code")]
     parts.append(CL.component_impl_def(group, comp, sorted_owned, all_ops))
-    parts.append(f"{CL.po3_statement(comp)} := {CL.auto_po3_proof(group, comp, sorted_owned, all_ops)}")
+    parts.append(CL.theorem(CL.po3_statement(comp), CL.auto_po3_proof(group, comp, sorted_owned, all_ops)))
     full_code = "\n\n".join(parts) + "\n"
 
     if skip_lean:
