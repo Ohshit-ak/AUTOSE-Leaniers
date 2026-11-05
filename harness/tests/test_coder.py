@@ -317,5 +317,90 @@ class TestMainStageCode(unittest.TestCase):
         self.assertIn("arch run directory not found", str(ctx.exception))
 
 
+class TestCompareRunsL2(unittest.TestCase):
+    def test_compare_runs_l2_metrics_and_report(self):
+        import sys
+        sys.path.insert(0, str(HARNESS.parent / "evaluation"))
+        import compare_runs
+
+        self.assertTrue(callable(getattr(compare_runs, "is_code_run", None)))
+        self.assertTrue(callable(getattr(compare_runs, "code_metrics", None)))
+        self.assertTrue(callable(getattr(compare_runs, "code_report", None)))
+
+        # Test metrics computation
+        mock_groups = {
+            "ShopSys": {
+                "group": "ShopSys",
+                "verdict": "accepted",
+                "impl_compiles": True,
+                "sound_proved": True,
+                "seconds": 12.0,
+                "components": {
+                    "Stock": {
+                        "proved": True,
+                        "ops": {
+                            "OP-restock": {"attempts": 1},
+                            "OP-sell": {"attempts": 2},
+                        }
+                    },
+                    "Audit": {
+                        "proved": True,
+                        "ops": {
+                            "OP-audit": {"attempts": 1},
+                        }
+                    }
+                }
+            }
+        }
+        m = compare_runs.code_metrics(mock_groups)
+        self.assertEqual(m["groups"], 1)
+        self.assertEqual(m["groups accepted"], 1)
+        self.assertEqual(m["Impl.lean compiles"], 1)
+        self.assertEqual(m["soundness proved"], 1)
+        self.assertEqual(m["components"], 2)
+        self.assertEqual(m["components proved"], 2)
+        self.assertEqual(m["PO3 proved %"], 100.0)
+        self.assertEqual(m["mean attempts per operation"], 1.33)
+
+    def test_compare_runs_l2_report_generation(self):
+        import json
+        import tempfile
+        import sys
+        sys.path.insert(0, str(HARNESS.parent / "evaluation"))
+        import compare_runs
+
+        with tempfile.TemporaryDirectory() as tmp_a, tempfile.TemporaryDirectory() as tmp_b:
+            path_a = Path(tmp_a)
+            path_b = Path(tmp_b)
+
+            for path in (path_a, path_b):
+                code_dir = path / "code"
+                group_dir = code_dir / "ShopSys"
+                group_dir.mkdir(parents=True)
+                (code_dir / "summary.json").write_text("{}", encoding="utf-8")
+                rec = {
+                    "group": "ShopSys",
+                    "verdict": "accepted",
+                    "impl_compiles": True,
+                    "sound_proved": True,
+                    "seconds": 5.0,
+                    "components": {
+                        "Stock": {"proved": True, "ops": {"OP-restock": {"attempts": 1}}}
+                    },
+                    "meta": {"model_id": "mock", "harness_version": "L2-v1"}
+                }
+                (group_dir / "code.json").write_text(json.dumps(rec), encoding="utf-8")
+
+            self.assertTrue(compare_runs.is_code_run(path_a))
+            reps = compare_runs.load_code_reps(path_a)
+            self.assertEqual(len(reps), 1)
+            self.assertIn("ShopSys", reps[0])
+
+            report = compare_runs.code_report(path_a, path_b)
+            self.assertIn("# L2:", report)
+            self.assertIn("PO3 proved %", report)
+            self.assertIn("soundness proved", report)
+
+
 if __name__ == "__main__":
     unittest.main()
