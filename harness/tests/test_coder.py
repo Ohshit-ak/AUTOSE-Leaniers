@@ -31,6 +31,14 @@ theorem Stock_impl_op_restock_ok : ∀ i : L0_op_restock.Input, Stock_pre_op_res
         problems = v(bad_code_admit)
         self.assertTrue(any("admit" in p.lower() for p in problems))
 
+        bad_code_native = bad_code_sorry.replace("sorry", "native_decide")
+        problems = v(bad_code_native)
+        self.assertTrue(any("native_decide" in p.lower() for p in problems))
+
+        bad_code_axiom = bad_code_sorry.replace("sorry", "axiom")
+        problems = v(bad_code_axiom)
+        self.assertTrue(any("axiom" in p.lower() for p in problems))
+
     def test_validator_rejects_missing_names(self):
         v = coding_agent.validate_op_code("Stock", "OP-restock")
         missing_impl = """
@@ -62,6 +70,10 @@ theorem Stock_impl_op_restock_ok : ∀ i : L0_op_restock.Input, Stock_pre_op_res
   rfl
 """
         self.assertEqual(v(valid_code), [])
+
+        # Accepts 'lemma' as well
+        valid_lemma = valid_code.replace("theorem Stock_impl_op_restock_ok", "lemma Stock_impl_op_restock_ok")
+        self.assertEqual(v(valid_lemma), [])
 
 
 class TestComponentCoder(unittest.TestCase):
@@ -127,6 +139,8 @@ theorem Stock_impl_op_sell_ok : ∀ i : L0_op_sell.Input, Stock_pre_op_sell i �
 
         self.assertFalse(res["success"])
         self.assertFalse(res["proved"])
+        self.assertIn("OP-restock", res["error"])
+        self.assertIn("timeout", res["error"])
 
     def test_component_coder_empty_owned(self):
         res = coding_agent.run_component_coder(

@@ -73,7 +73,7 @@ def validate_op_code(comp: str, op: str) -> Callable[[str], List[str]]:
     impl_name = CL.impl_op_name(comp, op)
     ok_name = CL.impl_op_ok_name(comp, op)
     impl_pat = re.compile(rf"\bdef\s+{re.escape(impl_name)}\b")
-    ok_pat = re.compile(rf"\btheorem\s+{re.escape(ok_name)}\b")
+    ok_pat = re.compile(rf"\b(?:theorem|lemma)\s+{re.escape(ok_name)}\b")
 
     def _validate(code: str) -> List[str]:
         problems = []
@@ -137,23 +137,24 @@ def run_component_coder(
 
     sorted_owned = sorted(set(owned), key=CL.slug)
     ops_dict: Dict[str, dict] = {}
-    all_succeeded = True
+    failing_op = None
 
     for op in sorted_owned:
         op_res = op_coder_fn(comp, op, locked_context, model)
         ops_dict[op] = op_res
         if not op_res.get("success"):
-            all_succeeded = False
+            failing_op = op
             break
 
-    if not all_succeeded:
+    if failing_op is not None:
+        fail_err = ops_dict[failing_op].get("error", "unknown error")
         return {
             "component": comp,
             "code": "",
             "success": False,
             "proved": False,
             "ops": ops_dict,
-            "error": "One or more operations failed to implement or verify.",
+            "error": f"Operation '{failing_op}' failed: {fail_err}",
         }
 
     parts = [ops_dict[op]["code"].strip() for op in sorted_owned if ops_dict[op].get("code")]
