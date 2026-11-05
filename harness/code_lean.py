@@ -61,7 +61,7 @@ def impl_op_sig(comp: str, op: str) -> str:
 
 def impl_signatures(comp: str, owned: Sequence[str]) -> str:
     """Signatures of all operations owned by `comp`, sorted by slug."""
-    return "\n".join(impl_op_sig(comp, op) for op in sorted(owned, key=slug))
+    return "\n".join(impl_op_sig(comp, op) for op in sorted(set(owned), key=slug))
 
 
 def impl_op_ok_statement(comp: str, op: str) -> str:
@@ -82,13 +82,16 @@ def component_impl_def(group: str, comp: str, owned: Sequence[str], all_ops: Seq
     """`<comp>Impl`: handles owned operations by calling their respective implementation functions,
     and passes any other message unchanged (`| m => m`). Owned operation branches are sorted
     alphabetically by `slug(op)`.
+
+    `all_ops` is accepted for interface consistency with `arch_lean.contract_def`, but unneeded
+    here because unowned operations and responses are handled uniformly by the `| m => m` fallback.
     """
     lines = [
         f"/-- Implementation of component {comp}: handles owned operations, passes others unchanged. -/",
         f"def {comp}Impl (m : {group}Msg) : {group}Msg :=",
         "  match m with",
     ]
-    for op in sorted(owned, key=slug):
+    for op in sorted(set(owned), key=slug):
         s = slug(op)
         lines.append(f"  | .req_{s} i => .res_{s} ({impl_op_name(comp, op)} i)")
     lines.append("  | m => m")
@@ -117,13 +120,10 @@ def auto_po3_proof(group: str, comp: str, owned: Sequence[str], all_ops: Sequenc
     All branches are sorted alphabetically by `slug(op)` for determinism.
     """
     owned_set = set(owned)
-    full_all_ops = list(all_ops)
-    for op in owned:
-        if op not in full_all_ops:
-            full_all_ops.append(op)
+    full_all_ops = set(all_ops).union(owned_set)
 
-    sorted_owned = sorted(owned, key=slug)
-    unowned = sorted([op for op in full_all_ops if op not in owned_set], key=slug)
+    sorted_owned = sorted(owned_set, key=slug)
+    unowned = sorted(full_all_ops - owned_set, key=slug)
     sorted_all = sorted(full_all_ops, key=slug)
 
     lines = ["by", "  intro m hpre", "  cases m with"]

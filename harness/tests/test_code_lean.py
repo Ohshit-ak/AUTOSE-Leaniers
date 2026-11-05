@@ -43,6 +43,14 @@ class TestCodeLeanNaming(unittest.TestCase):
         po3_stmt = code_lean.po3_statement("Stock")
         self.assertEqual(po3_stmt, "theorem StockImpl_ok : StockContract.Satisfies StockImpl")
 
+        # impl_signatures sorts by slug
+        sigs = code_lean.impl_signatures("Stock", ["OP-sell", "OP-restock"])
+        expected_sigs = (
+            "def Stock_impl_op_restock (i : L0_op_restock.Input) : L0_op_restock.Output := …\n"
+            "def Stock_impl_op_sell (i : L0_op_sell.Input) : L0_op_sell.Output := …"
+        )
+        self.assertEqual(sigs, expected_sigs)
+
 
 class TestComponentImplDef(unittest.TestCase):
     def test_component_impl_def_stock(self):
