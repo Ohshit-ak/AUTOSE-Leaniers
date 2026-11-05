@@ -401,6 +401,53 @@ class TestCompareRunsL2(unittest.TestCase):
             self.assertIn("PO3 proved %", report)
             self.assertIn("soundness proved", report)
 
+    def test_compare_runs_l2_multi_rep_and_cli(self):
+        import json
+        import tempfile
+        import sys
+        sys.path.insert(0, str(HARNESS.parent / "evaluation"))
+        import compare_runs
+
+        with tempfile.TemporaryDirectory() as tmp_a, tempfile.TemporaryDirectory() as tmp_b:
+            path_a = Path(tmp_a)
+            path_b = Path(tmp_b)
+
+            for rep_idx in (1, 2):
+                rep_dir = path_a / f"rep{rep_idx}" / "code"
+                gdir = rep_dir / "ShopSys"
+                gdir.mkdir(parents=True)
+                (rep_dir / "summary.json").write_text("{}", encoding="utf-8")
+                rec = {
+                    "group": "ShopSys",
+                    "verdict": "accepted",
+                    "impl_compiles": True,
+                    "sound_proved": True,
+                    "seconds": 4.0 * rep_idx,
+                    "components": {
+                        "Stock": {"proved": True, "ops": {"OP-restock": {"attempts": rep_idx}}}
+                    },
+                    "meta": {"model_id": "mock", "harness_version": "L2-v1"}
+                }
+                (gdir / "code.json").write_text(json.dumps(rec), encoding="utf-8")
+
+            # Single rep for B
+            code_b = path_b / "code"
+            gb = code_b / "ShopSys"
+            gb.mkdir(parents=True)
+            (code_b / "summary.json").write_text("{}", encoding="utf-8")
+            (gb / "code.json").write_text(json.dumps(rec), encoding="utf-8")
+
+            self.assertTrue(compare_runs.is_code_run(path_a))
+            reps_a = compare_runs.load_code_reps(path_a)
+            self.assertEqual(len(reps_a), 2)
+
+            out_file = path_a / "report.md"
+            rc = compare_runs.main([str(path_a), str(path_b), "-o", str(out_file)])
+            self.assertEqual(rc, 0)
+            self.assertTrue(out_file.exists())
+            text = out_file.read_text(encoding="utf-8")
+            self.assertIn("# L2:", text)
+
 
 if __name__ == "__main__":
     unittest.main()

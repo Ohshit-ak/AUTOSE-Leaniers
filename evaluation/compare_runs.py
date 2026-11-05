@@ -200,7 +200,7 @@ def arch_metrics(groups: dict) -> dict:
         "PO2 proved": sum(po2),
         "mean attempts per operation": round(sum(o.get("attempts", 0) for o in ops) / len(ops), 2) if ops else 0,
         "tool calls": sum(g.get("n_tool_calls", 0) for g in groups.values()),
-        "minutes": round(sum(g.get("seconds", 0) for g in groups.values()) / 60, 1),
+        "minutes": round(sum((g.get("seconds") or 0) for g in groups.values()) / 60, 1),
     }
     for st in ("syntax", "names", "types", "proof", "check", "other", "truncated", "weakened"):
         m[f"failed attempts: {st}"] = stages.get(st, 0)
@@ -280,7 +280,7 @@ def code_metrics(groups: dict) -> dict:
         "components proved": sum(bool(c.get("proved")) for c in comps),
         "PO3 proved %": pct(po3),
         "mean attempts per operation": round(sum(att) / len(att), 2) if att else 0.0,
-        "minutes": round(sum(g.get("seconds", 0) for g in groups.values()) / 60, 1),
+        "minutes": round(sum((g.get("seconds") or 0) for g in groups.values()) / 60, 1),
     }
 
 
