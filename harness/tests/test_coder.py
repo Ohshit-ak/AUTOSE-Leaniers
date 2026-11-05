@@ -290,6 +290,32 @@ class TestMainStageCode(unittest.TestCase):
             self.assertTrue((code_out / "ShopSys" / "code.json").exists())
             self.assertTrue((code_out / "summary.json").exists())
 
+    def test_main_cli_args_parsing(self):
+        import argparse
+        import main
+
+        # Create parser identical to main
+        ap = argparse.ArgumentParser()
+        ap.add_argument("--until", choices=main.STAGES)
+        ap.add_argument("--arch-run")
+
+        args = ap.parse_args(["--until", "code", "--arch-run", "some/path/arch"])
+        self.assertEqual(args.until, "code")
+        self.assertEqual(args.arch_run, "some/path/arch")
+
+    def test_stage_code_nonexistent_arch_run_fails(self):
+        import argparse
+        import main
+
+        args = argparse.Namespace(
+            model="mock",
+            arch_run="nonexistent/directory/path/that/does/not/exist",
+            component=None,
+        )
+        with self.assertRaises(SystemExit) as ctx:
+            main.stage_code("some_stem", args)
+        self.assertIn("arch run directory not found", str(ctx.exception))
+
 
 if __name__ == "__main__":
     unittest.main()

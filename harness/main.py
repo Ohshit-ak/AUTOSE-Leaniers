@@ -9,8 +9,10 @@ Stages run in order up to --until:
             benchmark/<doc>/Domain.lean (req_graph.py, no model) → runs/<stem>/graph/
     arch    L1: per component group, component contracts + trace/PO1/PO2 proofs
             (agents/architect_agent.py) → runs/<stem>/<model>-L1-v1/rep<k>/arch/<group>/
---until graph / --until arch do NOT rerun L0: they read the frozen L0 run (--l0-run,
-default runs/<stem>/qwen-v10.1/rep1). L2 is not wired in yet.
+    code    L2: per component group, component implementations + automated PO3 proofs +
+            end-to-end sound theorem → runs/<stem>/<model>-L2-v1/rep<k>/code/<group>/
+--until graph / --until arch / --until code do NOT rerun L0: they read the frozen L0 run (--l0-run,
+default runs/<stem>/qwen-v10.1/rep1) and frozen L1 run (--arch-run).
 
 Run from harness/:
     python main.py                                  # every XML in Requirements/, model qwen
@@ -432,10 +434,15 @@ def stage_code(stem: str, args) -> dict:
     from agents.coding_agent import run_component_coder
     from lean_runner import check_lean
 
-    arch_dir = Path(args.arch_run).resolve() if getattr(args, "arch_run", None) else (arch_run_dir(stem, args) / "arch")
-    if not arch_dir.exists():
-        stage_arch(stem, args)
+    if getattr(args, "arch_run", None):
+        arch_dir = Path(args.arch_run).resolve()
+        if not arch_dir.exists():
+            _fail(f"arch run directory not found: {arch_dir}")
+    else:
         arch_dir = arch_run_dir(stem, args) / "arch"
+        if not arch_dir.exists():
+            stage_arch(stem, args)
+            arch_dir = arch_run_dir(stem, args) / "arch"
 
     out_dir = code_run_dir(stem, args) / "code"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -444,91 +451,116 @@ def stage_code(stem: str, args) -> dict:
     arch_rel = str(arch_dir.relative_to(ROOT)) if arch_dir.is_relative_to(ROOT) else str(arch_dir)
     meta.update(harness_version=L2_VERSION, arch_run=arch_rel)
     summary = {"meta": meta, "groups": {}}
+    _write_json(out_dir / "summary.json", summary)
 
     group_dirs = sorted([d for d in arch_dir.iterdir() if d.is_dir() and (d / "Arch.lean").exists()])
     if args.component:
-        group_dirs = [d for d in group_dirs if d.name in args.component]
+        filtered = []
+        for d in group_dirs:
+            if d.name in args.component:
+                filtered.append(d)
+            elif (d / "arch.json").exists():
+                rec = json.loads((d / "arch.json").read_text(encoding="utf-8"))
+                comps = rec.get("order") or list((rec.get("contracts") or {}).keys())
+                if set(args.component) & set(comps):
+                    filtered.append(d)
+        group_dirs = filtered
 
     for gdir in group_dirs:
         group_id = gdir.name
-        arch_code = (gdir / "Arch.lean").read_text(encoding="utf-8")
-        arch_json_path = gdir / "arch.json"
-        arch_rec = json.loads(arch_json_path.read_text(encoding="utf-8")) if arch_json_path.exists() else {}
-
-        comps = arch_rec.get("order") or []
-        contracts = arch_rec.get("contracts") or {}
-        all_ops = list(arch_rec.get("operations", {}).keys())
-        if not all_ops:
-            all_ops = [op for c in contracts.values() for op in (c.get("ops") or {}).keys()]
-
-        print(f"[code] {group_id}: implementing {len(comps)} components ({' → '.join(comps)})")
         t0 = time.time()
-        comp_results = {}
-        comp_codes = []
-        all_comps_ok = True
-
-        for comp in comps:
-            owned = list((contracts.get(comp, {}).get("ops") or {}).keys())
-            res = run_component_coder(
-                group=group_id,
-                comp=comp,
-                owned=owned,
-                all_ops=all_ops,
-                locked_context=arch_code,
-                model=args.model,
-                skip_lean=args.skip_lean,
-            )
-            comp_results[comp] = res
-            if res.get("success"):
-                comp_codes.append(res.get("code", "").strip())
-            else:
-                all_comps_ok = False
-
         g_out = out_dir / group_id
         g_out.mkdir(parents=True, exist_ok=True)
+        try:
+            arch_code = (gdir / "Arch.lean").read_text(encoding="utf-8")
+            arch_json_path = gdir / "arch.json"
+            arch_rec = json.loads(arch_json_path.read_text(encoding="utf-8")) if arch_json_path.exists() else {}
 
-        if comps:
-            system_impl = CL.system_impl_def(group_id, comps)
-            sound_inst = CL.system_sound_instantiation(group_id, comps)
-        else:
-            system_impl = ""
-            sound_inst = ""
+            comps = arch_rec.get("order") or []
+            contracts = arch_rec.get("contracts") or {}
+            all_ops = list(arch_rec.get("operations", {}).keys())
+            if not all_ops:
+                all_ops = [op for c in contracts.values() for op in (c.get("ops") or {}).keys()]
 
-        full_impl = "\n\n".join([arch_code] + comp_codes + ([system_impl, sound_inst] if system_impl else [])) + "\n"
-        (g_out / "Impl.lean").write_text(full_impl, encoding="utf-8")
+            print(f"[code] {group_id}: implementing {len(comps)} components ({' → '.join(comps)})")
+            comp_results = {}
+            comp_codes = []
+            all_comps_ok = True
 
-        if not args.skip_lean and all_comps_ok and comps:
-            check = check_lean(full_impl)
-            sound_proved = check.get("success", False)
-            impl_compiles = check.get("success", False)
-            err = check.get("error", "")
-        else:
-            sound_proved = all_comps_ok if args.skip_lean else False
-            impl_compiles = all_comps_ok
-            err = ""
+            for comp in comps:
+                owned = list((contracts.get(comp, {}).get("ops") or {}).keys())
+                res = run_component_coder(
+                    group=group_id,
+                    comp=comp,
+                    owned=owned,
+                    all_ops=all_ops,
+                    locked_context=arch_code,
+                    model=args.model,
+                    skip_lean=args.skip_lean,
+                )
+                comp_results[comp] = res
+                if res.get("success"):
+                    comp_codes.append(res.get("code", "").strip())
+                else:
+                    all_comps_ok = False
 
-        verdict = "accepted" if (all_comps_ok and sound_proved) else "rejected"
-        elapsed = round(time.time() - t0, 1)
-        rec = {
-            "group": group_id,
-            "verdict": verdict,
-            "impl_compiles": impl_compiles,
-            "sound_proved": sound_proved,
-            "seconds": elapsed,
-            "components": comp_results,
-            "error": err,
-            "meta": meta,
-        }
+            if comps:
+                system_impl = CL.system_impl_def(group_id, comps)
+                sound_inst = CL.system_sound_instantiation(group_id, comps)
+            else:
+                system_impl = ""
+                sound_inst = ""
+
+            full_impl = "\n\n".join([arch_code] + comp_codes + ([system_impl, sound_inst] if system_impl else [])) + "\n"
+            (g_out / "Impl.lean").write_text(full_impl, encoding="utf-8")
+
+            if not args.skip_lean and all_comps_ok and comps:
+                check = check_lean(full_impl)
+                sound_proved = check.get("success", False)
+                impl_compiles = check.get("success", False)
+                err = check.get("error", "")
+            else:
+                sound_proved = all_comps_ok if args.skip_lean else False
+                impl_compiles = all_comps_ok
+                err = ""
+
+            verdict = "accepted" if (all_comps_ok and sound_proved) else "rejected"
+            elapsed = round(time.time() - t0, 1)
+            rec = {
+                "group": group_id,
+                "verdict": verdict,
+                "impl_compiles": impl_compiles,
+                "sound_proved": sound_proved,
+                "seconds": elapsed,
+                "components": comp_results,
+                "error": err,
+                "meta": meta,
+            }
+        except KeyboardInterrupt:
+            raise
+        except Exception as e:
+            elapsed = round(time.time() - t0, 1)
+            verdict = f"crashed: {type(e).__name__}: {e}"
+            rec = {
+                "group": group_id,
+                "verdict": verdict,
+                "impl_compiles": False,
+                "sound_proved": False,
+                "seconds": elapsed,
+                "components": {},
+                "error": str(e),
+                "meta": meta,
+            }
         _write_json(g_out / "code.json", rec)
 
         summary["groups"][group_id] = {
             "verdict": verdict,
-            "impl_compiles": impl_compiles,
-            "sound_proved": sound_proved,
+            "impl_compiles": rec.get("impl_compiles", False),
+            "sound_proved": rec.get("sound_proved", False),
             "seconds": elapsed,
         }
         _write_json(out_dir / "summary.json", summary)
-        print(f"[code] {group_id}: {verdict}, compiles={impl_compiles}, sound={sound_proved}, {elapsed}s -> {g_out.relative_to(ROOT) if g_out.is_relative_to(ROOT) else g_out}")
+        print(f"[code] {group_id}: {verdict}, compiles={rec.get('impl_compiles')}, sound={rec.get('sound_proved')}, {elapsed}s -> {g_out.relative_to(ROOT) if g_out.is_relative_to(ROOT) else g_out}")
 
     return summary
 
