@@ -612,7 +612,8 @@ def main(argv=None) -> int:
         if l1:  # L0 is frozen: read the parsed JSON and the L0 run, never regenerate them
             if not (PARSED_DIR / f"{path.stem}.json").exists():
                 stage_parse(path)
-            stage_graph(path.stem, args)
+            if not (RUNS_DIR / path.stem / "graph" / "graph.json").exists():
+                stage_graph(path.stem, args)
             if args.until == "graph":
                 continue
             for k in range(1, (args.repeat or 1) + 1):
