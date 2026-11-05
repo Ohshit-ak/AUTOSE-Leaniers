@@ -25,7 +25,7 @@ def check_lean(code: str) -> dict:
     the framework import is added here. A `sorry` counts as a failure.
     """
     code = HEADER + _IMPORT.sub("", code)
-    with tempfile.NamedTemporaryFile(suffix=".lean", mode="w", delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".lean", mode="w", encoding="utf-8", delete=False) as f:
         f.write(code)
         filepath = f.name
 
@@ -80,11 +80,11 @@ def core_names() -> dict:
     Read from Lean once (about 20 s) and cached next to the framework build.
     """
     if _NAMES_CACHE.exists():
-        cached = json.loads(_NAMES_CACHE.read_text())
+        cached = json.loads(_NAMES_CACHE.read_text(encoding="utf-8"))
         if set(cached) == set(NAME_SPACES):
             return cached
     script = _NAMES_SCRIPT % ", ".join(f"`{n}" for n in NAME_SPACES)
-    with tempfile.NamedTemporaryFile(suffix=".lean", mode="w", delete=False) as f:
+    with tempfile.NamedTemporaryFile(suffix=".lean", mode="w", encoding="utf-8", delete=False) as f:
         f.write(script)
         filepath = f.name
     try:
@@ -100,5 +100,5 @@ def core_names() -> dict:
     if not any(names.values()):
         return names  # don't cache a failed dump
     _NAMES_CACHE.parent.mkdir(parents=True, exist_ok=True)
-    _NAMES_CACHE.write_text(json.dumps({k: sorted(v) for k, v in names.items()}))
+    _NAMES_CACHE.write_text(json.dumps({k: sorted(v) for k, v in names.items()}), encoding="utf-8")
     return names
