@@ -56,9 +56,11 @@ from pathlib import Path
 from config import BASE_URLS, FRAMEWORK_PATH, HARNESS_VERSION, MODELS, ROOT, SEED
 from req_parser import parse_file, to_json
 
-STAGES = ["parse", "spec", "check", "graph", "arch"]
+STAGES = ["parse", "spec", "check", "graph", "arch", "code"]
 L1_STAGES = {"graph", "arch"}
 L1_VERSION = "L1-v1"
+L2_STAGES = {"code"}
+L2_VERSION = "L2-v1"
 REQ_DIR = ROOT / "Requirements"
 PARSED_DIR = REQ_DIR / "parsed"
 RUNS_DIR = ROOT / "runs"
@@ -354,6 +356,12 @@ def arch_run_dir(stem: str, args) -> Path:
     return d / f"rep{args.rep}" if args.repeat else d
 
 
+def code_run_dir(stem: str, args) -> Path:
+    name = args.run_name or f"{args.model}-{L2_VERSION}"
+    d = RUNS_DIR / stem / name
+    return d / f"rep{args.rep}" if args.repeat else d
+
+
 def arch_meta(stem: str, args, graph_path: Path) -> dict:
     from agents.architect_agent import prompt_hash
     meta = run_meta(args)
@@ -418,6 +426,113 @@ def stage_arch(stem: str, args) -> dict:
     return summary
 
 
+def stage_code(stem: str, args) -> dict:
+    """L2 for every group with an accepted L1 Arch.lean (or only --component)."""
+    import code_lean as CL
+    from agents.coding_agent import run_component_coder
+    from lean_runner import check_lean
+
+    arch_dir = Path(args.arch_run).resolve() if getattr(args, "arch_run", None) else (arch_run_dir(stem, args) / "arch")
+    if not arch_dir.exists():
+        stage_arch(stem, args)
+        arch_dir = arch_run_dir(stem, args) / "arch"
+
+    out_dir = code_run_dir(stem, args) / "code"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    meta = run_meta(args)
+    arch_rel = str(arch_dir.relative_to(ROOT)) if arch_dir.is_relative_to(ROOT) else str(arch_dir)
+    meta.update(harness_version=L2_VERSION, arch_run=arch_rel)
+    summary = {"meta": meta, "groups": {}}
+
+    group_dirs = sorted([d for d in arch_dir.iterdir() if d.is_dir() and (d / "Arch.lean").exists()])
+    if args.component:
+        group_dirs = [d for d in group_dirs if d.name in args.component]
+
+    for gdir in group_dirs:
+        group_id = gdir.name
+        arch_code = (gdir / "Arch.lean").read_text(encoding="utf-8")
+        arch_json_path = gdir / "arch.json"
+        arch_rec = json.loads(arch_json_path.read_text(encoding="utf-8")) if arch_json_path.exists() else {}
+
+        comps = arch_rec.get("order") or []
+        contracts = arch_rec.get("contracts") or {}
+        all_ops = list(arch_rec.get("operations", {}).keys())
+        if not all_ops:
+            all_ops = [op for c in contracts.values() for op in (c.get("ops") or {}).keys()]
+
+        print(f"[code] {group_id}: implementing {len(comps)} components ({' → '.join(comps)})")
+        t0 = time.time()
+        comp_results = {}
+        comp_codes = []
+        all_comps_ok = True
+
+        for comp in comps:
+            owned = list((contracts.get(comp, {}).get("ops") or {}).keys())
+            res = run_component_coder(
+                group=group_id,
+                comp=comp,
+                owned=owned,
+                all_ops=all_ops,
+                locked_context=arch_code,
+                model=args.model,
+                skip_lean=args.skip_lean,
+            )
+            comp_results[comp] = res
+            if res.get("success"):
+                comp_codes.append(res.get("code", "").strip())
+            else:
+                all_comps_ok = False
+
+        g_out = out_dir / group_id
+        g_out.mkdir(parents=True, exist_ok=True)
+
+        if comps:
+            system_impl = CL.system_impl_def(group_id, comps)
+            sound_inst = CL.system_sound_instantiation(group_id, comps)
+        else:
+            system_impl = ""
+            sound_inst = ""
+
+        full_impl = "\n\n".join([arch_code] + comp_codes + ([system_impl, sound_inst] if system_impl else [])) + "\n"
+        (g_out / "Impl.lean").write_text(full_impl, encoding="utf-8")
+
+        if not args.skip_lean and all_comps_ok and comps:
+            check = check_lean(full_impl)
+            sound_proved = check.get("success", False)
+            impl_compiles = check.get("success", False)
+            err = check.get("error", "")
+        else:
+            sound_proved = all_comps_ok if args.skip_lean else False
+            impl_compiles = all_comps_ok
+            err = ""
+
+        verdict = "accepted" if (all_comps_ok and sound_proved) else "rejected"
+        elapsed = round(time.time() - t0, 1)
+        rec = {
+            "group": group_id,
+            "verdict": verdict,
+            "impl_compiles": impl_compiles,
+            "sound_proved": sound_proved,
+            "seconds": elapsed,
+            "components": comp_results,
+            "error": err,
+            "meta": meta,
+        }
+        _write_json(g_out / "code.json", rec)
+
+        summary["groups"][group_id] = {
+            "verdict": verdict,
+            "impl_compiles": impl_compiles,
+            "sound_proved": sound_proved,
+            "seconds": elapsed,
+        }
+        _write_json(out_dir / "summary.json", summary)
+        print(f"[code] {group_id}: {verdict}, compiles={impl_compiles}, sound={sound_proved}, {elapsed}s -> {g_out.relative_to(ROOT) if g_out.is_relative_to(ROOT) else g_out}")
+
+    return summary
+
+
 # ---------------------------------------------------------------------------
 
 def main(argv=None) -> int:
@@ -439,6 +554,8 @@ def main(argv=None) -> int:
                          "runs/<doc>/<model>-<version>/rep<k>/")
     ap.add_argument("--l0-run", help="L1: frozen L0 run folder with specs.json "
                                        "(default runs/<doc>/qwen-v10.1/rep1)")
+    ap.add_argument("--arch-run", help="L2: frozen L1 run folder with arch/ "
+                                       "(default runs/<doc>/<model>-L1-v1/rep<k>/arch)")
     ap.add_argument("--component", nargs="+", metavar="ID", help="L1: only these groups (or groups "
                                                                    "containing these components)")
     ap.add_argument("--no-graph", action="store_true",
@@ -452,9 +569,10 @@ def main(argv=None) -> int:
     paths = [Path(p).resolve() for p in args.inputs] or sorted(REQ_DIR.glob("*.xml"))
     if not paths:
         _fail(f"no requirements XML found in {REQ_DIR}")
-    l1 = args.until in L1_STAGES
+    l2 = args.until in L2_STAGES
+    l1 = (args.until in L1_STAGES) or l2
     run_spec_stage = not l1 and STAGES.index(args.until) >= STAGES.index("spec")
-    if run_spec_stage or args.until == "arch":
+    if run_spec_stage or args.until in ("arch", "code"):
         preflight(args.model, args.skip_lean)
 
     from llm import set_seed
@@ -469,8 +587,11 @@ def main(argv=None) -> int:
                 args.rep = k
                 set_seed(SEED + k - 1)
                 if args.repeat:
-                    print(f"[repeat] {path.stem}: L1 repetition {k}/{args.repeat}, seed {SEED + k - 1}")
-                stage_arch(path.stem, args)
+                    print(f"[repeat] {path.stem}: {'L2' if l2 else 'L1'} repetition {k}/{args.repeat}, seed {SEED + k - 1}")
+                if args.until in L1_STAGES:
+                    stage_arch(path.stem, args)
+                elif args.until == "code":
+                    stage_code(path.stem, args)
             continue
         doc = stage_parse(path)
         for k in range(1, (args.repeat or 1) + 1):

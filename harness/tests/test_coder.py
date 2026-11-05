@@ -225,5 +225,71 @@ theorem Stock_impl_op_sell_ok : âˆ€ i : L0_op_sell.Input, Stock_pre_op_sell i â†
         self.assertTrue(res_stock["proved"])
 
 
+class TestMainStageCode(unittest.TestCase):
+    def test_main_stages_definition(self):
+        import main
+        self.assertIn("code", main.STAGES)
+        self.assertIn("code", main.L2_STAGES)
+        self.assertEqual(main.L2_VERSION, "L2-v1")
+        self.assertTrue(callable(getattr(main, "stage_code", None)))
+
+    def test_main_stage_code_execution(self):
+        import argparse
+        import json
+        import tempfile
+        from unittest.mock import patch
+        import main
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tmppath = Path(tmpdir)
+            stem = "test_stem"
+            arch_dir = tmppath / stem / "mock-L1-v1" / "arch"
+            group_dir = arch_dir / "ShopSys"
+            group_dir.mkdir(parents=True)
+
+            (group_dir / "Arch.lean").write_text("-- mock Arch.lean\n", encoding="utf-8")
+            arch_json = {
+                "group": "ShopSys",
+                "verdict": "accepted",
+                "order": ["Stock"],
+                "contracts": {
+                    "Stock": {"ops": {"OP-restock": {}}}
+                },
+                "operations": {"OP-restock": {}}
+            }
+            (group_dir / "arch.json").write_text(json.dumps(arch_json), encoding="utf-8")
+
+            args = argparse.Namespace(
+                model="mock",
+                run_name=None,
+                repeat=None,
+                rep=1,
+                skip_lean=True,
+                component=None,
+                arch_run=str(arch_dir),
+                until="code",
+            )
+
+            mock_op_res = {
+                "component": "Stock",
+                "code": "def Stock_impl_op_restock : Nat := 0\n\ntheorem Stock_impl_op_restock_ok : True := trivial\n",
+                "success": True,
+                "proved": True,
+                "ops": {"OP-restock": {"success": True}}
+            }
+
+            with patch("main.RUNS_DIR", tmppath), \
+                 patch("agents.coding_agent.run_component_coder", return_value=mock_op_res):
+                summary = main.stage_code(stem, args)
+
+            self.assertIn("ShopSys", summary["groups"])
+            self.assertEqual(summary["groups"]["ShopSys"]["verdict"], "accepted")
+
+            code_out = tmppath / stem / "mock-L2-v1" / "code"
+            self.assertTrue((code_out / "ShopSys" / "Impl.lean").exists())
+            self.assertTrue((code_out / "ShopSys" / "code.json").exists())
+            self.assertTrue((code_out / "summary.json").exists())
+
+
 if __name__ == "__main__":
     unittest.main()
