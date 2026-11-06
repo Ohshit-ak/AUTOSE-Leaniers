@@ -1,0 +1,363 @@
+[
+  {
+    "id": "DD-user-id",
+    "kind": "data_constraint",
+    "requirement_text": "User ID of the employee /customer of Tool Co Company; minimum 4 to maximum 10 characters (alphabetic or alphanumeric)",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:28:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:34:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:39:2: error: Type mismatch\n  h.right\nhas type\n  m.raw.length ≤ 10 ∧ m.raw.toList.all Char.isAlphanum = true\nbut is expected to have type\n  { pre := fun m => m.raw.length ≥ 4 ∧ m.raw.length ≤ 10 ∧ m.raw.toList.all Char.isAlphanum = true,\n        post := fun m o => o.valid = true }.pre\n    m\n<generated>:46:10: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `hp` is a proof of\n  m.raw.length ≥ 4\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "syntax",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length ≥ 4 ∧ m.raw.length ≤ 10 ∧\n    m.raw.toList.all Char.isAlphanum = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.raw.length ≥ 4 ∧ m.raw.length ≤ 10 ∧\n    m.raw.toList.all Char.isAlphanum = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 80.7
+  },
+  {
+    "id": "DD-password",
+    "kind": "data_constraint",
+    "requirement_text": "Password of the employee /customer of Tool Co Company; minimum 4 to maximum 10 characters (alphabetic or alphanumeric)",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:35:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:41:2: error: Type mismatch\n  h.left\nhas type\n  m.raw.length = i.raw.length\nbut is expected to have type\n  { pre := fun m => 4 ≤ m.raw.length ∧ m.raw.length ≤ 10 ∧ (m.raw.toList.all fun x => x.isAlphanum) = true,\n        post := fun m o => o.valid = true }.pre\n    m\n<generated>:48:6: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  o.valid\nin the target expression\n  { pre := fun x => True,\n        post := fun i o =>\n          o.valid = true ↔ 4 ≤ i.raw.length ∧ i.raw.length ≤ 10 ∧ (i.raw.toList.all fun x => x.isAlphanum) = true }.post\n    i o\n\ni : Input\no : Output\na✝ :\n  { pre := fun x => True,\n        post := fun i o =>\n          o.valid = true ↔ 4 ≤ i.raw.length ∧ i.raw.length ≤ 10 ∧ (i.raw.toList.all fun x => x.isAlphanum) = true }.pre\n    i\nm : Mid\nhp : m.raw.length = i.raw.length\nhq : 4 ≤ m.raw.length ∧ m.raw.length ≤ 10 ∧ (m.raw.toList.all fun x => x.isAlphanum) = true\nho : o.valid = true\n⊢ { pre := fun x => True,\n        post := fun i o =>\n          o.valid = true ↔ 4 ≤ i.raw.length ∧ i.raw.length ≤ 10 ∧ (i.raw.toList.all fun x => x.isAlphanum) = true }.post\n    i o\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "proof",
+        "syntax",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = i.raw.length ∧\n    (4 ≤ m.raw.length ∧ m.raw.length ≤ 10 ∧\n     m.raw.toList.all (·.isAlphanum) = true)\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => 4 ≤ m.raw.length ∧ m.raw.length ≤ 10 ∧\n    m.raw.toList.all (·.isAlphanum) = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  exact h.1\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at hp hq ho\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 80.3
+  },
+  {
+    "id": "DD-item-name",
+    "kind": "data_constraint",
+    "requirement_text": "Name of the selected item; maximum 50 character alphabetic string",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:28:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:41:2: error: Tactic `split` failed: Could not split an `if` or `match` expression in the goal\n\nHint: Use `set_option trace.split.failure true` to display additional diagnostic information\n\ni : Input\nm : Mid\na✝ :\n  { pre := fun x => True,\n        post := fun i m => m.raw.length ≥ 1 ∧ m.raw.length ≤ 50 ∧ (m.raw.toList.all fun x => x.isAlpha) = true }.pre\n    i\nh :\n  { pre := fun x => True,\n        post := fun i m => m.raw.length ≥ 1 ∧ m.raw.length ≤ 50 ∧ (m.raw.toList.all fun x => x.isAlpha) = true }.post\n    i m\n⊢ { pre := fun m => m.raw.length ≥ 1,\n        post := fun m o =>\n          o.valid = true ∧ o.valid = true ↔\n            1 ≤ m.raw.length ∧ m.raw.length ≤ 50 ∧ (m.raw.toList.all fun x => x.isAlpha) = true }.pre\n    m\n<generated>:50:6: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  o.valid = true ∧ o.valid = true\nin the target expression\n  o.valid = true ↔ 1 ≤ i.raw.length ∧ i.raw.length ≤ 50 ∧ (i.raw.toList.all fun x => x.isAlpha) = true\n\ni : Input\no : Output\na✝ : True\nm : Mid\nh1 : m.raw.length ≥ 1\nh2 : m.raw.length ≤ 50 ∧ (m.raw.toList.all fun x => x.isAlpha) = true\nho :\n  o.valid = true ∧ o.valid = true ↔ 1 ≤ m.raw.length ∧ m.raw.length ≤ 50 ∧ (m.raw.toList.all fun x => x.isAlpha) = true\n⊢ o.valid = true ↔ 1 ≤ i.raw.length ∧ i.raw.length ≤ 50 ∧ (i.raw.toList.all fun x => x.isAlpha) = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "proof",
+        "proof",
+        "proof",
+        "names",
+        "names",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length ≥ 1 ∧ m.raw.length ≤ 50 ∧\n                     m.raw.toList.all (·.isAlpha) = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.raw.length ≥ 1\n  post := fun m o => o.valid = true ∧\n                     o.valid ↔\n                     (1 ≤ m.raw.length ∧ m.raw.length ≤ 50 ∧\n                      m.raw.toList.all (·.isAlpha) = true)\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  split\n  · exact h.2.1\n  · exact h.2.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨h1, h2⟩, ho⟩\n  simp only at *\n  rw [ho, h1, h2]"
+    },
+    "l2": [],
+    "seconds": 68.9
+  },
+  {
+    "id": "DD-item-id",
+    "kind": "data_constraint",
+    "requirement_text": "ID that uniquely identified the selected item; a 7-digit system generated alphanumeric character",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:28:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:34:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:39:2: error: Type mismatch\n  h.right\nhas type\n  (m.raw.toList.all fun x => x.isAlphanum) = true\nbut is expected to have type\n  { pre := fun m => m.raw.length = 7 ∧ (m.raw.toList.all fun x => x.isAlphanum) = true,\n        post := fun m o => o.valid = true }.pre\n    m\n<generated>:43:55: error: Type mismatch\n  h3\nhas type\n  { pre := fun (m : Mid) => m.raw.length = 7 ∧ (m.raw.toList.all fun x => x.isAlphanum) = true,\n        post := fun m o => o.valid = true }.post\n    m o\nbut is expected to have type\n  { pre := fun (x : Input) => True,\n        post := fun i o => o.valid = true ↔ i.raw.length = 7 ∧ (i.raw.toList.all fun x => x.isAlphanum) = true }.post\n    i o\n<generated>:44:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "proof",
+        "proof",
+        "proof",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = 7 ∧\n    m.raw.toList.all (·.isAlphanum) = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.raw.length = 7 ∧\n    m.raw.toList.all (·.isAlphanum) = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, fun i o _ ⟨m, ⟨h1, h2⟩, h3⟩ => h3⟩\n  simp only at h1 h2\n  rw [h1, h2]"
+    },
+    "l2": [],
+    "seconds": 79.3
+  },
+  {
+    "id": "DD-price",
+    "kind": "data_constraint",
+    "requirement_text": "Cost of a single unit of the selected item; in dollars and cents.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  value : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.value = i.value ∧ m.value ≤ 9999\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.value ≤ 9999\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:30:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:43:2: error: simp_all made no progress\n",
+        "stages": [
+          "proof",
+          "proof",
+          "proof",
+          "proof",
+          "proof",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { value := i.value }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  unfold Contract.Satisfies\n  intro m\n  simp_all\n  omega"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { valid := m.value ≤ 9999 }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 58.9
+  },
+  {
+    "id": "DD-text-description",
+    "kind": "data_constraint",
+    "requirement_text": "special description of the selected item; maximum 100 alphabetic characters",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:28:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:34:16: error(lean.unknownIdentifier): Unknown identifier `i.raw.length`\n<generated>:34:44: error(lean.unknownIdentifier): Unknown identifier `i.raw.toList.all`\n<generated>:36:8: warning: declaration uses `sorry`\n<generated>:44:14: warning: declaration uses `sorry`\n<generated>:41:8: warning: declaration uses `sorry`\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  length : Nat\n  isAlpha : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => True\n  post := fun i m => m.length = i.raw.length ∧ m.isAlpha = (i.raw.toList.all (·.isAlpha))\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => 1 ≤ m.length ∧ m.length ≤ 100\n  post := fun m o => o.valid = true ∧\n    (m.length = i.raw.length ∧ m.isAlpha = (i.raw.toList.all (·.isAlpha)))\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hl, hi⟩, ho⟩\n  simp only at *\n  rw [ho, hl, hi]"
+    },
+    "l2": [],
+    "seconds": 74.4
+  },
+  {
+    "id": "DD-shipping-price",
+    "kind": "data_constraint",
+    "requirement_text": "Cost for shipping the item to its destination; in dollars and cents",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  value : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.value = i.value ∧ m.value ≤ 9999\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.value ≤ 9999\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:29:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:42:2: error: simp_all made no progress\n",
+        "stages": [
+          "proof",
+          "proof",
+          "proof",
+          "types",
+          "types",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { value := i.value }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  unfold Contract.Satisfies\n  intro m\n  simp_all\n  omega"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "names",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output :=\n  { valid := m.value ≤ 9999 }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 63.5
+  },
+  {
+    "id": "DD-quantity",
+    "kind": "data_constraint",
+    "requirement_text": "the number of units of each selected item that the customer is ordering; default = 1; maximum = quantity presently in inventory",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:32:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:37:2: error: Type mismatch\n  h.right\nhas type\n  m.max_ref = i.max_ref\nbut is expected to have type\n  { pre := fun m => 1 ≤ m.value ∧ m.value ≤ m.max_ref, post := fun m o => o.valid = true }.pre m\n<generated>:44:10: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  m.value\nin the target expression\n  true = true ↔ 1 ≤ i.value ∧ i.value ≤ i.max_ref\n\ni : Input\no : Output\na✝ : True\nm : Mid\nhp : m.value = i.value\nhq : m.max_ref = i.max_ref\nho : o.valid = true\n⊢ true = true ↔ 1 ≤ i.value ∧ i.value ≤ i.max_ref\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "syntax",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  value : Nat\n  max_ref : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.value = i.value ∧ m.max_ref = i.max_ref\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => 1 ≤ m.value ∧ m.value ≤ m.max_ref\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 65.8
+  },
+  {
+    "id": "DD-total",
+    "kind": "data_constraint",
+    "requirement_text": "Cost of a single unit of the selected item Number of units of that item selected; in dollars and cents",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  value : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.value = i.value ∧ m.value ≤ 9999\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.value ≤ 9999\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:30:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:43:2: error: simp_all made no progress\n",
+        "stages": [
+          "proof",
+          "proof",
+          "proof",
+          "types",
+          "proof",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { value := i.value }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  unfold Contract.Satisfies\n  intro m\n  simp_all\n  omega"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output :=\n  { valid := m.value ≤ 9999 }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 61.4
+  },
+  {
+    "id": "DD-name",
+    "kind": "data_constraint",
+    "requirement_text": "Name of the customer; maximum 100 alphabetic characters",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:28:36: error(lean.unknownIdentifier): Unknown identifier `finset.range`\n<generated>:34:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:39:2: error: `simp` made no progress\n<generated>:46:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "names",
+        "names",
+        "names",
+        "names",
+        "names",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length ∈ finset.range 1 101 ∧\n                     m.raw.toList.all (·.isAlpha) = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => 1 ≤ m.raw.length ∧ m.raw.length ≤ 100 ∧\n                   m.raw.toList.all (·.isAlpha) = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at hp hq ho\n  split\n  · rw [ho, hp]\n  · rw [ho, hq]"
+    },
+    "l2": [],
+    "seconds": 44.9
+  },
+  {
+    "id": "DD-city",
+    "kind": "data_constraint",
+    "requirement_text": "Name of the city for the above address; maximum 20 characters alphabetic string",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:35:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:47:10: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  m.raw.length\nin the target expression\n  true = true ↔ 1 ≤ i.raw.length ∧ i.raw.length ≤ 20 ∧ (i.raw.toList.all fun x => x.isAlpha) = true\n\ni : Input\no : Output\na✝ : True\nm : Mid\nhp : m.raw.length = i.raw.length\nhq : 1 ≤ m.raw.length ∧ m.raw.length ≤ 20 ∧ (m.raw.toList.all fun x => x.isAlpha) = true\nho : o.valid = true\n⊢ true = true ↔ 1 ≤ i.raw.length ∧ i.raw.length ≤ 20 ∧ (i.raw.toList.all fun x => x.isAlpha) = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "proof",
+        "types",
+        "types",
+        "proof",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = i.raw.length ∧\n                     1 ≤ m.raw.length ∧ m.raw.length ≤ 20 ∧\n                     m.raw.toList.all (·.isAlpha) = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => 1 ≤ m.raw.length ∧ m.raw.length ≤ 20 ∧\n                   m.raw.toList.all (·.isAlpha) = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 73.7
+  }
+]

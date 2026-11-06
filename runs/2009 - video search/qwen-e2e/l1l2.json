@@ -1,0 +1,395 @@
+[
+  {
+    "id": "REQ-1",
+    "kind": "requirement",
+    "requirement_text": "Torrent search will share the same search bar with the streaming search.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:26:10: error: `Input` has already been declared\n<generated>:30:10: error: `Output` has already been declared\n<generated>:35:4: error: `Spec` has already been declared\n<generated>:64:72: error: Application type mismatch: The argument\n  Spec\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract Output ?m.3\nin the application\n  TorrentResultsContract.Compatible Spec\n<generated>:66:8: error: Invalid simp theorem: Expected a proposition, but found\n  Input → Prop\n<generated>:66:36: error: Invalid simp theorem: Expected a proposition, but found\n  Input → Output → Prop\n<generated>:66:65: error: Invalid simp theorem: Expected a proposition, but found\n  Input → Output → Prop\n<generated>:66:2: error: `simp` made no progress\n<generated>:78:76: error: Application type mismatch: The argument\n  Spec\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract Output ?m.3\nin the application\n  StreamingResultsContract.Compatible Spec\n<generated>:80:8: error: Invalid simp theorem: Expected a proposition, but found\n  Input → Prop\n<generated>:80:38: error: Invalid simp theorem: Expected a proposition, but found\n  Input → Output → Prop\n<generated>:80:69: error: Invalid simp theorem: Expected a proposition, but found\n  Input → Output → Prop\n<generated>:80:2: error: `simp` made no progress\n<generated>:93:74: error: Application type mismatch: The argument\n  StreamingResultsContract\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract Out",
+      "contracts": [
+        "TorrentResultsContract",
+        "StreamingResultsContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "syntax",
+        "names",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  query          : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  torrentResults : List String\n  streamingResults : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => \n    o.torrentResults.length ≤ 100 ∧\n    o.streamingResults.length ≤ 100 ∧\n    (o.torrentResults.length = 0 ↔ i.query = \"\") ∧\n    (o.streamingResults.length = 0 ↔ i.query = \"\") ∧\n    (o.torrentResults.length > 0 → i.query ≠ \"\") ∧\n    (o.streamingResults.length > 0 → i.query ≠ \"\")\n\n-- Component 1: Torrent Results\ndef TorrentResultsContract : Contract Input Output := \n  { pre  := fun i => i.query = \"\"\n    post := fun i o => \n      o.torrentResults.length ≤ 100 ∧\n      (o.torrentResults.length = 0 ↔ i.query = \"\") ∧\n      (o.torrentResults.length > 0 → i.query ≠ \"\")\n  }\n\n-- Component 2: Streaming Results\ndef StreamingResultsContract : Contract Input Output := \n  { pre  := fun i => i.query ≠ \"\"\n    post := fun i o => \n      o.streamingResults.length ≤ 100 ∧\n      (o.streamingResults.length = 0 ↔ i.query ≠ \"\") ∧\n      (o.streamingResults.length > 0 → i.query ≠ \"\")\n  }\n\n-- Prove PO1: Compatibility\ntheorem PO1_TorrentResults : Contract.Compatible TorrentResultsContract Spec := by\n  intros i o hpre hpost\n  simp [TorrentResultsContract.pre, TorrentResultsContract.post, Spec.post] at hpost\n  split\n  -- o.torrentResults.length ≤ 100\n  simp [hpost.1] at hpre\n  exact hpre\n  -- (o.torrentResults.length = 0 ↔ i.query = \"\")\n  simp [hpost.2] at hpre\n  exact hpre\n  -- (o.torrentResults.length > 0 → i.query ≠ \"\")\n  simp [hpost.3] at hpre\n  exact hpre\n\ntheorem PO1_StreamingResults : Contract.Compatible StreamingResultsContract Spec := by\n  intros i o hpre hpost\n  simp [StreamingResultsContract.pre, StreamingResultsContract.post, Spec.post] at hpost\n  split\n  -- o.streamingResults.length ≤ 100\n  simp [hpost.1] at hpre\n  exact hpre\n  -- (o.streamingResults.length = 0 ↔ i.query ≠ \"\")\n  simp [hpost.2] at hpre\n  exact hpre\n  -- (o.streamingResults.length > 0 → i.query ≠ \"\")\n  simp [hpost.3] at hpre\n  exact hpre\n\n-- Prove PO2: Refinement\ntheorem PO2_TorrentResults : Contract.Refines (TorrentResultsContract.seq StreamingResultsContract) Spec := by\n  intros i o hpre hpost\n  simp [TorrentResultsContract.pre, StreamingResultsContract.pre] at hpre\n  simp [TorrentResultsContract.post, StreamingResultsContract.post, Spec.post] at hpost\n  split\n  -- o.torrentResults.length ≤ 100\n  simp [hpost.1] at hpre\n  exact hpre\n  -- o.streamingResults.length ≤ 100\n  simp [hpost.2] at hpre\n  exact hpre\n  -- (o.torrentResults.length = 0 ↔ i.query = \"\")\n  simp [hpost.3] at hpre\n  exact hpre\n  -- (o.streamingResults.length = 0 ↔ i.query ≠ \"\")\n  simp [hpost.4] at hpre\n  exact hpre\n  -- (o.torrentResults.length > 0 → i.query ≠ \"\")\n  simp [hpost.5] at hpre\n  exact hpre\n  -- (o.streamingResults.length > 0 → i.query ≠ \"\")\n  simp [hpost.6] at hpre\n  exact hpre"
+    },
+    "l2": [],
+    "seconds": 78.5
+  },
+  {
+    "id": "REQ-2",
+    "kind": "requirement",
+    "requirement_text": "Database of torrent sites can be updated via the internet.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:23:10: error: `Input` has already been declared\n<generated>:27:10: error: `Output` has already been declared\n<generated>:33:4: error: `Spec` has already been declared\n<generated>:50:47: error(lean.invalidField): Invalid field `Spec`: The environment does not contain `ContractForge.Contract.Spec`, so it is not possible to project the field `Spec` from an expression\n  NonEmptyContract\nof type `Contract Input Input`\n<generated>:54:44: error(lean.invalidField): Invalid field `Spec`: The environment does not contain `ContractForge.Contract.Spec`, so it is not possible to project the field `Spec` from an expression\n  MatchContract\nof type `Contract Input Output`\n<generated>:59:26: error(lean.invalidField): Invalid field `Spec`: The environment does not contain `ContractForge.Contract.Spec`, so it is not possible to project the field `Spec` from an expression\n  NonEmptyContract\nof type `Contract Input Input`\n",
+      "contracts": [
+        "NonEmptyContract",
+        "MatchContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "weakened",
+        "weakened",
+        "weakened",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  sites : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sites : List String\n  deriving DecidableEq, Repr\n\n-- IMPL: Database update via the internet\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.sites.length > 0\n  post := fun i o => o.sites.length = i.sites.length ∧\n                     (∀ s ∈ o.sites, s ∈ i.sites)\n\n-- Component 1: Ensure the input list is non-empty\ndef NonEmptyContract : Contract Input Input where\n  pre  := fun i => i.sites.length > 0\n  post := fun i i' => i' = i\n\n-- Component 2: Ensure the output list matches the input list\ndef MatchContract : Contract Input Output where\n  pre  := fun i => i.sites.length > 0\n  post := fun i o => o.sites.length = i.sites.length ∧\n                     (∀ s ∈ o.sites, s ∈ i.sites)\n\n-- Prove PO1: NonEmptyContract's postcondition is compatible with Spec's precondition\nexample : Contract.Compatible NonEmptyContract.Spec := by\n  unfold NonEmptyContract.Spec; discharge_po\n\n-- Prove PO1: MatchContract's postcondition is compatible with Spec's postcondition\nexample : Contract.Compatible MatchContract.Spec := by\n  unfold MatchContract.Spec; discharge_po\n\n-- Prove PO2: The composition of the two contracts refines the spec\nexample : Contract.Refines (NonEmptyContract.seq MatchContract) Spec := by\n  unfold NonEmptyContract.Spec MatchContract.Spec; discharge_po"
+    },
+    "l2": [],
+    "seconds": 36.4
+  },
+  {
+    "id": "REQ-3",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include torrent searching in the search.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:23:10: error: `Input` has already been declared\n<generated>:28:10: error: `Output` has already been declared\n<generated>:32:4: error: `Spec` has already been declared\n<generated>:45:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:48:30: error: Application type mismatch: The argument\n  QueryNonEmptyContract.post\nhas type\n  Input → Input → Prop\nbut is expected to have type\n  Contract ?m.1 ?m.2\nin the application\n  Contract.Compatible QueryNonEmptyContract.post\n<generated>:50:8: error: Invalid simp theorem: Expected a proposition, but found\n  Input → Input → Prop\n<generated>:50:36: error: Invalid simp theorem: Expected a proposition, but found\n  Input → Prop\n<generated>:50:2: error: `simp` made no progress\n<generated>:54:27: error: Application type mismatch: The argument\n  (QueryNonEmptyContract.seq IncludeTorrentContract).post\nhas type\n  Input → Output → Prop\nbut is expected to have type\n  Contract ?m.1 ?m.2\nin the application\n  Contract.Refines (QueryNonEmptyContract.seq IncludeTorrentContract).post\n<generated>:55:2: error: Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce\n\n⊢ sorry.Refines sorry\n<generated>:58:2: error: unexpected token '-'; expected command\n<generated>:62:30: error: Application type mismatch: The argument\n  IncludeTorrentContract.pre\nhas type\n  Input → Prop\nbut is expected to have type\n  Contract ?m.1 ?m.2\nin the applicat",
+      "contracts": [
+        "QueryNonEmptyContract",
+        "IncludeTorrentContract"
+      ],
+      "stages": [
+        "syntax",
+        "syntax",
+        "syntax",
+        "syntax",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  includeTorrent : Bool\n  query          : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => (o.results.length = 0 ↔ i.includeTorrent = false) ∧\n                     (i.includeTorrent = true → o.results.length > 0)\n\n-- Component 1: Query Non-Empty\ndef QueryNonEmptyContract : Contract Input Input where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i i' => i' = i\n\n-- Component 2: Include Torrent\ndef IncludeTorrentContract : Contract Input Output where\n  pre  := fun i => i.includeTorrent = true\n  post := fun i o => o.results.length > 0\n\n-- Prove PO1: QueryNonEmptyContract's post is compatible with Spec's pre\nexample : Contract.Compatible (QueryNonEmptyContract.post) Spec.pre := by\n  intros i h\n  simp [QueryNonEmptyContract.post, Spec.pre] at h\n  exact h\n\n-- Prove PO2: IncludeTorrentContract's post refines Spec's post\nexample : Contract.Refines (QueryNonEmptyContract.seq IncludeTorrentContract).post Spec.post := by\n  intros i o h\n  simp [QueryNonEmptyContract.post, IncludeTorrentContract.post, Spec.post] at h\n  split\n  - simp [h.1.1]\n  - simp [h.1.2, h.2]\n\n-- Prove PO1: IncludeTorrentContract's pre is compatible with QueryNonEmptyContract's post\nexample : Contract.Compatible IncludeTorrentContract.pre (QueryNonEmptyContract.post) := by\n  intros i h\n  simp [IncludeTorrentContract.pre, QueryNonEmptyContract.post] at h\n  exact h\n\n-- Prove PO2: The composition of the contracts refines the spec\nexample : Contract.Refines (QueryNonEmptyContract.seq IncludeTorrentContract).pre Spec.pre := by\n  intros i h\n  simp [QueryNonEmptyContract.pre, IncludeTorrentContract.pre, Spec.pre] at h\n  exact h\n\nexample : Spec.pre { includeTorrent := true, query := \"cats\" } ∧\n          Spec.post { includeTorrent := true, query := \"cats\" }\n                    { results := [\"cats-torrent1\", \"cats-torrent2\"] } := by\n  unfold Spec; decide"
+    },
+    "l2": [],
+    "seconds": 56.3
+  },
+  {
+    "id": "REQ-4",
+    "kind": "requirement",
+    "requirement_text": "Query will retrieve the no. of seed and peers, size of the file, date posted and a link to the webpage itself.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:44:10: error: `Torrent` has already been declared\n<generated>:52:10: error: `Input` has already been declared\n<generated>:57:10: error: `Output` has already been declared\n<generated>:61:4: error: `Spec` has already been declared\n<generated>:77:18: warning: unused variable `n`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:78:18: warning: unused variable `n`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:78:25: warning: unused variable `n`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:90:15: warning: unused variable `o`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:90:18: warning: unused variable `n`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:91:18: warning: unused variable `n`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:97:78: error: Application type mismatch: The argument\n  Spec\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract (Output × Nat) ?m.3\nin the application\n  FilterTorrentsContract.Compatible Spec\n<generated>:110:74: error: Application type mismatch: The argument\n  FilterTorrentsContract\nhas type\n  Contract (Input × Nat) (Output × Nat)\nbut is expected to have type\n  Contract Output ?m.3\nin the application\n  LimitResultsContract.Compatible FilterT",
+      "contracts": [
+        "FilterTorrentsContract",
+        "LimitResultsContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "names",
+        "names",
+        "names",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Torrent where\n  seed  : Nat\n  peers : Nat\n  size  : Nat\n  date  : String\n  link  : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  query : String\n  torrents : List Torrent\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List Torrent\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (∀ it ∈ o.results, it ∈ i.torrents ∧\n      it.seed > 0 ∧\n      it.peers > 0 ∧\n      0 < it.size ∧\n      it.date ≠ \"\" ∧\n      it.link ≠ \"\")\n    ∧\n    o.results.length ≤ 100 ∧\n    (o.results = [] ↔ i.torrents = [])\n\n-- Decompose the spec into two components\n\ndef FilterTorrentsContract : Contract (Input × Nat) (Output × Nat) where\n  pre  := fun (i, n) => i.query ≠ \"\"\n  post := fun (i, n) (o, n) =>\n    (∀ it ∈ o.results, it ∈ i.torrents ∧\n      it.seed > 0 ∧\n      it.peers > 0 ∧\n      0 < it.size ∧\n      it.date ≠ \"\" ∧\n      it.link ≠ \"\")\n    ∧\n    o.results.length ≤ 100 ∧\n    (o.results = [] ↔ i.torrents = [])\n\ndef LimitResultsContract : Contract (Output × Nat) Output where\n  pre  := fun (o, n) => true\n  post := fun (o, n) o' =>\n    o'.results.length ≤ 100 ∧\n    (o'.results = [] ↔ o.results = [])\n\n-- Prove PO1: each component's assumption follows from its predecessor's guarantee\n\ntheorem FilterTorrentsCompatible : Contract.Compatible FilterTorrentsContract Spec :=\n  by\n    unfold FilterTorrentsContract Spec\n    intros i o n\n    simp [FilterTorrentsContract.pre, FilterTorrentsContract.post, Spec.pre, Spec.post]\n    split\n    -- Prove the first part of the postcondition\n    simp [FilterTorrentsContract.post.1, Spec.post.1]\n    -- Prove the second part of the postcondition\n    simp [FilterTorrentsContract.post.2, Spec.post.2]\n    -- Prove the third part of the postcondition\n    simp [FilterTorrentsContract.post.3, Spec.post.3]\n\ntheorem LimitResultsCompatible : Contract.Compatible LimitResultsContract FilterTorrentsContract :=\n  by\n    unfold LimitResultsContract FilterTorrentsContract\n    intros o n o'\n    simp [LimitResultsContract.pre, LimitResultsContract.post, FilterTorrentsContract.post]\n    split\n    -- Prove the first part of the postcondition\n    simp [LimitResultsContract.post.1, FilterTorrentsContract.post.1]\n    -- Prove the second part of the postcondition\n    simp [LimitResultsContract.post.2, FilterTorrentsContract.post.2]\n    -- Prove the third part of the postcondition\n    simp [LimitResultsContract.post.3, FilterTorrentsContract.post.3]\n\n-- Prove PO2: the composition refines the spec\n\ntheorem SystemSound : Contract.Refines (FilterTorrentsContract.seq LimitResultsContract) Spec :=\n  by\n    unfold FilterTorrentsContract LimitResultsContract Spec\n    intros i o\n    simp [FilterTorrentsContract.pre, LimitResultsContract.pre, FilterTorrentsContract.post, LimitResultsContract.post, Spec.pre, Spec.post]\n    split\n    -- Prove the first part of the precondition\n    simp [FilterTorrentsContract.pre, LimitResultsContract.pre, Spec.pre]\n    -- Prove the first part of the postcondition\n    simp [FilterTorrentsContract.post, LimitResultsContract.post, Spec.post]"
+    },
+    "l2": [],
+    "seconds": 70.1
+  },
+  {
+    "id": "REQ-5",
+    "kind": "requirement",
+    "requirement_text": "If no results are found on a search it will display a message \"No results were found for this search.\"",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:25:10: error: `Input` has already been declared\n<generated>:30:10: error: `Output` has already been declared\n<generated>:35:4: error: `Spec` has already been declared\n",
+      "contracts": [
+        "Component1Contract",
+        "Component2Contract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "weakened",
+        "weakened",
+        "weakened",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  query          : String\n  torrents       : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (∀ it ∈ o.results, it ∈ i.torrents ∧ it == i.query) ∧\n    (o.results = [] ↔ o.message = \"No results were found for this search.\")\n\n-- Component 1: Query is not empty\ndef Component1Contract : Contract Input Input where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i i' => i = i'\n\n-- Component 2: Filter torrents based on query\ndef Component2Contract : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (∀ it ∈ o.results, it ∈ i.torrents ∧ it == i.query) ∧\n    (o.results = [] ↔ o.message = \"No results were found for this search.\")\n\n-- Prove PO1: Component1Contract's assumption follows from Spec's guarantee\nexample : Contract.Compatible Component1Contract Spec := by\n  unfold Component1Contract Spec; discharge_po\n\n-- Prove PO2: Component2Contract refines the spec\nexample : Contract.Refines (Component1Contract.seq Component2Contract) Spec := by\n  unfold Component1Contract Component2Contract Spec; discharge_po"
+    },
+    "l2": [],
+    "seconds": 39.7
+  },
+  {
+    "id": "REQ-2#2",
+    "kind": "requirement",
+    "requirement_text": "Database of video hosting and video linking sites can be updated via the internet.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:16:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:22:10: error: `Input` has already been declared\n<generated>:26:10: error: `Output` has already been declared\n<generated>:38:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:41:52: error(lean.invalidField): Invalid field `Spec`: The environment does not contain `ContractForge.Contract.Spec`, so it is not possible to project the field `Spec` from an expression\n  NonEmptySitesContract\nof type `Contract Input Input`\n<generated>:47:31: error(lean.invalidField): Invalid field `Spec`: The environment does not contain `ContractForge.Contract.Spec`, so it is not possible to project the field `Spec` from an expression\n  NonEmptySitesContract\nof type `Contract Input Input`\n",
+      "contracts": [
+        "NonEmptySitesContract",
+        "UpdateDatabaseContract"
+      ],
+      "stages": [
+        "names",
+        "names",
+        "syntax",
+        "syntax",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output']"
+      ],
+      "code": "structure Input where\n  sites : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  updated : Bool\n  deriving DecidableEq, Repr\n\n-- Component 1: Ensure sites list is non-empty\ndef NonEmptySitesContract : Contract Input Input where\n  pre  := fun i => i.sites.length > 0\n  post := fun i i' => i'.sites.length = i.sites.length\n\n-- Component 2: Update the database and set updated to true\ndef UpdateDatabaseContract : Contract Input Output where\n  pre  := fun i => i.sites.length > 0\n  post := fun i o => o.updated = true\n\n-- Prove PO1: NonEmptySitesContract's post follows from Spec's pre\nexample : Contract.Compatible NonEmptySitesContract.Spec := by\n  unfold NonEmptySitesContract.Spec; unfold NonEmptySitesContract; unfold UpdateDatabaseContract.Spec; unfold UpdateDatabaseContract\n  simp [Contract.Compatible]; discharge_po\n\n-- Prove PO2: The composition of the two contracts refines the spec\nexample : Contract.Refines (NonEmptySitesContract.seq UpdateDatabaseContract) Spec := by\n  unfold NonEmptySitesContract.Spec; unfold UpdateDatabaseContract.Spec; unfold NonEmptySitesContract; unfold UpdateDatabaseContract\n  simp [Contract.Refines, Contract.seq]; discharge_po"
+    },
+    "l2": [],
+    "seconds": 45.0
+  },
+  {
+    "id": "REQ-3#2",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include video host searching in the search.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:29:10: error: `Input` has already been declared\n<generated>:34:10: error: `Output` has already been declared\n<generated>:38:4: error: `Spec` has already been declared\n<generated>:47:16: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:52:16: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:55:51: error: Application type mismatch: The argument\n  Spec\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract Output ?m.3\nin the application\n  Component1Contract.Compatible Spec\n<generated>:59:51: error: Application type mismatch: The argument\n  Spec\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract Output ?m.3\nin the application\n  Component2Contract.Compatible Spec\n<generated>:63:51: error: Application type mismatch: The argument\n  Component2Contract\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract Output ?m.5\nin the application\n  Component1Contract.seq Component2Contract\n",
+      "contracts": [
+        "Component1Contract",
+        "Component2Contract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "names",
+        "names",
+        "names",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  includeHost : Bool\n  query       : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => \n    (o.results.length = 0 ↔ i.includeHost = false) ∧\n    (o.results.length > 0 → i.includeHost = true)\n\n-- Component 1: Handling the case where includeHost is false\ndef Component1Contract : Contract Input Output := \n  { pre  := fun i => i.includeHost = false,\n    post := fun i o => o.results.length = 0 }\n\n-- Component 2: Handling the case where includeHost is true\ndef Component2Contract : Contract Input Output := \n  { pre  := fun i => i.includeHost = true,\n    post := fun i o => o.results.length > 0 }\n\n-- Prove PO1: Component1Contract's assumption follows from Spec's guarantee\nexample : Contract.Compatible (Component1Contract) Spec := by\n  unfold Component1Contract Spec; discharge_po\n\n-- Prove PO1: Component2Contract's assumption follows from Spec's guarantee\nexample : Contract.Compatible (Component2Contract) Spec := by\n  unfold Component2Contract Spec; discharge_po\n\n-- Prove PO2: The composition of Component1Contract and Component2Contract refines Spec\nexample : Contract.Refines (Component1Contract.seq Component2Contract) Spec := by\n  unfold Component1Contract Component2Contract Spec; discharge_po"
+    },
+    "l2": [],
+    "seconds": 60.6
+  },
+  {
+    "id": "REQ-4#2",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include video link searching in the search.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:24:10: error: `Input` has already been declared\n<generated>:29:10: error: `Output` has already been declared\n<generated>:33:4: error: `Spec` has already been declared\n<generated>:46:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:52:30: error: Application type mismatch: The argument\n  QueryNonEmptyContract.post\nhas type\n  Input → Input → Prop\nbut is expected to have type\n  Contract ?m.1 ?m.2\nin the application\n  Contract.Compatible QueryNonEmptyContract.post\n",
+      "contracts": [
+        "QueryNonEmptyContract",
+        "IncludeVideoLinksContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  includeVideoLinks : Bool\n  query             : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => \n    (o.results.length = 0 ↔ i.includeVideoLinks = false) ∧\n    (o.results.length > 0 → i.includeVideoLinks = true)\n\n-- Component 1: Ensure the query is not empty\ndef QueryNonEmptyContract : Contract Input Input where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i i' => i = i'\n\n-- Component 2: Determine if video links should be included based on the query\ndef IncludeVideoLinksContract : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => \n    (o.results.length = 0 ↔ i.includeVideoLinks = false) ∧\n    (o.results.length > 0 → i.includeVideoLinks = true)\n\n-- Prove PO1: QueryNonEmptyContract's postcondition follows from Spec's preconditions\nexample : Contract.Compatible (QueryNonEmptyContract.post) Spec.pre := by\n  intros i hi\n  unfold QueryNonEmptyContract Spec\n  simp [hi]\n\n-- Prove PO2: The composition of the two contracts refines the spec\nexample : Contract.Refines (QueryNonEmptyContract.seq IncludeVideoLinksContract) Spec := by\n  unfold QueryNonEmptyContract IncludeVideoLinksContract Spec\n  simp\n  discharge_po"
+    },
+    "l2": [],
+    "seconds": 48.4
+  },
+  {
+    "id": "REQ-7#2",
+    "kind": "requirement",
+    "requirement_text": "If no results are found on a search it will display a message \"No results were found for this search.\"",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:26:10: error: `Input` has already been declared\n<generated>:31:10: error: `Output` has already been declared\n<generated>:36:4: error: `Spec` has already been declared\n<generated>:57:14: warning: unused variable `o`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:64:30: error: failed to synthesize\n  Decidable (∀ (x y : Input), QueryNonEmptyContract.pre x → QueryNonEmptyContract.post x y → FilterVideosContract.pre y)\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\n<generated>:67:30: error: failed to synthesize\n  Decidable\n    (∀ (x : Input) (y : List String),\n      FilterVideosContract.pre x → FilterVideosContract.post x y → GenerateOutputContract.pre y)\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\n<generated>:70:27: error: Application type mismatch: The argument\n  (QueryNonEmptyContract.seq FilterVideosContract).seq\nhas type\n  Contract (List String) ?m.8 → Contract Input ?m.8\nbut is expected to have type\n  Contract ?m.1 ?m.2\nin the application\n  Contract.Refines (QueryNonEmptyContract.seq FilterVideosContract).seq\n",
+      "contracts": [
+        "QueryNonEmptyContract",
+        "FilterVideosContract",
+        "GenerateOutputContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "names",
+        "names",
+        "names",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  query : String\n  videos : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (o.message = \"No results were found for this search.\" ↔ o.results = []) ∧\n    (∀ v ∈ o.results, v ∈ i.videos ∧ v.contains i.query) ∧\n    o.results.length ≤ 100\n\n-- Component 1: Query is not empty\ndef QueryNonEmptyContract : Contract Input Input where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i i' => i = i'\n\n-- Component 2: Filter videos based on query\ndef FilterVideosContract : Contract Input (List String) where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (∀ v ∈ o, v ∈ i.videos ∧ v.contains i.query) ∧\n    o.length ≤ 100\n\n-- Component 3: Generate output based on filtered videos\ndef GenerateOutputContract : Contract (List String) Output where\n  pre  := fun o => true\n  post := fun o o' =>\n    (o'.message = \"No results were found for this search.\" ↔ o'.results = []) ∧\n    o'.results = o\n\n-- Prove PO1: Each component's assumption follows from its predecessor's guarantee\nexample : Contract.Compatible QueryNonEmptyContract FilterVideosContract := by\n  unfold Contract.Compatible; discharge_po\n\nexample : Contract.Compatible FilterVideosContract GenerateOutputContract := by\n  unfold Contract.Compatible; discharge_po\n\n-- Prove PO2: The composition refines the spec\nexample : Contract.Refines (QueryNonEmptyContract.seq FilterVideosContract).seq GenerateOutputContract Spec := by\n  unfold Contract.Refines; discharge_po"
+    },
+    "l2": [],
+    "seconds": 51.1
+  },
+  {
+    "id": "REQ-1#3",
+    "kind": "requirement",
+    "requirement_text": "Query times will take no longer than 5 seconds to any website.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:18:10: error: `Input` has already been declared\n<generated>:21:10: error: `Output` has already been declared\n<generated>:25:4: error: `Spec` has already been declared\n<generated>:36:10: error: Type mismatch\n  fun o1 o2 => o1.elapsedMicros ≤ 1000000 → ?m.10 ≤ 5000000\nhas type\n  (o1 : Output) → ?m.15 o1 → Prop\nbut is expected to have type\n  Output → Prop\n<generated>:36:52: error(lean.invalidField): Invalid field notation: Type of\n  o2\nis not known; cannot resolve field `elapsedMicros`\n\nHint: Consider replacing the field projection `.elapsedMicros` with a call to the function `Output.elapsedMicros`.\n<generated>:43:2: error: `simp` made no progress\n<generated>:48:2: error: Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce\n\n⊢ (∀ (x : Input), Spec.pre x → (Component1Contract.seq Component2Contract).pre x) ∧\n    ∀ (x : Input) (y : Output), Spec.pre x → (Component1Contract.seq Component2Contract).post x y → Spec.post x y\n<generated>:53:0: warning: declaration uses `sorry`\n",
+      "contracts": [
+        "Component1Contract",
+        "Component2Contract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "syntax",
+        "syntax",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros ≤ 5000000\n\n-- Decompose the spec into two components\n\ndef Component1Contract : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros ≤ 1000000\n\ndef Component2Contract : Contract Output Output where\n  pre  := fun o1 o2 => o1.elapsedMicros ≤ 1000000 → o2.elapsedMicros ≤ 5000000\n  post := fun o1 o2 => o2.elapsedMicros ≤ 5000000\n\n-- Prove PO1: Component1Contract and Component2Contract are compatible\ntheorem PO1 : Contract.Compatible Component1Contract Component2Contract := by\n  unfold Contract.Compatible\n  intros o1 o2 h1 h2\n  simp [h1, h2]\n\n-- Prove PO2: the composition of Component1Contract and Component2Contract refines the spec\ntheorem PO2 : Contract.Refines (Component1Contract.seq Component2Contract) Spec := by\n  unfold Contract.Refines\n  intros o1 o2 h1 h2\n  simp [h1, h2]\n  discharge_po\n\n-- Example to check the correctness\nexample : (Component1Contract.seq Component2Contract).pre {} ∧ (Component1Contract.seq Component2Contract).post {} { elapsedMicros := 4500000 } := by\n  unfold Component1Contract Component2Contract; decide"
+    },
+    "l2": [],
+    "seconds": 50.2
+  },
+  {
+    "id": "REQ-2#3",
+    "kind": "requirement",
+    "requirement_text": "Sending the hyperlink to the default browser will take less than 1 second.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:18:10: error: `Input` has already been declared\n<generated>:21:10: error: `Output` has already been declared\n<generated>:25:4: error: `Spec` has already been declared\n<generated>:32:2: error(lean.unknownIdentifier): Unknown identifier `pre`\n<generated>:32:7: error: unexpected token ':='; expected command\n<generated>:36:2: error(lean.unknownIdentifier): Unknown identifier `pre`\n<generated>:36:7: error: unexpected token ':='; expected command\n<generated>:41:77: error: Application type mismatch: The argument\n  Spec\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract Output ?m.6\nin the application\n  Component2Contract.seq Spec\n<generated>:42:0: error(lean.unknownIdentifier): Unknown identifier `begin`\n<generated>:43:28: error: unexpected token ','; expected command\n<generated>:57:0: error: Invalid `end`: There is no current scope to end\n\nNote: Scopes are introduced using `namespace` and `section`\n<generated>:62:0: error(lean.unknownIdentifier): Unknown identifier `begin`\n<generated>:63:25: error: unexpected token ','; expected command\n<generated>:77:0: error: Invalid `end`: There is no current scope to end\n\nNote: Scopes are introduced using `namespace` and `section`\n",
+      "contracts": [
+        "Component1Contract",
+        "Component2Contract"
+      ],
+      "stages": [
+        "syntax",
+        "syntax",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros < 1000000\n\n-- Decompose the spec into two components\n\ndef Component1Contract : Contract Input Nat := \n  pre  := fun _ => True\n  post := fun _ n => n < 1000000\n\ndef Component2Contract : Contract Nat Output := \n  pre  := fun n => n < 1000000\n  post := fun n o => o.elapsedMicros = n\n\n-- Prove PO1: Component1Contract and Component2Contract are compatible with Spec\n\ntheorem PO1 : Contract.Compatible Component1Contract (Component2Contract.seq Spec) :=\nbegin\n  unfold Contract.Compatible,\n  unfold Component1Contract,\n  unfold Component2Contract,\n  unfold Spec,\n  unfold seq,\n  unfold Contract.seq,\n  unfold Contract.post,\n  unfold Component1Contract.post,\n  unfold Component2Contract.pre,\n  unfold Component2Contract.post,\n  unfold Spec.pre,\n  unfold Spec.post,\n  simp,\n  discharge_po\nend\n\n-- Prove PO2: The composition of Component1Contract and Component2Contract refines Spec\n\ntheorem PO2 : Contract.Refines (Component1Contract.seq Component2Contract) Spec :=\nbegin\n  unfold Contract.Refines,\n  unfold Component1Contract,\n  unfold Component2Contract,\n  unfold Spec,\n  unfold seq,\n  unfold Contract.seq,\n  unfold Contract.post,\n  unfold Component1Contract.post,\n  unfold Component2Contract.pre,\n  unfold Component2Contract.post,\n  unfold Spec.pre,\n  unfold Spec.post,\n  simp,\n  discharge_po\nend"
+    },
+    "l2": [],
+    "seconds": 42.9
+  },
+  {
+    "id": "REQ-3#3",
+    "kind": "requirement",
+    "requirement_text": "Loading the program will take less than 10 seconds.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:18:10: error: `Input` has already been declared\n<generated>:21:10: error: `Output` has already been declared\n<generated>:25:4: error: `Spec` has already been declared\n<generated>:37:17: warning: unused variable `o`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:40:49: error: Application type mismatch: The argument\n  Spec\nhas type\n  Contract Input Output\nbut is expected to have type\n  Contract (Output × Nat) ?m.3\nin the application\n  Component1Contract.Compatible Spec\n",
+      "contracts": [
+        "Component1Contract",
+        "Component2Contract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "names",
+        "names",
+        "names",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros < 10000000\n\n-- Decompose the spec into two components\n\ndef Component1Contract : Contract Input (Output × Nat) := \n  { pre  := fun _ => True\n    post := fun _ (o, _) => o.elapsedMicros < 5000000 }\n\ndef Component2Contract : Contract (Output × Nat) Output := \n  { pre  := fun (o, _) => o.elapsedMicros < 5000000\n    post := fun (o, _) o' => o'.elapsedMicros < 10000000 }\n\n-- Prove PO1: Component1Contract's assumption follows from Spec's guarantee\nexample : Contract.Compatible Component1Contract Spec := by\n  unfold Component1Contract Spec; discharge_po\n\n-- Prove PO2: Component1Contract and Component2Contract refine the spec\nexample : Contract.Refines (Component1Contract.seq Component2Contract) Spec := by\n  unfold Component1Contract Component2Contract Spec; discharge_po"
+    },
+    "l2": [],
+    "seconds": 39.0
+  },
+  {
+    "id": "REQ-4#3",
+    "kind": "requirement",
+    "requirement_text": "Any torrent result with 0 seeds will not be displayed.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:27:10: error: `Torrent` has already been declared\n<generated>:33:10: error: `Input` has already been declared\n<generated>:37:10: error: `Output` has already been declared\n<generated>:41:4: error: `Spec` has already been declared\n<generated>:49:42: error: Application type mismatch: The argument\n  (Input, List Torrent)\nhas type\n  Type × Type\nbut is expected to have type\n  Type\nin the application\n  Contract (Input, List Torrent)\n<generated>:55:38: error: Application type mismatch: The argument\n  (Output, List Torrent)\nhas type\n  Type × Type\nbut is expected to have type\n  Type\nin the application\n  Contract (Output, List Torrent)\n<generated>:65:2: error: No goals to be solved\n<generated>:64:8: warning: declaration uses `sorry`\n<generated>:64:36: warning: declaration uses `sorry`\n<generated>:74:2: error: Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce\n\n⊢ (FilterNonZeroSeedsContract.seq CollectResultsContract).Refines sorry\n",
+      "contracts": [
+        "FilterNonZeroSeedsContract",
+        "CollectResultsContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "names",
+        "names",
+        "names",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Torrent where\n  name   : String\n  seeds  : Nat\n  rating : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  torrents : List Torrent\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List Torrent\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => \n    (∀ it ∈ o.results, it ∈ i.torrents ∧ it.seeds ≠ 0) ∧\n    (o.results = [] ↔ i.torrents.all (fun t => t.seeds = 0))\n\n-- Decompose the spec into two components\n\ndef FilterNonZeroSeedsContract : Contract (Input, List Torrent) (Output, List Torrent) where\n  pre  := fun (i, _) => True\n  post := fun (i, _) (o, _) => \n    (∀ it ∈ o.results, it ∈ i.torrents ∧ it.seeds ≠ 0) ∧\n    (o.results = [] ↔ i.torrents.all (fun t => t.seeds = 0))\n\ndef CollectResultsContract : Contract (Output, List Torrent) Output where\n  pre  := fun (_, torrents) => torrents = []\n  post := fun (_, torrents) o => \n    o.results = torrents\n\n-- Prove PO1: each component's assumption follows from its predecessor's guarantee\n\ntheorem PO1 : Contract.Compatible FilterNonZeroSeedsContract CollectResultsContract := by\n  intros i o\n  simp [FilterNonZeroSeedsContract, CollectResultsContract]\n  split\n  -- First part: FilterNonZeroSeedsContract.post → CollectResultsContract.pre\n  simp [FilterNonZeroSeedsContract.post, CollectResultsContract.pre]\n  -- Second part: CollectResultsContract.post → FilterNonZeroSeedsContract.post\n  simp [CollectResultsContract.post, FilterNonZeroSeedsContract.post]\n\n-- Prove PO2: the composition refines the spec\n\ntheorem PO2 : Contract.Refines (FilterNonZeroSeedsContract.seq CollectResultsContract) Spec := by\n  intros i o\n  simp [FilterNonZeroSeedsContract, CollectResultsContract, Spec]\n  split\n  -- First part: FilterNonZeroSeedsContract.pre → Spec.pre\n  simp [FilterNonZeroSeedsContract.pre, Spec.pre]\n  -- Second part: FilterNonZeroSeedsContract.post → Spec.post\n  simp [FilterNonZeroSeedsContract.post, Spec.post]\n  -- Third part: CollectResultsContract.pre → Spec.pre\n  simp [CollectResultsContract.pre, Spec.pre]\n  -- Fourth part: CollectResultsContract.post → Spec.post\n  simp [CollectResultsContract.post, Spec.post]\n  discharge_po"
+    },
+    "l2": [],
+    "seconds": 122.7
+  },
+  {
+    "id": "REQ-5#3",
+    "kind": "requirement",
+    "requirement_text": "Sorting results should take less than 0.1 seconds.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:28:10: error: `Input` has already been declared\n<generated>:35:10: error: `Output` has already been declared\n<generated>:40:4: error: `Spec` has already been declared\n<generated>:61:8: error(lean.invalidField): Invalid field notation: Field projection operates on types of the form `C ...` where C is a constant. The expression\n  i.query ≠ \"\"\nhas type `Prop` which does not have the necessary form.\n<generated>:60:8: warning: This simp argument is unused:\n  h\n\nHint: Omit it from the simp argument list.\n  simp ̵[̵h̵]̵\n\nNote: This linter can be disabled with `set_option linter.unusedSimpArgs false`\n<generated>:63:50: error: Application type mismatch: The argument\n  QueryNonEmptyContract\nhas type\n  Contract Input Input\nbut is expected to have type\n  Contract Output ?m.3\nin the application\n  FilterItemsContract.Compatible QueryNonEmptyContract\n<generated>:72:2: error: Tactic `introN` failed: There are no additional binders or `let` bindings in the goal to introduce\n\n⊢ (∀ (x : Input),\n      { pre := fun i => i.query ≠ \"\",\n              post := fun i o =>\n                (∀ (it : String), it ∈ o.results → it ∈ i.items ∧ it.length ≤ 10) ∧ o.elapsedMicros < 100000 }.pre\n          x →\n        ({ pre := fun i => i.query ≠ \"\", post := fun i i' => i' = i }.seq\n              { pre := fun i => i.query ≠ \"\",\n                post := fun i o =>\n                  (∀ (it : String), it ∈ o.results → it ∈ i.items ∧ it.length ≤ 10) ∧\n                    o.elapsedMicros = i.elapsedMicros })",
+      "contracts": [
+        "QueryNonEmptyContract",
+        "FilterItemsContract"
+      ],
+      "stages": [
+        "names",
+        "names",
+        "names",
+        "types",
+        "names",
+        "returned"
+      ],
+      "static_issues": [
+        "redefines locked spec names: ['Input', 'Output', 'Spec']"
+      ],
+      "code": "structure Input where\n  query          : String\n  items          : List String\n  includeArchive : Bool\n  elapsedMicros  : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => (∀ it ∈ o.results, it ∈ i.items ∧ it.length ≤ 10) ∧\n                     o.elapsedMicros < 100000\n\n-- Component 1: Query is non-empty\ndef QueryNonEmptyContract : Contract Input Input where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i i' => i' = i\n\n-- Component 2: Filter items based on query\ndef FilterItemsContract : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => (∀ it ∈ o.results, it ∈ i.items ∧ it.length ≤ 10) ∧\n                     o.elapsedMicros = i.elapsedMicros\n\n-- Prove PO1: Each component's assumption follows from its predecessor's guarantee\nexample : Contract.Compatible QueryNonEmptyContract Spec := by\n  unfold Contract.Compatible; unfold Spec; unfold QueryNonEmptyContract\n  intros i i' h\n  simp [h]\n  exact (i.query ≠ \"\").trans (i'.query ≠ \"\")\n\nexample : Contract.Compatible FilterItemsContract QueryNonEmptyContract := by\n  unfold Contract.Compatible; unfold FilterItemsContract; unfold QueryNonEmptyContract\n  intros i i' h\n  simp [h]\n  exact (i = i').trans (i = i')\n\n-- Prove PO2: The composition refines the spec\nexample : Contract.Refines (QueryNonEmptyContract.seq FilterItemsContract) Spec := by\n  unfold Contract.Refines; unfold QueryNonEmptyContract; unfold FilterItemsContract; unfold Spec\n  intros i o h\n  simp [h]\n  exact (Spec.post i o).trans (FilterItemsContract.post i o).trans (QueryNonEmptyContract.post i i)"
+    },
+    "l2": [],
+    "seconds": 53.9
+  }
+]

@@ -16,7 +16,8 @@ When fixing code that failed to check:
   and do not replace `pre`/`post` with `True`.
 - Keep the names `Input`, `Output` and `Spec` (or the names you were asked for).
 - Follow the "How to fix" hints; they come from the Lean errors.
-- Return the COMPLETE corrected file in one ```lean block, not only the changed lines."""
+- Return the COMPLETE corrected file in one ```lean block, not only the changed lines.
+  Code that was given to you as already in scope is NOT part of your file: never repeat it."""
 
 HISTORY_TURNS = 2       # earlier (code, errors) exchanges kept in the conversation
 VALUE_ATTEMPTS = 2      # example-only repairs before the definitions are unlocked again
@@ -27,6 +28,33 @@ _TRIVIAL_POST = re.compile(r"\bpost\s*:=\s*fun\s+[\w_]+\s+[\w_]+\s*=>\s*[Tt]rue\
 
 # validate(code) → list of problems; empty means the code is accepted.
 Validator = Callable[[str], List[str]]
+
+
+_TOP_DECL = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?(?:private\s+)?"
+                       r"(?:def|structure|inductive|abbrev|theorem|lemma|instance|class)\s+([\w.]+)", re.M)
+
+
+def strip_redeclared(code: str, context: str) -> tuple:
+    """Remove top-level declarations in `code` whose names are already declared in `context`.
+
+    The checked file is `context + code`, so a repeated declaration can never compile
+    ("already been declared"); the copy in `context` is the locked one. Returns
+    (code, removed names). A declaration runs until the next non-indented line.
+    """
+    locked = set(_TOP_DECL.findall(context)) if context else set()
+    if not locked:
+        return code, []
+    out, removed, skipping = [], [], False
+    for line in code.split("\n"):
+        top = line[:1] not in ("", " ", "\t")
+        if top:
+            m = _TOP_DECL.match(line)
+            skipping = bool(m and m.group(1) in locked)
+            if skipping:
+                removed.append(m.group(1))
+        if not skipping:
+            out.append(line)
+    return "\n".join(out).strip(), removed
 
 
 def split_example(code: str):
@@ -107,7 +135,8 @@ def _ask(prompt: str, system: str, model: str, history=None, temperature=TEMPERA
 
 def generate_verified(prompt: str, system: str, model: str, context: str = "",
                       validate: Optional[Validator] = None,
-                      find_witness: Optional[Callable[[str], Optional[str]]] = None) -> dict:
+                      find_witness: Optional[Callable[[str], Optional[str]]] = None,
+                      auto_prove: Optional[Callable[[str, str], Optional[str]]] = None) -> dict:
     """Ask the model for Lean code, retrying with Lean's errors until it checks.
 
     `context` is already-verified Lean (e.g. a locked spec/contract) that is
@@ -148,6 +177,9 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
                                      temperature=RESTART_TEMPERATURE))
             continue
         code, fixes = apply_fixups(code)
+        code, dropped = strip_redeclared(code, context)
+        if dropped:
+            fixes = list(fixes) + [f"dropped re-declared locked names {sorted(set(dropped))}"]
         if locked_defs is not None:
             code = with_locked_defs(locked_defs, code, locked_example)
         if original is None:
@@ -193,7 +225,22 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
         if attempt == MAX_RETRIES:
             break
 
-        only_example = stage == "proof" and _errors_only_in_example(code, result["error"], context)
+        # The example-only repair is for L0 specs (`example … unfold Spec; decide`). With a
+        # locked context (L1/L2) the trailing part is PO theorems, not an example.
+        # L1/L2: definitions compile, only the PO theorems fail → try generic proofs first.
+        # Not gated on the error class (proof errors are often reported as type errors):
+        # auto_prove itself first checks that the definitions compile without the theorems.
+        if auto_prove and context and stage not in ("weakened", "check"):
+            proved = auto_prove(code, context)
+            if proved and not (validate and validate(proved)):
+                log[-1]["autoprove"] = "proved by search"
+                log.append({"attempt": attempt, "stage": "ok", "fixups": fixes + ["autoprove"]})
+                return {"success": True, "code": proved, "attempts": attempt, "log": log}
+            log[-1]["autoprove"] = "none found"
+        # The example-only repair is for L0 specs (`example … unfold Spec; decide`). With a
+        # locked context (L1/L2) the trailing part is PO theorems, not an example.
+        only_example = (not context and stage == "proof"
+                        and _errors_only_in_example(code, result["error"], context))
         # Only the example is wrong: let the harness look for values first.
         if only_example and find_witness and not context:
             defs, _ = split_example(code)
@@ -232,7 +279,8 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
         if not history:
             history = [{"role": "user", "content": prompt}]
         history.append({"role": "assistant", "content": f"```lean\n{code}\n```"})
-        feedback = f"{feedback_body}\n\nReturn the full corrected code."
+        feedback = f"{feedback_body}\n\nReturn the full corrected code." + (
+            " Do not repeat the code that is already in scope." if context else "")
         reply = _ask(feedback, system, model, history=history)
         history.append({"role": "user", "content": feedback})
         # keep the original request plus the last HISTORY_TURNS exchanges

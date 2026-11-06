@@ -668,6 +668,12 @@ def review_run(specs: dict, entries: dict) -> dict:
         compiled = r.get("compiles", r["checked"])  # runs before `compiles` existed only have `checked`
         r["l05"] = review(r["lean_predicate"], compiled, entries.get(r["id"], {}),
                           r.get("rejects_bad_example"), r.get("bad_example"))
+        # The in-loop checks (negative check, example consistency) can reject a spec that
+        # the post-hoc checks above accept; never report such a spec as a plain pass.
+        if r["l05"]["status"] == "pass" and r.get("compiles") and r["checked"] is False:
+            why = one_line(r.get("error") or "the in-loop checks did not pass")[:300]
+            r["l05"]["status"] = "flag"
+            r["l05"]["flags"].append(f"compiles, but the generation loop's own checks failed: {why}")
         counts[r["l05"]["status"]] += 1
     specs["l05_summary"] = counts
     return counts

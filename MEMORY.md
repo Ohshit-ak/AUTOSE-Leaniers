@@ -4,7 +4,7 @@ A running log of where ContractForge stands, why things are the way they are,
 and what comes next. Update it whenever you finish a piece of work or make a
 decision someone else would need to know.
 
-## Status (2026-11-04)
+## Status (2026-11-06)
 
 | Part | State |
 |------|-------|
@@ -19,8 +19,10 @@ decision someone else would need to know.
 | `harness/req_graph.py` | Done (L1-v1). Deterministic requirements graph, no LLM; spaCy `en_core_web_sm` 3.8. |
 | `harness/arch_lean.py` | Done (L1-v1). All L1 Lean the harness writes (message type, SystemSpec, contracts, statements, auto-proofs). |
 | `framework/ContractForge/Chain.lean` | Done (L1-v1). `compat_seq`, `chain3_sound`; existing definitions unchanged. |
-| `harness/agents/coding_agent.py` (L2) | Written, not run. |
-| `harness/main.py` | Single entry point. Stages `parse` → `spec` → `check` (L0) → `graph` → `arch` (L1); `--until graph/arch` read the frozen L0 run and never rerun L0. L2 not wired. Auto-starts the Qwen server. |
+| `harness/agents/coding_agent.py` (L2) | Merged from `feat/l2-coding-agent` (PR #1): `code` stage in `main.py`, `code_lean.py`, tests. Not run through `main.py` yet. |
+| `harness/main.py` | Single entry point. Stages `parse` → `spec` → `check` (L0) → `graph` → `arch` (L1); `--until graph/arch` read the frozen L0 run and never rerun L0. `code` (L2) reads the accepted L1 architectures. Auto-starts the Qwen server. |
+| `harness/agents/chain_architect.py`, `chain_coder.py` (per-spec L1/L2) | Run end to end 2026-11-06 (see *L1/L2 end-to-end*). v2 fixes: re-declared locked names stripped, exactly-two chained contracts with a worked example, harness proof search (`agents/autoprove.py`). |
+| `harness/e2e_l1l2.py` | Driver for L1 + L2 over the L0 specs that are `checked` and accepted in `review.json`. Writes `l1l2.json` and `l1l2/<id>.lean`. sbatch files in `runs/logs/`. |
 | `harness/reverify.py` | Not started. |
 | `benchmark/gammaj/` | `GammaJ_L0.lean`: hand-written gold L0 (25 specs `Spec_<id>` (16 data dictionary, 3 cart, 4 use case, 1 business rule, 1 security), all with `_sat` witnesses, ambiguities marked), compiles. `Domain.lean`: **DRAFT, needs human review**, extracted from it (`Product`, `CartLine`, `Cart`, `Account`, `Order`, `qtyOf`, `itemCount`, `totalCost`; adds `deriving DecidableEq, Repr`). |
 | `evaluation/compare_runs.py` | Done (v10; arch mode L1-v1). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. L1 folders get the arch report. |
@@ -189,6 +191,32 @@ Compare: `python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-L1-v1-nogr
 - Graph quality depends on Domain.lean and the synonyms file; session state has no entity.
 - Louvain splits only groups > 8 operations, and merging cycles can undo most of the split.
 
+## L1/L2 end-to-end (2026-11-06, Qwen 2.5 7B, on v10.1-code specs)
+
+| Run | Entries into L1 | L1 (PO1+PO2) | L2 (PO3) | Where | Notes |
+|-----|-----------------|--------------|----------|-------|-------|
+| e2e v1, gamma j | 61 (of 74; `checked` + accepted) | **0/61** | not run | `runs/0000 - gamma j/qwen-e2e/` | 5/5 attempts on every entry, ~56 min. L0 in this run: 67/74 compile, 64 checked, L0.5 63/3/8. |
+| e2e v1, video search | 14 (of 21) | **0/14** | not run | `runs/2009 - video search/qwen-e2e/` | ~13 min. L0: 18/21 compile, 15 checked, L0.5 14/1/6. |
+| e2e v2, video search | 14 | **9/14** (2.50 attempts) | **16/18 components**; **7/14 fully end to end** (L1 + every L2 + whole file re-checked in Lean) | `runs/2009 - video search/qwen-e2e-v2/` | 12 min, job 62032. Same specs as v1 (copied), new L1/L2 code. 3 of the 7 have a pass-through first component (`m.x = i.x` only: `REQ-3`, `REQ-3#2`, `REQ-4#2`), so they verify but don't really decompose. L1 fails: `REQ-1`, `REQ-4`, `REQ-7#2`, `REQ-4#3`, `REQ-5#3`. `REQ-1`: the second contract uses `i.query`, which it cannot see; `Mid` must carry every field the second component needs (prompt rule not added yet). |
+| e2e v2, gamma j | 61 | **29/61** (3.18 attempts) | **48/58 components**; **19/61 fully end to end** (requirements 12/27, use cases 7/17, data constraints 0/17) | `runs/0000 - gamma j/qwen-e2e-v2/` (`summary.txt`; results split over `l1l2.json` + shard files `l1l2.<a>-<b>.json`, `evaluation/summarize_e2e.py` merges them) | 65 min of model time, run as 5 shards in parallel (jobs 62033, 62047–62050, 62064–62065) to finish before the mid-submission. Same specs as v1. **12 of the 19 have a pass-through first component**, so only ~7 are real decompositions. **All 17 data constraints fail L1**: a data constraint is one validity check (`valid ↔ conditions`), and the model moves the check into the second component's `pre` and sets `o.valid = true`, so PO2 is false. Fix: skip L1 (or allow one component) for single-step specs. Most L2 failures are 1/2 (one component implemented and proved, the other not). |
+
+Why v1 failed (all 75):
+1. Every reply re-declared `Input`/`Output`/`Spec` (the harness prepends the spec as context, so a repeat can never compile). Cause: the repair rules say "return the COMPLETE file" and the prompt showed the spec in a ```lean block. 263 "already declared" errors buried the real ones.
+2. Component types didn't chain (`seq` needs `Contract Input Mid` then `Contract Mid Output`); only 33/61 did. Some used `Spec` as a component.
+3. Prompt allowed 2–4 components, but PO2 / `system_sound` only cover two.
+4. `intros` on `Compatible`/`Refines` without unfolding; `simp [Spec.pre]`.
+5. **`discharge_po` could never close PO1/PO2**: it unfolds `Compatible`/`Refines`/`seq` but not the user's contracts, so `pre`/`post` stay opaque and it falls through to `decide` (fails to synthesize `Decidable`).
+6. **L1 hit the L0 "write only a new example" path**: `split_example` treats the first `theorem` as the example, so a failing PO proof made the harness ask for an `example … unfold Spec; decide`.
+
+v2 fixes (commits efaeef8..): `discharge_po [A, B, Spec]` unfolds named defs; `base.strip_redeclared` drops top-level declarations already in the context; example-only path only without context; L1 prompt: exactly two contracts, `Input → Mid → Output`, no copy-of-Spec/identity components, Lean-checked worked example; harness proof search (`agents/autoprove.py`) tries generic unfold + `simp_all`/`grind`/`omega` scripts on each PO when only the theorems fail; L0.5 report flags (not passes) a spec whose in-loop checks failed (`checked=False`, e.g. `3.4.3/S2`, `UC-administrator-manage-plug-in-options` in the e2e run).
+
+Still open for L1/L2 (known failures for the report):
+- No semantic L1 validator: 15 of 26 end-to-end passes (both SRS) have a pass-through first component (`m.x = i.x` only). They verify but do not decompose.
+- Single-step specs (all data constraints) cannot be split into two components; L1 should skip them or allow one.
+- `Mid` must carry every `Input` field the second component needs (video search `REQ-1` refers to `i.query` in the second contract). Not yet in the prompt.
+- L2 often proves only 1 of 2 components; L2 failures not yet analysed.
+- Single runs (seed 42), so no spread yet; not wired into `main.py`.
+
 ## Decisions
 
 - **Lean version:** use the installed Lean 4.29.1 (`framework/lean-toolchain`). Do not reinstall via elan.
@@ -269,6 +297,7 @@ Compare: `python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-L1-v1-nogr
 - **PO2** `Contract.Refines c s` — composed contract refines the spec.
 - **PO3** `Contract.Satisfies c f` — implementation meets its contract.
 - `Contract.system_sound` combines PO1 + PO2 + PO3 into end-to-end correctness.
+- Use `discharge_po [<contracts>, Spec]` (names to unfold); plain `discharge_po` cannot see inside user contracts.
 
 ## Gotchas
 
@@ -302,6 +331,8 @@ Compare: `python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-L1-v1-nogr
 
 ## Next steps
 
+0. **Mid-submission 2026-11-06 23:59** (4-page progress report + repo link). After it: L1 semantic validator (reject identity / copy-of-`Spec` components), wire L1/L2 into `main.py`, ×3 reps of the e2e runs, then L2 results.
+
 0. **L1:** Qwen runs done (see *L1 → Results*; PO2 proved in no run). Left: run Gemma once (`--model gemma --run-name gemma-L1-v1`,
    needs `.env`), look into the one failing `trace_post` (`3.5.3/S2`, `3.1.3/S1`), optionally an agent-mode run. Nothing is committed yet.
 
@@ -311,7 +342,7 @@ Compare: `python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-L1-v1-nogr
 2. Commit `runs/0000 - gamma j/qwen/` (prompt v2) and `qwen-baseline/` (v1). Next for L0: add the APIs Qwen still invents (`List.nodup`, `String.last`, `String.toInt`, `Char.isAlphabetic`) to the "don't exist" list and repair hints; look at the 7 entries that regressed.
 3. Review the checked specs for meaning, not just compilation (see *Gotchas*).
 4. Run Gemma (and DeepSeek/Groq if keys are available) on all 75 entries with `--resume` to get comparable L0 pass rates.
-5. Wire L1 (architect) and L2 (coding) stages into `main.py`.
+5. Wire L1 (architect) and L2 (coding) stages into `main.py` (driver exists: `harness/e2e_l1l2.py`).
 6. Add `requirements.txt` (`google-genai`, `openai`, `python-dotenv`).
 7. First benchmark system: `benchmark/bank_ledger/`.
 8. `evaluation/metrics.py` with the `RunResult` dataclass from the kickoff guide.

@@ -1,0 +1,685 @@
+[
+  {
+    "id": "1.4/S2",
+    "kind": "requirement",
+    "requirement_text": "The initial inventory will be 100 items.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  items : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.items = 100\n  post := fun i m => m.items = i.items\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.items = 100\n  post := fun m o => o.items = m.items\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { items := i.items }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "names",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { items := m.items }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 20.3
+  },
+  {
+    "id": "1.4/S3",
+    "kind": "requirement",
+    "requirement_text": "Expandable with unique codes, the owners can purchase to expand the inventory.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "UpdateContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  inventory : List Code\n  purchases : List Code\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.purchases.all (fun c => c.unique)\n  post := fun i m => m.purchases = i.purchases ∧ m.inventory = i.inventory\n\ndef UpdateContract : Contract Mid Output where\n  pre  := fun m => m.purchases.all (fun c => c.unique)\n  post := fun m o => o.inventory.length = m.inventory.length + m.purchases.length ∧\n                     ∀ c ∈ m.purchases, c ∈ o.inventory ∧ c.unique\n\ntheorem po1 : Contract.Compatible ValidateContract UpdateContract := by\n  discharge_po [Spec, UpdateContract, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq UpdateContract) Spec := by\n  discharge_po [Spec, UpdateContract, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 2,
+        "error": "",
+        "stages": [
+          "truncated",
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid :=\n  { inventory := i.inventory, purchases := i.purchases }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [Spec, UpdateContract, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "UpdateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def UpdateContractImpl (m : Mid) : Output := { inventory := m.inventory ++ m.purchases.filter (fun c => c.unique) }\n\ntheorem UpdateContractImpl_ok : UpdateContract.Satisfies UpdateContractImpl := by\n  discharge_po [Spec, UpdateContract, UpdateContractImpl, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 154.5
+  },
+  {
+    "id": "1.4/S4",
+    "kind": "requirement",
+    "requirement_text": "The minimum total inventory will be 20,000 items.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  items : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.items ≥ 20000\n  post := fun i m => m.items = i.items\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.items ≥ 20000\n  post := fun m o => o.items = m.items\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { items := i.items }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { items := m.items }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 17.4
+  },
+  {
+    "id": "3.1.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Customers will be able to create accounts to store their customer profiles, configure contact information, view their purchase history, and confirm orders.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:68:2: error: Tactic `split` failed: Could not split an `if` or `match` expression in the goal\n\nHint: Use `set_option trace.split.failure true` to display additional diagnostic information\n\ni : Input\nm : Mid\na✝ :\n  { pre := fun i => i.email ≠ \"\" ∧ i.phone ≠ \"\" ∧ i.address ≠ \"\",\n        post := fun i m =>\n          m.name = i.name ∧\n            m.email = i.email ∧\n              m.phone = i.phone ∧\n                m.address = i.address ∧ m.purchaseHistory = i.purchaseHistory ∧ m.orderStatus = i.orderStatus }.pre\n    i\nh :\n  { pre := fun i => i.email ≠ \"\" ∧ i.phone ≠ \"\" ∧ i.address ≠ \"\",\n        post := fun i m =>\n          m.name = i.name ∧\n            m.email = i.email ∧\n              m.phone = i.phone ∧\n                m.address = i.address ∧ m.purchaseHistory = i.purchaseHistory ∧ m.orderStatus = i.orderStatus }.post\n    i m\n⊢ { pre := fun m => m.name ≠ \"\" ∧ m.email ≠ \"\" ∧ m.phone ≠ \"\" ∧ m.address ≠ \"\",\n        post := fun m o =>\n          o.profileCreated = true ∧\n            o.profile.name = m.name ∧\n              o.profile.email = m.email ∧\n                o.profile.phone = m.phone ∧\n                  o.profile.address = m.address ∧\n                    o.profile.purchaseHistory = m.purchaseHistory ∧\n                      o.profile.orderStatus = m.orderStatus ∧\n                        o.profile.purchaseHistory.Nodup ∧ o.profile.orderStatus = \"confirmed\" }.pre\n    m\n<generated>:77:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition",
+      "contracts": [
+        "ValidateContract",
+        "CreateProfileContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  name        : String\n  email       : String\n  phone       : String\n  address     : String\n  purchaseHistory : List String\n  orderStatus : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.email ≠ \"\" ∧ i.phone ≠ \"\" ∧ i.address ≠ \"\"\n  post := fun i m => m.name = i.name ∧ m.email = i.email ∧ m.phone = i.phone ∧ m.address = i.address ∧ m.purchaseHistory = i.purchaseHistory ∧ m.orderStatus = i.orderStatus\n\ndef CreateProfileContract : Contract Mid Output where\n  pre  := fun m => m.name ≠ \"\" ∧ m.email ≠ \"\" ∧ m.phone ≠ \"\" ∧ m.address ≠ \"\"\n  post := fun m o => o.profileCreated = true ∧\n    o.profile.name = m.name ∧ o.profile.email = m.email ∧\n    o.profile.phone = m.phone ∧ o.profile.address = m.address ∧\n    o.profile.purchaseHistory = m.purchaseHistory ∧\n    o.profile.orderStatus = m.orderStatus ∧\n    o.profile.purchaseHistory.Nodup ∧\n    o.profile.orderStatus = \"confirmed\"\n\ntheorem po1 : Contract.Compatible ValidateContract CreateProfileContract := by\n  unfold Contract.Compatible ValidateContract CreateProfileContract\n  intro i m _ h\n  split\n  · simp only [h.2, h.1]\n  · simp only [h.2, h.1]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq CreateProfileContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract CreateProfileContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]\n  exact true"
+    },
+    "l2": [],
+    "seconds": 105.5
+  },
+  {
+    "id": "3.1.3/S2",
+    "kind": "requirement",
+    "requirement_text": "Customers will be able to register, log in, and log out of their accounts.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:46:6: error(lean.invalidField): Invalid field `action`: The environment does not contain `Mid.action`, so it is not possible to project the field `action` from an expression\n  m\nof type `Mid`\n<generated>:47:12: error(lean.invalidField): Invalid field `accounts`: The environment does not contain `Mid.accounts`, so it is not possible to project the field `accounts` from an expression\n  m\nof type `Mid`\n<generated>:49:7: error(lean.invalidField): Invalid field `action`: The environment does not contain `Mid.action`, so it is not possible to project the field `action` from an expression\n  m\nof type `Mid`\n<generated>:50:7: error(lean.invalidField): Invalid field `action`: The environment does not contain `Mid.action`, so it is not possible to project the field `action` from an expression\n  m\nof type `Mid`\n<generated>:50:44: error(lean.invalidField): Invalid field `accounts`: The environment does not contain `Mid.accounts`, so it is not possible to project the field `accounts` from an expression\n  m\nof type `Mid`\n<generated>:47:22: error(lean.invalidField): Invalid field notation: Type of\n  a\nis not known; cannot resolve field `username`\n\nHint: Consider replacing the field projection with a call to one of the following:\n  • `Account.username`\n  • `Input.username`\n  • `Mid.username`\n  • `Output.username`\n<generated>:47:48: error(lean.invalidField): Invalid field notation: Type of\n  a\nis not known; cannot resolve field `password`\n\nHint: Consider replacing the field project",
+      "contracts": [
+        "ValidateContract",
+        "ProcessContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "types",
+        "syntax",
+        "names",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  username : String\n  password : String\n  logged   : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\"\n  post := fun i m => m.username = i.username ∧ m.password = i.password ∧ m.logged = false\n\ndef ProcessContract : Contract Mid Output where\n  pre  := fun m => m.logged = false\n  post := fun m o => (o.logged = true ↔\n    m.action = \"login\" ∧\n    ∃ a ∈ m.accounts, a.username = m.username ∧ a.password = m.password) ∧\n    (o.logged = false ↔\n    (m.action = \"logout\" ∧ o.username = m.username) ∨\n    (m.action = \"register\" ∧ m.username ∉ m.accounts.map (·.username)))\n\ntheorem po1 : Contract.Compatible ValidateContract ProcessContract := by\n  unfold Contract.Compatible ValidateContract ProcessContract\n  intro i m _ h\n  cases h with h1 h2\n  simp only at h1 h2\n  rw [h1, h2]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ProcessContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ProcessContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 73.3
+  },
+  {
+    "id": "3.1.3/S3",
+    "kind": "requirement",
+    "requirement_text": "Furthermore, Customer profiles will also include payment information, such as the ability to store credit card information, and address information.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  profiles : List CustomerProfile\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.profiles = i.profiles ∧\n                     ∀ p ∈ m.profiles, p.name ≠ \"\" ∧\n                     p.email ≠ \"\" ∧\n                     p.creditCards.Nodup ∧\n                     p.addresses.Nodup\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => True\n  post := fun m o => o.profiles = m.profiles\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:64:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:75:85: error: unsolved goals\n⊢ { pre := fun x => True,\n        post := fun i m =>\n          m.profiles = i.profiles ∧\n            ∀ (p : CustomerProfile),\n              p ∈ m.profiles → ¬p.name = \"\" ∧ ¬p.email = \"\" ∧ p.creditCards.Nodup ∧ p.addresses.Nodup }.Satisfies\n    ValidateContractImpl\n",
+        "stages": [
+          "proof",
+          "types",
+          "types",
+          "proof",
+          "types",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { profiles := i.profiles }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  unfold ValidateContract; simp_all"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { profiles := m.profiles }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 184.5
+  },
+  {
+    "id": "3.2.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Products will be stored in multi-tiered categories; a category can contain sub categories or products.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  categories : List Category\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.categories.Nodup\n  post := fun i m => m.categories = i.categories ∧ m.categories.Nodup\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.categories.Nodup\n  post := fun m o => o.categories = m.categories ∧ o.categories.Nodup\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 2,
+        "error": "",
+        "stages": [
+          "truncated",
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { categories := i.categories }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { categories := m.categories }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 154.1
+  },
+  {
+    "id": "3.2.3/S2",
+    "kind": "requirement",
+    "requirement_text": "The inventory management will allow for administrators to update the categories, the products placed in categories, and the specific product details.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "CopyContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  categories : List Category\n  products : List Product\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.categories.Nodup ∧ i.products.Nodup\n  post := fun i m => m.categories = i.categories ∧ m.products = i.products\n\ndef CopyContract : Contract Mid Output where\n  pre  := fun m => m.categories.Nodup ∧ m.products.Nodup\n  post := fun m o => o.categories = m.categories ∧ o.products = m.products\n\ntheorem po1 : Contract.Compatible ValidateContract CopyContract := by\n  discharge_po [CopyContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq CopyContract) Spec := by\n  discharge_po [CopyContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { categories := i.categories, products := i.products }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [CopyContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "CopyContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def CopyContractImpl (m : Mid) : Output := { categories := m.categories, products := m.products }\n\ntheorem CopyContractImpl_ok : CopyContract.Satisfies CopyContractImpl := by\n  discharge_po [CopyContract, CopyContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 24.2
+  },
+  {
+    "id": "3.3.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Customers will also be able to add products into the shopping cart.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "AddProductContract",
+        "UpdateCartContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  cart : List Product\n  productToAdd : Product\n  deriving DecidableEq, Repr\n\ndef AddProductContract : Contract Input Mid where\n  pre  := fun i => true\n  post := fun i m => m.cart.length = i.cart.length + 1 ∧\n                     m.cart.contains i.productToAdd\n\ndef UpdateCartContract : Contract Mid Output where\n  pre  := fun m => m.cart.length > 0\n  post := fun m o => o.cart = m.cart\n\ntheorem po1 : Contract.Compatible AddProductContract UpdateCartContract := by\n  discharge_po [AddProductContract, Spec, UpdateCartContract]\n\ntheorem po2 : Contract.Refines (AddProductContract.seq UpdateCartContract) Spec := by\n  discharge_po [AddProductContract, Spec, UpdateCartContract]"
+    },
+    "l2": [
+      {
+        "contract": "AddProductContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def AddProductContractImpl (i : Input) : Mid := \n  { cart := i.cart ++ [i.productToAdd], \n    productToAdd := i.productToAdd }\n\ntheorem AddProductContractImpl_ok : AddProductContract.Satisfies AddProductContractImpl := by\n  discharge_po [AddProductContract, AddProductContractImpl, Spec, UpdateCartContract]"
+      },
+      {
+        "contract": "UpdateCartContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def UpdateCartContractImpl (m : Mid) : Output := { cart := m.cart }\n\ntheorem UpdateCartContractImpl_ok : UpdateCartContract.Satisfies UpdateCartContractImpl := by\n  discharge_po [UpdateCartContract, UpdateCartContractImpl]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 19.6
+  },
+  {
+    "id": "3.3.3/S2",
+    "kind": "requirement",
+    "requirement_text": "The shopping cart will clearly display the number of items in the cart, along with the total cost.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:48:6: error: Invalid projection: Projection operates on structure-like types with fields. The expression\n  h\nhas type\n  m.itemCount = (List.map (fun x => x.quantity) i.items).sum\nwhich has no fields.\n<generated>:44:70: error: unsolved goals\ni : Input\nm : Mid\na✝ :\n  { pre := fun i => i.items.Nodup, post := fun i m => m.itemCount = (List.map (fun x => x.quantity) i.items).sum }.pre i\nh : m.itemCount = (List.map (fun x => x.quantity) i.items).sum\n⊢ { pre := fun m => m.itemCount > 0, post := fun m o => o.totalCost = m.totalCost }.pre m\n<generated>:54:18: error: Insufficient number of fields for `⟨...⟩` constructor: Constructor `Eq.refl` does not have explicit fields, but 2 were provided\n<generated>:55:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  itemCount : Nat\n  totalCost : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.items.Nodup\n  post := fun i m => m.itemCount = (i.items.map (fun x => x.quantity)).sum\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.itemCount > 0\n  post := fun m o => o.totalCost = m.totalCost\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  rw [h.2]\n  exact h.1\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 73.9
+  },
+  {
+    "id": "3.3.3/S3",
+    "kind": "requirement",
+    "requirement_text": "The customer will also be able to add to or remove products from the shopping cart prior to checkout and order confirmation.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  cart : List Product\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.cart.Nodup\n  post := fun i m => m.cart = i.cart\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.cart.Nodup\n  post := fun m o => o.cart = m.cart\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { cart := i.cart }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { cart := m.cart }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 16.6
+  },
+  {
+    "id": "3.4.3/S3",
+    "kind": "requirement",
+    "requirement_text": "The customer will then receive a confirmation email with the specific order details.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "SendContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  orderId : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.orderId > 0\n  post := fun i m => m.orderId = i.orderId\n\ndef SendContract : Contract Mid Output where\n  pre  := fun m => m.orderId > 0\n  post := fun m o => o.sent = true ∧\n                     o.details = { id := m.orderId, items := [], total := 0 }\n\ntheorem po1 : Contract.Compatible ValidateContract SendContract := by\n  discharge_po [SendContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq SendContract) Spec := by\n  discharge_po [SendContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := \n  { orderId := i.orderId }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [SendContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "SendContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def SendContractImpl (m : Mid) : Output := { sent := true, details := { id := m.orderId, items := [], total := 0 } }\n\ntheorem SendContractImpl_ok : SendContract.Satisfies SendContractImpl := by\n  discharge_po [SendContract, SendContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 20.5
+  },
+  {
+    "id": "SI-1.2",
+    "kind": "requirement",
+    "requirement_text": "Through programmatic interface, WebOrder will transmit information of items ordered by customers to the Inventory management system.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:42:8: error: Invalid projection: Projection operates on structure-like types with fields. The expression\n  h\nhas type\n  m.updatedItems = i.orderedItems\nwhich has no fields.\n<generated>:47:18: error: Insufficient number of fields for `⟨...⟩` constructor: Constructor `Eq.refl` does not have explicit fields, but 2 were provided\n<generated>:48:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateContract",
+        "UpdateContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  updatedItems : List Item\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.orderedItems.Nodup\n  post := fun i m => m.updatedItems = i.orderedItems\n\ndef UpdateContract : Contract Mid Output where\n  pre  := fun m => m.updatedItems.Nodup\n  post := fun m o => (o.success = true ↔\n    ∀ it ∈ m.updatedItems, it.count = it.count + 1)\n\ntheorem po1 : Contract.Compatible ValidateContract UpdateContract := by\n  unfold Contract.Compatible ValidateContract UpdateContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq UpdateContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract UpdateContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hm1, hm2⟩, ho⟩\n  simp only at *\n  rw [ho, hm1, hm2]"
+    },
+    "l2": [],
+    "seconds": 72.6
+  },
+  {
+    "id": "CI-1",
+    "kind": "requirement",
+    "requirement_text": "The WebOrder system shall send an e-mail confirmation to the customer that the items they ordered will be delivered to the shipping address along with tracking number.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "SendEmailContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  customerEmail : String\n  items         : List String\n  shippingAddr  : String\n  trackingNum   : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.customerEmail ≠ \"\" ∧ i.items.Nodup ∧ i.shippingAddr ≠ \"\" ∧ i.trackingNum ≠ \"\"\n  post := fun i m => m.customerEmail = i.customerEmail ∧ m.items = i.items ∧ m.shippingAddr = i.shippingAddr ∧ m.trackingNum = i.trackingNum\n\ndef SendEmailContract : Contract Mid Output where\n  pre  := fun m => m.customerEmail ≠ \"\" ∧ m.items.Nodup ∧ m.shippingAddr ≠ \"\" ∧ m.trackingNum ≠ \"\"\n  post := fun m o => o.sentEmail = true\n\ntheorem po1 : Contract.Compatible ValidateContract SendEmailContract := by\n  discharge_po [SendEmailContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq SendEmailContract) Spec := by\n  discharge_po [SendEmailContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := \n  { customerEmail := i.customerEmail, \n    items         := i.items, \n    shippingAddr  := i.shippingAddr, \n    trackingNum   := i.trackingNum }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [SendEmailContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "SendEmailContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def SendEmailContractImpl (m : Mid) : Output := { sentEmail := true }\n\ntheorem SendEmailContractImpl_ok : SendEmailContract.Satisfies SendEmailContractImpl := by\n  discharge_po [SendEmailContract, SendEmailContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 23.2
+  },
+  {
+    "id": "CI-2",
+    "kind": "requirement",
+    "requirement_text": "The WebOrder system shall send an e-mail to System Administrator regarding any technical queries from customers or sales people.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "SendEmailContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  queryFrom : String\n  queryType : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.queryType = \"technical\"\n  post := fun i m => m.queryType = i.queryType ∧ m.queryType = \"technical\"\n\ndef SendEmailContract : Contract Mid Output where\n  pre  := fun m => m.queryType = \"technical\"\n  post := fun m o => o.eMailSent = true\n\ntheorem po1 : Contract.Compatible ValidateContract SendEmailContract := by\n  discharge_po [SendEmailContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq SendEmailContract) Spec := by\n  discharge_po [SendEmailContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := \n  { queryFrom := i.queryFrom, queryType := i.queryType }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [SendEmailContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "SendEmailContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def SendEmailContractImpl (m : Mid) : Output := { eMailSent := true }\n\ntheorem SendEmailContractImpl_ok : SendEmailContract.Satisfies SendEmailContractImpl := by\n  discharge_po [SendEmailContract, SendEmailContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 20.4
+  },
+  {
+    "id": "5.1/R1",
+    "kind": "requirement",
+    "requirement_text": "Upon the USB being plugged in the system shall be able to be deployed and operational in less than 1 minute.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.elapsedMicros < 60000000\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.elapsedMicros < 60000000\n  post := fun m o => o.elapsedMicros = m.elapsedMicros\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { elapsedMicros := 0 }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { elapsedMicros := m.elapsedMicros }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 20.3
+  }
+]
