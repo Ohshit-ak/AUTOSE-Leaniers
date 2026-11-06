@@ -232,7 +232,7 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
         # auto_prove itself first checks that the definitions compile without the theorems.
         if auto_prove and context and stage not in ("weakened", "check"):
             proved = auto_prove(code, context)
-            if proved:
+            if proved and not (validate and validate(proved)):
                 log[-1]["autoprove"] = "proved by search"
                 log.append({"attempt": attempt, "stage": "ok", "fixups": fixes + ["autoprove"]})
                 return {"success": True, "code": proved, "attempts": attempt, "log": log}
