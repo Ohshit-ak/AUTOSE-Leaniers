@@ -1,0 +1,141 @@
+{
+  "group": "AccountSys",
+  "graph_mode": "no-graph",
+  "model": "qwen",
+  "requested_mode": "pipeline",
+  "operations": {},
+  "locked_hash": "687428ab8e2e",
+  "l0_operations": [
+    "1.4/S2",
+    "1.4/S3",
+    "1.4/S4",
+    "3.1.3/S1",
+    "3.1.3/S2",
+    "3.1.3/S3",
+    "3.2.3/S2",
+    "3.3.3/S1",
+    "3.3.3/S2",
+    "3.3.3/S3",
+    "3.4.3/S1",
+    "3.4.3/S2",
+    "3.4.3/S3",
+    "3.5.3/S2",
+    "5.1/R5",
+    "5.3/R3",
+    "5.3/R5",
+    "5.5/R5",
+    "CI-1",
+    "DD-credit-card-no",
+    "DD-e-mail-id",
+    "DD-item-id",
+    "DD-item-name",
+    "DD-name",
+    "DD-order-no",
+    "DD-password",
+    "DD-price",
+    "DD-quantity",
+    "DD-text-description",
+    "DD-total",
+    "DD-tracking-no",
+    "DD-user-id",
+    "SI-1.2",
+    "UC-administrator-add-user",
+    "UC-administrator-change-user-properties",
+    "UC-administrator-login-administrator",
+    "UC-administrator-logout-administrator",
+    "UC-administrator-remove-plug-ins",
+    "UC-administrator-remove-user",
+    "UC-customer-add-item-to-cart",
+    "UC-customer-edit-customer-details",
+    "UC-customer-login-customer",
+    "UC-customer-logout-customer",
+    "UC-customer-register-customer",
+    "UC-sales-person-add-product",
+    "UC-sales-person-login-sales-person",
+    "UC-sales-person-remove-product",
+    "UC-sales-person-update-product-attributes"
+  ],
+  "excluded_operations": [
+    "5.3/R1",
+    "5.5/R1",
+    "5.5/R2",
+    "UC-customer-checkout-an-order"
+  ],
+  "decomposition": {
+    "components": null,
+    "attempts": [
+      {
+        "attempt": 1,
+        "problems": [
+          "`<op id>` is not an operation of this system",
+          "`<op id>` is not an operation of this system",
+          "`<op id>` is not an operation of this system",
+          "`3.3.3/S3` is in both Accounts and Cart",
+          "`3.4.3/S3` is in both Accounts and Cart",
+          "`<op id>` is not an operation of this system",
+          "`<op id>` is not an operation of this system",
+          "`3.5.3/S2` is in both Accounts and Search",
+          "`5.1/R5` is in both Inventory and Search",
+          "`<op id>` is not an operation of this system"
+        ]
+      },
+      {
+        "attempt": 2,
+        "problems": [
+          "`3.3.3/S3` is in both Accounts and Cart",
+          "`3.4.3/S3` is in both Accounts and Cart",
+          "`3.5.3/S2` is in both Accounts and Search",
+          "`5.1/R5` is in both Inventory and Search"
+        ]
+      },
+      {
+        "attempt": 3,
+        "problems": [
+          "`3.3.3/S3` is in both Accounts and Cart",
+          "`3.4.3/S3` is in both Accounts and Cart",
+          "`3.5.3/S2` is in both Accounts and Search",
+          "`5.1/R5` is in both Inventory and Search"
+        ]
+      },
+      {
+        "attempt": 4,
+        "problems": [
+          "`3.3.3/S3` is in both Accounts and Cart",
+          "`3.4.3/S3` is in both Accounts and Cart",
+          "`3.5.3/S2` is in both Accounts and Search",
+          "`5.1/R5` is in both Inventory and Search",
+          "operations in no component: UC-customer-add-item-to-cart"
+        ]
+      },
+      {
+        "attempt": 5,
+        "problems": [
+          "`3.3.3/S3` is in both Accounts and Cart",
+          "`3.4.3/S3` is in both Accounts and Cart",
+          "`3.5.3/S2` is in both Accounts and Search",
+          "`5.1/R5` is in both Inventory and Search"
+        ]
+      }
+    ]
+  },
+  "mode_used": "none",
+  "verdict": "no valid decomposition",
+  "seconds": 54.9,
+  "meta": {
+    "harness_version": "L1-v1",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 43,
+    "repetition": 2,
+    "prompt_hash": "584a3d01b3f2",
+    "git_commit": "dd491bb",
+    "git_dirty": true,
+    "l0_prompt_hash": "a4ace6f72b38",
+    "graph_sha": "4d89a5e3e5dd",
+    "l0_run": "runs/0000 - gamma j/qwen-v10.1/rep1",
+    "graph_mode": "no-graph",
+    "arch_mode": "pipeline"
+  }
+}
