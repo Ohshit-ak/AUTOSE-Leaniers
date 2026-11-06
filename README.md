@@ -19,6 +19,20 @@ Verified system  (Contract.system_sound ⇒ end-to-end correctness)
 
 > Current status, design decisions and next steps are in **[MEMORY.md](MEMORY.md)**. Read it first.
 
+**Status (2026-11-06).** All three layers run end to end with an open-weight model
+(Qwen 2.5 7B, local). Single runs, seed 42, on the L0 specs that passed every L0 check:
+
+| SRS | L0 specs into L1 | L1 (PO1+PO2) | L2 components (PO3) | Fully verified end to end |
+|-----|------------------|--------------|---------------------|---------------------------|
+| `0000 - gamma j` | 61 of 74 | 29/61 | 48/58 | **19/61** |
+| `2009 - video search` | 14 of 21 | 9/14 | 16/18 | **7/14** |
+
+"Fully verified" means that Lean re-checks the spec, both component contracts, PO1, PO2,
+both implementations and their PO3 proofs together in one file. Known limits: 15 of these
+26 split off a first component that only copies fields; none of the 17 data constraints
+decompose (a single validity check); L2 often proves only one of the two components.
+Details are in [MEMORY.md](MEMORY.md) under *L1/L2 end-to-end*.
+
 ---
 
 ## Repository layout
@@ -41,11 +55,12 @@ AUTOSE-Leaniers/
 │   │   ├── Contract.lean   # Contract type, PO1/PO2/PO3 definitions, seq composition
 │   │   ├── Soundness.lean  # seq_sound, refines_sound, system_sound
 │   │   ├── Strings.lean    # decidable string-format helpers for specs (allDigits, isMMYY, …)
-│   │   └── Tactics.lean    # discharge_po tactic
+│   │   └── Tactics.lean    # discharge_po / discharge_po [names] tactics
 │   └── Test.lean           # smoke test
 │
 ├── harness/                # Python orchestration
-│   ├── main.py             # pipeline entry point: parse → spec (L0)
+│   ├── main.py             # pipeline entry point: parse → spec (L0) → L0.5
+│   ├── e2e_l1l2.py         # L1 + L2 over the accepted L0 specs of a run (shardable)
 │   ├── config.py           # models, API keys, retry/timeout settings
 │   ├── llm.py              # call_llm(): DeepSeek / Groq / Gemma / Qwen; extract_lean()
 │   ├── lean_runner.py      # check_lean(): type-checks code against the framework
@@ -57,8 +72,9 @@ AUTOSE-Leaniers/
 │       ├── repair.py           # Lean errors → short feedback + fix hints
 │       ├── fixups.py           # mechanical syntax fixes before each check
 │       ├── spec_agent.py       # L0: requirement → spec
-│       ├── architect_agent.py  # L1: spec → contracts + PO1/PO2
-│       └── coding_agent.py     # L2: contract → impl + PO3
+│       ├── architect_agent.py  # L1: spec → two chained contracts + PO1/PO2
+│       ├── coding_agent.py     # L2: contract → impl + PO3
+│       └── autoprove.py        # harness proof search for PO1/PO2/PO3 (no model)
 │
 ├── scripts/
 │   ├── start_qwen_server.sh  # local Qwen 2.5 7B via llama.cpp (port 8082)
@@ -66,13 +82,15 @@ AUTOSE-Leaniers/
 │   └── compare_runs.py       # before/after report of two single runs (v9 and earlier)
 │
 ├── evaluation/
-│   └── compare_runs.py       # compare two runs over repetitions (rep1..N): mean (min–max), verdict only beyond the spread
+│   ├── compare_runs.py       # compare two runs over repetitions (rep1..N): mean (min–max), verdict only beyond the spread
+│   └── summarize_e2e.py      # L1/L2/end-to-end counts of an e2e run; flags pass-through splits
 │
 ├── Requirements/           # input SRS documents (.xml, .pdf)
 │   └── parsed/             # parser output, one JSON per document
 │
 └── runs/                   # pipeline outputs: runs/<document>/<run-name>/
-                            #   SRSs run so far: `0000 - gamma j`, `2009 - video search`
+    │                       #   SRSs run so far: `0000 - gamma j`, `2009 - video search`
+    └── logs/               # sbatch files of the e2e runs (logs themselves are not committed)
 ```
 
 Planned, not yet created: `harness/reverify.py`, `requirements.txt`, and the
@@ -92,6 +110,8 @@ contents of `benchmark/` and the rest of `evaluation/` (see [MEMORY.md](MEMORY.m
 | Change how Lean is invoked or errors are reported | [harness/lean_runner.py](harness/lean_runner.py) |
 | Edit an agent's system prompt | [harness/agents/](harness/agents/) |
 | Change the retry/repair loop | [harness/agents/base.py](harness/agents/base.py) |
+| Run L1/L2 on a finished L0 run | [harness/e2e_l1l2.py](harness/e2e_l1l2.py) |
+| Change the generic proof scripts the harness tries | [harness/agents/autoprove.py](harness/agents/autoprove.py) |
 
 ### Proof obligations
 
@@ -263,7 +283,8 @@ Lean's error message. A `sorry` counts as a failure. (Next to a real error, Lean
 `main.py` parses every SRS XML in `Requirements/`, generates one Lean spec (L0)
 per requirement, data constraint and use case, and then checks the specs (L0.5,
 `validate.py`): no empty `post`, runtime bounds present, data-field specs accept and
-reject values built from the parser's rules. L1/L2 are not wired in yet.
+reject values built from the parser's rules. L1/L2 are not in `main.py` yet; run them
+on a finished run with `e2e_l1l2.py` (see *Run L1/L2 end to end* below).
 
 ```bash
 python main.py                                    # all XMLs, model qwen (or $CF_MODEL)
@@ -331,9 +352,38 @@ filter/sort/limit parsing, scope-section drops, `Nat ≥ 0`, per-mutant vacuity,
 `has_precondition`, UI drops, `ContractForge.Strings`, name suggestions, field and function-misuse hints). Tests that run Lean are skipped
 if `lake` is missing.
 
+### Run L1/L2 end to end (`e2e_l1l2.py`)
+
+Takes a finished `main.py` run and sends every spec that is `checked` and accepted in
+`review.json` through L1 (architect: two chained contracts `Input → Mid → Output`,
+proofs of PO1 and PO2) and then L2 (one coder per contract: implementation + PO3).
+When both L2 components succeed, the whole file is checked by Lean once more.
+
+```bash
+cd harness
+python e2e_l1l2.py "../runs/2009 - video search/qwen-e2e-v2" --model qwen
+python e2e_l1l2.py "../runs/0000 - gamma j/qwen-e2e-v2" --model qwen --start 16 --end 27   # one shard
+cd .. && python evaluation/summarize_e2e.py "runs/0000 - gamma j/qwen-e2e-v2"
+```
+
+On ada, each shard runs as its own GPU job with its own Qwen server port
+(`runs/logs/e2e-*.sbatch`; set `CF_QWEN_PORT` and `CF_QWEN_BASE_URL`). Outputs:
+
+| File | Contents |
+|------|----------|
+| `l1l2.json` (or `l1l2.<start>-<end>.json` per shard) | per spec: L1 success, attempts, contracts, error, code; per contract the L2 result; `full_check` for the combined file |
+| `l1l2/<id>.lean` | spec + L1 code + L2 code in one file, checkable with `lake env lean` from the repo root |
+| `summary.txt` | output of `evaluation/summarize_e2e.py` (merges shard files) |
+
+How L1/L2 differ from L0 in the repair loop (`agents/base.py`): the spec (and for L2 the
+contracts) are passed as locked context. Declarations of locked names that the model repeats
+are removed before checking, the L0 "write only a new `example`" repair is not used, and
+whenever the model's definitions compile, `agents/autoprove.py` first tries generic proof
+scripts (`discharge_po [names]`, unfold + `simp_all` / `grind` / `omega`) on each PO theorem.
+
 ### Run the agents step by step
 
-To use the agents directly (e.g. to try L1/L2 before they are in `main.py`):
+To use the agents directly:
 
 ```python
 from agents.spec_agent import run_spec
@@ -367,10 +417,16 @@ def incC : Contract Nat Nat := { pre := fun _ => True, post := fun x y => y > x 
 
 theorem inc_ok : incC.Satisfies (· + 1) := by
   unfold incC; discharge_po
+
+-- or let the tactic unfold your own definitions too:
+theorem inc_ok' : incC.Satisfies (· + 1) := by
+  discharge_po [incC]
 ```
 
 `discharge_po` unfolds the PO definitions and tries `simp_all`, `omega`,
-`grind` and `decide`. If none of them closes the goal, write the proof by hand.
+`grind` and `decide`. It does **not** unfold your own contracts, so without an
+`unfold` first their `pre`/`post` stay opaque and it fails. `discharge_po [A, B, Spec]`
+also unfolds the named definitions. If neither closes the goal, write the proof by hand.
 
 ---
 
