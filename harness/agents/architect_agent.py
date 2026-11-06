@@ -1,6 +1,7 @@
 """L1: spec → component contracts + proofs of PO1/PO2."""
 import re
 
+from agents.autoprove import auto_prove
 from agents.base import generate_verified
 
 SYSTEM_PROMPT_ARCHITECT = """\
@@ -69,7 +70,8 @@ _CONTRACT_DEF = re.compile(r"^def\s+(\w+Contract)\b", re.MULTILINE)
 def run_architect(spec_code: str, model: str) -> dict:
     prompt = (f"These definitions are already in scope (LOCKED, do not repeat them):\n\n{spec_code}\n\n"
               "Split `Spec` into exactly two chained component contracts and prove po1 and po2.")
-    return generate_verified(prompt, SYSTEM_PROMPT_ARCHITECT, model, context=spec_code)
+    return generate_verified(prompt, SYSTEM_PROMPT_ARCHITECT, model, context=spec_code,
+                              auto_prove=auto_prove)
 
 
 def extract_contracts(arch_code: str) -> list[str]:

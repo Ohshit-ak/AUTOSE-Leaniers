@@ -1,4 +1,5 @@
 """L2: one locked contract → implementation + proof of PO3."""
+from agents.autoprove import auto_prove
 from agents.base import generate_verified
 
 SYSTEM_PROMPT_CODER = """\
@@ -24,5 +25,6 @@ def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
         f"Implement the component for `{contract_name}`. Code in scope:\n\n"
         f"```lean\n{locked_code}\n```"
     )
-    result = generate_verified(prompt, SYSTEM_PROMPT_CODER, model, context=locked_code)
+    result = generate_verified(prompt, SYSTEM_PROMPT_CODER, model, context=locked_code,
+                              auto_prove=auto_prove)
     return {"name": contract_name, **result}

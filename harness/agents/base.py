@@ -135,7 +135,8 @@ def _ask(prompt: str, system: str, model: str, history=None, temperature=TEMPERA
 
 def generate_verified(prompt: str, system: str, model: str, context: str = "",
                       validate: Optional[Validator] = None,
-                      find_witness: Optional[Callable[[str], Optional[str]]] = None) -> dict:
+                      find_witness: Optional[Callable[[str], Optional[str]]] = None,
+                      auto_prove: Optional[Callable[[str, str], Optional[str]]] = None) -> dict:
     """Ask the model for Lean code, retrying with Lean's errors until it checks.
 
     `context` is already-verified Lean (e.g. a locked spec/contract) that is
@@ -224,6 +225,17 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
         if attempt == MAX_RETRIES:
             break
 
+        # The example-only repair is for L0 specs (`example … unfold Spec; decide`). With a
+        # locked context (L1/L2) the trailing part is PO theorems, not an example.
+        # L1/L2: definitions compile, only the PO theorems fail → try generic proofs first.
+        if (auto_prove and context and stage == "proof"
+                and _errors_only_in_example(code, result["error"], context)):
+            proved = auto_prove(code, context)
+            if proved:
+                log[-1]["autoprove"] = "proved by search"
+                log.append({"attempt": attempt, "stage": "ok", "fixups": fixes + ["autoprove"]})
+                return {"success": True, "code": proved, "attempts": attempt, "log": log}
+            log[-1]["autoprove"] = "none found"
         # The example-only repair is for L0 specs (`example … unfold Spec; decide`). With a
         # locked context (L1/L2) the trailing part is PO theorems, not an example.
         only_example = (not context and stage == "proof"
