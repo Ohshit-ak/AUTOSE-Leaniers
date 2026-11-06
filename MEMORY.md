@@ -336,7 +336,7 @@ Still open for L1/L2 (known failures for the report):
 0. **L1:** Qwen runs done (see *L1 → Results*; PO2 proved in no run). Left: run Gemma once (`--model gemma --run-name gemma-L1-v1`,
    needs `.env`), look into the one failing `trace_post` (`3.5.3/S2`, `3.1.3/S1`), optionally an agent-mode run. Nothing is committed yet.
 
-1. Revoke the leaked Gemini key.
+
 1. **L0 is frozen at v10.1.** Open L0 issues, for after the freeze or a v11: the run-to-run compile failures (`5.5/R1` Decidable on a structure, `DD-shipping-date` and `DD-credit-card-expiry-date` date formats, `DD-location`, `UC-customer-checkout-an-order` writing `Spec.post {…}` with one record that mixes input and output fields — the `_field_of_other` hint misreads that as `i.x` vs `o.x`). Get a truly held-out SRS (video search was seen during v9). Compare runs only with `evaluation/compare_runs.py` over ≥3 reps.
 1. (old) v9 is done on both SRSs (`qwen-v9`; compare with `scripts/compare_runs.py <before> <after>`, reports in each `qwen-v9/comparison.md`). Next: the sort / filter / "display N results" requirements of video search (all 5 new ones fail L0.5: look at their Lean files); the gamma j ✅ → ⚠️ regressions (`pre := True`, "no field types to vary"); the 4 new compile failures. Still open from v8: check the model's forbidden example against the parser's rules before trusting it (DD-item-name, DD-city, DD-order-no). Commit the v8/v9 runs and the v9 code.
 2. Commit `runs/0000 - gamma j/qwen/` (prompt v2) and `qwen-baseline/` (v1). Next for L0: add the APIs Qwen still invents (`List.nodup`, `String.last`, `String.toInt`, `Char.isAlphabetic`) to the "don't exist" list and repair hints; look at the 7 entries that regressed.

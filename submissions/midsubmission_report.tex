@@ -1,123 +1,98 @@
 \documentclass[10pt,a4paper]{article}
 \usepackage[margin=1.8cm]{geometry}
 \usepackage[T1]{fontenc}
-\usepackage{lmodern}
 \usepackage{booktabs,tabularx,array}
 \usepackage{enumitem}
 \usepackage{hyperref}
-\usepackage{tikz}
-\usetikzlibrary{arrows.meta,positioning}
 \usepackage{titlesec}
 \usepackage{microtype}
 
 \setlist{nosep,leftmargin=1.2em}
-\titlespacing*{\section}{0pt}{6pt}{3pt}
-\titlespacing*{\subsection}{0pt}{4pt}{2pt}
+\titlespacing*{\section}{0pt}{7pt}{3pt}
+\titlespacing*{\subsection}{0pt}{5pt}{2pt}
 \titleformat{\section}{\large\bfseries}{\thesection}{0.6em}{}
 \titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
-\setlength{\parskip}{2pt}
+\setlength{\parskip}{3pt}
 \setlength{\parindent}{0pt}
 \setlength{\emergencystretch}{2em}
 \hypersetup{colorlinks=true,urlcolor=blue,linkcolor=black}
-\newcommand{\cf}{\textsc{ContractForge}}
+\newcommand{\cf}{ContractForge}
 \newcommand{\code}[1]{\texttt{\small #1}}
 
-\title{\vspace{-1.2cm}\textbf{\cf: Multi-Agent Generation of Formally Verified\\Lean 4 Code from English Requirements}\\[2pt]
-\large Phase 2 -- Mid-Submission Progress Report}
-\author{Team AUTOSE-Leaniers\\
-\small [Member 1, Bavya Sri Kilari(2025701029), Member 3] \quad [AutoSE]}
-\date{\small 6 November 2026\\
-\href{https://github.com/Ohshit-ak/AUTOSE-Leaniers}{\nolinkurl{github.com/Ohshit-ak/AUTOSE-Leaniers}}}
+\title{\vspace{-1.3cm}\textbf{\cf: Verified Lean 4 Code from English Requirements}\\[2pt]
+\large Mid-Submission Progress Report}
+\author{Bavya Sri Kilari (2025701029), Akshith K (2024111004), Vivek R (2019112020)\\
+\small Autonomous Software Engineering, Monsoon 2026, IIIT Hyderabad}
+\date{\small 6 November 2026 \quad Repository: \href{https://github.com/Ohshit-ak/AUTOSE-Leaniers}{\nolinkurl{github.com/Ohshit-ak/AUTOSE-Leaniers}}}
 
 \begin{document}
 \maketitle
-\vspace{-0.8cm}
+\vspace{-0.9cm}
 
-\section{Project Idea and What Changed Since the Proposal}
-\cf{} turns an English software requirements specification (SRS) into Lean~4 code that is machine-checked against the requirements. The pipeline has three layers, and \emph{Lean itself} accepts or rejects the output of each layer before the next one starts:
-\begin{itemize}
-\item \textbf{L0 (spec agent):} each requirement becomes a Lean specification \code{Spec : Contract Input Output} (a precondition and a postcondition).
-\item \textbf{L1 (architect):} the specs are grouped into components, each with a contract, and the proof obligations \textbf{PO1} (consecutive contracts are compatible) and \textbf{PO2} (the composed contract refines the spec) are proved.
-\item \textbf{L2 (coding agents):} one agent per component writes an implementation and proves \textbf{PO3}, \code{Contract.Satisfies c f}.
-\end{itemize}
-A soundness theorem in the framework (\code{Contract.system\_sound}) combines PO1--PO3 into end-to-end correctness. The framework library is Lean core only (no Mathlib), so builds stay fast.
+\section{Where the project stands}
+\cf{} takes a software requirements specification (SRS) written in English and tries to produce Lean~4 code that is checked against it. We work in three layers. L0 turns each requirement into a Lean specification (\code{Spec : Contract Input Output}, a precondition and a postcondition). L1 groups the specifications into components, writes a contract for each, and proves that consecutive contracts fit together (PO1) and that their composition refines the specification (PO2). L2 writes an implementation per component and proves it meets its contract (PO3). A soundness theorem in our framework, \code{Contract.system\_sound}, combines the three into end-to-end correctness. Lean decides at every layer whether the output is accepted, so nothing moves forward because a model said it was correct.
 
-\begin{figure}[h]
-\centering
-\begin{tikzpicture}[node distance=7mm,
-  box/.style={draw,rounded corners,align=center,minimum height=8mm,inner sep=3pt,font=\small},
-  lab/.style={font=\scriptsize,align=center},
-  >=Stealth]
-\node[box] (req) {English\\requirement};
-\node[box,right=of req] (l0) {L0 spec agent\\+ L0.5 checks};
-\node[box,right=of l0] (l1) {L1 graph +\\architect};
-\node[box,right=of l1] (l2) {L2 coding\\agents};
-\node[box,right=of l2] (sys) {Verified\\system};
-\draw[->] (req)--(l0); \draw[->] (l0)--node[lab,above]{Lean spec} (l1);
-\draw[->] (l1)--node[lab,above]{contracts}(l2); \draw[->] (l2)--(sys);
-\node[lab,below=1mm of l0] {compiles, tested};
-\node[lab,below=1mm of l1] {PO1, PO2};
-\node[lab,below=1mm of l2] {PO3};
-\end{tikzpicture}
-\caption{The \cf{} pipeline. Each arrow is gated by the Lean type checker.}
-\end{figure}
+In short: L0 works and is frozen (version 10.1, about 90\% of the gamma~j requirements compile and most pass our extra checks). L1 runs end to end on the real SRS and proves 96 of 98 obligations per run, but the last obligation, and with it PO2, has not gone through yet. L2 has its first end-to-end results on a simpler path: 19 of 61 gamma~j specifications and 7 of 14 video-search specifications are verified from specification to implementation, although many of those decompositions are shallow (Section~5). Everything runs on a local Qwen~2.5~7B model on the university GPU cluster.
 
-\textbf{Changes to the original proposal.}
-(1) A large part of the time went into making L0 reliable, because every later layer depends on it; L0 is now frozen (v10.1).
-(2) In L1, contracts are written over a \emph{harness-generated message type} instead of a shared \code{World} record: one \code{World $\to$ World} step cannot satisfy conflicting operations such as login and logout.
-(3) \code{SystemSpec} is generated by the harness as the conjunction of the L0 specs, and every theorem statement (trace, PO1, PO2) is written by the harness. The model only writes the contract bodies, so it cannot weaken what has to be proved.
-(4) Cyclic component groups are merged rather than rejected, because stopping left the main benchmark with nothing to run.
-(5) To get a first L2 number before this deadline we added a second, simpler L1/L2 path next to the graph one: each L0 spec on its own is split into exactly two chained contracts (\code{Input $\to$ Mid $\to$ Output}), and then one coder per contract proves PO3. The graph path is still the main design; the per-spec path is what L2 has been run on so far.
+The repository has 76 commits between 19 October and 6 November. Work happened on feature branches (\code{fix/l0-spec-quality}, \code{l0-v10}, \code{l1-graph-contracts}, \code{l1\_runs}, \code{feat/l2-coding-agent}) that are merged into \code{main} through pull requests \#1 and \#2. \code{MEMORY.md} in the repository logs every version, decision and run in more detail than fits here.
 
-\section{Architecture and Implementation Plan}
-The system is a Python harness around a small Lean 4 library.
+\section{Architecture and implementation}
+The Lean side (\code{framework/}) is small and uses Lean core only, without Mathlib, to keep builds fast. \code{Contract.lean} defines the \code{Contract} type, the three proof obligations and sequential composition; \code{Soundness.lean} and \code{Chain.lean} hold the soundness theorems for two and for $n$ components; \code{Strings.lean} has decidable helpers for string formats such as \code{MM/YY}; and the tactic \code{discharge\_po [A, B]} unfolds the named contracts and tries \code{simp\_all}, \code{omega}, \code{grind} and \code{decide}.
 
-\textbf{Lean framework} (\code{framework/}): \code{Contract.lean} (the \code{Contract} type, PO1--PO3, sequential composition), \code{Soundness.lean} (\code{seq\_sound}, \code{refines\_sound}, \code{system\_sound}), \code{Chain.lean} (chains of $n$ components), \code{Strings.lean} (decidable string-format helpers), and a \code{discharge\_po} tactic that tries \code{simp\_all}, \code{omega}, \code{grind} and \code{decide}. \code{discharge\_po [A, B]} also unfolds the named contracts (the plain version left user contracts opaque and could never close PO1/PO2).
+The Python harness (\code{harness/}) has one entry point, \code{main.py}, with the stages parse, spec, check, graph, arch and code. The parser (\code{req\_parser.py}) is rule-based and uses no model: the same XML always gives the same JSON, and every sentence it drops is stored with the rule that dropped it (219 dropped sentences on gamma~j, mostly UI wording, vague goals and technology choices). All agents share one loop in \code{agents/base.py}: generate, check with Lean, repair. The repair step shows the model only the earliest layer of errors (syntax, then names, then types, then proofs), applies mechanical fixes first, suggests the closest real names when the model invents a function, and rejects a repair that weakens the specification. Locked context, such as an approved spec, is prepended by the harness, so a later agent cannot change it.
 
-\textbf{Harness} (\code{harness/}): a single entry point \code{main.py} with stages \code{parse $\to$ spec $\to$ check $\to$ graph $\to$ arch $\to$ code}. Its main parts:
-\begin{itemize}
-\item \code{req\_parser.py}: a rule-based, LLM-free SRS parser. The same XML always gives the same JSON, and every dropped sentence is kept with the rule that dropped it.
-\item \code{agents/base.py}: a shared generate $\to$ check $\to$ repair loop used by every agent. Repairs show only the earliest error layer (syntax, names, types, proofs), mechanical fixups run first, and attempts that weaken the spec are rejected. For L1/L2, re-declared locked names are stripped, and \code{agents/autoprove.py} tries generic proof scripts on each PO before asking the model again.
-\item \code{validate.py} (L0.5): checks beyond compilation: vacuity (\code{post} must reject a changed output), parser facts such as runtime bounds, data-field tests built from the SRS rules, and a negative check in which the model names one forbidden behaviour that Lean must show the spec rejects.
-\item \code{req\_graph.py}, \code{arch\_lean.py}, \code{agents/architect\_agent.py}: the L1 requirements graph and architect (Section~3).
-\item \code{agents/coding\_agent.py}, \code{code\_lean.py}: the L2 coder for graph architectures (Section~3).
-\item \code{e2e\_l1l2.py}, \code{agents/chain\_architect.py}, \code{agents/chain\_coder.py}: the per-spec L1/L2 path, run on a finished L0 run; it can be split into shards that run as parallel GPU jobs.
-\end{itemize}
-Models: a local Qwen~2.5~7B (Q4\_K\_M, llama.cpp) on a university GPU cluster is the main model; DeepSeek, Groq and Gemma are supported through the same \code{call\_llm} interface. Runs are seeded and repeatable (\code{--repeat N}), and \code{evaluation/compare\_runs.py} reports mean (min--max) over repetitions, declaring a change ``better'' or ``worse'' only when it exceeds the run-to-run spread. \code{evaluation/summarize\_e2e.py} gives the L1, L2 and end-to-end counts of a per-spec run.
+For the stage after compilation we built \code{validate.py} (we call it L0.5). It checks that \code{post} actually rejects a changed output, that runtime bounds found by the parser appear in the spec, and, for data-dictionary fields, that the spec accepts valid sample strings and rejects invalid ones generated from the SRS rules. It also runs a negative check: the model names one forbidden behaviour (for a login, a wrong password that still signs in), and Lean has to prove the spec rejects it. This check exists because one of our early login specs compiled and passed everything while letting every login succeed.
 
-\section{Progress Completed}
-\subsection{L0: requirements $\to$ Lean specifications (done, frozen at v10.1)}
-The parser extracts 75 entries from the gamma~j SRS (35 requirements, 20 data constraints, 20 use cases; 219 statements dropped with reasons). A second SRS (video search, 21 entries) is used as a sanity check. Table~\ref{tab:l0} shows how the compile rate moved with each version of the prompt and repair loop.
+L1 is driven by a requirements graph (\code{req\_graph.py}) that is built without a model. Operations are the L0 specs; entities come from a reviewed \code{Domain.lean} for the shop, the data dictionary, the glossary and a small synonym file. An edge goes from an operation that writes an entity to one that reads it. Connected groups become systems, large groups are split with Louvain clustering (fixed seed), cycles are merged, and the topological order gives the chain of components. The harness, not the model, writes every theorem statement in L1: the system spec is the conjunction of the L0 specs, the trace obligations say each contract assumes no more than its L0 spec and guarantees at least as much, and PO1/PO2 follow the chain. The model only writes two definitions per operation (\code{<C>\_pre\_<op>} and \code{<C>\_post\_<op>}), so it cannot make the goal easier. A \code{--no-graph} mode lets the model decompose the system itself and serves as our baseline.
+
+Models are called through one function, \code{call\_llm}, which supports the local Qwen server, DeepSeek, Groq and Gemma. Runs are seeded, \code{--repeat N} produces several repetitions, and \code{evaluation/compare\_runs.py} reports mean and range and only calls a difference ``better'' or ``worse'' when it is larger than the spread between repetitions. There are 128 unit tests on \code{main}, covering the parser, the checks, the graph, every L1 tool and the L2 coder.
+
+\section{Changes from the proposal}
+\begin{enumerate}
+\item \textbf{Real SRS documents instead of a hand-made benchmark.} The proposal planned \textsc{ArchVeriBench}, 15--25 small hand-written systems. We use public SRS documents from the PURE dataset instead: the gamma~j web store (75 entries) as the development set and a video-search SRS (21 entries) as a second document. This is a harder and more realistic input, and it meant much more time went into L0 than we planned. We keep a hand-written gold file (25 L0 specs for gamma~j) for checking meaning.
+\item \textbf{L1 contracts work on a message type.} We first tried contracts over a shared \code{World} record, but one \code{World $\to$ World} step cannot satisfy operations that conflict, such as login and logout. Contracts now act on a message type the harness generates from the L0 specs.
+\item \textbf{The harness writes all L1 statements}, including the system spec, so the model cannot weaken the goal. The proposal left this to the architect agent.
+\item \textbf{Cycles are merged, not rejected.} Rejecting them left gamma~j with nothing to run, since checkout writes an order and the profile page reads it.
+\item \textbf{A second, simpler L1/L2 path.} To get L2 numbers before this deadline, we added a path where each L0 spec is split into exactly two chained contracts (\code{Input $\to$ Mid $\to$ Output}) and one coder per contract proves PO3. The graph path remains the main design.
+\item \textbf{Not started yet:} incremental re-verification when requirements change, and the baselines that need it (B4).
+\end{enumerate}
+
+\section{Demonstration on gamma~j}
+The login requirement shows how the layers work together. L0 produces an \code{Input} with the entered credentials and a list of accounts, an \code{Output} with \code{signedIn}, and \code{post} stating \code{signedIn = true $\leftrightarrow$ $\exists$ a $\in$ accounts}, with matching name and password. Lean proves a satisfiability example. L0.5 then changes the output and confirms \code{post} rejects it, and the negative check proves that ``wrong password, signed in'' is rejected; the first login spec we generated failed exactly this test. In L1 the spec is assigned to the \code{Account} component, the model writes \code{Account\_pre\_login} and \code{Account\_post\_login}, and the harness proves the trace obligation and PO1.
+
+On the simpler path, a use case such as ``sales person removes a product'' comes out as one Lean file with the spec, two contracts, two implementations and all three proof obligations proved. Every run writes self-contained output: each Lean file compiles from the repository root with \code{lake env lean <file>}, and \code{arch.json} and \code{l1l2.json} record every obligation, the attempts and the errors. Unproved L1 obligations are left in \code{Arch.lean} as \code{-- NOT PROVED:} comments, so a reader can see exactly what is missing.
+
+\section{Results so far}
+\textbf{L0.} Table~\ref{tab:l0} shows how the compile rate on gamma~j changed as we worked on the prompt and the repair loop. Before version~8 every number comes from a single run. When we ran version~8 three times, its own L0.5 pass count moved between 51 and 56, which was larger than most of the improvements we had been reporting, so from then on we compare versions over three seeds.
 
 \begin{table}[h]
 \centering\small
 \begin{tabularx}{\linewidth}{@{}lXr@{}}
 \toprule
-Version & Change & Entries compiling (of 75)\\
+Version & Main change & Compiling\\
 \midrule
-No Lean check & first prompt, no repair loop & 0 (by hand)\\
-v1 & hardened prompt (templates, Lean 3 syntax banned) & 30\\
-v2 & prompt v2 + conversational repair loop & 55\\
-v4 & staged repair, witness search, 16k context & 65\\
-v8 & vacuity fix, fixups, hints, negative-check parsing & 68\\
-v10.1 (\(\times\)3 seeds) & string library, name suggestions, truncation guard & 67.0 (66--68)\\
+no Lean check & first prompt, no repair loop & 0/75 (checked by hand)\\
+v1 & stricter prompt and templates, Lean 3 syntax banned & 30/75\\
+v2 & conversational repair loop & 55/75\\
+v4 & staged repair, harness searches for example values, longer context & 65/75\\
+v8 & fixes to our own checks, mechanical fixups, repair hints & 68/75\\
+v8, 3 seeds & same code & 67.3 (67--68)/75\\
+v10.1, 3 seeds & string library, name suggestions, truncation guard & 67.0 (66--68)/74\\
 \bottomrule
 \end{tabularx}
-\caption{L0 on gamma~j with Qwen~2.5~7B. Compiling is necessary but not sufficient, which is why L0.5 exists.}
+\caption{L0 on gamma~j with Qwen~2.5~7B. In v10.1 the parser drops one scope sentence, so there are 74 entries.}
 \label{tab:l0}
 \end{table}
 
-Over three seeds, v10.1 gives 61 L0.5 passes (57--63) against 53.3 (51--56) for v8, with 2.16 attempts per entry (v8: 2.58). Most of that gain is a scoring change (no ``\code{pre = True}'' flag when the requirement states no precondition), so on equal scoring the pass rates are about equal (about 64 vs.\ 61). We report this rather than the larger number. A single run moves by about $\pm5$ passes on its own, which is why we moved to three-seed comparisons.
+Compiling is a weak bar, so we also report L0.5. Over three seeds, v10.1 passes 61 entries (57--63) against 53.3 (51--56) for v8, with fewer attempts per entry (2.16 against 2.58). Most of that difference comes from a change in scoring, though: v10.1 no longer flags \code{pre = True} when the requirement has no precondition. Counted the same way, the two versions are about equal (roughly 64 and 61). Compilation did not improve beyond the noise either. We froze L0 at this point because further prompt work was moving numbers within the spread.
 
-\subsection{L1: requirements graph and architecture (done, evaluated on gamma~j)}
-\textbf{Graph (no LLM).} \code{req\_graph.py} builds a deterministic graph in which operations are L0 specs and entities come from \code{Domain.lean}, the data dictionary, a glossary and a synonym file. Edges are write$\to$read dataflow and use-case links. Connected groups become systems, large groups are split with Louvain clustering, cycles are listed and then merged, and the topological order gives the chain of components. On gamma~j this gives 8 groups, 9 components, 6 cycles (1 merged set) and 184 edges; 47.2\% of fields map to a domain entity (116/246).
-\textbf{Architect.} For each operation the model writes only \code{<C>\_pre\_<op>} and \code{<C>\_post\_<op>}. The harness checks that the contract compiles, is satisfiable on the L0 example, is not vacuous, and satisfies the trace obligation (\code{pre} assumes no more than the L0 \code{pre}; under it \code{post} implies the L0 \code{post}). PO1 and PO2 proofs are generated mechanically from the ownership map, so they scale: all 67 compiling specs as one system check in about 12\,s. Three modes exist: pipeline (default), agent (model calls the tools) and no-graph (baseline, the model decomposes the system itself).
+\textbf{L1 (graph path).} On gamma~j the graph has 184 edges and 9 components in 8 groups; 47\% of fields map to a domain entity. Only one group has more than one compiling spec (\code{AccountSys}, 48 operations), so that is the system we evaluate. Table~\ref{tab:l1} compares the graph with the no-graph baseline over three seeds.
 
 \begin{table}[h]
 \centering\small
 \begin{tabular}{@{}lcc@{}}
 \toprule
-Qwen~2.5~7B, group \code{AccountSys} (48 ops), 3 seeds & graph & no graph\\
+\code{AccountSys}, 48 operations, 3 seeds & with graph & no graph\\
 \midrule
 \code{Arch.lean} compiles & 3/3 & 1/3\\
 Contracts satisfiable and non-vacuous & 100\% & 33\%\\
@@ -127,71 +102,49 @@ PO2 proved & 0/3 & 0/3\\
 Minutes per run & 12.2 & 4.6\\
 \bottomrule
 \end{tabular}
-\caption{L1 (graph path) results. The graph variant produced a valid decomposition in every run; without the graph, 2 of 3 runs returned a decomposition the harness rejected.}
+\caption{L1 results. Without the graph, two of three runs produced a decomposition the harness rejected.}
 \label{tab:l1}
 \end{table}
 
-In graph mode, 96 of 98 obligations are proved in every run. Exactly one \code{trace\_post} fails per run (\code{3.5.3/S2} in two runs, \code{3.1.3/S1} in one), and PO2 fails with it, since it needs every trace first. With only three repetitions and a bimodal baseline, the comparison tool calls the difference ``within noise'', so the advantage of the graph is indicative, not established.
+With the graph, 96 of 98 obligations are proved in every run. Each run has exactly one failing trace obligation (\code{3.5.3/S2} twice, \code{3.1.3/S1} once), and PO2 fails with it because it depends on all traces. The graph runs are clearly more stable, but with three seeds and a baseline that either fails completely or almost succeeds, our comparison tool calls the difference ``within noise''. We read it as a promising sign rather than a result.
 
-\subsection{L2: implementation and PO3 (first end-to-end runs, per-spec path)}
-The L2 coding agent takes a locked contract and generates an implementation plus a proof of \code{Contract.Satisfies c f} (PO3), using the same generate--check--repair loop. For the graph path, the coder (\code{coding\_agent.py}, \code{code\_lean.py}, the \code{code} stage in \code{main.py}, about 700 lines of tests) is merged into \code{main} but has not been run on the gamma~j architecture yet, since no graph architecture is accepted (PO2 above).
-
-On the per-spec path we ran L1 and L2 end to end on every L0 spec that compiled and was accepted by L0.5 (single run, seed 42, Qwen~2.5~7B). The first attempt (v1) proved nothing in L1 (0/61 on gamma~j, 0/14 on video search): every reply re-declared the locked \code{Input}/\code{Output}/\code{Spec}, many component types did not chain, and \code{discharge\_po} could not unfold the user's contracts. After fixing these (v2), we get Table~\ref{tab:e2e}. ``End to end'' means L1 proved, every L2 component proved, and the combined file checked by Lean once more.
+\textbf{L1 and L2 on the per-spec path.} Our first version proved nothing (0/61 on gamma~j, 0/14 on video search). Every reply re-declared the locked \code{Input}, \code{Output} and \code{Spec}, the component types often did not chain, and \code{discharge\_po} could not unfold user contracts. After fixing these we got Table~\ref{tab:e2e} (single run, seed 42).
 
 \begin{table}[h]
 \centering\small
 \begin{tabular}{@{}lcccc@{}}
 \toprule
-Per-spec path, v2 & specs in & L1 (PO1+PO2) & L2 components (PO3) & end to end\\
+ & specs in & L1 proved & L2 components proved & verified end to end\\
 \midrule
 gamma~j & 61 & 29/61 & 48/58 & 19/61\\
 video search & 14 & 9/14 & 16/18 & 7/14\\
 \bottomrule
 \end{tabular}
-\caption{First L1+L2 results (one run each; gamma~j took 65 min of model time, run as parallel shards). On gamma~j: requirements 12/27, use cases 7/17, data constraints 0/17 end to end.}
+\caption{Per-spec L1 and L2. ``End to end'' means L1, every L2 component and the combined file all check in Lean. On gamma~j this is 12/27 requirements, 7/17 use cases and 0/17 data constraints. The gamma~j run took 65 minutes of model time, split over five GPU jobs.}
 \label{tab:e2e}
 \end{table}
 
-These numbers look better than they are. 12 of the 19 gamma~j passes (and 3 of 7 on video search) have a \emph{pass-through} first component that only copies its input (\code{m.x = i.x}), so they verify but do not really decompose anything; about 7 are real two-step designs. L2 itself is the easier step: once L1 holds, most components get a proved implementation.
+These numbers overstate the progress. In 12 of the 19 gamma~j successes and 3 of the 7 video-search ones, the first component just copies its input to its output, so the proof is valid but the decomposition does not mean much. About seven are real two-step designs. Once L1 holds, L2 usually succeeds, which suggests the hard part of the pipeline is the architecture, not the code.
 
-\subsection{Evaluation assets and tests}
-\code{benchmark/gammaj/} holds a hand-written gold L0 file (25 specs, all with satisfiability witnesses, ambiguities marked) and a reviewed \code{Domain.lean}. The unit tests cover the parser, the negative check, harness regressions, L0 versions v9 and v10, the requirements graph, every L1 tool and the L2 coder (128 tests passing on \code{main}). The repository has 76 commits between 19 October and 6 November; the work was done on branches (\code{l0-v10}, \code{l1-graph-contracts}, \code{l1\_runs}, \code{feat/l2-coding-agent}, \code{fix/l0-spec-quality}), and all of them are now merged into \code{main} (PRs \#1 and \#2).
-
-\section{Preliminary Demonstration}
-Run on the gamma~j SRS (an online shop with accounts, a cart, products and orders). Example flow for the requirement ``log in'':
-\begin{enumerate}
-\item L0 produces \code{Spec} with \code{Input} (credentials, a list of accounts) and \code{Output} (\code{signedIn}), where \code{post} says \code{signedIn = true $\leftrightarrow$ $\exists$ a $\in$ accounts, \ldots}, and Lean proves a satisfiability \code{example}.
-\item L0.5 checks that \code{post} rejects a changed output, and the model's forbidden example (wrong password $\to$ signed in) is shown to be rejected by \code{decide}. This catches the first-generation login spec, which accepted every login.
-\item L1 assigns the spec to a component, the model writes \code{Account\_pre\_login} and \code{Account\_post\_login}, and the harness proves the trace obligation and PO1 for consecutive components; PO2 for the chain is attempted but has failed in every run so far (Section~5).
-\item On the per-spec path, a spec such as ``sales person removes a product'' (\code{UC-sales-person-remove-product}) goes through L1 and L2 and comes out as one Lean file with the spec, two contracts, two implementations and all three POs proved. Even here the split is shallow: the first component does the filtering and the second only copies it on.
-\end{enumerate}
-Every run writes self-contained, checkable output: each Lean file starts with \code{import ContractForge} and compiles with \code{lake env lean <file>} from the repository root; \code{arch.json} and \code{l1l2.json} record every obligation, attempts and errors; \code{Arch.lean} marks unproved obligations as \code{-- NOT PROVED:} comments.
-
-\section{Known Failures and Limitations}
+\section{Known failures and limitations}
 \begin{itemize}
-\item \textbf{Compiling is not correctness.} An L0 spec that compiles and passes L0.5 can still say too little (``confirm orders'' gives a weak \code{post}). One negative example is weak evidence, and it catches a \code{post} that accepts too much, not one that rejects valid outputs. We therefore review specs by hand, but only some of them so far.
-\item \textbf{L0 failures that persist:} \code{5.5/R1} and \code{DD-shipping-date} fail in every version; \code{DD-credit-card-expiry-date}, \code{DD-location} and the checkout use case fail in about two of three runs. Seven L0 specs do not compile and are therefore excluded from L1. Typical causes are invented library functions (\code{List.nth}, \code{String.substring}), type errors on tuples, and date formats.
-\item \textbf{L1 graph path: PO2 is proved in no run.} One \code{trace\_post} obligation fails per run, with the error ``Expected type must not contain free variables''. We have not yet investigated the cause, and fixing it would likely let the system be accepted.
-\item \textbf{L1 contracts can be trivial.} A contract equal to the L0 conditions makes every obligation easy, and nothing yet rewards a contract that says more than the requirement. On the per-spec path the same problem shows up as pass-through components (15 of the 26 end-to-end passes); there is no semantic check that rejects them yet.
-\item \textbf{Data constraints cannot be split.} All 17 gamma~j data constraints fail per-spec L1: a data constraint is one validity check, and the model moves the check into the second component's \code{pre}, which makes PO2 false. These specs should skip L1 or be allowed one component. Also, \code{Mid} must carry every field the second component needs (video search \code{REQ-1} fails because of this).
-\item \textbf{Graph quality depends on inputs.} Only 47.2\% of fields map to a domain entity; session state (\code{signedIn}, \code{cookie}) has no entity. Seven of the eight groups are single data-dictionary fields and are skipped by L1 (fewer than two compiling specs), so the graph path has so far been evaluated on one system.
-\item \textbf{Limited evidence.} Three seeds per condition for L0 and graph L1, a single run for the per-spec L1/L2 results, one model size (7B), one main SRS. The video-search SRS was looked at while writing v9, so it is not a held-out test. L2 failures (often one of the two components fails) are not analysed yet.
-\item \textbf{Model dependence.} Qwen~2.5~7B is small. A larger model (Gemma through the API) is planned for a single comparison run but has not been run.
+\item \textbf{A spec that compiles can still be wrong.} L0.5 catches some of this, but one negative example is weak evidence: it finds a \code{post} that accepts too much, not one that rejects valid outputs. Vague requirements (``confirm orders'') still give specs that say too little. We have checked only part of the specs by hand.
+\item \textbf{Persistent L0 failures.} \code{5.5/R1} (a shortest-path requirement) and \code{DD-shipping-date} fail in every version; the card expiry date, \code{DD-location} and the checkout use case fail in about two of three runs. The typical causes are invented library functions, type errors on tuples and date formats. Specs that do not compile are left out of L1, and losing checkout hurts, because it connects the cart and the orders.
+\item \textbf{PO2 is not proved on the graph path.} The failing trace obligation reports ``Expected type must not contain free variables'', which looks like a problem in how the harness builds the statement, not in the model's contract. We have not looked into it yet.
+\item \textbf{Trivial contracts.} A contract that repeats the L0 conditions makes every obligation easy, and nothing in the pipeline rewards a contract that says more. On the per-spec path this shows up as the copy-only components above.
+\item \textbf{Data constraints cannot be split in two.} All 17 gamma~j data constraints fail per-spec L1. A data constraint is a single validity check, and the model moves it into the second component's precondition, which makes PO2 false. These specs should skip L1 or be allowed one component.
+\item \textbf{The graph depends on its inputs.} Only 47\% of fields map to an entity, and session state such as \code{signedIn} has none. Seven of the eight groups are single data fields, so the graph path has been evaluated on one system only.
+\item \textbf{Limited evidence.} One model size (7B), one main SRS, three seeds for L0 and graph L1, one seed for the per-spec runs. The video-search SRS was read while we wrote L0 version~9, so it is not a clean held-out test. We have not analysed the L2 failures yet.
 \end{itemize}
 
-\section{Remaining Work}
+\section{Remaining work and plan}
 \begin{enumerate}
-\item \textbf{Run L2 on the graph path} (the \code{code} stage in \code{main.py}) once a gamma~j architecture is accepted, and report PO3 pass rate, attempts and time per component with three seeds. [Add date/owner.]
-\item \textbf{Fix the failing L1 trace} (\code{3.5.3/S2}, \code{3.1.3/S1}) so that PO2 and \code{system\_sound} can be proved for the full system, then rerun the graph vs.\ no-graph comparison.
-\item \textbf{Per-spec path:} a semantic L1 check that rejects pass-through and copy-of-\code{Spec} components, one-component handling for data constraints, the \code{Mid}-fields rule in the prompt, a look at the L2 failures, and three seeds instead of one.
-\item \textbf{Second benchmark system} (\code{benchmark/bank\_ledger/}) and a held-out SRS, so results do not rest on one document.
-\item \textbf{Stronger contracts in L1:} reward contracts that add constraints beyond the L0 text, and relate operations to one another.
-\item \textbf{Model comparison:} one Gemma run (and DeepSeek if a key is available) to check how much of the failure rate is due to the 7B model.
-\item \textbf{Re-verification and reporting:} \code{harness/reverify.py} (recheck a finished run from its JSON), a \code{requirements.txt}, and \code{evaluation/metrics.py} with one result record per run.
-\item \textbf{Housekeeping:} wire the per-spec path into \code{main.py} (or drop it once the graph path works), review more generated specs by hand, and revoke an API key that was committed to the history early on.
+\item \textbf{By 12 Nov:} find and fix the failing trace obligation so PO2 and \code{system\_sound} go through on \code{AccountSys}, then run L2 on the graph path (the \code{code} stage) with three seeds.
+\item \textbf{By 15 Nov:} a semantic check in L1 that rejects copy-only components and copies of the spec; one-component handling for data constraints; the rule that \code{Mid} carries every field the second component needs. Rerun the per-spec path with three seeds.
+\item \textbf{By 19 Nov:} one comparison run with a larger model (Gemma over the API) to separate the 7B model's limits from our pipeline's; a truly held-out SRS from PURE that nobody on the team has read.
+\item \textbf{By 24 Nov:} incremental re-verification (\code{harness/reverify.py}): when a requirement changes, use the graph and trace links to recheck only the affected contracts, compared against regenerating everything.
+\item \textbf{By 30 Nov:} final runs, the 8-page ACM report and the demo. Also on the list: \code{requirements.txt}, folding the per-spec path into \code{main.py}, more manual review of generated specs, and revoking an API key that was committed early in the project.
 \end{enumerate}
-
-\section{Summary}
-Beyond a proposal, the project has a working Lean framework with a soundness theorem, a deterministic parser, an L0 agent that compiles about 89\% of gamma~j entries with a 7B local model (up from 0 without a repair loop), an L1 graph and architect that prove 96 of 98 obligations per run and are more reliable with the graph than without it, and a first end-to-end L1+L2 result: 19 of 61 gamma~j specs and 7 of 14 video-search specs are fully verified from spec to implementation, though many of these use a trivial first component. The main open risks are the single failing L1 obligation that blocks PO2 on the graph path, and the weak decompositions on the per-spec path.
+We would especially like feedback on two choices: whether evaluating on real SRS documents instead of the planned hand-made benchmark is acceptable for the final submission, and whether the per-spec L1/L2 path is worth keeping next to the graph path or should be dropped once the graph path works.
 
 \end{document}
