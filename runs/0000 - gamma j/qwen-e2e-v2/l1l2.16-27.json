@@ -1,0 +1,435 @@
+[
+  {
+    "id": "5.1/R3",
+    "kind": "requirement",
+    "requirement_text": "The system shall be able to retrieve 200 products per second.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  perSecond : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.perSecond ≥ 200\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.perSecond ≥ 200\n  post := fun m o => o.perSecond = m.perSecond\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { perSecond := 200 }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { perSecond := m.perSecond }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 39.3
+  },
+  {
+    "id": "5.1/R4",
+    "kind": "requirement",
+    "requirement_text": "The system shall be able to add product to shopping cart in less than 2ms.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.elapsedMicros < 2000\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.elapsedMicros < 2000\n  post := fun m o => o.elapsedMicros = m.elapsedMicros\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:36:26: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:38:61: error: Application type mismatch: The argument\n  ValidateContractImpl\nhas type\n  Mid → Input\nbut is expected to have type\n  Input → Mid\nin the application\n  ValidateContract.Satisfies ValidateContractImpl\n<generated>:42:54: error: Application type mismatch: The argument\n  m\nhas type\n  Input\nbut is expected to have type\n  Mid\nin the application\n  ValidateContractImpl m\n",
+        "stages": [
+          "types",
+          "types",
+          "types",
+          "weakened",
+          "types",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (m : Mid) : Input := {}\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  unfold Contract.Satisfies\n  intro m\n  simp_all\n  exact ValidateContract.post m (ValidateContractImpl m)"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { elapsedMicros := m.elapsedMicros }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 47.7
+  },
+  {
+    "id": "5.1/R5",
+    "kind": "requirement",
+    "requirement_text": "The system shall be able to search for a specified product in less than 1 second.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:16:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:32:46: error(lean.invalidField): Invalid field `elapsedMicros`: The environment does not contain `Mid.elapsedMicros`, so it is not possible to project the field `elapsedMicros` from an expression\n  m\nof type `Mid`\n<generated>:35:44: error(lean.invalidField): Invalid field `elapsedMicros`: The environment does not contain `Mid.elapsedMicros`, so it is not possible to project the field `elapsedMicros` from an expression\n  m\nof type `Mid`\n<generated>:41:16: error: unknown tactic\n<generated>:41:10: error(lean.inductionWithNoAlts): Invalid syntax for case analysis tactic: The `with` keyword must be followed by a tactic or by an alternative (e.g. `| zero =>`), but here it is followed by the identifier `h1`.\n<generated>:49:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `h3` is a proof of\n  o.results.length = m.results.length ∧ o.elapsedMicros < 1000000\n<generated>:47:14: warning: declaration uses `sorry`\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "types",
+        "names",
+        "proof",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  product : String\n  items   : List String\n  results : List String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.product ≠ \"\"\n  post := fun i m => m.results.length = 0 ∧ m.elapsedMicros = 0\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.results.length = 0 ∧ m.elapsedMicros = 0\n  post := fun m o => o.results.length = m.results.length ∧ o.elapsedMicros < 1000000\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  cases h with h1 h2\n  exact h1, h2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨h1, h2⟩, h3⟩\n  simp only at *\n  rw [h3, h1, h2]"
+    },
+    "l2": [],
+    "seconds": 62.0
+  },
+  {
+    "id": "5.1/R6",
+    "kind": "requirement",
+    "requirement_text": "The system shall be able to email customer and vendor in less than 1 second.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.elapsedMicros < 1000000\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.elapsedMicros < 1000000\n  post := fun m o => o.elapsedMicros = m.elapsedMicros\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:36:48: error: `elapsedMicros` is not a field of structure `Input`\n<generated>:38:61: error: Application type mismatch: The argument\n  ValidateContractImpl\nhas type\n  Mid → Input\nbut is expected to have type\n  Input → Mid\nin the application\n  ValidateContract.Satisfies ValidateContractImpl\n",
+        "stages": [
+          "names",
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (m : Mid) : Input := { elapsedMicros := m.elapsedMicros }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { elapsedMicros := m.elapsedMicros }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 36.4
+  },
+  {
+    "id": "5.1/R7",
+    "kind": "requirement",
+    "requirement_text": "The system shall be able to validate credit card in less than 2 seconds.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:41:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:46:8: error: Invalid projection: Projection operates on structure-like types with fields. The expression\n  h.right\nhas type `m.isTest = i.isTest` which has no fields.\n<generated>:53:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `ho` is a proof of\n  o.valid = true ∧ o.elapsedMicros < 2000000\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  cardNumber : String\n  isTest     : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.cardNumber ≠ \"\"\n  post := fun i m => m.cardNumber = i.cardNumber ∧ m.isTest = i.isTest\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.cardNumber = \"1234567890123456\" ∧ m.isTest = false\n  post := fun m o => o.valid = true ∧ o.elapsedMicros < 2000000\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2.1\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 80.0
+  },
+  {
+    "id": "5.1/R8",
+    "kind": "requirement",
+    "requirement_text": "The system shall be able to acquire shipping charges in less than 2 seconds.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.elapsedMicros < 2000000\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.elapsedMicros < 2000000\n  post := fun m o => o.elapsedMicros = m.elapsedMicros\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:36:48: error: `elapsedMicros` is not a field of structure `Input`\n<generated>:38:61: error: Application type mismatch: The argument\n  ValidateContractImpl\nhas type\n  Mid → Input\nbut is expected to have type\n  Input → Mid\nin the application\n  ValidateContract.Satisfies ValidateContractImpl\n",
+        "stages": [
+          "names",
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (m : Mid) : Input := { elapsedMicros := m.elapsedMicros }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { elapsedMicros := m.elapsedMicros }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 39.1
+  },
+  {
+    "id": "5.1/R9",
+    "kind": "requirement",
+    "requirement_text": "The system shall be able to restore 1000 records per second.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  perSecond : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.perSecond ≥ 1000\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.perSecond ≥ 1000\n  post := fun m o => o.perSecond = m.perSecond\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:36:48: error: `perSecond` is not a field of structure `Input`\n<generated>:38:61: error: Application type mismatch: The argument\n  ValidateContractImpl\nhas type\n  Mid → Input\nbut is expected to have type\n  Input → Mid\nin the application\n  ValidateContract.Satisfies ValidateContractImpl\n<generated>:42:2: error: omega could not prove the goal:\nNo usable constraints found. You may need to unfold definitions so `omega` can see linear arithmetic facts about `Nat` and `Int`, which may also involve multiplication, division, and modular remainder by constants.\n",
+        "stages": [
+          "names",
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (m : Mid) : Input := { perSecond := 1000 }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  unfold Contract.Satisfies\n  intro m\n  simp_all\n  omega"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { perSecond := m.perSecond }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 40.4
+  },
+  {
+    "id": "5.3/R3",
+    "kind": "requirement",
+    "requirement_text": "The system shall encrypt all customer data in database.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:17:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:33:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:47:8: error: Invalid projection: Projections cannot be used on functions, and\n  h.right\nhas function type\n  ∀ (s : String), s ∈ i.customerData → s ≠ \"\" → m.encryptedData.contains (encrypt s) = false\n<generated>:52:18: error: Invalid `⟨...⟩` notation: The expected type\n  ∀ (s : String), s ∈ i.customerData → s ≠ \"\" → m.encryptedData.contains (encrypt s) = false\nis not an inductive type\n\nNote: This notation can only be used when the expected type is an inductive type with a single constructor\n<generated>:53:2: error: No goals to be solved\n",
+      "contracts": [
+        "EncryptCustomerDataContract",
+        "FinalizeEncryptionContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  customerData : List String\n  encryptedData : List String\n  deriving DecidableEq, Repr\n\ndef EncryptCustomerDataContract : Contract Input Mid where\n  pre  := fun i => true\n  post := fun i m => m.encryptedData.length = i.customerData.length ∧\n                     ∀ s ∈ i.customerData, s ≠ \"\" →\n                     m.encryptedData.contains (encrypt s) = false\n\ndef FinalizeEncryptionContract : Contract Mid Output where\n  pre  := fun m => ∀ s ∈ m.customerData, s ≠ \"\" →\n                   m.encryptedData.contains (encrypt s) = true\n  post := fun m o => o.encryptedData = m.encryptedData\n\ntheorem po1 : Contract.Compatible EncryptCustomerDataContract FinalizeEncryptionContract := by\n  unfold Contract.Compatible EncryptCustomerDataContract FinalizeEncryptionContract\n  intro i m _ h\n  simp only at h\n  exact h.2.2\n\ntheorem po2 : Contract.Refines (EncryptCustomerDataContract.seq FinalizeEncryptionContract) Spec := by\n  unfold Contract.Refines Contract.seq EncryptCustomerDataContract FinalizeEncryptionContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 77.9
+  },
+  {
+    "id": "5.3/R4",
+    "kind": "requirement",
+    "requirement_text": "The system shall auto detect IP DOS attacks and block IP automatically.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:42:48: error: unexpected token ','; expected ':=' or '|'\n<generated>:42:7: error: Missing cases:\n<generated>:39:68: error: unsolved goals\ni : Input\nm : Mid\na✝ : { pre := fun i => i.failedAttempts < 10, post := fun i m => m.failedAttempts = i.failedAttempts + 1 }.pre i\nh : { pre := fun i => i.failedAttempts < 10, post := fun i m => m.failedAttempts = i.failedAttempts + 1 }.post i m\nthis : m.failedAttempts = i.failedAttempts + 1\n⊢ { pre := fun m => m.failedAttempts < 10,\n        post := fun m o =>\n          (o.blocked = true ↔ m.failedAttempts + 1 ≥ 10) ∧ o.failedAttempts = m.failedAttempts + 1 }.pre\n    m\n<generated>:49:18: error: Insufficient number of fields for `⟨...⟩` constructor: Constructor `Eq.refl` does not have explicit fields, but 2 were provided\n<generated>:50:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateContract",
+        "BlockContract"
+      ],
+      "stages": [
+        "syntax",
+        "syntax",
+        "syntax",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  ip : String\n  failedAttempts : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.failedAttempts < 10\n  post := fun i m => m.failedAttempts = i.failedAttempts + 1\n\ndef BlockContract : Contract Mid Output where\n  pre  := fun m => m.failedAttempts < 10\n  post := fun m o => (o.blocked = true ↔ m.failedAttempts + 1 ≥ 10) ∧\n                     o.failedAttempts = m.failedAttempts + 1\n\ntheorem po1 : Contract.Compatible ValidateContract BlockContract := by\n  unfold Contract.Compatible ValidateContract BlockContract\n  intro i m _ h\n  have : m.failedAttempts = i.failedAttempts + 1, from h.2\n  rw this at h\n  exact h.1\n\ntheorem po2 : Contract.Refines (ValidateContract.seq BlockContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract BlockContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 64.0
+  },
+  {
+    "id": "5.3/R5",
+    "kind": "requirement",
+    "requirement_text": "The system shall detect consecutive failed login attempts.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:71:16: error: unknown tactic\n<generated>:71:10: error(lean.inductionWithNoAlts): Invalid syntax for case analysis tactic: The `with` keyword must be followed by a tactic or by an alternative (e.g. `| zero =>`), but here it is followed by the identifier `h1`.\n<generated>:82:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `h3` is a proof of\n  o.accepted = m.accepted ∧ o.accounts = m.accounts\n",
+      "contracts": [
+        "ValidateContract",
+        "UpdateContract"
+      ],
+      "stages": [
+        "types",
+        "syntax",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  accounts : List Account\n  username : String\n  password : String\n  accepted : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.username ≠ \"\"\n  post := fun i m => \n    (m.accepted = true ↔\n      ∃ a ∈ i.accounts, a.username = i.username ∧\n      (a.failedAttempts < 3 ∧ a.password = i.password)) ∧\n    (m.accepted = false →\n      ∃ a ∈ i.accounts, a.username = i.username ∧\n      (a.failedAttempts = 3 ∨ a.failedAttempts + 1 = 3))\n\ndef UpdateContract : Contract Mid Output where\n  pre  := fun m => m.accepted\n  post := fun m o => o.accepted = m.accepted ∧\n                     o.accounts = m.accounts\n\ntheorem po1 : Contract.Compatible ValidateContract UpdateContract := by\n  unfold Contract.Compatible ValidateContract UpdateContract\n  intro i m _ h\n  simp only at h\n  cases h with h1 h2\n  · simp only [h1] at h2\n    simp only [h2]\n  · simp only [h1] at h2\n    simp only [h2]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq UpdateContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract UpdateContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨h1, h2⟩, h3⟩\n  simp only at *\n  rw [h3, h1, h2]"
+    },
+    "l2": [],
+    "seconds": 85.2
+  },
+  {
+    "id": "5.5/R5",
+    "kind": "requirement",
+    "requirement_text": "The system shall validate email address existence.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateEmailContract",
+        "CheckEmailContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  email : String\n  deriving DecidableEq, Repr\n\ndef ValidateEmailContract : Contract Input Mid where\n  pre  := fun i => i.email ≠ \"\"\n  post := fun i m => m.email = i.email ∧\n                    m.email.toList.all Char.isAlphanum = true ∧\n                    m.email.contains '@' ∧\n                    m.email.contains '.' ∧\n                    m.email.length ≥ 6\n\ndef CheckEmailContract : Contract Mid Output where\n  pre  := fun m => m.email ≠ \"\"\n  post := fun m o => o.exists_ = true\n\ntheorem po1 : Contract.Compatible ValidateEmailContract CheckEmailContract := by\n  discharge_po [CheckEmailContract, Spec, ValidateEmailContract]\n\ntheorem po2 : Contract.Refines (ValidateEmailContract.seq CheckEmailContract) Spec := by\n  discharge_po [CheckEmailContract, Spec, ValidateEmailContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateEmailContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:35:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:48:2: error: simp_all made no progress\n",
+        "stages": [
+          "proof",
+          "proof",
+          "proof",
+          "proof",
+          "proof",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateEmailContractImpl (i : Input) : Mid := { email := i.email }\n\ntheorem ValidateEmailContractImpl_ok : ValidateEmailContract.Satisfies ValidateEmailContractImpl := by\n  unfold Contract.Satisfies\n  intro i\n  simp_all\n  split\n  { assumption }\n  { assumption }"
+      },
+      {
+        "contract": "CheckEmailContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def CheckEmailContractImpl (m : Mid) : Output := { exists_ := true }\n\ntheorem CheckEmailContractImpl_ok : CheckEmailContract.Satisfies CheckEmailContractImpl := by\n  discharge_po [CheckEmailContract, CheckEmailContractImpl, Spec, ValidateEmailContract]"
+      }
+    ],
+    "seconds": 66.7
+  }
+]

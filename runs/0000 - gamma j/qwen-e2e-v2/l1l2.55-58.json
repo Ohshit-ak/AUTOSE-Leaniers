@@ -1,0 +1,102 @@
+[
+  {
+    "id": "UC-administrator-install-patch-process",
+    "kind": "use_case",
+    "requirement_text": "Install patch process: Install patches or software updates to the web store.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:49:2: error: Type mismatch\n  h.right.right\nhas type\n  m.patches = i.patches\nbut is expected to have type\n  { pre := fun m => m.success = true,\n        post := fun m o => o.webStoreVersion = m.webStoreVersion ∧ o.patches = m.patches ∧ o.success = true }.pre\n    m\n<generated>:56:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `ho` is a proof of\n  o.webStoreVersion = m.webStoreVersion ∧ o.patches = m.patches ∧ o.success = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "proof",
+        "proof",
+        "proof",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  webStoreVersion : String\n  patches         : List Patch\n  success         : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.webStoreVersion ≠ \"\"\n  post := fun i m => m.webStoreVersion = i.webStoreVersion ∧ m.success = i.success ∧ m.patches = i.patches\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.success\n  post := fun m o => o.webStoreVersion = m.webStoreVersion ∧ o.patches = m.patches ∧ o.success = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  exact h.2.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 73.3
+  },
+  {
+    "id": "UC-sales-person-login-sales-person",
+    "kind": "use_case",
+    "requirement_text": "Login Sales Person: Login to an account with the system.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:47:2: error: Type mismatch\n  h.right.right\nhas type\n  m.email = i.email\nbut is expected to have type\n  { pre := fun m => m.username = \"registered_username\" ∧ m.password = \"registered_password\",\n        post := fun m o =>\n          o.loggedIn = true ∧\n            (o.cookie = some \"session_cookie\" ↔ m.username = \"registered_username\") ∧\n              (o.emailSent = true ↔ m.password ≠ \"registered_password\") }.pre\n    m\n<generated>:54:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `ho` is a proof of\n  o.loggedIn = true ∧\n    (o.cookie = some \"session_cookie\" ↔ m.username = \"registered_username\") ∧\n      (o.emailSent = true ↔ m.password ≠ \"registered_password\")\n",
+      "contracts": [
+        "ValidateContract",
+        "AuthenticateContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  username : String\n  password : String\n  email    : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\" ∧ i.email ≠ \"\"\n  post := fun i m => m.username = i.username ∧ m.password = i.password ∧ m.email = i.email\n\ndef AuthenticateContract : Contract Mid Output where\n  pre  := fun m => m.username = \"registered_username\" ∧ m.password = \"registered_password\"\n  post := fun m o => o.loggedIn = true ∧\n    (o.cookie = some \"session_cookie\" ↔ m.username = \"registered_username\") ∧\n    (o.emailSent = true ↔ m.password ≠ \"registered_password\")\n\ntheorem po1 : Contract.Compatible ValidateContract AuthenticateContract := by\n  unfold Contract.Compatible ValidateContract AuthenticateContract\n  intro i m _ h\n  exact h.2.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq AuthenticateContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract AuthenticateContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 86.4
+  },
+  {
+    "id": "UC-sales-person-logout-sales-person",
+    "kind": "use_case",
+    "requirement_text": "Logout Sales Person: Logout the Sales Person account on the system.",
+    "l1": {
+      "success": true,
+      "attempts": 2,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "UpdateContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  cookie : String\n  signedIn : Bool := false\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.signedIn = true\n  post := fun i m => m.signedIn = false ∧ m.cookie = i.cookie\n\ndef UpdateContract : Contract Mid Output where\n  pre  := fun m => m.signedIn = false\n  post := fun m o => o.signedIn = false ∧ o.cookie = m.cookie\n\ntheorem po1 : Contract.Compatible ValidateContract UpdateContract := by\n  discharge_po [Spec, UpdateContract, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq UpdateContract) Spec := by\n  discharge_po [Spec, UpdateContract, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { cookie := i.cookie, signedIn := false }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [Spec, UpdateContract, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "UpdateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def UpdateContractImpl (m : Mid) : Output := { signedIn := false, cookie := m.cookie }\n\ntheorem UpdateContractImpl_ok : UpdateContract.Satisfies UpdateContractImpl := by\n  discharge_po [UpdateContract, UpdateContractImpl]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 23.5
+  }
+]

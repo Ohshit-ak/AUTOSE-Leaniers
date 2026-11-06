@@ -1,0 +1,334 @@
+[
+  {
+    "id": "DD-state",
+    "kind": "data_constraint",
+    "requirement_text": "Name of the state for the above city; maximum 20 characters alphabetic string",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:35:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:40:2: error: Type mismatch\n  h.right.left\nhas type\n  1 ≤ m.raw.length\nbut is expected to have type\n  { pre := fun m => 1 ≤ m.raw.length ∧ m.raw.length ≤ 20 ∧ (m.raw.toList.all fun x => x.isAlpha) = true,\n        post := fun m o => o.valid = true }.pre\n    m\n<generated>:47:10: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  m.raw.length\nin the target expression\n  true = true ↔ 1 ≤ i.raw.length ∧ i.raw.length ≤ 20 ∧ (i.raw.toList.all fun x => x.isAlpha) = true\n\ni : Input\no : Output\na✝ : True\nm : Mid\nhp : m.raw.length = i.raw.length\nhq : 1 ≤ m.raw.length ∧ m.raw.length ≤ 20 ∧ (m.raw.toList.all fun x => x.isAlpha) = true\nho : o.valid = true\n⊢ true = true ↔ 1 ≤ i.raw.length ∧ i.raw.length ≤ 20 ∧ (i.raw.toList.all fun x => x.isAlpha) = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = i.raw.length ∧\n                     1 ≤ m.raw.length ∧ m.raw.length ≤ 20 ∧\n                     m.raw.toList.all (·.isAlpha) = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => 1 ≤ m.raw.length ∧ m.raw.length ≤ 20 ∧\n                   m.raw.toList.all (·.isAlpha) = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2.1\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 95.2
+  },
+  {
+    "id": "DD-zip-code",
+    "kind": "data_constraint",
+    "requirement_text": "The postal code of the above address; 5 digit numeric string",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:28:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:32:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:37:2: error: Type mismatch\n  h.right\nhas type\n  (m.raw.toList.all fun x => x.isDigit) = true\nbut is expected to have type\n  { pre := fun m => m.raw.length = 5 ∧ (m.raw.toList.all fun x => x.isDigit) = true,\n        post := fun m o => o.valid = true }.pre\n    m\n<generated>:44:10: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  m.raw.length\nin the target expression\n  true = true ↔ i.raw.length = 5 ∧ (i.raw.toList.all fun x => x.isDigit) = true\n\ni : Input\no : Output\na✝ : True\nm : Mid\nhp : m.raw.length = 5\nhq : (m.raw.toList.all fun x => x.isDigit) = true\nho : o.valid = true\n⊢ true = true ↔ i.raw.length = 5 ∧ (i.raw.toList.all fun x => x.isDigit) = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = 5 ∧ m.raw.toList.all (·.isDigit) = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.raw.length = 5 ∧ m.raw.toList.all (·.isDigit) = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 64.6
+  },
+  {
+    "id": "DD-e-mail-id",
+    "kind": "data_constraint",
+    "requirement_text": "E-mail address of the customer who is using the Web order system; 50 characters alphanumeric",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:39:2: error: Type mismatch\n  h.left\nhas type\n  m.raw.length = i.raw.length\nbut is expected to have type\n  { pre := fun m => m.raw.length = 50, post := fun m o => o.valid = true ∧ m.raw.toList.all Char.isAlphanum = true }.pre\n    m\n<generated>:45:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `ho` is a proof of\n  o.valid = true ∧ m.raw.toList.all Char.isAlphanum = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = i.raw.length ∧\n                     m.raw.toList.all Char.isAlphanum = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.raw.length = 50\n  post := fun m o => o.valid = true ∧\n                     m.raw.toList.all Char.isAlphanum = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  exact h.1\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, fun i o _ ⟨m, ⟨hp, hq⟩, ho⟩ => ?_⟩\n  simp only at hp hq ho\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 74.3
+  },
+  {
+    "id": "DD-credit-card-no",
+    "kind": "data_constraint",
+    "requirement_text": "Credit card number of the customer; 16 digit numeric string",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:29:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:35:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:41:8: error: Application type mismatch: The argument\n  h.left\nhas type\n  m.raw.length = 16\nof sort `Prop` but is expected to have type\n  Prop\nof sort `Type` in the application\n  And ⋯\n<generated>:48:6: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  o.valid\nin the target expression\n  { pre := fun x => True,\n        post := fun i o => o.valid = true ↔ i.raw.length = 16 ∧ i.raw.toList.all Char.isDigit = true }.post\n    i o\n\ni : Input\no : Output\na✝ :\n  { pre := fun x => True,\n        post := fun i o => o.valid = true ↔ i.raw.length = 16 ∧ i.raw.toList.all Char.isDigit = true }.pre\n    i\nm : Mid\nhp : m.raw.length = 16\nhq : m.raw.toList.all Char.isDigit = true\nho : o.valid = true\n⊢ { pre := fun x => True,\n        post := fun i o => o.valid = true ↔ i.raw.length = 16 ∧ i.raw.toList.all Char.isDigit = true }.post\n    i o\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "syntax",
+        "types",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = 16 ∧\n                     m.raw.toList.all Char.isDigit = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.raw.length = 16 ∧\n                  m.raw.toList.all Char.isDigit = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  exact h.1 ∧ h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at hp hq ho\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 63.6
+  },
+  {
+    "id": "DD-order-no",
+    "kind": "data_constraint",
+    "requirement_text": "Unique confirmation number of the order to the customer; 9 characters alphanumeric",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:29:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:35:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:40:2: error: Type mismatch\n  h.right\nhas type\n  m.raw.toList.all Char.isAlphanum = true\nbut is expected to have type\n  { pre := fun m => m.raw.length = 9 ∧ m.raw.toList.all Char.isAlphanum = true, post := fun m o => o.valid = true }.pre\n    m\n<generated>:47:10: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  m.raw.length\nin the target expression\n  true = true ↔ i.raw.length = 9 ∧ i.raw.toList.all Char.isAlphanum = true\n\ni : Input\no : Output\na✝ : True\nm : Mid\nh1 : m.raw.length = 9\nh2 : m.raw.toList.all Char.isAlphanum = true\nho : o.valid = true\n⊢ true = true ↔ i.raw.length = 9 ∧ i.raw.toList.all Char.isAlphanum = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "proof",
+        "proof",
+        "proof",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = 9 ∧\n                     m.raw.toList.all Char.isAlphanum = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.raw.length = 9 ∧\n                  m.raw.toList.all Char.isAlphanum = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨h1, h2⟩, ho⟩\n  simp only at *\n  rw [ho, h1, h2]"
+    },
+    "l2": [],
+    "seconds": 72.2
+  },
+  {
+    "id": "DD-tracking-no",
+    "kind": "data_constraint",
+    "requirement_text": "Number to track the order; 20 characters alphanumeric",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:29:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:35:14: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:40:2: error: Type mismatch\n  h.right\nhas type\n  m.raw.toList.all Char.isAlphanum = true\nbut is expected to have type\n  { pre := fun m => m.raw.length = 20 ∧ m.raw.toList.all Char.isAlphanum = true, post := fun m o => o.valid = true }.pre\n    m\n<generated>:47:10: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  m.raw.length\nin the target expression\n  true = true ↔ i.raw.length = 20 ∧ i.raw.toList.all Char.isAlphanum = true\n\ni : Input\no : Output\na✝ : True\nm : Mid\nhp : m.raw.length = 20\nhq : m.raw.toList.all Char.isAlphanum = true\nho : o.valid = true\n⊢ true = true ↔ i.raw.length = 20 ∧ i.raw.toList.all Char.isAlphanum = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "proof",
+        "types",
+        "proof",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  raw : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => m.raw.length = 20 ∧\n                     m.raw.toList.all Char.isAlphanum = true\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.raw.length = 20 ∧\n                  m.raw.toList.all Char.isAlphanum = true\n  post := fun m o => o.valid = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 68.4
+  },
+  {
+    "id": "UC-customer-register-customer",
+    "kind": "use_case",
+    "requirement_text": "Register Customer: Register a new customer account with the system.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "RegisterContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  name   : String\n  email  : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.name ≠ \"\" ∧ i.email ≠ \"\"\n  post := fun i m => m.name = i.name ∧ m.email = i.email\n\ndef RegisterContract : Contract Mid Output where\n  pre  := fun m => m.name ≠ \"\" ∧ m.email ≠ \"\"\n  post := fun m o => o.registered = true ∧ o.cookie ≠ \"\"\n\ntheorem po1 : Contract.Compatible ValidateContract RegisterContract := by\n  discharge_po [RegisterContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq RegisterContract) Spec := by\n  discharge_po [RegisterContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := \n  { name := i.name, email := i.email }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [RegisterContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "RegisterContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def RegisterContractImpl (m : Mid) : Output := { registered := true, cookie := \"unique-cookie\" }\n\ntheorem RegisterContractImpl_ok : RegisterContract.Satisfies RegisterContractImpl := by\n  discharge_po [RegisterContract, RegisterContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 21.3
+  },
+  {
+    "id": "UC-customer-login-customer",
+    "kind": "use_case",
+    "requirement_text": "Login Customer: Login to a customer account with the system.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:50:6: error: Tactic `rewrite` failed: Did not find an occurrence of the pattern\n  m.logged = false\nin the target expression\n  { pre := fun m => m.logged = true, post := fun m o => o.logged = m.logged ∧ o.cookie = m.cookie }.pre m\n\ni : Input\nm : Mid\na✝ :\n  { pre := fun i => i.email ≠ \"\",\n        post := fun i m =>\n          (m.logged = true ↔ i.password = i.account.password) ∧\n            (m.logged = false ↔ i.password ≠ i.account.password) ∧ (m.cookie ≠ \"\" ↔ m.logged = true) }.pre\n    i\nh :\n  (m.logged = true ↔ i.password = i.account.password) ∧\n    (m.logged = false ↔ i.password ≠ i.account.password) ∧ (m.cookie ≠ \"\" ↔ m.logged = true)\n⊢ { pre := fun m => m.logged = true, post := fun m o => o.logged = m.logged ∧ o.cookie = m.cookie }.pre m\n<generated>:57:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `ho` is a proof of\n  o.logged = m.logged ∧ o.cookie = m.cookie\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "syntax",
+        "types",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  logged : Bool\n  cookie : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.email ≠ \"\"\n  post := fun i m => (m.logged = true ↔ i.password = i.account.password) ∧\n                     (m.logged = false ↔ i.password ≠ i.account.password) ∧\n                     (m.cookie ≠ \"\" ↔ m.logged = true)\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.logged = true\n  post := fun m o => o.logged = m.logged ∧ o.cookie = m.cookie\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  rw [h.2.1, h.2.2]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 82.4
+  },
+  {
+    "id": "UC-customer-edit-customer-details",
+    "kind": "use_case",
+    "requirement_text": "Edit Customer Details: Edit the customer account details.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:50:36: error(lean.invalidField): Invalid field `signedIn`: The environment does not contain `Mid.signedIn`, so it is not possible to project the field `signedIn` from an expression\n  m\nof type `Mid`\n<generated>:56:8: warning: declaration uses `sorry`\n<generated>:64:14: warning: declaration uses `sorry`\n<generated>:61:8: warning: declaration uses `sorry`\n",
+      "contracts": [
+        "ValidateContract",
+        "UpdateContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "types",
+        "syntax",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  username : String\n  password : String\n  email    : String\n  phone    : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.signedIn = true\n  post := fun i m => m.username = i.changes.username ∧\n                     m.password = i.changes.password ∧\n                     m.email = i.changes.email ∧\n                     m.phone = i.changes.phone\n\ndef UpdateContract : Contract Mid Output where\n  pre  := fun m => true\n  post := fun m o => o.signedIn = m.signedIn ∧\n                     o.changes.username = m.username ∧\n                     o.changes.password = m.password ∧\n                     o.changes.email = m.email ∧\n                     o.changes.phone = m.phone\n\ntheorem po1 : Contract.Compatible ValidateContract UpdateContract := by\n  unfold Contract.Compatible ValidateContract UpdateContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq UpdateContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract UpdateContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 63.5
+  },
+  {
+    "id": "UC-customer-logout-customer",
+    "kind": "use_case",
+    "requirement_text": "Logout Customer: Logout the customer account on the system.",
+    "l1": {
+      "success": true,
+      "attempts": 4,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "SignOutContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  signedIn : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.signedIn = true\n  post := fun i m => m.signedIn = i.signedIn\n\ndef SignOutContract : Contract Mid Output where\n  pre  := fun m => m.signedIn = true\n  post := fun m o => o.signedIn = false\n\ntheorem po1 : Contract.Compatible ValidateContract SignOutContract := by\n  discharge_po [SignOutContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq SignOutContract) Spec := by\n  discharge_po [SignOutContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { signedIn := i.signedIn }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [SignOutContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "SignOutContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def SignOutContractImpl (m : Mid) : Output := { signedIn := false }\n\ntheorem SignOutContractImpl_ok : SignOutContract.Satisfies SignOutContractImpl := by\n  discharge_po [SignOutContract, SignOutContractImpl]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 61.1
+  },
+  {
+    "id": "UC-customer-add-item-to-cart",
+    "kind": "use_case",
+    "requirement_text": "Add Item To Cart: Customer adds item(s) in the cart",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:48:2: error: Tactic `split` failed: Could not split an `if` or `match` expression in the goal\n\nHint: Use `set_option trace.split.failure true` to display additional diagnostic information\n\ni : Input\nm : Mid\na✝ :\n  { pre := fun i => i.signedIn = true,\n        post := fun i m => m.signedIn = i.signedIn ∧ m.items = i.items ∧ m.cookie = i.cookie }.pre\n    i\nh :\n  { pre := fun i => i.signedIn = true,\n        post := fun i m => m.signedIn = i.signedIn ∧ m.items = i.items ∧ m.cookie = i.cookie }.post\n    i m\n⊢ { pre := fun m => m.signedIn = true,\n        post := fun m o => o.signedIn = m.signedIn ∧ o.items = m.items ∧ o.cookie = m.cookie }.pre\n    m\n<generated>:57:8: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `ho` is a proof of\n  o.signedIn = m.signedIn ∧ o.items = m.items ∧ o.cookie = m.cookie\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "syntax",
+        "names",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  signedIn : Bool\n  items    : List String\n  cookie   : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.signedIn = true\n  post := fun i m => m.signedIn = i.signedIn ∧\n                     m.items = i.items ∧\n                     m.cookie = i.cookie\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.signedIn = true\n  post := fun m o => o.signedIn = m.signedIn ∧\n                     o.items = m.items ∧\n                     o.cookie = m.cookie\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  split\n  · exact h.2.1\n  · exact h.2.2\n  · exact h.2.3\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, fun i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩ => by\n    simp only at *\n    rw [ho, hp, hq]⟩"
+    },
+    "l2": [],
+    "seconds": 63.9
+  }
+]

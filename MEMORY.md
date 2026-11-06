@@ -63,7 +63,7 @@ Second document, used to check that harness changes generalise beyond gamma j. R
 | e2e v1, gamma j | 61 (of 74; `checked` + accepted) | **0/61** | not run | `runs/0000 - gamma j/qwen-e2e/` | 5/5 attempts on every entry, ~56 min. L0 in this run: 67/74 compile, 64 checked, L0.5 63/3/8. |
 | e2e v1, video search | 14 (of 21) | **0/14** | not run | `runs/2009 - video search/qwen-e2e/` | ~13 min. L0: 18/21 compile, 15 checked, L0.5 14/1/6. |
 | e2e v2, video search | 14 | **9/14** (2.50 attempts) | **16/18 components**; **7/14 fully end to end** (L1 + every L2 + whole file re-checked in Lean) | `runs/2009 - video search/qwen-e2e-v2/` | 12 min, job 62032. Same specs as v1 (copied), new L1/L2 code. 3 of the 7 have a pass-through first component (`m.x = i.x` only: `REQ-3`, `REQ-3#2`, `REQ-4#2`), so they verify but don't really decompose. L1 fails: `REQ-1`, `REQ-4`, `REQ-7#2`, `REQ-4#3`, `REQ-5#3`. `REQ-1`: the second contract uses `i.query`, which it cannot see; `Mid` must carry every field the second component needs (prompt rule not added yet). |
-| e2e v2, gamma j | 61 | E2E_GJ | E2E_GJ_L2 | `runs/0000 - gamma j/qwen-e2e-v2/` | Same specs as v1. |
+| e2e v2, gamma j | 61 | **29/61** (3.18 attempts) | **48/58 components**; **19/61 fully end to end** (requirements 12/27, use cases 7/17, data constraints 0/17) | `runs/0000 - gamma j/qwen-e2e-v2/` (`summary.txt`; results split over `l1l2.json` + shard files `l1l2.<a>-<b>.json`, `evaluation/summarize_e2e.py` merges them) | 65 min of model time, run as 5 shards in parallel (jobs 62033, 62047–62050, 62064–62065) to finish before the mid-submission. Same specs as v1. **12 of the 19 have a pass-through first component**, so only ~7 are real decompositions. **All 17 data constraints fail L1**: a data constraint is one validity check (`valid ↔ conditions`), and the model moves the check into the second component's `pre` and sets `o.valid = true`, so PO2 is false. Fix: skip L1 (or allow one component) for single-step specs. Most L2 failures are 1/2 (one component implemented and proved, the other not). |
 
 Why v1 failed (all 75):
 1. Every reply re-declared `Input`/`Output`/`Spec` (the harness prepends the spec as context, so a repeat can never compile). Cause: the repair rules say "return the COMPLETE file" and the prompt showed the spec in a ```lean block. 263 "already declared" errors buried the real ones.
@@ -75,7 +75,12 @@ Why v1 failed (all 75):
 
 v2 fixes (commits efaeef8..): `discharge_po [A, B, Spec]` unfolds named defs; `base.strip_redeclared` drops top-level declarations already in the context; example-only path only without context; L1 prompt: exactly two contracts, `Input → Mid → Output`, no copy-of-Spec/identity components, Lean-checked worked example; harness proof search (`agents/autoprove.py`) tries generic unfold + `simp_all`/`grind`/`omega` scripts on each PO when only the theorems fail; L0.5 report flags (not passes) a spec whose in-loop checks failed (`checked=False`, e.g. `3.4.3/S2`, `UC-administrator-manage-plug-in-options` in the e2e run).
 
-Still open for L1/L2: no semantic L1 validator (a decomposition that compiles can still be trivial); L2 gated on L1 success; not wired into `main.py`; single runs only.
+Still open for L1/L2 (known failures for the report):
+- No semantic L1 validator: 15 of 26 end-to-end passes (both SRS) have a pass-through first component (`m.x = i.x` only). They verify but do not decompose.
+- Single-step specs (all data constraints) cannot be split into two components; L1 should skip them or allow one.
+- `Mid` must carry every `Input` field the second component needs (video search `REQ-1` refers to `i.query` in the second contract). Not yet in the prompt.
+- L2 often proves only 1 of 2 components; L2 failures not yet analysed.
+- Single runs (seed 42), so no spread yet; not wired into `main.py`.
 
 ## Decisions
 

@@ -1,0 +1,232 @@
+[
+  {
+    "id": "UC-administrator-logout-administrator",
+    "kind": "use_case",
+    "requirement_text": "Logout Administrator: Logout the Administrator account on the system.",
+    "l1": {
+      "success": true,
+      "attempts": 2,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "LogoutContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  cookie : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.logged_in = true\n  post := fun i m => m.cookie = i.cookie\n\ndef LogoutContract : Contract Mid Output where\n  pre  := fun m => m.cookie = m.cookie\n  post := fun m o => o.logged_in = false ∧ o.cookie = m.cookie\n\ntheorem po1 : Contract.Compatible ValidateContract LogoutContract := by\n  discharge_po [LogoutContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq LogoutContract) Spec := by\n  discharge_po [LogoutContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "syntax",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { cookie := i.cookie }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [LogoutContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "LogoutContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def LogoutContractImpl (m : Mid) : Output := { cookie := m.cookie, logged_in := false }\n\ntheorem LogoutContractImpl_ok : LogoutContract.Satisfies LogoutContractImpl := by\n  discharge_po [LogoutContract, LogoutContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 29.6
+  },
+  {
+    "id": "UC-administrator-add-user",
+    "kind": "use_case",
+    "requirement_text": "Add User: Register a new customer, sales person, or administrator account with the system",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:72:6: error: Invalid projection: Projections cannot be used on functions, and\n  h.mpr\nhas function type\n  i.isCustomer = true ∧ m.username ≠ \"\" ∧ m.password ≠ \"\" ∧ m.role = \"customer\" ∧ m.privileges ≠ \"\" →\n    m.username = i.username ∧ m.password = i.password ∧ m.role = i.role ∧ m.privileges = i.privileges\n<generated>:68:70: error: unsolved goals\ni : Input\nm : Mid\na✝ :\n  {\n        pre := fun i =>\n          i.username ≠ \"\" ∧\n            i.password ≠ \"\" ∧\n              (i.role = \"customer\" ∨ i.role = \"sales person\" ∨ i.role = \"administrator\") ∧ i.isCustomer = true,\n        post := fun i m =>\n          m.username = i.username ∧ m.password = i.password ∧ m.role = i.role ∧ m.privileges = i.privileges ↔\n            i.isCustomer = true ∧ m.username ≠ \"\" ∧ m.password ≠ \"\" ∧ m.role = \"customer\" ∧ m.privileges ≠ \"\" }.pre\n    i\nh :\n  m.username = i.username ∧ m.password = i.password ∧ m.role = i.role ∧ m.privileges = i.privileges ↔\n    i.isCustomer = true ∧ m.username ≠ \"\" ∧ m.password ≠ \"\" ∧ m.role = \"customer\" ∧ m.privileges ≠ \"\"\n⊢ { pre := fun m => m.username ≠ \"\" ∧ m.password ≠ \"\" ∧ m.role = \"customer\" ∧ m.privileges ≠ \"\",\n        post := fun m o =>\n          o.username = m.username ∧ o.password = m.password ∧ o.role = m.role ∧ o.privileges = m.privileges ↔\n            m.isCustomer = true ∧ o.username ≠ \"\" ∧ o.password ≠ \"\" ∧ o.role = \"customer\" ∧ o.privileges ≠ \"\" }.pre\n    m\n<generated>:78:18: error: Invalid `⟨...⟩` notation: The expected type\n  i.isCustomer = true ∧ m",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  username : String\n  password : String\n  role     : String\n  privileges : String\n  isCustomer : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\" ∧\n                 (i.role = \"customer\" ∨ i.role = \"sales person\" ∨ i.role = \"administrator\") ∧\n                 i.isCustomer\n  post := fun i m => (m.username = i.username ∧ m.password = i.password ∧\n                      m.role = i.role ∧ m.privileges = i.privileges) ↔\n                    (i.isCustomer ∧\n                     m.username ≠ \"\" ∧ m.password ≠ \"\" ∧\n                     m.role = \"customer\" ∧ m.privileges ≠ \"\")\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.username ≠ \"\" ∧ m.password ≠ \"\" ∧\n                 m.role = \"customer\" ∧ m.privileges ≠ \"\"\n  post := fun m o => (o.username = m.username ∧ o.password = m.password ∧\n                      o.role = m.role ∧ o.privileges = m.privileges) ↔\n                    (m.isCustomer ∧\n                     o.username ≠ \"\" ∧ o.password ≠ \"\" ∧\n                     o.role = \"customer\" ∧ o.privileges ≠ \"\")\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  rw [h.2.2]\n  exact h.1\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]\n  exact hq.2"
+    },
+    "l2": [],
+    "seconds": 98.3
+  },
+  {
+    "id": "UC-administrator-remove-user",
+    "kind": "use_case",
+    "requirement_text": "Remove User: Remove a user from the system.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "UpdateContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  accounts : List Account\n  username : String\n  deleted  : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.username ≠ \"\"\n  post := fun i m => m.deleted = true ∧\n                     (∃ a ∈ i.accounts, a.username = i.username) ∧\n                     (m.accounts = i.accounts.filter (fun a => a.username ≠ i.username))\n\ndef UpdateContract : Contract Mid Output where\n  pre  := fun m => m.deleted\n  post := fun m o => o.accounts = m.accounts ∧\n                     o.deleted = m.deleted\n\ntheorem po1 : Contract.Compatible ValidateContract UpdateContract := by\n  discharge_po [Spec, UpdateContract, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq UpdateContract) Spec := by\n  discharge_po [Spec, UpdateContract, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:60:29: error: simp_all made no progress\n",
+        "stages": [
+          "truncated",
+          "proof",
+          "proof",
+          "syntax",
+          "proof",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid :=\n  { accounts := i.accounts.filter (fun a => a.username ≠ i.username),\n    username := i.username,\n    deleted := true }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  unfold Contract.Satisfies; simp_all"
+      },
+      {
+        "contract": "UpdateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def UpdateContractImpl (m : Mid) : Output := { accounts := m.accounts, deleted := m.deleted }\n\ntheorem UpdateContractImpl_ok : UpdateContract.Satisfies UpdateContractImpl := by\n  discharge_po [Spec, UpdateContract, UpdateContractImpl, ValidateContract]"
+      }
+    ],
+    "seconds": 195.0
+  },
+  {
+    "id": "UC-administrator-change-user-properties",
+    "kind": "use_case",
+    "requirement_text": "Change User Properties: Alter properties such as passwords and privileges of the user.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:46:38: error(lean.invalidField): Invalid field `newPrivileges`: The environment does not contain `Mid.newPrivileges`, so it is not possible to project the field `newPrivileges` from an expression\n  m\nof type `Mid`\n<generated>:51:8: error: Invalid projection: Projection operates on structure-like types with fields. The expression\n  h.right\nhas type `m.password = i.newPassword` which has no fields.\n<generated>:56:14: warning: declaration uses `sorry`\n<generated>:53:8: warning: declaration uses `sorry`\n",
+      "contracts": [
+        "UpdatePasswordContract",
+        "UpdatePrivilegesContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "syntax",
+        "syntax",
+        "names",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  username : String\n  password : String\n  deriving DecidableEq, Repr\n\ndef UpdatePasswordContract : Contract Input Mid where\n  pre  := fun i => i.username ≠ \"\"\n  post := fun i m => m.username = i.username ∧ m.password = i.newPassword\n\ndef UpdatePrivilegesContract : Contract Mid Output where\n  pre  := fun m => m.username ≠ \"\" ∧ m.password ≠ \"\"\n  post := fun m o => o.username = m.username ∧\n                     o.password = m.password ∧\n                     o.privileges = m.newPrivileges\n\ntheorem po1 : Contract.Compatible UpdatePasswordContract UpdatePrivilegesContract := by\n  unfold Contract.Compatible UpdatePasswordContract UpdatePrivilegesContract\n  intro i m _ h\n  exact h.2.2\n\ntheorem po2 : Contract.Refines (UpdatePasswordContract.seq UpdatePrivilegesContract) Spec := by\n  unfold Contract.Refines Contract.seq UpdatePasswordContract UpdatePrivilegesContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 54.7
+  },
+  {
+    "id": "UC-administrator-install-plug-ins",
+    "kind": "use_case",
+    "requirement_text": "Install Plug-ins: Install a new plug-in to the application.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:38:42: error: Type mismatch\n  [m, m]\nhas type\n  List Mid\nbut is expected to have type\n  List PlugIn\n<generated>:40:8: warning: declaration uses `sorry`\n<generated>:48:18: error: Insufficient number of fields for `⟨...⟩` constructor: Constructor `Eq.refl` does not have explicit fields, but 2 were provided\n<generated>:49:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateContract",
+        "InstallContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  name : String\n  version : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.newPlugIn.name ≠ \"\" ∧ i.newPlugIn.version ≠ \"\"\n  post := fun i m => m.name = i.newPlugIn.name ∧ m.version = i.newPlugIn.version\n\ndef InstallContract : Contract Mid Output where\n  pre  := fun m => m.name ≠ \"\" ∧ m.version ≠ \"\"\n  post := fun m o => o.installedPlugIns = m :: m :: [] -- Ensure the plug-in is installed\n\ntheorem po1 : Contract.Compatible ValidateContract InstallContract := by\n  unfold Contract.Compatible ValidateContract InstallContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq InstallContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract InstallContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hn, hv, _⟩, ho⟩\n  simp only at *\n  rw [ho, hn, hv]"
+    },
+    "l2": [],
+    "seconds": 50.3
+  },
+  {
+    "id": "UC-administrator-remove-plug-ins",
+    "kind": "use_case",
+    "requirement_text": "Remove Plug-ins: Remove a plug-in from the application.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:55:13: error: Invalid projection: Projections cannot be used on functions, and\n  h\nhas function type\n  (∃ p, p ∈ i.plugIns ∧ p.name = i.name ∧ p.active = true) →\n    m.plugIns = List.filter (fun p => decide (p.name ≠ i.name)) i.plugIns ∧ m.plugIns.Nodup\n<generated>:55:20: error: Invalid projection: Projections cannot be used on functions, and\n  h\nhas function type\n  (∃ p, p ∈ i.plugIns ∧ p.name = i.name ∧ p.active = true) →\n    m.plugIns = List.filter (fun p => decide (p.name ≠ i.name)) i.plugIns ∧ m.plugIns.Nodup\n<generated>:56:8: error: Invalid projection: Projections cannot be used on functions, and\n  h\nhas function type\n  (∃ p, p ∈ i.plugIns ∧ p.name = i.name ∧ p.active = true) →\n    m.plugIns = List.filter (fun p => decide (p.name ≠ i.name)) i.plugIns ∧ m.plugIns.Nodup\n<generated>:61:18: error: Invalid `⟨...⟩` notation: The expected type\n  (∃ p, p ∈ i.plugIns ∧ p.name = i.name ∧ p.active = true) →\n    m.plugIns = List.filter (fun p => decide (p.name ≠ i.name)) i.plugIns ∧ m.plugIns.Nodup\nis not an inductive type\n\nNote: This notation can only be used when the expected type is an inductive type with a single constructor\n<generated>:62:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateContract",
+        "FilterContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  plugIns : List PlugIn\n  name    : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.name ≠ \"\" ∧ i.plugIns.Nodup\n  post := fun i m => \n    (∃ p ∈ i.plugIns, p.name = i.name ∧ p.active = true) →\n    m.plugIns = i.plugIns.filter (fun p => p.name ≠ i.name) ∧\n    m.plugIns.Nodup\n\ndef FilterContract : Contract Mid Output where\n  pre  := fun m => m.plugIns.Nodup\n  post := fun m o => \n    o.plugIns = m.plugIns.filter (fun p => p.name ≠ m.name) ∧\n    o.plugIns.Nodup\n\ntheorem po1 : Contract.Compatible ValidateContract FilterContract := by\n  unfold Contract.Compatible ValidateContract FilterContract\n  intro i m _ h\n  simp only [h.2.1, h.2.2]\n  exact h.1\n\ntheorem po2 : Contract.Refines (ValidateContract.seq FilterContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract FilterContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]\n  exact m"
+    },
+    "l2": [],
+    "seconds": 88.0
+  },
+  {
+    "id": "UC-administrator-install-patch-process",
+    "kind": "use_case",
+    "requirement_text": "Install patch process: Install patches or software updates to the web store.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:49:2: error: Type mismatch\n  h.right.right\nhas type\n  m.patches = i.patches\nbut is expected to have type\n  { pre := fun m => m.success = true,\n        post := fun m o => o.webStoreVersion = m.webStoreVersion ∧ o.patches = m.patches ∧ o.success = true }.pre\n    m\n<generated>:56:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `ho` is a proof of\n  o.webStoreVersion = m.webStoreVersion ∧ o.patches = m.patches ∧ o.success = true\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  webStoreVersion : String\n  patches         : List Patch\n  success         : Bool\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.webStoreVersion ≠ \"\"\n  post := fun i m => m.webStoreVersion = i.webStoreVersion ∧ m.success = i.success ∧ m.patches = i.patches\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.success\n  post := fun m o => o.webStoreVersion = m.webStoreVersion ∧ o.patches = m.patches ∧ o.success = true\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  exact h.2.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 72.4
+  }
+]
