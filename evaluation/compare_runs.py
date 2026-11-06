@@ -18,6 +18,10 @@ L1 runs (folders with rep*/arch/ or arch/, written by `main.py --until arch`) ge
 report instead: compiles, contracts satisfiable / non-vacuous, trace obligations proved,
 PO1 proved per consecutive pair, PO2 proved, attempts, tool calls, failures by stage, and
 the most common error per stage. A and B may be graph and --no-graph runs.
+
+L2 runs (folders with rep*/code/ or code/, written by `main.py --until code`) get the code
+report: compiles, groups accepted, component PO3 proved %, end-to-end soundness proved,
+attempts, and execution time.
 """
 import argparse
 import json
@@ -196,7 +200,7 @@ def arch_metrics(groups: dict) -> dict:
         "PO2 proved": sum(po2),
         "mean attempts per operation": round(sum(o.get("attempts", 0) for o in ops) / len(ops), 2) if ops else 0,
         "tool calls": sum(g.get("n_tool_calls", 0) for g in groups.values()),
-        "minutes": round(sum(g.get("seconds", 0) for g in groups.values()) / 60, 1),
+        "minutes": round(sum((g.get("seconds") or 0) for g in groups.values()) / 60, 1),
     }
     for st in ("syntax", "names", "types", "proof", "check", "other", "truncated", "weakened"):
         m[f"failed attempts: {st}"] = stages.get(st, 0)
@@ -246,13 +250,76 @@ def arch_report(dir_a: Path, dir_b: Path) -> str:
     return "\n".join(out) + "\n"
 
 
+# ---------------------------------------------------------------------------
+# L2 Code Comparison
+# ---------------------------------------------------------------------------
+
+def is_code_run(run: Path) -> bool:
+    return (run / "code" / "summary.json").exists() or any(run.glob("rep*/code/summary.json"))
+
+
+def load_code_reps(run: Path) -> list:
+    """[{group: code.json}] per repetition."""
+    dirs = [run / "code"] if (run / "code").exists() else sorted(
+        (p for p in run.glob("rep*/code")), key=lambda p: int("".join(c for c in p.parent.name if c.isdigit()) or 0))
+    return [{p.parent.name: json.loads(p.read_text(encoding="utf-8")) for p in d.glob("*/code.json")} for d in dirs]
+
+
+def code_metrics(groups: dict) -> dict:
+    comps = [c for g in groups.values() for c in (g.get("components") or {}).values()]
+    ops = [op for c in comps for op in (c.get("ops") or {}).values()]
+    po3 = [c.get("proved") for c in comps if c.get("proved") is not None]
+    pct = lambda xs: round(100 * sum(xs) / len(xs), 1) if xs else 0.0  # noqa: E731
+    att = [o["attempts"] for o in ops if o.get("attempts")]
+    return {
+        "groups": len(groups),
+        "groups accepted": sum(g.get("verdict") == "accepted" for g in groups.values()),
+        "Impl.lean compiles": sum(bool(g.get("impl_compiles")) for g in groups.values()),
+        "soundness proved": sum(bool(g.get("sound_proved")) for g in groups.values()),
+        "components": len(comps),
+        "components proved": sum(bool(c.get("proved")) for c in comps),
+        "PO3 proved %": pct(po3),
+        "mean attempts per operation": round(sum(att) / len(att), 2) if att else 0.0,
+        "minutes": round(sum((g.get("seconds") or 0) for g in groups.values()) / 60, 1),
+    }
+
+
+CODE_LOWER_BETTER = {"mean attempts per operation", "minutes"}
+LOWER_BETTER |= CODE_LOWER_BETTER
+
+
+def code_report(dir_a: Path, dir_b: Path) -> str:
+    A, B = load_code_reps(dir_a), load_code_reps(dir_b)
+    ra, rb = len(A), len(B)
+    ma, mb = [code_metrics(r) for r in A], [code_metrics(r) for r in B]
+    meta = lambda reps: next((g.get("meta") for r in reps for g in r.values() if g.get("meta")), {})  # noqa: E731
+    out = [f"# L2: `{dir_a.name}` ({ra} reps) vs `{dir_b.name}` ({rb} reps)", ""]
+    for tag, reps in (("A", A), ("B", B)):
+        m = meta(reps)
+        out.append(f"- {tag}: model `{m.get('model_id')}`, harness `{m.get('harness_version')}`, "
+                   f"arch_run `{m.get('arch_run')}`, commit `{m.get('git_commit')}`")
+    out += ["", "Mean (min–max) over repetitions; a difference is real only beyond the spread.", "",
+            f"| metric | A | B | Δ mean | verdict |", "|---|---|---|---|---|"]
+    for name in ma[0] if ma else []:
+        a = summarize([m[name] for m in ma])
+        b = summarize([m[name] for m in mb]) if mb else (0, 0, 0)
+        v = verdict(name, a, b, ra, rb)
+        out.append(f"| {name} | {fmt(*a, ra)} | {fmt(*b, rb)} | {b[0] - a[0]:+.2f} | {v} |")
+    return "\n".join(out) + "\n"
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("a", type=Path, help="run folder (before)")
     ap.add_argument("b", type=Path, help="run folder (after)")
     ap.add_argument("-o", "--out", type=Path, help="write the report here (default: stdout)")
     args = ap.parse_args(argv)
-    text = arch_report(args.a, args.b) if is_arch_run(args.a) else report(args.a, args.b)
+    if is_code_run(args.a):
+        text = code_report(args.a, args.b)
+    elif is_arch_run(args.a):
+        text = arch_report(args.a, args.b)
+    else:
+        text = report(args.a, args.b)
     if args.out:
         args.out.write_text(text, encoding="utf-8")
         print(args.out)

@@ -9,6 +9,7 @@ The `sorry` test needs Lean (`lake`) and a built framework; the rest need neithe
 """
 import shutil
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -256,6 +257,30 @@ class SorryDetection(unittest.TestCase):
     def test_real_proof_passes(self):
         from lean_runner import check_lean
         self.assertTrue(check_lean("example : 1 = 1 := rfl")["success"])
+
+
+@unittest.skipUnless(shutil.which("lake"), "needs Lean (lake)")
+class TestHarnessFixes(unittest.TestCase):
+    def test_utf8_lean_check(self):
+        import lean_runner
+
+        # Lean code containing Unicode characters like ← and →
+        code = "-- arrows: a → b ∧ c ← d\nexample : 1 = 1 := rfl"
+        res = lean_runner.check_lean(code)
+        self.assertTrue(res.get("success"), res.get("error"))
+
+        # core_names writes _NAMES_SCRIPT containing ←
+        mock_output = mock.Mock(returncode=0, stdout="Nat.add\nString.length\n", stderr="")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_cache = Path(tmpdir) / "cf_core_names.json"
+            with mock.patch.object(lean_runner, "_NAMES_CACHE", temp_cache), \
+                 mock.patch("subprocess.run", return_value=mock_output):
+                names = lean_runner.core_names()
+                self.assertIn("Nat", names)
+                self.assertIn("add", names["Nat"])
+                # Verify reading cached JSON works
+                cached = lean_runner.core_names()
+                self.assertEqual(names, cached)
 
 
 if __name__ == "__main__":
