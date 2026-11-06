@@ -1,0 +1,570 @@
+[
+  {
+    "id": "REQ-1",
+    "kind": "requirement",
+    "requirement_text": "Torrent search will share the same search bar with the streaming search.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:33:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:41:35: error(lean.unknownIdentifier): Unknown identifier `i.query`\n<generated>:42:37: error(lean.unknownIdentifier): Unknown identifier `i.query`\n<generated>:43:35: error(lean.unknownIdentifier): Unknown identifier `i.query`\n<generated>:44:37: error(lean.unknownIdentifier): Unknown identifier `i.query`\n<generated>:52:8: error: Invalid projection: Projection operates on structure-like types with fields. The expression\n  h.right\nhas type `m.streamingResults.length = 0` which has no fields.\n<generated>:57:18: error: Insufficient number of fields for `⟨...⟩` constructor: Constructor `Eq.refl` does not have explicit fields, but 5 were provided\n<generated>:58:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateQueryContract",
+        "FetchResultsContract"
+      ],
+      "stages": [
+        "names",
+        "names",
+        "types",
+        "types",
+        "syntax",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  torrentResults : List String\n  streamingResults : List String\n  deriving DecidableEq, Repr\n\ndef ValidateQueryContract : Contract Input Mid where\n  pre  := fun i => i.query = \"\"\n  post := fun i m => \n    m.torrentResults.length = 0 ∧\n    m.streamingResults.length = 0\n\ndef FetchResultsContract : Contract Mid Output where\n  pre  := fun m => \n    m.torrentResults.length ≤ 100 ∧\n    m.streamingResults.length ≤ 100 ∧\n    (m.torrentResults.length = 0 ↔ i.query = \"\") ∧\n    (m.streamingResults.length = 0 ↔ i.query = \"\") ∧\n    (m.torrentResults.length > 0 → i.query ≠ \"\") ∧\n    (m.streamingResults.length > 0 → i.query ≠ \"\")\n  post := fun m o => \n    o.torrentResults = m.torrentResults ∧\n    o.streamingResults = m.streamingResults\n\ntheorem po1 : Contract.Compatible ValidateQueryContract FetchResultsContract := by\n  unfold Contract.Compatible ValidateQueryContract FetchResultsContract\n  intro i m _ h\n  exact h.2.1\n\ntheorem po2 : Contract.Refines (ValidateQueryContract.seq FetchResultsContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateQueryContract FetchResultsContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _, _, _, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 76.3
+  },
+  {
+    "id": "REQ-2",
+    "kind": "requirement",
+    "requirement_text": "Database of torrent sites can be updated via the internet.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  sites : List String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.sites.length > 0\n  post := fun i m => m.sites.length = i.sites.length ∧\n                     (∀ s ∈ m.sites, s ∈ i.sites)\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.sites.length > 0\n  post := fun m o => o.sites.length = m.sites.length ∧\n                     (∀ s ∈ o.sites, s ∈ m.sites)\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { sites := i.sites }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { sites := m.sites }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 15.6
+  },
+  {
+    "id": "REQ-3",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include torrent searching in the search.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "FetchResultsContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  includeTorrent : Bool\n  query          : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.includeTorrent = i.includeTorrent ∧ m.query = i.query\n\ndef FetchResultsContract : Contract Mid Output where\n  pre  := fun m => m.query ≠ \"\"\n  post := fun m o => (o.results.length = 0 ↔ m.includeTorrent = false) ∧\n                     (m.includeTorrent = true → o.results.length > 0)\n\ntheorem po1 : Contract.Compatible ValidateContract FetchResultsContract := by\n  discharge_po [FetchResultsContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq FetchResultsContract) Spec := by\n  discharge_po [FetchResultsContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := \n  { includeTorrent := i.includeTorrent, query := i.query }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [FetchResultsContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "FetchResultsContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def FetchResultsContractImpl (m : Mid) : Output := \n  { results := if m.includeTorrent then [\"some-torrent-result\"] else [] }\n\ntheorem FetchResultsContractImpl_ok : FetchResultsContract.Satisfies FetchResultsContractImpl := by\n  discharge_po [FetchResultsContract, FetchResultsContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 23.0
+  },
+  {
+    "id": "REQ-4",
+    "kind": "requirement",
+    "requirement_text": "Query will retrieve the no. of seed and peers, size of the file, date posted and a link to the webpage itself.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:65:32: error(lean.invalidField): Invalid field `torrents`: The environment does not contain `Torrent.torrents`, so it is not possible to project the field `torrents` from an expression\n  m.torrent\nof type `Torrent`\n<generated>:66:38: error(lean.invalidField): Invalid field `torrents`: The environment does not contain `Torrent.torrents`, so it is not possible to project the field `torrents` from an expression\n  m.torrent\nof type `Torrent`\n<generated>:73:8: warning: declaration uses `sorry`\n<generated>:81:14: warning: declaration uses `sorry`\n<generated>:78:8: warning: declaration uses `sorry`\n",
+      "contracts": [
+        "FilterTorrentsContract",
+        "CollectResultsContract"
+      ],
+      "stages": [
+        "names",
+        "names",
+        "names",
+        "names",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  torrent : Torrent\n  deriving DecidableEq, Repr\n\ndef FilterTorrentsContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.torrent ∈ i.torrents ∧\n                     m.torrent.seed > 0 ∧\n                     m.torrent.peers > 0 ∧\n                     0 < m.torrent.size ∧\n                     m.torrent.date ≠ \"\" ∧\n                     m.torrent.link ≠ \"\"\n\ndef CollectResultsContract : Contract Mid Output where\n  pre  := fun m => m.torrent.seed > 0 ∧\n                   m.torrent.peers > 0 ∧\n                   0 < m.torrent.size ∧\n                   m.torrent.date ≠ \"\" ∧\n                   m.torrent.link ≠ \"\"\n  post := fun m o =>\n    o.results.length ≤ 100 ∧\n    (o.results = [] ↔ m.torrent.torrents = []) ∧\n    (∀ it ∈ o.results, it ∈ m.torrent.torrents ∧\n      it.seed > 0 ∧\n      it.peers > 0 ∧\n      0 < it.size ∧\n      it.date ≠ \"\" ∧\n      it.link ≠ \"\")\n\ntheorem po1 : Contract.Compatible FilterTorrentsContract CollectResultsContract := by\n  unfold Contract.Compatible FilterTorrentsContract CollectResultsContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (FilterTorrentsContract.seq CollectResultsContract) Spec := by\n  unfold Contract.Refines Contract.seq FilterTorrentsContract CollectResultsContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 59.9
+  },
+  {
+    "id": "REQ-5",
+    "kind": "requirement",
+    "requirement_text": "If no results are found on a search it will display a message \"No results were found for this search.\"",
+    "l1": {
+      "success": true,
+      "attempts": 2,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "names",
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  results : List String\n  message : String\n  query   : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.results = [] ∧ m.message = \"No results were found for this search.\"\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.results = [] ∧ m.message = \"No results were found for this search.\"\n  post := fun m o =>\n    (∀ it ∈ o.results, it ∈ m.results ∧ it == m.query) ∧\n    (o.results = [] ↔ o.message = \"No results were found for this search.\")\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := \n  { results := [], message := \"No results were found for this search.\", query := i.query }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := \n  { results := m.results, message := \"No results were found for this search.\" }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 84.7
+  },
+  {
+    "id": "REQ-2#2",
+    "kind": "requirement",
+    "requirement_text": "Database of video hosting and video linking sites can be updated via the internet.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "UpdateContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  sites : List String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.sites.length > 0\n  post := fun i m => m.sites.length = i.sites.length\n\ndef UpdateContract : Contract Mid Output where\n  pre  := fun m => m.sites.length > 0\n  post := fun m o => o.updated = true\n\ntheorem po1 : Contract.Compatible ValidateContract UpdateContract := by\n  discharge_po [Spec, UpdateContract, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq UpdateContract) Spec := by\n  discharge_po [Spec, UpdateContract, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { sites := i.sites }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [Spec, UpdateContract, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "UpdateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def UpdateContractImpl (m : Mid) : Output := { updated := true }\n\ntheorem UpdateContractImpl_ok : UpdateContract.Satisfies UpdateContractImpl := by\n  discharge_po [UpdateContract, UpdateContractImpl]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 21.4
+  },
+  {
+    "id": "REQ-3#2",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include video host searching in the search.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "proof",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  includeHost : Bool\n  query       : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.includeHost = i.includeHost ∧ m.query = i.query\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.query ≠ \"\"\n  post := fun m o => \n    (o.results.length = 0 ↔ m.includeHost = false) ∧\n    (o.results.length > 0 → m.includeHost = true)\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := \n  { includeHost := i.includeHost, query := i.query }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 3,
+        "error": "",
+        "stages": [
+          "proof",
+          "syntax",
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output :=\n  { results := if m.includeHost then [\"host1\"] else [] }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 47.4
+  },
+  {
+    "id": "REQ-4#2",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include video link searching in the search.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "proof",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  includeVideoLinks : Bool\n  query             : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.includeVideoLinks = i.includeVideoLinks ∧ m.query = i.query\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.query ≠ \"\"\n  post := fun m o => \n    (o.results.length = 0 ↔ m.includeVideoLinks = false) ∧\n    (o.results.length > 0 → m.includeVideoLinks = true)\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { includeVideoLinks := i.includeVideoLinks, query := i.query }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "types",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { results := if m.includeVideoLinks then [\"video1\", \"video2\"] else [] }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 25.0
+  },
+  {
+    "id": "REQ-7#2",
+    "kind": "requirement",
+    "requirement_text": "If no results are found on a search it will display a message \"No results were found for this search.\"",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:47:2: error: Tactic `split` failed: Could not split an `if` or `match` expression in the goal\n\nHint: Use `set_option trace.split.failure true` to display additional diagnostic information\n\ni : Input\nm : Mid\na✝ :\n  { pre := fun i => i.query ≠ \"\",\n        post := fun i m =>\n          m.query = i.query ∧ m.videos = i.videos ∧ m.message = \"No results were found for this search.\" ↔\n            m.results = [] }.pre\n    i\nh :\n  { pre := fun i => i.query ≠ \"\",\n        post := fun i m =>\n          m.query = i.query ∧ m.videos = i.videos ∧ m.message = \"No results were found for this search.\" ↔\n            m.results = [] }.post\n    i m\n⊢ {\n        pre := fun m =>\n          m.query ≠ \"\" ∧ m.videos ≠ [] ∧ m.message = \"No results were found for this search.\" ↔ m.results = [],\n        post := fun m o =>\n          (o.message = \"No results were found for this search.\" ↔ o.results = []) ∧\n            (∀ (v : String), v ∈ o.results → v ∈ m.videos ∧ v.contains m.query = true) ∧ o.results.length ≤ 100 }.pre\n    m\n<generated>:54:18: error: Invalid `⟨...⟩` notation: The expected type\n  m.results = [] → m.query = i.query ∧ m.videos = i.videos ∧ m.message = \"No results were found for this search.\"\nis not an inductive type\n\nNote: This notation can only be used when the expected type is an inductive type with a single constructor\n<generated>:55:2: error: No goals to be solved\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "syntax",
+        "types",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  query : String\n  videos : List String\n  results : List String\n  message : String\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.query = i.query ∧ m.videos = i.videos ∧ m.message = \"No results were found for this search.\" ↔ m.results = []\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.query ≠ \"\" ∧ m.videos ≠ [] ∧ m.message = \"No results were found for this search.\" ↔ m.results = []\n  post := fun m o =>\n    (o.message = \"No results were found for this search.\" ↔ o.results = []) ∧\n    (∀ v ∈ o.results, v ∈ m.videos ∧ v.contains m.query) ∧\n    o.results.length ≤ 100\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  split\n  · simp only [h.2.1, h.2.2]\n  · simp only [h.1.1, h.1.2]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 80.0
+  },
+  {
+    "id": "REQ-1#3",
+    "kind": "requirement",
+    "requirement_text": "Query times will take no longer than 5 seconds to any website.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.elapsedMicros ≤ 5000000\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.elapsedMicros ≤ 5000000\n  post := fun m o => o.elapsedMicros = m.elapsedMicros\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:36:26: warning: unused variable `m`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:38:61: error: Application type mismatch: The argument\n  ValidateContractImpl\nhas type\n  Mid → Input\nbut is expected to have type\n  Input → Mid\nin the application\n  ValidateContract.Satisfies ValidateContractImpl\n<generated>:42:54: error: Application type mismatch: The argument\n  m\nhas type\n  Input\nbut is expected to have type\n  Mid\nin the application\n  ValidateContractImpl m\n",
+        "stages": [
+          "types",
+          "types",
+          "types",
+          "weakened",
+          "types",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (m : Mid) : Input := {}\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  unfold Contract.Satisfies\n  intro m\n  simp_all\n  exact ValidateContract.post m (ValidateContractImpl m)"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { elapsedMicros := m.elapsedMicros }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 51.8
+  },
+  {
+    "id": "REQ-2#3",
+    "kind": "requirement",
+    "requirement_text": "Sending the hyperlink to the default browser will take less than 1 second.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.elapsedMicros < 1000000\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.elapsedMicros < 1000000\n  post := fun m o => o.elapsedMicros = m.elapsedMicros\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:36:48: error: `elapsedMicros` is not a field of structure `Input`\n<generated>:38:61: error: Application type mismatch: The argument\n  ValidateContractImpl\nhas type\n  Mid → Input\nbut is expected to have type\n  Input → Mid\nin the application\n  ValidateContract.Satisfies ValidateContractImpl\n",
+        "stages": [
+          "names",
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (m : Mid) : Input := { elapsedMicros := m.elapsedMicros }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { elapsedMicros := m.elapsedMicros }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "seconds": 38.9
+  },
+  {
+    "id": "REQ-3#3",
+    "kind": "requirement",
+    "requirement_text": "Loading the program will take less than 10 seconds.",
+    "l1": {
+      "success": true,
+      "attempts": 1,
+      "error": "",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "ok"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun _ m => m.elapsedMicros < 10000000\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.elapsedMicros < 10000000\n  post := fun m o => o.elapsedMicros = m.elapsedMicros\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  discharge_po [ComputeContract, Spec, ValidateContract]\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  discharge_po [ComputeContract, Spec, ValidateContract]"
+    },
+    "l2": [
+      {
+        "contract": "ValidateContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "proof",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ValidateContractImpl (i : Input) : Mid := { elapsedMicros := 0 }\n\ntheorem ValidateContractImpl_ok : ValidateContract.Satisfies ValidateContractImpl := by\n  discharge_po [ComputeContract, Spec, ValidateContract, ValidateContractImpl]"
+      },
+      {
+        "contract": "ComputeContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "stages": [
+          "syntax",
+          "ok"
+        ],
+        "static_issues": [],
+        "code": "def ComputeContractImpl (m : Mid) : Output := { elapsedMicros := m.elapsedMicros }\n\ntheorem ComputeContractImpl_ok : ComputeContract.Satisfies ComputeContractImpl := by\n  discharge_po [ComputeContract, ComputeContractImpl, Spec, ValidateContract]"
+      }
+    ],
+    "full_check": true,
+    "seconds": 18.0
+  },
+  {
+    "id": "REQ-4#3",
+    "kind": "requirement",
+    "requirement_text": "Any torrent result with 0 seeds will not be displayed.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:46:2: error: Type mismatch\n  h.right\nhas type\n  m.selected = [] ↔ (i.torrents.all fun t => decide (t.seeds = 0)) = true\nbut is expected to have type\n  { pre := fun m => m.selected ≠ [], post := fun m o => o.results = m.selected }.pre m\n<generated>:53:10: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `hp ?it ?a✝` is a proof of\n  ?it ∈ i.torrents ∧ Torrent.seeds ?it ≠ 0\n",
+      "contracts": [
+        "FilterSeedsContract",
+        "SelectResultsContract"
+      ],
+      "stages": [
+        "types",
+        "types",
+        "names",
+        "names",
+        "names",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  torrents : List Torrent\n  selected : List Torrent\n  deriving DecidableEq, Repr\n\ndef FilterSeedsContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => \n    (∀ it ∈ m.selected, it ∈ i.torrents ∧ it.seeds ≠ 0) ∧\n    (m.selected = [] ↔ i.torrents.all (fun t => t.seeds = 0))\n\ndef SelectResultsContract : Contract Mid Output where\n  pre  := fun m => m.selected ≠ []\n  post := fun m o => \n    o.results = m.selected\n\ntheorem po1 : Contract.Compatible FilterSeedsContract SelectResultsContract := by\n  unfold Contract.Compatible FilterSeedsContract SelectResultsContract\n  intro i m _ h\n  exact h.2\n\ntheorem po2 : Contract.Refines (FilterSeedsContract.seq SelectResultsContract) Spec := by\n  unfold Contract.Refines Contract.seq FilterSeedsContract SelectResultsContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq⟩, ho⟩\n  simp only at *\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 68.7
+  },
+  {
+    "id": "REQ-5#3",
+    "kind": "requirement",
+    "requirement_text": "Sorting results should take less than 0.1 seconds.",
+    "l1": {
+      "success": false,
+      "attempts": 5,
+      "error": "<generated>:49:2: error: Type mismatch\n  h.right.right\nhas type\n  m.elapsedMicros = i.elapsedMicros ∧ m.items = i.items\nbut is expected to have type\n  { pre := fun m => m.query ≠ \"\" ∧ m.elapsedMicros < 100000,\n        post := fun m o =>\n          (∀ (it : String), it ∈ o.results → it ∈ m.items ∧ it.length ≤ 10) ∧ o.elapsedMicros = m.elapsedMicros }.pre\n    m\n<generated>:56:6: error: Invalid rewrite argument: Expected an equality or iff proof or definition name, but `ho` is a proof of\n  (∀ (it : String), it ∈ o.results → it ∈ m.items ∧ it.length ≤ 10) ∧ o.elapsedMicros = m.elapsedMicros\n",
+      "contracts": [
+        "ValidateContract",
+        "ComputeContract"
+      ],
+      "stages": [
+        "types",
+        "syntax",
+        "proof",
+        "types",
+        "types",
+        "returned"
+      ],
+      "static_issues": [],
+      "code": "structure Mid where\n  query          : String\n  items          : List String\n  includeArchive : Bool\n  elapsedMicros  : Nat\n  deriving DecidableEq, Repr\n\ndef ValidateContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.query = i.query ∧ m.includeArchive = i.includeArchive ∧\n                     m.elapsedMicros = i.elapsedMicros ∧ m.items = i.items\n\ndef ComputeContract : Contract Mid Output where\n  pre  := fun m => m.query ≠ \"\" ∧ m.elapsedMicros < 100000\n  post := fun m o => (∀ it ∈ o.results, it ∈ m.items ∧ it.length ≤ 10) ∧\n                     o.elapsedMicros = m.elapsedMicros\n\ntheorem po1 : Contract.Compatible ValidateContract ComputeContract := by\n  unfold Contract.Compatible ValidateContract ComputeContract\n  intro i m _ h\n  simp only at h\n  exact h.2.2\n\ntheorem po2 : Contract.Refines (ValidateContract.seq ComputeContract) Spec := by\n  unfold Contract.Refines Contract.seq ValidateContract ComputeContract Spec\n  refine ⟨fun i h => h, ?_⟩\n  intro i o _ ⟨m, ⟨hp, hq, _⟩, ho⟩\n  simp only at hp hq ho\n  rw [ho, hp, hq]"
+    },
+    "l2": [],
+    "seconds": 86.1
+  }
+]

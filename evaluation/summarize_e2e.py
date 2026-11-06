@@ -15,7 +15,12 @@ def trivial(code: str) -> bool:
 
 
 for run in sys.argv[1:]:
-    d = json.loads((Path(run) / "l1l2.json").read_text())
+    # l1l2.json plus shard files l1l2.<start>-<end>.json; first result per id wins
+    seen, d = set(), []
+    for f in sorted(Path(run).glob("l1l2*.json")):
+        for e in json.loads(f.read_text()):
+            if e["id"] not in seen:
+                seen.add(e["id"]); d.append(e)
     n = len(d)
     l1 = sum(e.get("l1", {}).get("success", False) for e in d)
     l2s = [x for e in d for x in e.get("l2", [])]

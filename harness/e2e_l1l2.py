@@ -51,6 +51,8 @@ def main():
     ap.add_argument("run_dir")
     ap.add_argument("--model", default="qwen")
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--start", type=int, default=0, help="first entry index (for sharding)")
+    ap.add_argument("--end", type=int, help="one past the last entry index (for sharding)")
     a = ap.parse_args()
     run = Path(a.run_dir)
     specs = json.loads((run / "specs.json").read_text())
@@ -59,13 +61,15 @@ def main():
             if r.get("checked") is True and review.get(r["id"], {}).get("decision") == "accept"]
     if a.limit:
         todo = todo[:a.limit]
+    todo = todo[a.start:a.end]
+    shard = f".{a.start}-{a.end}" if (a.start or a.end) else ""
     print(f"[l1l2] {run}: {len(todo)} accepted specs of {len(specs['results'])}", flush=True)
 
     from main import ensure_qwen_server
     if a.model == "qwen":
         ensure_qwen_server()
 
-    out_path, lean_dir = run / "l1l2.json", run / "l1l2"
+    out_path, lean_dir = run / f"l1l2{shard}.json", run / "l1l2"
     lean_dir.mkdir(exist_ok=True)
     out = []
     for i, r in enumerate(todo, 1):
