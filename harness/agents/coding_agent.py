@@ -11,7 +11,10 @@ Rules:
 - The spec and contracts are already in scope and LOCKED: do not repeat,
   redefine or modify them, and do not write `import` lines.
 - Write `def <name>Impl` and `theorem <name>Impl_ok : <Name>Contract.Satisfies <name>Impl`.
-- Try `by discharge_po` first, then manual tactics.
+- `Satisfies` and the contract are definitions: try
+  `by discharge_po [<Name>Contract, <name>Impl]` first; otherwise
+  `unfold Contract.Satisfies <Name>Contract <name>Impl` and prove by hand.
+- Use only Lean 4 core functions (no Mathlib).
 - No `sorry`. Output ONLY Lean 4 code in one ```lean block.
 """
 
