@@ -228,8 +228,9 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
         # The example-only repair is for L0 specs (`example … unfold Spec; decide`). With a
         # locked context (L1/L2) the trailing part is PO theorems, not an example.
         # L1/L2: definitions compile, only the PO theorems fail → try generic proofs first.
-        if (auto_prove and context and stage == "proof"
-                and _errors_only_in_example(code, result["error"], context)):
+        # Not gated on the error class (proof errors are often reported as type errors):
+        # auto_prove itself first checks that the definitions compile without the theorems.
+        if auto_prove and context and stage not in ("weakened", "check"):
             proved = auto_prove(code, context)
             if proved:
                 log[-1]["autoprove"] = "proved by search"

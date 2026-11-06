@@ -38,6 +38,8 @@ def auto_prove(code: str, context: str) -> Optional[str]:
     if not thms:
         return None
     head = code[:thms[0].start()].rstrip()
+    if not check_lean(f"{context}\n\n{head}")["success"]:  # definitions broken: nothing to prove
+        return None
     proved = []
     for m in thms:
         stmt = f"theorem {m.group(1)} :{m.group(2)}:= by"
