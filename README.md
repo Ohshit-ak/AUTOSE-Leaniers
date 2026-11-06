@@ -35,6 +35,42 @@ Details are in [MEMORY.md](MEMORY.md) under *L1/L2 end-to-end*.
 
 ---
 
+## Branches (and where to go if `main` breaks)
+
+Everything was merged into `main` on 2026-11-06 (PRs #1 and #2). The old branches are
+kept on purpose, so each one is a known working state you can fall back to:
+
+| Branch | What it has | Use it when |
+|--------|-------------|-------------|
+| `main` | everything: L0 v10.1, graph L1 + its Qwen runs, graph L2 (`code` stage), the per-spec L1/L2 path (`e2e_l1l2.py`) and its runs, the mid-submission report | normal work |
+| `backup/main-pre-merge` | `main` as it was just before the 2026-11-06 merges (= `feat/l2-coding-agent`) | the merge itself turns out to have broken something |
+| `l0-v10` | L0 frozen at v10.1 + the per-spec L1/L2 path and its e2e runs (here the agents are still called `architect_agent.py` / `coding_agent.py`) | the per-spec L1/L2 or `e2e_l1l2.py` stops working on `main` |
+| `feat/l2-coding-agent` | graph L1 + the L2 coder for graph architectures (`code_lean.py`, `--until code`), no L1 run outputs | the graph L1/L2 code (`main.py --until arch/code`) stops working |
+| `l1_runs` | graph L1 + the Qwen L1 runs (graph vs no-graph, 3 seeds) | you need the L1 runs as they were produced |
+| `fix/l0-spec-quality` | early L0 work (repair loop, negative check), long since included everywhere | only for history |
+
+What changed in the merge, in case something looks off:
+- `main` and `l0-v10` each had their own L1/L2 agents. On `main` the graph-path agents keep the
+  names `agents/architect_agent.py` and `agents/coding_agent.py` (used by `main.py`); the per-spec
+  agents from `l0-v10` live in `agents/chain_architect.py` and `agents/chain_coder.py` (used by `e2e_l1l2.py`).
+- A stray gitlink `AUTOSE-Leaniers` (a nested copy of the repo) from `l1_runs` was left out.
+
+To fall back, don't rewrite `main`. Check the branch out on its own, or copy one file back:
+
+```bash
+git fetch origin
+git switch l0-v10                                   # work from that branch
+git restore --source origin/l0-v10 -- harness/e2e_l1l2.py   # or take one file from it onto main
+git diff origin/backup/main-pre-merge main -- harness/      # see what the merge changed
+```
+
+After the merge, `lake build` succeeds and all 128 tests in `harness/tests` pass on `main`.
+If `pytest` says `No module named 'tests.test_arch'`, some other package in your Python
+installs a top-level `tests` package that hides ours; run `touch harness/tests/__init__.py`
+locally (don't commit it) or use a clean virtualenv.
+
+---
+
 ## Repository layout
 
 ```
