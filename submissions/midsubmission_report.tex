@@ -148,7 +148,7 @@ gamma~j & 61 & 29/61 & 48/58 & 19/61\\
 video search & 14 & 9/14 & 16/18 & 7/14\\
 \bottomrule
 \end{tabular}
-\caption{First L1+L2 results (one run each; gamma~j took 65 min of model time over 5 parallel shards). On gamma~j: requirements 12/27, use cases 7/17, data constraints 0/17 end to end.}
+\caption{First L1+L2 results (one run each; gamma~j took 65 min of model time, run as parallel shards). On gamma~j: requirements 12/27, use cases 7/17, data constraints 0/17 end to end.}
 \label{tab:e2e}
 \end{table}
 
@@ -162,8 +162,8 @@ Run on the gamma~j SRS (an online shop with accounts, a cart, products and order
 \begin{enumerate}
 \item L0 produces \code{Spec} with \code{Input} (credentials, a list of accounts) and \code{Output} (\code{signedIn}), where \code{post} says \code{signedIn = true $\leftrightarrow$ $\exists$ a $\in$ accounts, \ldots}, and Lean proves a satisfiability \code{example}.
 \item L0.5 checks that \code{post} rejects a changed output, and the model's forbidden example (wrong password $\to$ signed in) is shown to be rejected by \code{decide}. This catches the first-generation login spec, which accepted every login.
-\item L1 assigns the spec to a component, the model writes \code{Account\_pre\_login} and \code{Account\_post\_login}, and the harness proves the trace obligation, PO1 for consecutive components and PO2 for the chain.
-\item On the per-spec path, a spec such as ``sales person removes a product (\code{UC-sales-person-remove-product}) goes through L1 and L2 and comes out as one Lean file with the spec, two non-trivial contracts, two implementations and all three POs proved.
+\item L1 assigns the spec to a component, the model writes \code{Account\_pre\_login} and \code{Account\_post\_login}, and the harness proves the trace obligation and PO1 for consecutive components; PO2 for the chain is attempted but has failed in every run so far (Section~5).
+\item On the per-spec path, a spec such as ``sales person removes a product (\code{UC-sales-person-remove-product}) goes through L1 and L2 and comes out as one Lean file with the spec, two contracts, two implementations and all three POs proved. Even here the split is shallow: the first component does the filtering and the second only copies it on.
 \end{enumerate}
 Every run writes self-contained, checkable output: each Lean file starts with \code{import ContractForge} and compiles with \code{lake env lean <file>} from the repository root; \code{arch.json} and \code{l1l2.json} record every obligation, attempts and errors; \code{Arch.lean} marks unproved obligations as \code{-- NOT PROVED:} comments.
 
