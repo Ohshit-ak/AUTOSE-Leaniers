@@ -62,8 +62,8 @@ Second document, used to check that harness changes generalise beyond gamma j. R
 ## L1: requirements graph → contracts (L1-v1, 2026-11-04)
 
 Branch `l1-graph-contracts`. Reads the frozen L0 run `runs/0000 - gamma j/qwen-v10.1/rep1`;
-L0, the parser and `Strings.lean` are unchanged. **No Qwen results yet**: the runs are in
-`runs/qwen-L1-v1.sbatch` (ada). `benchmark/gammaj/Domain.lean` is a DRAFT until reviewed.
+L0, the parser and `Strings.lean` are unchanged. Qwen results: see *Results*
+below. `benchmark/gammaj/Domain.lean` is REVIEWED (2026-11-06).
 
 ### Design: the graph decides the proof obligations
 
@@ -134,9 +134,36 @@ Prompt hash (`architect_agent.prompt_hash()`) and graph sha are in `arch.json` `
   plumbing only.
 
 ### Results
-Pending (ada): graph ×3 and no-graph ×3 (seeds 42–44), tool smoke test, agent ×1 if it passes.
+Run 2026-11-06 on a GTX 1080 Ti (gnode004) with the local Qwen 2.5 7B Instruct Q4_K_M, pipeline mode,
+seeds 42–44, group `AccountSys` (48 operations; the other 7 groups have < 2 compiling specs).
+No smoke test and no agent-mode run were done. Full table: `runs/0000 - gamma j/qwen-L1-v1/comparison.md`.
 Compare: `python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-L1-v1-nograph" "runs/0000 - gamma j/qwen-L1-v1"`.
-Report as mean (min–max): trace %, PO1 %, PO2, attempts, tool calls, failures by stage.
+
+| | graph (B) | no-graph (A) |
+|---|---|---|
+| verdict | rejected ×3 | rejected ×1, "no valid decomposition" ×2 |
+| `Arch.lean` compiles | 3/3 | 1/3 |
+| components | 2 (Account, Account2) | 1.33 (0–4); rep3 chose 4 (Inventory, Accounts, ShoppingCart, Payment) |
+| contracts satisfiable / non-vacuous | 100 % | 33 % (0–100) |
+| trace proved | 99 % | 33 % (0–99) |
+| PO1 proved | 100 % (1 pair) | 33 % (0–100) |
+| PO2 proved | 0/3 | 0/3 |
+| mean attempts per operation | 1.12 (1.10–1.15) | 0.36 (0–1.08) |
+| failed attempts, `check` stage | 6.33 (5–7) | 0.67 (0–2) |
+| minutes per run | 12.2 (11.4–13.2) | 4.6 (0.9–11.8) |
+
+- **Graph mode:** 96/98 obligations proved every time. In each repeat exactly one `trace_post` fails and
+  PO2 fails with it (it needs every trace first): `Account:3.5.3/S2` in rep1 and rep3, `Account:3.1.3/S1`
+  in rep2. The error on `3.5.3/S2` is `Expected type must not contain free variables` (cause not yet investigated).
+- **No-graph mode:** reps 1 and 2 returned a decomposition the harness rejected (60 s and 55 s, nothing
+  proved). Rep3 was valid, 4 components, 98/100 proved, and failed the same obligation `Accounts:3.5.3/S2`, plus PO2.
+- Graph mode is more reliable (compiles 3/3 vs 1/3, trace 99 % vs 33 %). The comparison tool calls this
+  "within noise" because it is 3 repeats with a bimodal baseline, so treat it as indicative.
+  The `check`-stage failures are higher with the graph (6.3 vs 0.7), but the no-graph runs mostly stopped early.
+- PO2 is proved in no run, so by the plan Gemma should be run once (`--model gemma --run-name gemma-L1-v1`);
+  this needs an API key in `.env`. Not done.
+- Not done: agent mode (needs the tool-call check, which we skipped by choice).
+- Open: why `3.5.3/S2` (and once `3.1.3/S1`) breaks the harness's own proof; fixing that would likely accept the system.
 
 ### Changes from the L1 task prompt (agreed with Akshith where marked)
 1. (agreed) Contracts are over a harness-generated message type, not a shared `World` record:
@@ -275,8 +302,8 @@ Report as mean (min–max): trace %, PO1 %, PO2, attempts, tool calls, failures 
 
 ## Next steps
 
-0. **L1:** review `benchmark/gammaj/Domain.lean` (then mark it REVIEWED), then submit `runs/qwen-L1-v1.sbatch` on ada; compare graph vs no-graph;
-   if Qwen proves no PO2, run Gemma once (`--model gemma --run-name gemma-L1-v1`). Fill *L1 → Results*.
+0. **L1:** Qwen runs done (see *L1 → Results*; PO2 proved in no run). Left: run Gemma once (`--model gemma --run-name gemma-L1-v1`,
+   needs `.env`), look into the one failing `trace_post` (`3.5.3/S2`, `3.1.3/S1`), optionally an agent-mode run. Nothing is committed yet.
 
 1. Revoke the leaked Gemini key.
 1. **L0 is frozen at v10.1.** Open L0 issues, for after the freeze or a v11: the run-to-run compile failures (`5.5/R1` Decidable on a structure, `DD-shipping-date` and `DD-credit-card-expiry-date` date formats, `DD-location`, `UC-customer-checkout-an-order` writing `Spec.post {…}` with one record that mixes input and output fields — the `_field_of_other` hint misreads that as `i.x` vs `o.x`). Get a truly held-out SRS (video search was seen during v9). Compare runs only with `evaluation/compare_runs.py` over ≥3 reps.

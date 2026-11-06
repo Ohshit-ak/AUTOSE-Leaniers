@@ -1,4 +1,4 @@
--- STATUS: DRAFT, needs human review
+-- STATUS: REVIEWED 2026-11-06 (compiles; definitions identical to GammaJ_L0.lean lines 205-245 plus DecidableEq, Repr deriving)
 /-!
 # GAMMA-J Web Store — shared domain types (L1)
 
