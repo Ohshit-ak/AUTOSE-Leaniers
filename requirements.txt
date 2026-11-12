@@ -1,0 +1,10 @@
+# Python dependencies of the harness (harness/, evaluation/, scripts/).
+# Install:  python -m pip install -r requirements.txt
+#           python -m spacy download en_core_web_sm      # L1 requirements graph (req_graph.py)
+# Lean 4 (elan/lake, toolchain pinned in framework/lean-toolchain) is installed separately.
+python-dotenv>=1.0
+openai>=1.0          # DeepSeek / Groq / local Qwen (OpenAI-compatible endpoints)
+google-genai>=1.0    # Gemma via Gemini API
+networkx>=3.0        # L1 requirements graph + Louvain communities
+spacy>=3.7           # L1 lemmatisation (needs the en_core_web_sm model, see above)
+pytest>=8.0          # tests: `python -m pytest` from harness/

@@ -4,10 +4,16 @@ No model calls. The same inputs always give the same graph.json bytes: every lis
 sorted, Louvain (only for groups that are too big) runs with a fixed seed, and the spaCy
 version is recorded so a different lemmatiser is visible.
 
-    entities     names from Domain.lean (structures; fields as attributes), the data
-                 dictionary, glossary terms and use-case actors, normalised (lower case,
-                 camelCase/snake_case split, spaCy lemma), plus synonyms from the glossary
-                 ("also called X") and Requirements/synonyms/<doc>.json
+    entities     from the inputs every SRS has: the data dictionary, glossary terms and
+                 use-case actors, normalised (lower case, camelCase/snake_case split, spaCy
+                 lemma), glossary synonyms ("also called X"), and from the L0 specs
+                 themselves: their helper structures (`structure Account`), and state: a
+                 field name that one operation reads and another one writes (`signedIn`,
+                 `cookie`) is an entity even when no document names it.
+                 Optional extras (`--vocab full`, the default when the files exist):
+                 benchmark/<doc>/Domain.lean (structures; fields as attributes) and
+                 Requirements/synonyms/<doc>.json. `--vocab srs` ignores both, so the
+                 graph of a new SRS does not depend on hand-written vocabulary
     operations   one per L0 spec. `structure Input` fields are reads; `structure Output`
                  fields are writes, except a field the spec only copies (`o.f = i.f`), which
                  is a read. A field maps to an entity by its name, else by its type
@@ -17,12 +23,22 @@ version is recorded so a different lemmatiser is visible.
                  of A establishes, and "include"/"extend" steps naming another use case
     groups       connected parts of the operation–entity projection (plus use-case links).
                  Each group is one system for L1 (one message type, one SystemSpec)
-    components   a group, or Louvain communities (fixed seed) of a group with more than
-                 CF_GRAPH_MAX_COMPONENT operations. One contract per component
-    checks       the component graph of each group must be acyclic. If it is not, its cycles
-                 are listed and each strongly connected set of components is merged into one
-                 component (decided with the user: stopping L1 left gamma j nothing to run).
-                 Topological order of the components = chain order
+    components   Louvain communities (fixed seed) of a group. A group with more than
+                 CF_GRAPH_MAX_COMPONENT operations is always split; a smaller one with at
+                 least CF_GRAPH_MIN_SPLIT operations is split when the communities are real
+                 (modularity ≥ CF_GRAPH_MIN_MODULARITY), else it is one component.
+                 One contract per component
+    order        chain order = topological order of the component graph. If it has cycles
+                 they are listed, and (CF_GRAPH_CYCLES):
+                   break (default)  the components stay as Louvain made them; inside each
+                                    strongly connected set the order with the least
+                                    backward dataflow is taken, and the backward edges are
+                                    recorded as `feedback_edges`. L1's proofs do not depend
+                                    on the order (a component passes on what it does not
+                                    own), so breaking a cycle loses no soundness
+                   merge            each strongly connected set becomes one component (the
+                                    v1 behaviour; on gamma j it merged 47 of 52 operations
+                                    back into one component)
 
 Usage (from harness/):
     python req_graph.py "0000 - gamma j"            # → runs/<doc>/graph/graph.json, graph.png
@@ -44,8 +60,13 @@ import networkx as nx
 
 from config import ROOT
 
-GRAPH_VERSION = "1"
+GRAPH_VERSION = "2"
 MAX_COMPONENT_OPS = int(os.getenv("CF_GRAPH_MAX_COMPONENT", "8"))
+MIN_SPLIT_OPS = int(os.getenv("CF_GRAPH_MIN_SPLIT", "4"))          # smaller groups are never split
+MIN_MODULARITY = float(os.getenv("CF_GRAPH_MIN_MODULARITY", "0.1"))  # below this a split is noise
+CYCLE_MODE = os.getenv("CF_GRAPH_CYCLES", "break")                  # break | merge
+VOCAB = os.getenv("CF_GRAPH_VOCAB", "full")                         # full | srs
+EXACT_ORDER_MAX = 8      # strongly connected sets up to this size are ordered exactly
 LOUVAIN_SEED = int(os.getenv("CF_GRAPH_SEED", "42"))
 MAX_CYCLES_LISTED = 20
 DEFAULT_L0_RUN = "qwen-v10.1/rep1"
@@ -147,6 +168,7 @@ class Vocabulary:
         self.synonyms: Dict[str, str] = {}      # term → entity term
         self.attributes: Dict[str, set] = defaultdict(set)  # attribute term → entity terms
         self.dd_owner: Dict[str, str] = {}      # data-dictionary field name → owning entity
+        self.state: set = set()                 # entities found as state shared between specs
 
     def add_entity(self, name: str, source: str) -> Optional[str]:
         term = norm(name)
@@ -215,6 +237,41 @@ def build_vocabulary(doc: dict, domain_code: Optional[str], synonyms: dict) -> V
     return v
 
 
+def add_spec_entities(v: Vocabulary, results: List[dict], entries: dict) -> None:
+    """Entities the L0 specs carry themselves, so the graph does not depend on a hand-written
+    domain file: helper structures, and state. State = a field name no other source explains
+    that some operation reads (`Input`) and some operation writes (`Output`), in at least
+    two operations; e.g. `signedIn`, `cookie`."""
+    read_by, written_by, names = defaultdict(set), defaultdict(set), {}
+    parsed = []
+    for r in results:
+        st = structures(r.get("lean_predicate") or "")
+        parsed.append((r, st))
+        for struct, fields in sorted(st.items()):
+            if struct in ("Input", "Output"):
+                continue
+            ent = v.add_entity(struct, "L0 structure")
+            for f in sorted(fields):
+                if ent and norm(f):
+                    v.attributes[norm(f)].add(ent)
+    for r, st in parsed:
+        entry = entries.get(r["id"], {})
+        alias = entry.get("field") if entry.get("kind") == "data_constraint" else None
+        for side, ops in (("Input", read_by), ("Output", written_by)):
+            for f, t in sorted(st.get(side, {}).items()):
+                if map_field(v, f, t, alias if side == "Input" else None):
+                    continue
+                term = norm(f)
+                if term:
+                    ops[term].add(r["id"])
+                    names.setdefault(term, f)
+    for term in sorted(set(read_by) & set(written_by)):
+        if len(read_by[term] | written_by[term]) >= 2:
+            ent = v.add_entity(names[term], "shared field")
+            if ent:
+                v.state.add(ent)
+
+
 def data_owner(v: Vocabulary, d: dict) -> Optional[str]:
     """The entity a data-dictionary field belongs to: the first word(s) of its name if they
     name an entity ("Item name" → item), else the first entity after "of" in its
@@ -261,11 +318,14 @@ def map_field(v: Vocabulary, name: str, typ: str, alias: Optional[str] = None) -
     return None
 
 
-def is_state_write(rec: dict) -> bool:
+def is_state_write(rec: dict, state: set = frozenset()) -> bool:
     """An output field changes an entity only if its name or type names that entity (or a
     synonym), e.g. `accounts : List Account`, `cart`. A `Bool` (`emailSent`, `valid`) or a value
     matched only through an attribute or one word of its name (`totalCost`) is a result the
-    operation returns, not a change to the entity."""
+    operation returns, not a change to the entity. A state entity (`signedIn`: read by one
+    spec, written by another) is written by the field of that name, `Bool` or not."""
+    if rec["entity"] in state and rec["via"] == "name" and rec["rule"] == "name":
+        return True
     if rec["type"].strip() == "Bool":
         return False
     return rec["via"] in ("name", "synonym") and rec["rule"] in ("name", "type", "type head")
@@ -289,7 +349,7 @@ def operation(v: Vocabulary, r: dict, entry: dict) -> dict:
                 reads.append(rec)
             elif f in copies:
                 reads.append({**rec, "copied": True})
-            elif is_state_write(rec):
+            elif is_state_write(rec, v.state):
                 writes.append(rec)
             else:
                 results.append(rec)
@@ -409,6 +469,60 @@ def _louvain_split(g: nx.Graph) -> List[List[str]]:
     return out
 
 
+def split_group(sub: nx.Graph) -> Tuple[List[List[str]], str, Optional[float]]:
+    """(communities, how, modularity) for one group. More than MAX_COMPONENT_OPS operations:
+    always Louvain. At least MIN_SPLIT_OPS: Louvain, kept only if it finds real communities
+    (≥ 2, modularity ≥ MIN_MODULARITY). Otherwise the group is one component."""
+    members = sorted(sub.nodes)
+    n = len(members)
+    if n <= MAX_COMPONENT_OPS and (n < MIN_SPLIT_OPS or sub.number_of_edges() == 0):
+        return [members], "connected", None
+    comms = _louvain_split(sub)
+    q = round(nx.community.modularity(sub, [set(c) for c in comms], weight="weight"), 4) \
+        if sub.number_of_edges() and len(comms) > 1 else 0.0
+    if n > MAX_COMPONENT_OPS or (len(comms) > 1 and q >= MIN_MODULARITY):
+        return comms, "louvain", q
+    return [members], "connected (no clear communities)", q
+
+
+def _back_weight(order: List[str], weight: Dict[Tuple[str, str], int]) -> int:
+    pos = {c: k for k, c in enumerate(order)}
+    return sum(w for (a, b), w in weight.items() if a in pos and b in pos and pos[a] > pos[b])
+
+
+def order_cycle(nodes: List[str], weight: Dict[Tuple[str, str], int]) -> List[str]:
+    """Order of one strongly connected set with the least backward weight (ties: alphabetical).
+    Exact for up to EXACT_ORDER_MAX components, else greedy: repeatedly take the component
+    whose outgoing weight most exceeds its incoming weight among those left."""
+    nodes = sorted(nodes)
+    if len(nodes) <= EXACT_ORDER_MAX:
+        from itertools import permutations
+        return list(min(permutations(nodes), key=lambda p: (_back_weight(list(p), weight), p)))
+    left, out = list(nodes), []
+    while left:
+        def gain(c):
+            return (sum(w for (a, b), w in weight.items() if a == c and b in left)
+                    - sum(w for (a, b), w in weight.items() if b == c and a in left))
+        best = min(left, key=lambda c: (-gain(c), c))
+        out.append(best)
+        left.remove(best)
+    return out
+
+
+def chain_order(cg: nx.DiGraph, reasons: dict) -> Tuple[List[str], List[Tuple[str, str]]]:
+    """(chain order, feedback edges). Strongly connected sets in topological order of the
+    condensation; inside a set, `order_cycle`. Feedback edges are those that point backwards."""
+    weight = {(a, b): max(1, len(reasons.get((a, b), []))) for a, b in cg.edges}
+    cond = nx.condensation(cg)
+    key = {n: min(cond.nodes[n]["members"]) for n in cond.nodes}
+    order = []
+    for n in nx.lexicographical_topological_sort(cond, key=lambda n: key[n]):
+        members = sorted(cond.nodes[n]["members"])
+        order += order_cycle(members, weight) if len(members) > 1 else members
+    pos = {c: k for k, c in enumerate(order)}
+    return order, sorted((a, b) for a, b in cg.edges if pos[a] > pos[b])
+
+
 def _rotated(cycle: List[str]) -> List[str]:
     """A cycle written from its smallest name (networkx may start it anywhere)."""
     k = cycle.index(min(cycle))
@@ -449,6 +563,7 @@ def build_graph(doc: dict, specs: dict, domain_code: Optional[str], synonyms: di
     from arch_lean import slug
     entries = {e["id"]: e for e in doc["requirements"] + doc["data_dictionary"] + doc["use_cases"]}
     v = build_vocabulary(doc, domain_code, synonyms)
+    add_spec_entities(v, specs["results"], entries)
     ops = [operation(v, r, entries.get(r["id"], {})) for r in specs["results"]]
     for o in ops:
         o["lean_name"] = slug(o["id"])
@@ -485,10 +600,7 @@ def build_graph(doc: dict, specs: dict, domain_code: Optional[str], synonyms: di
     groups, components, taken = [], [], set()
     for gi, members in enumerate(parts, 1):
         sub = proj.subgraph(members)
-        if len(members) > MAX_COMPONENT_OPS:
-            comms, split = _louvain_split(sub), "louvain"
-        else:
-            comms, split = [list(members)], "connected"
+        comms, split, modularity = split_group(sub)
         comms.sort(key=lambda c: (-len(c), c[0]))
         gname = _component_name([by_id[m] for m in members], set())
         gname = f"{gname}Sys" if f"{gname}Sys" not in {g['id'] for g in groups} else f"{gname}Sys{gi}"
@@ -501,7 +613,7 @@ def build_graph(doc: dict, specs: dict, domain_code: Optional[str], synonyms: di
         cycles = [] if acyclic else sorted(
             (_rotated(c) for c in nx.simple_cycles(cg0)), key=lambda c: (len(c), c))[:MAX_CYCLES_LISTED]
         merged = []
-        if not acyclic:
+        if not acyclic and CYCLE_MODE == "merge":
             # Each strongly connected set of components becomes one component.
             final = []
             for scc in sorted((sorted(c) for c in nx.strongly_connected_components(cg0)), key=lambda c: c[0]):
@@ -521,13 +633,18 @@ def build_graph(doc: dict, specs: dict, domain_code: Optional[str], synonyms: di
             for m in members_c:
                 by_id[m]["component"] = name
         cg, reasons = _component_graph({c: comp_ops for c, comp_ops in zip(cids, comms)}, by_id, edges)
-        order = list(nx.lexicographical_topological_sort(cg))
+        order, feedback = chain_order(cg, reasons)
+        how = ("ok" if acyclic else f"cyclic: {len(cycles)} cycle(s); " + (
+            f"{len(merged)} set(s) of components merged" if CYCLE_MODE == "merge" else
+            f"components kept, {len(feedback)} feedback edge(s) point against the chain order"))
         groups.append({"id": gname, "operations": list(members), "components": cids, "split": split,
+                       "modularity": modularity,
                        "component_edges": [{"src": a, "dst": b, "reasons": reasons[(a, b)]}
                                            for a, b in sorted(cg.edges)],
-                       "acyclic": acyclic, "cycles": cycles, "merged_cycles": merged, "order": order,
-                       "status": "ok" if acyclic else
-                       f"cyclic: {len(cycles)} cycle(s); {len(merged)} set(s) of components merged"})
+                       "acyclic": acyclic, "cycles": cycles, "cycles_resolved": None if acyclic else CYCLE_MODE,
+                       "merged_cycles": merged,
+                       "feedback_edges": [{"src": a, "dst": b, "reasons": len(reasons[(a, b)])} for a, b in feedback],
+                       "order": order, "status": how})
 
     total = sum(len(o["reads"]) + len(o["writes"]) + len(o["results"]) + len(o["unmapped"]) for o in ops)
     mapped = sum(len(o["reads"]) + len(o["writes"]) + len(o["results"]) for o in ops)
@@ -537,7 +654,8 @@ def build_graph(doc: dict, specs: dict, domain_code: Optional[str], synonyms: di
         "graph_version": GRAPH_VERSION,
         "source": doc.get("source", {}),
         "inputs": {},  # filled by the caller (paths relative to the repo root + hashes)
-        "settings": {"max_component_ops": MAX_COMPONENT_OPS, "louvain_seed": LOUVAIN_SEED},
+        "settings": {"max_component_ops": MAX_COMPONENT_OPS, "min_split_ops": MIN_SPLIT_OPS,
+                     "min_modularity": MIN_MODULARITY, "cycles": CYCLE_MODE, "louvain_seed": LOUVAIN_SEED},
         "nlp": spacy_meta(),
         "entities": [{**v.entities[t], "used": t in used,
                       "attributes": sorted(a for a, owners in v.attributes.items() if t in owners)}
@@ -553,6 +671,8 @@ def build_graph(doc: dict, specs: dict, domain_code: Optional[str], synonyms: di
             "operations": len(ops), "fields": total, "fields_mapped": mapped,
             "pct_fields_mapped": round(100 * mapped / total, 1) if total else 0.0,
             "entities": len(v.entities), "entities_used": len(used),
+            "entities_used_by_source": dict(sorted(_count_sources(v, used).items())),
+            "state_entities": sorted(v.state),
             "edges": len(edge_list),
             "edges_dataflow": sum(any(r["kind"] == "dataflow" for r in e["reasons"]) for e in edge_list),
             "edges_usecase": sum(any(r["kind"] != "dataflow" for r in e["reasons"]) for e in edge_list),
@@ -560,9 +680,21 @@ def build_graph(doc: dict, specs: dict, domain_code: Optional[str], synonyms: di
             "cycles": sum(len(g["cycles"]) for g in groups),
             "cyclic_groups": sum(not g["acyclic"] for g in groups),
             "merged_component_sets": sum(len(g["merged_cycles"]) for g in groups),
+            "feedback_edges": sum(len(g["feedback_edges"]) for g in groups),
+            "largest_component": max((len(c["operations"]) for c in components), default=0),
             "isolated_operations": len(isolated),
         },
     }
+
+
+def _count_sources(v: Vocabulary, used: List[str]) -> Dict[str, int]:
+    """How many of the entities that operations use come from each source (an entity named by
+    several sources counts for each)."""
+    out: Dict[str, int] = defaultdict(int)
+    for t in used:
+        for src in v.entities[t]["sources"]:
+            out[src] += 1
+    return out
 
 
 def to_json(graph: dict) -> str:
@@ -636,27 +768,32 @@ def _rel(path: Path) -> str:
         return str(path)
 
 
-def load_inputs(stem: str, l0_run: Optional[Path] = None, domain: Optional[Path] = None):
+def load_inputs(stem: str, l0_run: Optional[Path] = None, domain: Optional[Path] = None,
+                vocab: Optional[str] = None):
     parsed = ROOT / "Requirements" / "parsed" / f"{stem}.json"
     l0_run = l0_run or (ROOT / "runs" / stem / DEFAULT_L0_RUN)
     domain = domain or (benchmark_dir(stem) / "Domain.lean")
     syn = ROOT / "Requirements" / "synonyms" / f"{stem}.json"
     doc = json.loads(parsed.read_text(encoding="utf-8"))
     specs = json.loads((l0_run / "specs.json").read_text(encoding="utf-8"))
-    domain_code = domain.read_text(encoding="utf-8") if domain.exists() else None
-    synonyms = json.loads(syn.read_text(encoding="utf-8")) if syn.exists() else {}
+    vocab = vocab or VOCAB
+    extras = vocab == "full"   # `srs`: no hand-written vocabulary at all
+    domain_code = domain.read_text(encoding="utf-8") if extras and domain.exists() else None
+    synonyms = json.loads(syn.read_text(encoding="utf-8")) if extras and syn.exists() else {}
     synonyms = synonyms.get("synonyms", synonyms)
     inputs = {"parsed": _rel(parsed), "parsed_sha": _hash(parsed),
               "l0_run": _rel(l0_run), "l0_specs_sha": _hash(l0_run / "specs.json"),
-              "domain": _rel(domain) if domain.exists() else None, "domain_sha": _hash(domain),
-              "synonyms": _rel(syn) if syn.exists() else None, "synonyms_sha": _hash(syn),
+              "vocab": vocab,
+              "domain": _rel(domain) if domain_code is not None else None,
+              "domain_sha": _hash(domain) if domain_code is not None else None,
+              "synonyms": _rel(syn) if synonyms else None, "synonyms_sha": _hash(syn) if synonyms else None,
               "synonyms_size": len(synonyms)}
     return doc, specs, domain_code, synonyms, inputs
 
 
 def run(stem: str, l0_run: Optional[Path] = None, domain: Optional[Path] = None,
-        out_dir: Optional[Path] = None, png: bool = True) -> dict:
-    doc, specs, domain_code, synonyms, inputs = load_inputs(stem, l0_run, domain)
+        out_dir: Optional[Path] = None, png: bool = True, vocab: Optional[str] = None) -> dict:
+    doc, specs, domain_code, synonyms, inputs = load_inputs(stem, l0_run, domain, vocab)
     graph = build_graph(doc, specs, domain_code, synonyms)
     graph["inputs"] = inputs
     out_dir = out_dir or (ROOT / "runs" / stem / "graph")
@@ -677,9 +814,12 @@ def main(argv=None) -> int:
     ap.add_argument("--domain", type=Path, help="Domain.lean (default benchmark/<doc>/Domain.lean)")
     ap.add_argument("-o", "--out", type=Path, help="output folder (default runs/<doc>/graph)")
     ap.add_argument("--no-png", action="store_true")
+    ap.add_argument("--vocab", choices=["full", "srs"], default=None,
+                    help="full: also use Domain.lean and the synonyms file if they exist (default, or "
+                         "$CF_GRAPH_VOCAB); srs: only the SRS and the L0 specs")
     args = ap.parse_args(argv)
     stem = Path(args.doc).stem if args.doc.endswith((".xml", ".json")) else args.doc
-    g = run(stem, args.l0_run, args.domain, args.out, png=not args.no_png)
+    g = run(stem, args.l0_run, args.domain, args.out, png=not args.no_png, vocab=args.vocab)
     print(json.dumps(g["metrics"], indent=1))
     return 0
 

@@ -176,8 +176,9 @@ class LeanTools(unittest.TestCase):
 
     def test_unprovable_po1_rejected(self):
         """Audit assumes more than the L0 spec (stock < 5): its trace `pre` fails, so PO1
-        Stock → Audit cannot be proved and the architecture is rejected."""
+        Stock → Audit cannot be proved and the architecture is rejected (degrading off)."""
         s = session()
+        s.degrade_failed = False
         s.check_contract("Stock", STOCK)
         s.check_contract("Audit", AUDIT.replace(": Prop := True", ": Prop := i.stock < 5").replace("(_ :", "(i :"))
         self.assertFalse(s.check_po1("Stock", "Audit")["ok"])
@@ -197,8 +198,48 @@ class LeanTools(unittest.TestCase):
         self.assertFalse(final["ok"])
         self.assertTrue(any("single component" in p for p in final["problems"]))
 
+    def test_failing_operation_is_degraded_not_blocking(self):
+        """Same bad Audit contract with degrading on (the default): OP-audit keeps its L0
+        conditions, every obligation of the group is proved, and the verdict says so."""
+        s = session()
+        self.assertTrue(s.degrade_failed)
+        s.check_contract("Stock", STOCK)
+        s.check_contract("Audit", AUDIT.replace(": Prop := True", ": Prop := i.stock < 5").replace("(_ :", "(i :"))
+        final = s.submit_architecture()
+        self.assertTrue(final["ok"], final["text"])
+        self.assertEqual(final["verdict"], "accepted-degraded")
+        self.assertEqual(list(final["degraded"]), ["OP-audit"])
+        self.assertEqual(final["degraded"]["OP-audit"], "`pre` is false on the L0 example")
+        self.assertTrue(all(final["proved"].values()))
+        self.assertTrue(final["proved"]["po2"])
+        self.assertTrue(final["arch_compiles"])
+        self.assertIn("harness fallback for OP-audit", final["arch"])
+        self.assertIn("def Audit_pre_op_audit (i : L0_op_audit.Input) : Prop := L0_op_audit.Spec.pre i", final["arch"])
+        self.assertNotIn("i.stock < 5", final["arch"])           # the model's definitions are gone
+        self.assertIn("def Stock_post_op_sell", final["arch"])    # the other operations keep theirs
+        self.assertEqual(s.results["trace_pre:Audit:OP-audit"]["by"], "fallback")
+
+    def test_missing_operation_is_degraded(self):
+        s = session()
+        s.check_contract("Stock", STOCK.split("def Stock_pre_op_sell")[0])  # restock only
+        self.assertEqual(s.fill_missing("Stock"), ["OP-sell"])
+        s.check_contract("Audit", AUDIT)
+        final = s.submit_architecture()
+        self.assertEqual(final["verdict"], "accepted-degraded")
+        self.assertEqual(final["degraded"], {"OP-sell": "no valid contract from the model"})
+        self.assertEqual(s.placeholders, ["OP-sell"])
+
+    def test_a_correct_architecture_is_not_degraded(self):
+        s = session()
+        s.check_contract("Stock", STOCK)
+        s.check_contract("Audit", AUDIT)
+        final = s.submit_architecture()
+        self.assertEqual(final["verdict"], "accepted")
+        self.assertEqual(final["degraded"], {})
+
     def test_placeholders_compile_and_are_reported(self):
         s = session()
+        s.degrade_failed = False
         s.check_contract("Stock", STOCK.split("def Stock_pre_op_sell")[0])  # restock only
         self.assertEqual(s.fill_missing("Stock"), ["OP-sell"])
         s.check_contract("Audit", AUDIT)

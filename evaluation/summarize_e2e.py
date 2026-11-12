@@ -1,39 +1,211 @@
-"""Summarize an L1/L2 run: python evaluation/summarize_e2e.py <run_dir> [...]"""
-import collections, json, re, sys
+#!/usr/bin/env python3
+"""Summarize chain L1/L2 runs: results, why things failed, and the spread over repetitions.
+
+    python evaluation/summarize_e2e.py <run_dir> [<run_dir> ...] [-o report.md]
+
+A run folder has l1l2.json (plus shard files l1l2.<a>-<b>.json; the first record per id wins),
+or repetitions rep1/, rep2/, … each with those files (`main.py --until chain --repeat N`).
+With repetitions every number is `mean (min–max)`; a difference between two runs is only
+real if it is larger than that spread.
+
+What is counted:
+    L1 by mode     chain (two components), single (not split: one condition or a data
+                   constraint), single-fallback (the split failed, `Spec` kept whole)
+    end to end     L1 + every L2 + the whole file with `system_ok` accepted by Lean
+    strength       for chain architectures: the chain_checks score out of 5
+    failure classes (harness/chain_failures.py) for L1 and for each L2 component
+    1-of-2         specs where exactly one of two components was implemented: which one
+                   failed, its class, and whether the contract was implementable at all
+Runs made before chain-v3 have no `mode`/`error_class`: they are classified here from the
+stored error text, and their accepted architectures are re-judged with the v3 static check
+(identity / copy-of-Spec components).
+"""
+import argparse
+import collections
+import json
+import statistics
+import sys
 from pathlib import Path
 
-_POST = re.compile(r"post\s*:=\s*fun\s+\w+\s+\w+\s*=>\s*(.*?)(?=\n\S|\n\s*(?:pre|post)\s*:=|\Z)", re.S)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "harness"))
+import chain_checks as C  # noqa: E402
+from chain_failures import classify, root_cause  # noqa: E402
 
 
-def trivial(code: str) -> bool:
-    """First component's post only copies fields (m.x = i.x ∧ …): a pass-through split."""
-    posts = _POST.findall(code)
-    if not posts:
-        return False
-    parts = [p.strip() for p in re.split(r"∧", posts[0]) if p.strip()]
-    return all(re.fullmatch(r"\(?\w+\.(\w+)\s*=\s*\w+\.\1\)?", p) for p in parts)
-
-
-for run in sys.argv[1:]:
-    # l1l2.json plus shard files l1l2.<start>-<end>.json; first result per id wins
-    seen, d = set(), []
-    for f in sorted(Path(run).glob("l1l2*.json")):
-        for e in json.loads(f.read_text()):
+def load_rep(folder: Path) -> list:
+    seen, out = set(), []
+    for f in sorted(folder.glob("l1l2*.json")):
+        for e in json.loads(f.read_text(encoding="utf-8")):
             if e["id"] not in seen:
-                seen.add(e["id"]); d.append(e)
+                seen.add(e["id"])
+                out.append(e)
+    return out
+
+
+def load_run(run: Path) -> list:
+    """[(rep name, records)]"""
+    if list(run.glob("l1l2*.json")):
+        return [(run.name, load_rep(run))]
+    reps = sorted((p for p in run.glob("rep*") if list(p.glob("l1l2*.json"))),
+                  key=lambda p: int("".join(c for c in p.name if c.isdigit()) or 0))
+    if not reps:
+        sys.exit(f"error: no l1l2*.json in {run} or {run}/rep*/")
+    return [(p.name, load_rep(p)) for p in reps]
+
+
+def _cls(x: dict):
+    return x.get("error_class") or classify(x.get("error"), x.get("stages"))
+
+
+def _spec_of(e: dict, specs: dict):
+    return (specs.get(e["id"]) or {}).get("lean_predicate") or ""
+
+
+def metrics(d: list, specs: dict) -> dict:
     n = len(d)
-    l1 = sum(e.get("l1", {}).get("success", False) for e in d)
-    l2s = [x for e in d for x in e.get("l2", [])]
-    l2 = sum(x["success"] for x in l2s)
-    full = sum(e.get("full_check") is True for e in d)
-    kinds = collections.Counter((e["kind"], e.get("full_check") is True) for e in d)
-    att = sum(e["l1"]["attempts"] for e in d if "l1" in e) / max(n, 1)
-    mins = sum(e["seconds"] for e in d) / 60
-    print(f"{run}: {n} specs · L1 {l1}/{n} · L2 components {l2}/{len(l2s)} · "
-          f"end-to-end (L1 + all L2 + full Lean check) {full}/{n} · L1 attempts {att:.2f} · {mins:.0f} min")
-    for k in sorted({k for k, _ in kinds}):
-        print(f"   {k}: {kinds[(k, True)]}/{kinds[(k, True)] + kinds[(k, False)]} end-to-end")
-    ok = [e for e in d if e.get("full_check") is True]
-    triv = [e["id"] for e in ok if trivial(e["l1"]["code"])]
-    print(f"   of the end-to-end passes, {len(triv)} have a pass-through first component: {triv}")
-    print("   failing L1:", [e["id"] for e in d if not e.get("l1", {}).get("success")])
+    l1 = [e.get("l1") or {} for e in d]
+    mode = lambda x: x.get("mode", "chain")  # noqa: E731
+    ok = [x for x in l1 if x.get("success")]
+    l2 = [x for e in d for x in e.get("l2", [])]
+    full = [e for e in d if e.get("full_check") is True]
+    chain_tried = [x for x in l1 if mode(x) == "chain" or mode(x) == "single-fallback"]
+    m = {
+        "specs": n,
+        "L1 accepted": len(ok),
+        "L1 chain (two components)": sum(mode(x) == "chain" for x in ok),
+        "L1 single (not split)": sum(mode(x) == "single" for x in ok),
+        "L1 single-fallback": sum(mode(x) == "single-fallback" for x in ok),
+        "L2 components implemented": len([x for x in l2 if x["success"]]),
+        "L2 components total": len(l2),
+        "end to end": len(full),
+        "end to end, chain": sum(mode(e["l1"]) == "chain" for e in full),
+        "end to end, single": sum(mode(e["l1"]) != "chain" for e in full),
+        "L1 attempts per split spec": (statistics.mean(x.get("attempts", 0) for x in chain_tried)
+                                       if chain_tried else 0.0),
+        "minutes": sum(e.get("seconds", 0) for e in d) / 60,
+    }
+    scores = [x["strength"]["score"] for x in ok if mode(x) == "chain" and x.get("strength")]
+    if scores:
+        m["strength of chain architectures (of 5)"] = statistics.mean(scores)
+    for kind in sorted({e["kind"] for e in d}):
+        m[f"end to end, {kind}"] = sum(e["kind"] == kind for e in full)
+        m[f"specs, {kind}"] = sum(e["kind"] == kind for e in d)
+    return m
+
+
+def failures(d: list) -> dict:
+    l1c, l2c, one_of_two = collections.Counter(), collections.Counter(), []
+    for e in d:
+        l1 = e.get("l1") or {}
+        if "crash" in e and not l1:
+            l1c["crash"] += 1
+        elif not l1.get("success"):
+            l1c[_cls(l1) or "unknown"] += 1
+        elif l1.get("mode") == "single-fallback":
+            l1c[f"{(l1.get('failed_split') or {}).get('error_class') or 'unknown'} (fell back to single)"] += 1
+        l2 = e.get("l2", [])
+        for x in l2:
+            if not x["success"]:
+                l2c[_cls(x) or "unknown"] += 1
+        if len(l2) == 2 and sum(x["success"] for x in l2) == 1:
+            k = 0 if not l2[0]["success"] else 1
+            one_of_two.append({"id": e["id"], "failed": ("first", "second")[k], "contract": l2[k]["contract"],
+                               "class": _cls(l2[k]) or "unknown",
+                               "cause": e.get("l2_root_cause") or root_cause(e) or ""})
+    return {"l1": l1c, "l2": l2c, "one_of_two": one_of_two}
+
+
+def rejudge(d: list, specs: dict) -> collections.Counter:
+    """Accepted two-component architectures under the v3 static check."""
+    out = collections.Counter()
+    for e in d:
+        l1 = e.get("l1") or {}
+        if not l1.get("success") or l1.get("mode", "chain") != "chain":
+            continue
+        spec = _spec_of(e, specs)
+        if not spec:
+            out["(no spec text: not judged)"] += 1
+            continue
+        why = C.single_step(spec, e.get("kind"))
+        if why:
+            out["single-step spec (v3 does not split it)"] += 1
+            continue
+        problems = C.static_check(C.strip_theorems(l1.get("code") or ""), spec)["problems"]
+        out["real decomposition" if not problems else (classify("static: " + "; ".join(problems)) or "other")] += 1
+    return out
+
+
+def spread(values: list) -> str:
+    if len(values) == 1:
+        v = values[0]
+        return f"{v:.2f}" if isinstance(v, float) else str(v)
+    mean = statistics.mean(values)
+    fmt = (lambda v: f"{v:.2f}") if any(isinstance(v, float) for v in values) else (lambda v: f"{v:g}")
+    return f"{mean:.2f} ({fmt(min(values))}–{fmt(max(values))})"
+
+
+def report(run: Path) -> str:
+    reps = load_run(run)
+    specs = {}
+    for folder in [run, *sorted(run.glob("rep*"))]:
+        if (folder / "specs.json").exists():
+            specs = {r["id"]: r for r in json.loads((folder / "specs.json").read_text(encoding="utf-8"))["results"]}
+            break
+    meta_path = next((p for p in [run / "chain_meta.json", *run.glob("rep*/chain_meta.json")] if p.exists()), None)
+    if not specs and meta_path:
+        root = Path(__file__).resolve().parent.parent
+        l0 = root / json.loads(meta_path.read_text(encoding="utf-8")).get("l0_run", "")
+        if (l0 / "specs.json").exists():
+            specs = {r["id"]: r for r in json.loads((l0 / "specs.json").read_text(encoding="utf-8"))["results"]}
+    ms = [metrics(d, specs) for _, d in reps]
+    lines = [f"## {run}", "",
+             f"{len(reps)} repetition(s): {', '.join(name for name, _ in reps)}"
+             + ("" if len(reps) > 1 else " — a single run, so there is no spread and no difference to "
+                                         "another run can be called real"), "",
+             "| metric | " + ("mean (min–max)" if len(reps) > 1 else "value") + " |", "|---|---|"]
+    for key in ms[0]:
+        lines.append(f"| {key} | {spread([m.get(key, 0) for m in ms])} |")
+    fs = [failures(d) for _, d in reps]
+    for title, key in (("L1 failures by class", "l1"), ("L2 component failures by class", "l2")):
+        classes = sorted({c for f in fs for c in f[key]}, key=lambda c: -sum(f[key][c] for f in fs))
+        lines += ["", f"### {title}", ""]
+        if not classes:
+            lines.append("none")
+        else:
+            lines += ["| class | " + ("mean (min–max)" if len(reps) > 1 else "count") + " |", "|---|---|"]
+            lines += [f"| {c} | {spread([f[key][c] for f in fs])} |" for c in classes]
+    lines += ["", "### Specs with exactly one of two components implemented", ""]
+    rows = [(name, o) for (name, _), f in zip(reps, fs) for o in f["one_of_two"]]
+    if not rows:
+        lines.append("none")
+    else:
+        lines += ["| rep | spec | failed component | class | structural cause |", "|---|---|---|---|---|"]
+        lines += [f"| {name} | {o['id']} | {o['failed']} (`{o['contract']}`) | {o['class']} | {o['cause'] or '—'} |"
+                  for name, o in rows]
+    judged = [rejudge(d, specs) for _, d in reps]
+    if any(judged):
+        lines += ["", "### Accepted two-component architectures under the v3 static check", ""]
+        keys = sorted({k for j in judged for k in j}, key=lambda k: -sum(j[k] for j in judged))
+        lines += ["| verdict | " + ("mean (min–max)" if len(reps) > 1 else "count") + " |", "|---|---|"]
+        lines += [f"| {k} | {spread([j[k] for j in judged])} |" for k in keys]
+    never = collections.Counter(e["id"] for _, d in reps for e in d if e.get("full_check") is not True)
+    always_fail = sorted(i for i, c in never.items() if c == len(reps))
+    lines += ["", f"Not end to end in {'every repetition' if len(reps) > 1 else 'this run'} "
+                  f"({len(always_fail)}): " + (", ".join(always_fail) or "none")]
+    return "\n".join(lines) + "\n"
+
+
+def main(argv=None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument("runs", nargs="+", type=Path)
+    ap.add_argument("-o", "--out", type=Path, help="also write the report to this file")
+    a = ap.parse_args(argv)
+    text = "\n".join(report(r) for r in a.runs)
+    print(text)
+    if a.out:
+        a.out.write_text(text, encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

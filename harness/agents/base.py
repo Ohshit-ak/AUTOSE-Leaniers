@@ -136,7 +136,10 @@ def _ask(prompt: str, system: str, model: str, history=None, temperature=TEMPERA
 def generate_verified(prompt: str, system: str, model: str, context: str = "",
                       validate: Optional[Validator] = None,
                       find_witness: Optional[Callable[[str], Optional[str]]] = None,
-                      auto_prove: Optional[Callable[[str, str], Optional[str]]] = None) -> dict:
+                      auto_prove: Optional[Callable[[str, str], Optional[str]]] = None,
+                      prepare: Optional[Callable[[str], str]] = None,
+                      precheck: Optional[Validator] = None,
+                      check_weakened: bool = True, check_label: str = "L0.5") -> dict:
     """Ask the model for Lean code, retrying with Lean's errors until it checks.
 
     `context` is already-verified Lean (e.g. a locked spec/contract) that is
@@ -144,6 +147,12 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
     `validate` runs after Lean accepts the code (e.g. the L0.5 checks); its
     problems are fed back like Lean errors. `find_witness(code)` returns an
     `example` with values the harness found itself, or None.
+    `prepare(code)` rewrites each reply before anything else looks at it (e.g. drops the
+    theorems when the harness states and proves them itself). `precheck(code)` runs before
+    Lean: its problems are fed back without a Lean run (stage `static`), so a mistake the
+    harness can name (a field the contract cannot see) is not reported as a raw Lean error.
+    `check_weakened=False` turns off the L0 rule that `pre`/`post` may not become `True`:
+    for a component contract, dropping an assumption is a legitimate repair.
 
     Each attempt:
       1. mechanical syntax fixes (agents/fixups.py) are applied;
@@ -180,13 +189,21 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
         code, dropped = strip_redeclared(code, context)
         if dropped:
             fixes = list(fixes) + [f"dropped re-declared locked names {sorted(set(dropped))}"]
+        if prepare:
+            code = prepare(code)
         if locked_defs is not None:
             code = with_locked_defs(locked_defs, code, locked_example)
         if original is None:
             original = code
 
-        why = weakened(original, code)
-        if why:
+        why = weakened(original, code) if check_weakened else None
+        static = precheck(code) if precheck and not why else []
+        if static:
+            stage, feedback_body = "static", (
+                "The code was not sent to Lean because of these problems:\n"
+                + "\n".join(f"- {p}" for p in static))
+            result = {"success": False, "error": "static: " + "; ".join(static)}
+        elif why:
             stage, feedback_body = "weakened", (
                 f"Your last change weakened the specification: {why}. Restore the original "
                 "meaning and fix only the reported errors.")
@@ -199,7 +216,7 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
                 return {"success": True, "code": code, "attempts": attempt, "log": log}
             if result["success"]:
                 stage = "check"
-                result = {"success": False, "error": "L0.5: " + "; ".join(problems)}
+                result = {"success": False, "error": f"{check_label}: " + "; ".join(problems)}
                 feedback_body = ("Lean accepts the code, but the specification checks found "
                                  "problems:\n" + "\n".join(f"- {p}" for p in problems))
             else:
@@ -219,7 +236,8 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
                                           + "\n".join(f"- {b}" for b in broken)
                                           + "\nChange the example values so that every condition holds.")
         log.append({"attempt": attempt, "stage": stage, "fixups": fixes})
-        rank = {"weakened": RANK_NOT_CHECKED, "check": RANK_COMPILES}.get(stage, RANK_LEAN_ERROR)
+        rank = {"weakened": RANK_NOT_CHECKED, "static": RANK_NOT_CHECKED,
+                "check": RANK_COMPILES}.get(stage, RANK_LEAN_ERROR)
         if best is None or rank > best[0]:  # ties keep the earlier attempt
             best = (rank, attempt, code, result["error"])
         if attempt == MAX_RETRIES:
@@ -230,7 +248,7 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
         # L1/L2: definitions compile, only the PO theorems fail → try generic proofs first.
         # Not gated on the error class (proof errors are often reported as type errors):
         # auto_prove itself first checks that the definitions compile without the theorems.
-        if auto_prove and context and stage not in ("weakened", "check"):
+        if auto_prove and context and stage not in ("weakened", "check", "static"):
             proved = auto_prove(code, context)
             if proved and not (validate and validate(proved)):
                 log[-1]["autoprove"] = "proved by search"

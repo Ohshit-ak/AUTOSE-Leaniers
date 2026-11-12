@@ -3,6 +3,7 @@ import re
 from typing import Callable, Dict, List, Optional, Sequence
 
 import code_lean as CL
+import po
 from agents.base import generate_verified
 from lean_runner import check_lean
 
@@ -65,7 +66,6 @@ Rules:
 {WORKED_EXAMPLE}
 """
 
-_FORBIDDEN = re.compile(r"\b(sorry|admit|native_decide|axiom)\b")
 
 
 def validate_op_code(comp: str, op: str) -> Callable[[str], List[str]]:
@@ -77,9 +77,8 @@ def validate_op_code(comp: str, op: str) -> Callable[[str], List[str]]:
 
     def _validate(code: str) -> List[str]:
         problems = []
-        m = _FORBIDDEN.search(code)
-        if m:
-            problems.append(f"Forbidden proof-bypassing keyword `{m.group()}` is not allowed.")
+        for word in po.forbidden_words(code):  # the same rule as L1 and the chain path
+            problems.append(f"Forbidden proof-bypassing keyword `{word}` is not allowed.")
         if not impl_pat.search(code):
             problems.append(f"Missing required implementation function `def {impl_name}`.")
         if not ok_pat.search(code):

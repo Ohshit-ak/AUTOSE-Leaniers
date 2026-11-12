@@ -21,11 +21,11 @@ import re
 from typing import Dict, List, Optional, Sequence
 
 from agents.base import split_example
+from po import FORBIDDEN, forbidden_words  # noqa: F401  (shared with the chain path; re-exported)
 
 _IMPORT_OPEN = re.compile(r"^\s*(?:import|open)\s+.*$\n?", re.MULTILINE)
 _DEF_NAME = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?(?:def|abbrev|theorem|lemma)\s+([\w.']+)",
                        re.MULTILINE)
-FORBIDDEN = ("sorry", "admit", "native_decide")
 
 
 def slug(op_id: str) -> str:
@@ -47,13 +47,6 @@ def sha(text: str) -> str:
 
 def defined_names(code: str) -> List[str]:
     return _DEF_NAME.findall(code)
-
-
-def forbidden_words(code: str) -> List[str]:
-    found = [w for w in FORBIDDEN if re.search(rf"\b{w}\b", code)]
-    if re.search(r"^\s*axiom\b", code, re.MULTILINE):
-        found.append("axiom")
-    return found
 
 
 # ---------------------------------------------------------------------------

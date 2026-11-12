@@ -188,6 +188,8 @@ def arch_metrics(groups: dict) -> dict:
     m = {
         "groups": len(groups),
         "groups accepted": sum(g.get("verdict") == "accepted" for g in groups.values()),
+        "groups accepted-degraded": sum(g.get("verdict") == "accepted-degraded" for g in groups.values()),
+        "operations degraded (contract = L0 conditions)": sum(len(g.get("degraded") or {}) for g in groups.values()),
         "Arch.lean compiles": sum(bool(g.get("arch_compiles")) for g in groups.values()),
         "components": sum(len(g.get("order") or []) for g in groups.values()),
         "operations": len(ops),

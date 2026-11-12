@@ -11,8 +11,13 @@ Stages run in order up to --until:
             (agents/architect_agent.py) → runs/<stem>/<model>-L1-v1/rep<k>/arch/<group>/
     code    L2: per component group, component implementations + automated PO3 proofs +
             end-to-end sound theorem → runs/<stem>/<model>-L2-v1/rep<k>/code/<group>/
---until graph / --until arch / --until code do NOT rerun L0: they read the frozen L0 run (--l0-run,
-default runs/<stem>/qwen-v10.1/rep1) and frozen L1 run (--arch-run).
+    chain   L1 + L2 per accepted L0 spec (the other L1/L2 path; not after `code`, an
+            alternative to graph → arch → code): each spec is split into two chained contracts
+            Input → Mid → Output, or kept whole if it is a single step; each contract is
+            implemented; the harness states and proves PO1/PO2/PO3 and the end-to-end theorem
+            (chain_pipeline.py) → runs/<stem>/<model>-chain-v3/rep<k>/
+--until graph / --until arch / --until code / --until chain do NOT rerun L0: they read the frozen
+L0 run (--l0-run, default runs/<stem>/qwen-v10.1/rep1) and frozen L1 run (--arch-run).
 
 Run from harness/:
     python main.py                                  # every XML in Requirements/, model qwen
@@ -28,6 +33,9 @@ Run from harness/:
     python main.py "../Requirements/0000 - gamma j.xml" --until arch --repeat 3            # L1
     python main.py "../Requirements/0000 - gamma j.xml" --until arch --no-graph --repeat 3 # baseline
     python main.py … --until arch --component AccountSys    # one component group only
+    python main.py "../Requirements/0000 - gamma j.xml" --until chain --repeat 3           # chain L1 + L2
+    python main.py … --until chain --only 5.3/R4 --fallback-single
+    python ../evaluation/summarize_e2e.py "../runs/0000 - gamma j/qwen-chain-v3"           # results + spread
 
 With --model qwen, the local llama.cpp server is started automatically if it is not
 already running (needs a GPU node: srun -p u22 --gres=gpu:1 --pty bash), and stopped
@@ -58,7 +66,8 @@ from pathlib import Path
 from config import BASE_URLS, FRAMEWORK_PATH, HARNESS_VERSION, MODELS, ROOT, SEED
 from req_parser import parse_file, to_json
 
-STAGES = ["parse", "spec", "check", "graph", "arch", "code"]
+STAGES = ["parse", "spec", "check", "graph", "arch", "code", "chain"]
+DEFAULT_UNTIL = "code"   # `chain` is the alternative L1/L2 path, chosen with --until chain
 L1_STAGES = {"graph", "arch"}
 L1_VERSION = "L1-v1"
 L2_STAGES = {"code"}
@@ -341,7 +350,7 @@ def l0_run_dir(stem: str, args) -> Path:
 
 def stage_graph(stem: str, args) -> dict:
     import req_graph
-    g = req_graph.run(stem, l0_run_dir(stem, args))
+    g = req_graph.run(stem, l0_run_dir(stem, args), vocab=args.vocab)
     m = g["metrics"]
     print(f"[graph] {stem}: {m['pct_fields_mapped']}% fields mapped, {m['groups']} groups, "
           f"{m['components']} components, {m['cycles']} cycles ({m['merged_component_sets']} merged) "
@@ -428,6 +437,36 @@ def stage_arch(stem: str, args) -> dict:
     return summary
 
 
+def chain_run_dir(stem: str, args) -> Path:
+    from chain_pipeline import CHAIN_VERSION
+    d = RUNS_DIR / stem / (args.run_name or f"{args.model}-{CHAIN_VERSION}")
+    return d / f"rep{args.rep}" if args.repeat else d
+
+
+def stage_chain(stem: str, args) -> list:
+    """Chain L1 + L2 for every accepted spec of the frozen L0 run (see chain_pipeline.py)."""
+    import chain_pipeline
+    from agents import chain_architect, chain_coder
+    l0_dir = l0_run_dir(stem, args)
+    if not (l0_dir / "specs.json").exists():
+        _fail(f"no L0 run at {l0_dir} (set --l0-run)")
+    out_dir = chain_run_dir(stem, args)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    meta = run_meta(args)
+    meta.update(harness_version=chain_pipeline.CHAIN_VERSION, l0_prompt_hash=meta.pop("prompt_hash", None),
+                prompt_hash={"architect": chain_architect.prompt_hash(), "coder": chain_coder.prompt_hash()},
+                l0_run=str(l0_dir.relative_to(ROOT)) if l0_dir.is_relative_to(ROOT) else str(l0_dir),
+                split=args.split, fallback_single=args.fallback_single)
+    out = chain_pipeline.run(l0_dir, out_dir, args.model, split=args.split,
+                             fallback_single=args.fallback_single, only=args.only, kinds=args.kinds,
+                             limit=args.limit, resume=args.resume, meta=meta)
+    n = len(out)
+    print(f"[chain] {stem}: L1 {sum(e.get('l1', {}).get('success', False) for e in out)}/{n}, "
+          f"end to end {sum(e.get('full_check') is True for e in out)}/{n} -> "
+          f"{out_dir.relative_to(ROOT) if out_dir.is_relative_to(ROOT) else out_dir}")
+    return out
+
+
 def stage_code(stem: str, args) -> dict:
     """L2 for every group with an accepted L1 Arch.lean (or only --component)."""
     import code_lean as CL
@@ -476,7 +515,7 @@ def stage_code(stem: str, args) -> dict:
             arch_json_path = gdir / "arch.json"
             arch_rec = json.loads(arch_json_path.read_text(encoding="utf-8")) if arch_json_path.exists() else {}
 
-            if arch_rec.get("verdict") not in ("accepted", None):
+            if arch_rec.get("verdict") not in ("accepted", "accepted-degraded", None):
                 print(f"[code] {group_id}: skipped (L1 verdict: {arch_rec.get('verdict')})")
                 continue
 
@@ -574,7 +613,8 @@ def stage_code(stem: str, args) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="ContractForge pipeline")
     ap.add_argument("inputs", nargs="*", help="requirements .xml or parsed .json (default: Requirements/*.xml)")
-    ap.add_argument("--until", choices=STAGES, default=STAGES[-1], help="last stage to run (default: %(default)s)")
+    ap.add_argument("--until", choices=STAGES, default=DEFAULT_UNTIL,
+                    help="last stage to run (default: %(default)s); `chain` runs the per-spec L1 + L2 path")
     ap.add_argument("--model", default=os.getenv("CF_MODEL", "qwen"),
                     help="qwen | deepseek | groq | gemma (default: $CF_MODEL or qwen)")
     ap.add_argument("--run-name", help="output folder under runs/<doc>/ (default: the model name)")
@@ -598,6 +638,14 @@ def main(argv=None) -> int:
                     help="L1 baseline: the model decomposes each group itself (no components/edges/order)")
     ap.add_argument("--arch-mode", choices=["pipeline", "agent"], default=os.getenv("CF_ARCH_MODE", "pipeline"),
                     help="L1: the harness calls the tools (pipeline) or the model does (agent)")
+    ap.add_argument("--vocab", choices=["full", "srs"], default=None,
+                    help="graph: full = also use benchmark/<doc>/Domain.lean and the synonyms file when "
+                         "they exist (default); srs = only the SRS and the L0 specs")
+    ap.add_argument("--split", choices=["auto", "always", "never"], default="auto",
+                    help="chain: split specs into two components (auto: not the single-step ones)")
+    ap.add_argument("--fallback-single", action="store_true",
+                    help="chain: when the two-component split fails, implement `Spec` as one component "
+                         "(reported separately as single-fallback)")
     args = ap.parse_args(argv)
     if args.repeat is not None and args.repeat < 1:
         _fail("--repeat must be at least 1")
@@ -605,19 +653,37 @@ def main(argv=None) -> int:
     paths = [Path(p).resolve() for p in args.inputs] or sorted(REQ_DIR.glob("*.xml"))
     if not paths:
         _fail(f"no requirements XML found in {REQ_DIR}")
+    chain = args.until == "chain"
     l2 = args.until in L2_STAGES
     l1 = (args.until in L1_STAGES) or l2
-    run_spec_stage = not l1 and STAGES.index(args.until) >= STAGES.index("spec")
-    if run_spec_stage or args.until in ("arch", "code"):
+    run_spec_stage = not l1 and not chain and STAGES.index(args.until) >= STAGES.index("spec")
+    if run_spec_stage or args.until in ("arch", "code", "chain"):
         preflight(args.model, args.skip_lean)
 
     from llm import set_seed
     for path in paths:
+        if chain:  # L0 is frozen; no graph needed
+            for k in range(1, (args.repeat or 1) + 1):
+                args.rep = k
+                set_seed(SEED + k - 1)
+                if args.repeat:
+                    print(f"[repeat] {path.stem}: chain repetition {k}/{args.repeat}, seed {SEED + k - 1}")
+                stage_chain(path.stem, args)
+            continue
         if l1:  # L0 is frozen: read the parsed JSON and the L0 run, never regenerate them
             if not (PARSED_DIR / f"{path.stem}.json").exists():
                 stage_parse(path)
-            if not (RUNS_DIR / path.stem / "graph" / "graph.json").exists():
+            graph_path = RUNS_DIR / path.stem / "graph" / "graph.json"
+            # `--until graph` always rebuilds (deterministic, no model); later stages reuse the
+            # graph on disk so a run stays comparable with the graph it was started with.
+            if args.until == "graph" or not graph_path.exists():
                 stage_graph(path.stem, args)
+            else:
+                import req_graph
+                have = json.loads(graph_path.read_text(encoding="utf-8")).get("graph_version")
+                if have != req_graph.GRAPH_VERSION:
+                    print(f"[graph] warning: {graph_path.relative_to(ROOT)} was built by graph version {have}, "
+                          f"the code is version {req_graph.GRAPH_VERSION}; rebuild it with --until graph")
             if args.until == "graph":
                 continue
             for k in range(1, (args.repeat or 1) + 1):

@@ -19,6 +19,7 @@ Rules the model cannot bypass:
 """
 import hashlib
 import json
+import os
 import re
 from typing import Dict, List, Optional, Sequence, Tuple
 
@@ -27,6 +28,9 @@ from agents.repair import closest, format_feedback, framework_helpers, parse_err
 from lean_runner import HEADER, check_lean, core_names
 from validate import _mutants, example_witness, field_types, literal_fields, one_line
 
+# A failing operation is degraded (it keeps its L0 conditions as its contract) instead of
+# blocking PO1/PO2 for the whole group. CF_ARCH_DEGRADE=0 restores the strict behaviour.
+DEGRADE = os.getenv("CF_ARCH_DEGRADE", "1") == "1"
 PRELUDE = "set_option linter.unusedSimpArgs false\nset_option linter.unusedVariables false\n"
 MAX_ERRORS = 3
 _DEF_ONLY = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?(?:def|abbrev)\s+([\w.']+)", re.MULTILINE)
@@ -48,6 +52,21 @@ def _errors(output: str, n: int = MAX_ERRORS) -> List[str]:
 
 def def_names(code: str) -> List[str]:
     return _DEF_ONLY.findall(code)
+
+
+def drop_defs(code: str, names) -> str:
+    """`code` without the top-level definitions called `names` (each runs to the next
+    non-indented line; a comment line directly above it goes too)."""
+    out, skipping = [], False
+    for line in code.split("\n"):
+        if line[:1] not in ("", " ", "\t"):
+            m = _DEF_ONLY.match(line)
+            skipping = bool(m and m.group(1) in names)
+            if skipping and out and out[-1].startswith("--"):
+                out.pop()
+        if not skipping:
+            out.append(line)
+    return re.sub(r"\n{3,}", "\n\n", "\n".join(out)).strip()
 
 
 class ArchSession:
@@ -75,7 +94,10 @@ class ArchSession:
         self.proofs: Dict[str, str] = {}             # obligation → model proof body
         self.results: Dict[str, dict] = {}           # obligation → outcome
         self.calls: List[dict] = []                  # tool-call log
-        self.placeholders: List[str] = []           # operations whose defs the harness filled in
+        self.placeholders: List[str] = []           # operations the model gave no contract for
+        self.degraded: Dict[str, str] = {}           # operation → why it keeps its L0 conditions
+        self.fallback: Dict[str, str] = {}           # operation → the harness's fallback defs
+        self.degrade_failed = DEGRADE
         self.require_split = False                   # no-graph mode: one component is not allowed
 
     # -- setup ---------------------------------------------------------------------------
@@ -118,9 +140,12 @@ class ArchSession:
             lines.append(f"  {c['id']}: {len(c['operations'])} operations: {', '.join(c['operations'])}")
         for e in g.get("component_edges", []):
             lines.append(f"Edge {e['src']} → {e['dst']} ({len(e['reasons'])} reasons), e.g. {e['reasons'][0]}")
-        if g.get("cycles"):
+        if g.get("cycles") and g.get("merged_cycles"):
             lines.append(f"{len(g['cycles'])} cycles between provisional components were merged: "
                          f"{g.get('merged_cycles')}")
+        elif g.get("cycles"):
+            lines.append(f"{len(g['cycles'])} cycles between components; chain order chosen with "
+                         f"{len(g.get('feedback_edges', []))} dataflow edge(s) pointing backwards.")
         return "\n".join(lines)
 
     def get_component(self, component: str) -> str:
@@ -174,19 +199,64 @@ class ArchSession:
                             "yourself (the harness proves they imply the L0 spec)")
         return problems
 
+    def degrade(self, component: str, op: str, reason: str) -> None:
+        """Operation `op` keeps its L0 conditions as its contract: the model's definitions for
+        it are dropped and the harness defines `pre`/`post` as the L0 `pre`/`post`. Its trace
+        obligations then hold by definition, so one bad operation no longer blocks PO1/PO2
+        for the group. The operation is reported (`degraded`), and the verdict of a group
+        with degraded operations is "accepted-degraded", never "accepted"."""
+        s, pre, post = A.slug(op), A.pre_name(component, op), A.post_name(component, op)
+        self.code[component] = drop_defs(self.code.get(component, ""), {pre, post})
+        self.fallback[op] = (f"-- harness fallback for {op} ({reason}): its contract is its L0 spec\n"
+                             f"def {pre} (i : L0_{s}.Input) : Prop := L0_{s}.Spec.pre i\n"
+                             f"def {post} (i : L0_{s}.Input) (o : L0_{s}.Output) : Prop := L0_{s}.Spec.post i o")
+        self.degraded[op] = reason
+        self.proofs[f"trace_pre:{component}:{op}"] = "by\n  intro i h\n  exact h"
+        self.proofs[f"trace_post:{component}:{op}"] = "by\n  intro i o _ h\n  exact h"
+
+    def degrade_failing(self, component: str, contract: Optional[dict] = None) -> List[str]:
+        """Degrade every operation of `component` whose trace is not proved (and, given a
+        `check_contract` result, whose contract is unsatisfiable or vacuous). Returns them."""
+        ops = next(c for c in self.components if c["id"] == component)["operations"]
+        todo = {}
+        for op, info in ((contract or {}).get("ops") or {}).items():
+            if op in self.degraded:
+                continue
+            if info.get("pre_false"):
+                todo[op] = "`pre` is false on the L0 example"
+            elif info.get("satisfiable") is False:
+                todo[op] = "`post` rejects the L0 example"
+            elif info.get("vacuous"):
+                todo[op] = "`post` is vacuous"
+        if self._component_defs(component):
+            for (op, part), ok in self.check_traces(component, [o for o in ops if o not in self.degraded])["parts"].items():
+                if not ok:
+                    todo.setdefault(op, f"trace `{part}` not proved")
+        for op, why in todo.items():
+            self.degrade(component, op, why)
+        if todo:
+            self.check_traces(component, list(todo))
+        return list(todo)
+
     def fill_missing(self, component: str) -> List[str]:
-        """Placeholder defs (`False`) for owned operations the model gave no valid contract for,
-        so the component's contract still compiles; their traces then fail and are reported."""
+        """Owned operations the model gave no valid contract for. They are degraded (L0
+        conditions as the contract); with degrading off they get placeholder defs (`False`),
+        so the contract still compiles and their traces fail and are reported."""
         code = self.code.get(component, "")
-        have, added = set(def_names(code)), []
+        have, added = set(def_names(code)) | set(def_names("\n".join(self.fallback.values()))), []
         for op in next(c for c in self.components if c["id"] == component)["operations"]:
             s = A.slug(op)
+            if self.degrade_failed and (A.pre_name(component, op) not in have or A.post_name(component, op) not in have):
+                self.degrade(component, op, "no valid contract from the model")
+                added.append(op)
+                continue
             if A.pre_name(component, op) not in have or A.post_name(component, op) not in have:
                 code += (f"\n\n-- harness placeholder: no valid contract from the model for {op}\n"
                          f"def {A.pre_name(component, op)} (_ : L0_{s}.Input) : Prop := False\n"
                          f"def {A.post_name(component, op)} (_ : L0_{s}.Input) (_ : L0_{s}.Output) : Prop := False")
                 added.append(op)
-        self.code[component] = code.strip()
+        if not self.degrade_failed:
+            self.code[component] = code.strip()
         self.placeholders += [o for o in added if o not in self.placeholders]
         return added
 
@@ -300,7 +370,11 @@ class ArchSession:
     # -- obligations --------------------------------------------------------------------------
 
     def _component_defs(self, component: str) -> str:
-        return self.code.get(component, "")
+        """The model's definitions of the component plus the harness fallbacks of its
+        degraded operations."""
+        ops = next((c["operations"] for c in self.components if c["id"] == component), [])
+        parts = [self.code.get(component, "")] + [self.fallback[o] for o in ops if o in self.fallback]
+        return "\n\n".join(p for p in parts if p)
 
     def trace_theorems(self, component: str, op: str, proofs: Optional[Dict[str, str]] = None) -> Dict[str, str]:
         st = A.trace_statements(component, op)
@@ -501,25 +575,43 @@ class ArchSession:
             problems.append("locked context changed (Domain.lean, an L0 spec or the system spec)")
         if self.require_split and len(self.order) < 2 and len(self.l0) > 1:
             problems.append("a single component is not a decomposition")
-        if self.placeholders:
+        if self.placeholders and not self.degrade_failed:
             problems.append(f"{len(self.placeholders)} operations have no contract from the model "
                             f"(harness placeholders): {', '.join(self.placeholders[:5])}")
         old_proofs = dict(self.proofs)
         self.results = {}
         contracts = {}
+
+        def contract_of(cid: str) -> dict:
+            code = self.code.get(cid, "")
+            if self._ops_in(cid, code):
+                r = self.check_contract(cid, code)
+                self.code[cid] = code
+                return r
+            if self._component_defs(cid):  # every operation is degraded
+                return {"ok": True, "text": "every operation keeps its L0 conditions (degraded)", "ops": {}}
+            return {"ok": False, "text": "no code"}
+
         for c in self.components:
             cid = c["id"]
-            code = self.code.get(cid, "")
-            r = self.check_contract(cid, code) if code else {"ok": False, "text": "no code"}
-            contracts[cid] = {"ok": r["ok"], "ops": r.get("ops", {}), "text": r["text"][:500]}
-            if code:
-                self.code[cid] = code
+            if self.degrade_failed:
+                self.fill_missing(cid)
+            r = contract_of(cid)
+            if self._component_defs(cid):
                 given = {op: {p: old_proofs.get(f"trace_{p}:{cid}:{op}", "") for p in ("pre", "post")}
                          for op in c["operations"]}
                 self.check_traces(cid, c["operations"], given)
+                if self.degrade_failed and self.degrade_failing(cid, r):
+                    r = contract_of(cid)
+            contracts[cid] = {"ok": r["ok"], "ops": r.get("ops", {}), "text": r["text"][:500]}
+        for op in self.degraded:
+            for part in ("pre", "post"):
+                res = self.results.get(f"trace_{part}:{self.owner[op]}:{op}")
+                if res and res.get("proved"):
+                    res["by"] = "fallback"
         for a, b in zip(self.order, self.order[1:]):
             self.check_po1(a, b, old_proofs.get(f"po1:{a}:{b}", ""))
-        if len(self.order) >= 1 and all(self.code.get(c) for c in self.order):
+        if len(self.order) >= 1 and all(self._component_defs(c) for c in self.order):
             self.check_po2(old_proofs.get("po2", ""))
         text = self.arch_file()
         whole = check_lean(text)
@@ -527,9 +619,12 @@ class ArchSession:
             problems.append("Arch.lean does not compile: " + "; ".join(_errors(whole["error"], 2)))
         proved = {k: bool(self.results.get(k, {}).get("proved")) for k in self.obligations()}
         ok = not problems and all(proved.values()) and all(v["ok"] for v in contracts.values())
-        return {"ok": ok, "problems": problems, "contracts": contracts, "proved": proved,
-                "arch_compiles": whole["success"], "arch": text,
-                "text": ("ACCEPTED" if ok else "REJECTED") + f": {sum(proved.values())}/{len(proved)} obligations proved"
+        verdict = ("accepted-degraded" if self.degraded else "accepted") if ok else "rejected"
+        note = (f"; {len(self.degraded)} of {len(self.l0)} operations degraded (contract = L0 conditions): "
+                + ", ".join(list(self.degraded)[:5])) if self.degraded else ""
+        return {"ok": ok, "verdict": verdict, "degraded": dict(self.degraded), "problems": problems,
+                "contracts": contracts, "proved": proved, "arch_compiles": whole["success"], "arch": text,
+                "text": verdict.upper() + f": {sum(proved.values())}/{len(proved)} obligations proved" + note
                         + ("; " + "; ".join(problems) if problems else "")}
 
     # -- agent-mode dispatch -----------------------------------------------------------------

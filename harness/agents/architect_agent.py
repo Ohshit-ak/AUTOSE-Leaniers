@@ -232,17 +232,22 @@ def build_component(s: ArchSession, comp: str, model: str, graph_info: bool, rec
                                     "seconds": round(time.time() - t0, 1), "log": r.get("log", []),
                                     **({"error": r["error"][:600]} if r.get("error") else {})}
     s.fill_missing(comp)
-    s.check_contract(comp, s.code[comp])
+    if s._ops_in(comp, s.code.get(comp, "")):
+        s.check_contract(comp, s.code[comp])
     t = s.check_traces(comp, ops)
-    if t["ok"] or not PROOF_RETRIES:
-        return
-    for (op, part), ok in sorted(t["parts"].items()):
-        if ok or op in s.placeholders:
-            continue
-        stmt = A.trace_statements(comp, op)[part]
-        about = s.get_l0_spec(op) + "\n" + s.code[comp]
-        prove_loop(s, stmt, about, lambda body, o=op, p=part: s.check_trace(comp, o, **{f"proof_{p}": body}),
-                   model, PROOF_RETRIES)
+    if not t["ok"] and PROOF_RETRIES:
+        for (op, part), ok in sorted(t["parts"].items()):
+            if ok or op in s.placeholders or op in s.degraded:
+                continue
+            stmt = A.trace_statements(comp, op)[part]
+            about = s.get_l0_spec(op) + "\n" + s.code[comp]
+            prove_loop(s, stmt, about, lambda body, o=op, p=part: s.check_trace(comp, o, **{f"proof_{p}": body}),
+                       model, PROOF_RETRIES)
+    if s.degrade_failed:
+        # An operation whose trace still fails keeps its L0 conditions, so PO1/PO2 of the
+        # group are not blocked by it; it is reported as degraded.
+        for op in s.degrade_failing(comp):
+            record["operations"].setdefault(op, {})["degraded"] = s.degraded[op]
 
 
 def run_pipeline(s: ArchSession, model: str, graph_info: bool, record: dict,
@@ -390,7 +395,7 @@ def run_group(graph: dict, group_id: str, l0_codes: Dict[str, str], domain_code:
 
     final = s.submit_architecture(expected_locked_hash=record["locked_hash"])
     record.update(
-        mode_used=used, verdict="accepted" if final["ok"] else "rejected", problems=final["problems"],
+        mode_used=used, verdict=final["verdict"], degraded=final["degraded"], problems=final["problems"],
         arch_compiles=final["arch_compiles"], obligations={k: s.results.get(k, {}) for k in s.obligations()},
         proved=final["proved"], contracts=final["contracts"], placeholders=s.placeholders,
         code=dict(s.code), proofs=dict(s.proofs), tool_calls=s.calls, n_tool_calls=len(s.calls),

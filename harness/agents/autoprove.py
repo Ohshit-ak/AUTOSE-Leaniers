@@ -13,8 +13,17 @@ _DEF_NAME = re.compile(r"^def\s+(\w+)", re.M)
 _NEXT_TOP = re.compile(r"^\S", re.M)
 
 
-def _scripts(names: str) -> list:
-    """Candidate proofs; `names` are the user definitions to unfold (comma separated)."""
+def _scripts(names: str, statement: str = "") -> list:
+    """Candidate proofs; `names` are the user definitions to unfold (comma separated).
+    The obligation-specific tactic goes first: PO2 over `seq` has the middle value as an
+    `∃` hypothesis, which `discharge_po2` takes apart before closing (the generic scripts
+    below never do)."""
+    special = [f"{tac} [{names}]" for word, tac in (("Refines", "discharge_po2"), ("Compatible", "discharge_po1"),
+                                                     ("Satisfies", "discharge_po3")) if word in statement]
+    return special + _generic(names)
+
+
+def _generic(names: str) -> list:
     u = f"unfold Contract.Compatible Contract.Refines Contract.seq Contract.Satisfies at *; " \
         f"unfold {names.replace(',', '')} at *"
     return [
@@ -43,7 +52,7 @@ def auto_prove(code: str, context: str) -> Optional[str]:
     proved = []
     for m in thms:
         stmt = f"theorem {m.group(1)} :{m.group(2)}:= by"
-        for s in _scripts(names):
+        for s in _scripts(names, m.group(2)):
             attempt = f"{head}\n\n{stmt}\n  {s}"
             if check_lean(f"{context}\n\n{attempt}")["success"]:
                 proved.append(f"{stmt}\n  {s}")

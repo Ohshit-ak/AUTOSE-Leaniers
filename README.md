@@ -9,17 +9,23 @@ English requirement
    │  L0 spec agent        → Lean spec  (Spec : Contract Input Output)
    ▼
 Lean spec
-   │  L1 architect agent   → component contracts + proofs of PO1, PO2
+   │  L1 architect agent   → component contracts; PO1, PO2
    ▼
 Contracts (locked)
-   │  L2 coding agents     → implementations + proofs of PO3 (one per component)
+   │  L2 coding agents     → implementations (one per component); PO3
    ▼
 Verified system  (Contract.system_sound ⇒ end-to-end correctness)
 ```
 
+In L1 and L2 the model writes definitions (contracts, functions). The proof-obligation
+statements are written by the harness, which also proves them and reports the part that fails.
+There are two L1/L2 paths: per component group from a requirements graph (`--until arch`,
+`--until code`) and per spec (`--until chain`). The last step of the intended pipeline, turning
+the verified Lean implementation into Python, is not built yet.
+
 > Current status, design decisions and next steps are in **[MEMORY.md](MEMORY.md)**. Read it first.
 
-**Status (2026-11-06).** All three layers run end to end with an open-weight model
+**Status (2026-11-12; Qwen results are from 2026-11-06).** All three layers run end to end with an open-weight model
 (Qwen 2.5 7B, local). Single runs, seed 42, on the L0 specs that passed every L0 check:
 
 | SRS | L0 specs into L1 | L1 (PO1+PO2) | L2 components (PO3) | Fully verified end to end |
@@ -33,6 +39,14 @@ both implementations and their PO3 proofs together in one file. Known limits: 15
 decompose (a single validity check); L2 often proves only one of the two components.
 Details are in [MEMORY.md](MEMORY.md) under *L1/L2 end-to-end*.
 
+**2026-11-12, chain-v3 (code changed, Qwen not rerun yet).** The table above is the v2 run.
+Judged by the v3 checks, the 38 architectures v2 accepted on both SRSs are 21 single-step specs
+(now not split at all), 16 identity / copy-of-`Spec` splits (now rejected) and 1 real
+decomposition, so the v2 L1 numbers overstate decomposition. v3: the model writes only
+definitions and the harness states and proves PO1/PO2/PO3; single-step specs keep `Spec` as their
+one component; the chain path is a `main.py` stage with repetitions. New numbers need
+`runs/qwen-chain-v3.sbatch` on a GPU node. See MEMORY.md, *chain-v3*.
+
 ---
 
 ## Branches (and where to go if `main` breaks)
@@ -42,7 +56,7 @@ kept on purpose, so each one is a known working state you can fall back to:
 
 | Branch | What it has | Use it when |
 |--------|-------------|-------------|
-| `main` | everything: L0 v10.1, graph L1 + its Qwen runs, graph L2 (`code` stage), the per-spec L1/L2 path (`e2e_l1l2.py`) and its runs, the mid-submission report | normal work |
+| `main` | everything: L0 v10.1, graph L1 + its Qwen runs, graph L2 (`code` stage), the per-spec L1/L2 path (`--until chain`; `e2e_l1l2.py` is its older CLI) and its v2 runs, the mid-submission report | normal work |
 | `backup/main-pre-merge` | `main` as it was just before the 2026-11-06 merges (= `feat/l2-coding-agent`) | the merge itself turns out to have broken something |
 | `l0-v10` | L0 frozen at v10.1 + the per-spec L1/L2 path and its e2e runs (here the agents are still called `architect_agent.py` / `coding_agent.py`) | the per-spec L1/L2 or `e2e_l1l2.py` stops working on `main` |
 | `feat/l2-coding-agent` | graph L1 + the L2 coder for graph architectures (`code_lean.py`, `--until code`), no L1 run outputs | the graph L1/L2 code (`main.py --until arch/code`) stops working |
@@ -52,7 +66,7 @@ kept on purpose, so each one is a known working state you can fall back to:
 What changed in the merge, in case something looks off:
 - `main` and `l0-v10` each had their own L1/L2 agents. On `main` the graph-path agents keep the
   names `agents/architect_agent.py` and `agents/coding_agent.py` (used by `main.py`); the per-spec
-  agents from `l0-v10` live in `agents/chain_architect.py` and `agents/chain_coder.py` (used by `e2e_l1l2.py`).
+  agents from `l0-v10` live in `agents/chain_architect.py` and `agents/chain_coder.py` (used by `main.py --until chain` and `e2e_l1l2.py`; rewritten on `main` for chain-v3, so the `l0-v10` copies are the v2 agents).
 - A stray gitlink `AUTOSE-Leaniers` (a nested copy of the repo) from `l1_runs` was left out.
 
 To fall back, don't rewrite `main`. Check the branch out on its own, or copy one file back:
@@ -65,9 +79,9 @@ git diff origin/backup/main-pre-merge main -- harness/      # see what the merge
 ```
 
 After the merge, `lake build` succeeds and all 128 tests in `harness/tests` pass on `main`.
-If `pytest` says `No module named 'tests.test_arch'`, some other package in your Python
-installs a top-level `tests` package that hides ours; run `touch harness/tests/__init__.py`
-locally (don't commit it) or use a clean virtualenv.
+`harness/tests/` is a package (`__init__.py`) and `harness/pytest.ini` pins `testpaths`/`pythonpath`,
+so an unrelated top-level `tests` package installed elsewhere in your Python can no longer
+shadow ours. Run `python -m pytest` (or `python -m unittest discover -s tests`) from `harness/`.
 
 ---
 
@@ -78,6 +92,7 @@ AUTOSE-Leaniers/
 ├── README.md               # this file: what it is, how to navigate, how to use
 ├── MEMORY.md               # project state, decisions, gotchas, next steps
 ├── .env.example            # API key names (copy to .env)
+├── requirements.txt        # Python dependencies (pip install -r requirements.txt)
 ├── .env                    # your API keys (gitignored)
 ├── lakefile.lean           # root Lake workspace: requires framework/, so editors and
 ├── lean-toolchain          #   `lake env lean` resolve `import ContractForge` for runs/
@@ -96,8 +111,12 @@ AUTOSE-Leaniers/
 │   └── Test.lean           # smoke test
 │
 ├── harness/                # Python orchestration
-│   ├── main.py             # pipeline entry point: parse → spec (L0) → check → graph → arch (L1) → code (L2)
-│   ├── e2e_l1l2.py         # per-spec L1 + L2 over the accepted L0 specs of a run (shardable)
+│   ├── main.py             # pipeline entry point: parse → spec (L0) → check → graph → arch (L1) → code (L2); or → chain
+│   ├── chain_pipeline.py   # chain path (`--until chain`): per spec L1 → L2 → end-to-end theorem
+│   ├── chain_checks.py     # chain L1 checks: shape, field visibility, identity/copy, strength, PO1/PO2 + diagnosis
+│   ├── chain_failures.py   # failure classes of chain L1/L2 results; root cause of an unimplementable contract
+│   ├── po.py               # PO code shared by both L1/L2 paths: forbidden words, statements, batched proving
+│   ├── e2e_l1l2.py         # older CLI of the chain path (one run folder, shardable)
 │   ├── req_graph.py        # L1: deterministic requirements graph (no LLM)
 │   ├── arch_lean.py        # L1: harness-written Lean (message type, SystemSpec, PO statements)
 │   ├── code_lean.py        # L2: harness-written Lean for the coding stage
@@ -115,9 +134,9 @@ AUTOSE-Leaniers/
 │       ├── arch_tools.py       # L1: the architect's tools (checks, obligations, submit)
 │       ├── architect_agent.py  # L1 (main.py): group → component contracts + trace/PO1/PO2
 │       ├── coding_agent.py     # L2 (main.py): component contract → impl + PO3
-│       ├── chain_architect.py  # L1 (e2e_l1l2.py): spec → two chained contracts + PO1/PO2
-│       ├── chain_coder.py      # L2 (e2e_l1l2.py): contract → impl + PO3
-│       └── autoprove.py        # harness proof search for PO1/PO2/PO3 (no model)
+│       ├── chain_architect.py  # L1 (chain): spec → `Mid` + two chained contracts; PO1/PO2 by the harness
+│       ├── chain_coder.py      # L2 (chain): contract → implementation; PO3 by the harness
+│       └── autoprove.py        # generic proof search over model-written PO theorems (kept for other callers)
 │
 ├── scripts/
 │   ├── start_qwen_server.sh  # local Qwen 2.5 7B via llama.cpp (port 8082)
@@ -126,7 +145,7 @@ AUTOSE-Leaniers/
 │
 ├── evaluation/
 │   ├── compare_runs.py       # compare two runs over repetitions (rep1..N): mean (min–max), verdict only beyond the spread
-│   └── summarize_e2e.py      # L1/L2/end-to-end counts of an e2e run; flags pass-through splits
+│   └── summarize_e2e.py      # chain runs: results by mode, failure classes, 1-of-2 causes, spread over repetitions
 │
 ├── Requirements/           # input SRS documents (.xml, .pdf)
 │   └── parsed/             # parser output, one JSON per document
@@ -136,7 +155,7 @@ AUTOSE-Leaniers/
     └── logs/               # sbatch files of the e2e runs (logs themselves are not committed)
 ```
 
-Planned, not yet created: `harness/reverify.py`, `requirements.txt`, and the
+Planned, not yet created: `harness/reverify.py` and the
 contents of `benchmark/` and the rest of `evaluation/` (see [MEMORY.md](MEMORY.md)).
 
 ### Where to look for…
@@ -155,8 +174,11 @@ contents of `benchmark/` and the rest of `evaluation/` (see [MEMORY.md](MEMORY.m
 | Change the retry/repair loop | [harness/agents/base.py](harness/agents/base.py) |
 | Change how the requirements graph is built (L1) | [harness/req_graph.py](harness/req_graph.py) |
 | Change the L1 tools, checks or generated Lean | [harness/agents/arch_tools.py](harness/agents/arch_tools.py), [harness/arch_lean.py](harness/arch_lean.py) |
-| Run L1/L2 on a finished L0 run | [harness/e2e_l1l2.py](harness/e2e_l1l2.py) |
-| Change the generic proof scripts the harness tries | [harness/agents/autoprove.py](harness/agents/autoprove.py) |
+| Run L1/L2 per spec on a finished L0 run | `main.py --until chain` ([harness/chain_pipeline.py](harness/chain_pipeline.py)) |
+| Change what counts as a real decomposition, or the PO feedback | [harness/chain_checks.py](harness/chain_checks.py) |
+| Change how PO statements are written or checked in batches (both paths) | [harness/po.py](harness/po.py) |
+| Change how failures are classified, or the run summary | [harness/chain_failures.py](harness/chain_failures.py), [evaluation/summarize_e2e.py](evaluation/summarize_e2e.py) |
+| Change the generic proof scripts for model-written theorems | [harness/agents/autoprove.py](harness/agents/autoprove.py) |
 
 ### Proof obligations
 
@@ -203,7 +225,7 @@ Python 3.10+. Use a venv (or your existing conda env):
 ```bash
 python -m venv venv
 source venv/bin/activate
-pip install google-genai openai python-dotenv networkx spacy
+pip install -r requirements.txt
 python -m spacy download en_core_web_sm   # L1 requirements graph
 ```
 
@@ -330,7 +352,7 @@ Lean's error message. A `sorry` counts as a failure. (Next to a real error, Lean
 per requirement, data constraint and use case, and then checks the specs (L0.5,
 `validate.py`): no empty `post`, runtime bounds present, data-field specs accept and
 reject values built from the parser's rules. L1 (`graph`, `arch`) and L2 (`code`) are described below.
-A second, per-spec L1/L2 path runs on a finished run with `e2e_l1l2.py` (see *Run L1/L2 end to end* below).
+A second, per-spec L1/L2 path is the `chain` stage (see *Chain path* below).
 
 ```bash
 python main.py                                    # all XMLs, model qwen (or $CF_MODEL)
@@ -396,7 +418,7 @@ reply forms, numeric data tests, fixups and repair hints) and the v9 changes (`t
 filter/sort/limit parsing, scope-section drops, `Nat ≥ 0`, per-mutant vacuity, the search template) and the v10 changes
 (`test_v10_fixes.py`: seeds and run metadata, truncation, deriving fixup, rule-based negative cases, vacuity feedback,
 `has_precondition`, UI drops, `ContractForge.Strings`, name suggestions, field and function-misuse hints). Tests that run Lean are skipped
-if `lake` is missing. L1: `test_req_graph.py` (graph determinism, edges, cycles, unmapped fields; needs spaCy) and `test_arch.py` (every L1 tool on a toy shop, a correct architecture, and the cases the harness rejects).
+if `lake` is missing. L1: `test_req_graph.py` (graph determinism, edges, cycles, unmapped fields; needs spaCy) and `test_arch.py` (every L1 tool on a toy shop, a correct architecture, the cases the harness rejects, and degraded operations). Chain path: `test_chain.py` (static checks, PO diagnosis, single-step routing, the coder, the pipeline with a scripted model, the repetition summary).
 
 ### L1: requirements graph → contracts (`--until graph`, `--until arch`)
 
@@ -415,42 +437,61 @@ cd .. && python evaluation/compare_runs.py "runs/0000 - gamma j/qwen-L1-v1-nogra
 
 | Step | What | Where |
 |------|------|-------|
-| graph | `req_graph.py`, no model: entities (Domain.lean, data dictionary, glossary, actors, `Requirements/synonyms/<doc>.json`), one operation per L0 spec (Input fields = reads, Output fields = writes unless only copied or a `Bool` result), write→read and use-case edges, groups (connected), components (Louvain if > `CF_GRAPH_MAX_COMPONENT`=8 ops), cycles listed then merged, topological order | `runs/<doc>/graph/graph.json`, `graph.png` |
+| graph | `req_graph.py`, no model (graph version 2): entities from the SRS (data dictionary, glossary, actors) and from the L0 specs themselves (helper structures; state = a field one spec reads and another writes, e.g. `signedIn`), plus Domain.lean and `Requirements/synonyms/<doc>.json` when they exist (`--vocab srs` ignores both). One operation per L0 spec (Input fields = reads, Output fields = writes unless only copied or a `Bool` result), write→read and use-case edges, groups (connected), components (Louvain: always above `CF_GRAPH_MAX_COMPONENT`=8 ops, from `CF_GRAPH_MIN_SPLIT`=4 ops when modularity ≥ `CF_GRAPH_MIN_MODULARITY`=0.1). Cycles are listed and broken: components stay, the chain order with the least backward dataflow is taken and the backward edges are recorded (`CF_GRAPH_CYCLES=merge` for the v1 behaviour). `--until graph` always rebuilds | `runs/<doc>/graph/graph.json`, `graph.png` |
 | arch | per group with ≥ 2 compiling L0 specs: the harness writes a message type (`req_<op>`/`res_<op>`), a locked `SystemSpec` (one case per L0 spec), every theorem statement; the model writes `<C>_pre_<op>`/`<C>_post_<op>` per operation. Checks: compiles, satisfiable on the L0 example, not vacuous, trace (covers the L0 spec), PO1 per consecutive pair, PO2 for the chain, `system_sound_<G>` | `runs/<doc>/<model>-L1-v1[-nograph]/rep<k>/arch/<group>/Arch.lean`, `arch.json`, `arch/summary.json` |
+
+An operation whose contract fails a check or whose trace is not proved is **degraded**: it keeps
+its L0 conditions as its contract (harness fallback), so it no longer blocks PO1/PO2 of the
+group. The verdict is then `accepted-degraded` with the operations listed in `arch.json`
+(`degraded`); `CF_ARCH_DEGRADE=0` restores the strict behaviour (verdict `rejected`).
 
 `Arch.lean` compiles on its own from the repo root (`lake env lean "runs/…/Arch.lean"`);
 obligations that were not proved are comments starting `-- NOT PROVED:`. `arch.json` has the
 model's code, every obligation (proved, by `auto`/`model`, attempts, errors), contract checks,
 the tool-call log, the mode used and `meta`. Design and results: MEMORY.md (*L1*).
 
-### Run L1/L2 end to end (`e2e_l1l2.py`)
+### Chain path: L1/L2 per spec (`--until chain`)
 
-Takes a finished `main.py` run and sends every spec that is `checked` and accepted in
-`review.json` through L1 (`agents/chain_architect.py`: two chained contracts `Input → Mid → Output`,
-proofs of PO1 and PO2) and then L2 (`agents/chain_coder.py`, one coder per contract: implementation + PO3).
-When both L2 components succeed, the whole file is checked by Lean once more.
+The second L1/L2 path. It reads the **frozen** L0 run (default `runs/<doc>/qwen-v10.1/rep1`,
+`--l0-run`) and sends every spec that is `checked` and accepted in `review.json` through L1 and L2.
 
 ```bash
 cd harness
-python e2e_l1l2.py "../runs/2009 - video search/qwen-e2e-v2" --model qwen
-python e2e_l1l2.py "../runs/0000 - gamma j/qwen-e2e-v2" --model qwen --start 16 --end 27   # one shard
-cd .. && python evaluation/summarize_e2e.py "runs/0000 - gamma j/qwen-e2e-v2"
+python main.py "../Requirements/0000 - gamma j.xml" --until chain --repeat 3     # seeds 42, 43, 44
+python main.py … --until chain --only 5.3/R4 UC-customer-login-customer          # some specs
+python main.py … --until chain --repeat 3 --fallback-single --run-name qwen-chain-v3-fallback
+cd .. && python evaluation/summarize_e2e.py "runs/0000 - gamma j/qwen-chain-v3"  # results, failure classes, spread
 ```
 
-On ada, each shard runs as its own GPU job with its own Qwen server port
-(`runs/logs/e2e-*.sbatch`; set `CF_QWEN_PORT` and `CF_QWEN_BASE_URL`). Outputs:
+On ada: `sbatch runs/qwen-chain-v3.sbatch` (both SRSs, 3 seeds, with and without fallback, summary).
+`e2e_l1l2.py <run_dir> [--start A --end B]` is the older CLI of the same pipeline (one folder, shards).
+
+| Step | Who writes what | Checks |
+|------|-----------------|--------|
+| route | harness (`chain_checks.single_step`) | a data constraint, or a `post` with one condition, is **not split**: its one component is `Spec`, PO2 is `Refines Spec Spec`, no model call (`mode: single`) |
+| L1 | model: `structure Mid` and two contracts `Input → Mid → Output`, definitions only. Harness: the PO1/PO2 statements and proofs (`discharge_po1`, `discharge_po2`) | before Lean: shape; **visibility** (a contract reads only its own records; an `Input` field used by the second contract is reported with the field to add to `Mid`); **work** (a `post` that only copies fields or restates the precondition is an identity; a contract equal to `Spec` up to variable names is a copy; the second must use what the first computes). In Lean: a fact claimed about a copied `Input` field must follow from `pre`; PO1; PO2. A failed PO names the conjunct that does not follow |
+| L2 | model: `def <C>Impl (x : A) : B` with the signature it is given. Harness: PO3 statement and proof (`discharge_po3`) | signature; PO3, and on failure the `post` conjuncts the function does not establish |
+| end | harness | one file per spec with `theorem system_ok : Spec.Satisfies (<B>Impl ∘ <A>Impl)` from `Contract.system_sound po1 po2 …` (or `refines_sound` for a single component), checked by Lean (`full_check`) |
+
+`--fallback-single`: when the two-component split fails, `Spec` is implemented as one component
+(`mode: single-fallback`, reported separately; keep these runs in their own `--run-name`).
+`--split always|never` overrides the routing.
+
+Outputs in `runs/<doc>/<model>-chain-v3/rep<k>/`:
 
 | File | Contents |
 |------|----------|
-| `l1l2.json` (or `l1l2.<start>-<end>.json` per shard) | per spec: L1 success, attempts, contracts, error, code; per contract the L2 result; `full_check` for the combined file |
-| `l1l2/<id>.lean` | spec + L1 code + L2 code in one file, checkable with `lake env lean` from the repo root |
-| `summary.txt` | output of `evaluation/summarize_e2e.py` (merges shard files) |
+| `l1l2.json` | per spec: `l1` (success, `mode`, attempts, contracts, `strength`, error, `error_class`, code), `l2` per contract (success, attempts, error, `error_class`, code), `full_check`, `system_theorem`, `l2_root_cause` |
+| `l1l2/<id>.lean` | spec + architecture + implementations + `system_ok`, checkable with `lake env lean` from the repo root |
+| `chain_meta.json` | model, seed, prompt hashes, commit, L0 run, options |
 
-How L1/L2 differ from L0 in the repair loop (`agents/base.py`): the spec (and for L2 the
-contracts) are passed as locked context. Declarations of locked names that the model repeats
-are removed before checking, the L0 "write only a new `example`" repair is not used, and
-whenever the model's definitions compile, `agents/autoprove.py` first tries generic proof
-scripts (`discharge_po [names]`, unfold + `simp_all` / `grind` / `omega`) on each PO theorem.
+`strength` (chain architectures) records what the decomposition adds to `Spec`: first component
+does work, second does work, second uses the first's result, neither is a copy of `Spec`, the
+second states an interface assumption (score out of 5; the first four are required).
+`error_class` (`harness/chain_failures.py`): shape, visibility, identity, unrealizable, po1, po2,
+signature, po3, or a Lean class (redeclared, unknown-field, unknown-name, syntax, type-error,
+proof). `summarize_e2e.py` counts them, lists specs with one of two components implemented with
+the cause, and prints `mean (min–max)` over repetitions.
 
 ### Writing Lean against the framework
 
@@ -469,7 +510,10 @@ theorem inc_ok' : incC.Satisfies (· + 1) := by
 `discharge_po` unfolds the PO definitions and tries `simp_all`, `omega`,
 `grind` and `decide`. It does **not** unfold your own contracts, so without an
 `unfold` first their `pre`/`post` stay opaque and it fails. `discharge_po [A, B, Spec]`
-also unfolds the named definitions. If neither closes the goal, write the proof by hand.
+also unfolds the named definitions. One tactic per obligation goes further:
+`discharge_po1 [A, B]` (PO1), `discharge_po2 [A, B, Spec]` (PO2: it takes the middle value of
+`A.seq B`, an `∃` hypothesis, apart before closing), `discharge_po3 [C, CImpl]` (PO3: splits an
+`if` in the implementation). If none closes the goal, write the proof by hand.
 
 ---
 

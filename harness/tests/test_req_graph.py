@@ -90,16 +90,17 @@ class GraphTests(unittest.TestCase):
         self.assertEqual(op["reads"][0]["rule"], "type")
         self.assertEqual(op["writes"][0]["via"], "synonym")  # glossary: Book "also called volume"
 
-    def split_each(self, results, **kw):
+    def split_each(self, results, cycles="break", **kw):
         """Build with every operation in its own component (Louvain replaced)."""
         import req_graph
-        old = (req_graph.MAX_COMPONENT_OPS, req_graph._louvain_split)
+        old = (req_graph.MAX_COMPONENT_OPS, req_graph._louvain_split, req_graph.CYCLE_MODE)
         req_graph.MAX_COMPONENT_OPS = 1
         req_graph._louvain_split = lambda g: [[n] for n in sorted(g.nodes)]
+        req_graph.CYCLE_MODE = cycles
         try:
             return self.build(results, **kw)
         finally:
-            req_graph.MAX_COMPONENT_OPS, req_graph._louvain_split = old
+            req_graph.MAX_COMPONENT_OPS, req_graph._louvain_split, req_graph.CYCLE_MODE = old
 
     def test_louvain_split_respects_size(self):
         import networkx as nx
@@ -117,12 +118,88 @@ class GraphTests(unittest.TestCase):
             req_graph.MAX_COMPONENT_OPS = old
         self.assertEqual(sorted(parts), [["a0", "a1", "a2", "a3"], ["b0", "b1", "b2", "b3"]])
 
+    CYCLE = [("A", "  loan : Loan", "  books : List Book"), ("B", "  books : List Book", "  loan : Loan"),
+             ("C", "  loan : Loan", "  shelf : Shelf")]
+
+    def test_cycle_broken_components_kept(self):
+        """Default: A ⇄ B is a cycle; both stay components, the order has one backward edge."""
+        g = self.split_each([result(i, spec(a, b)) for i, a, b in self.CYCLE])
+        grp = g["groups"][0]
+        self.assertFalse(grp["acyclic"])
+        self.assertEqual(grp["cycles_resolved"], "break")
+        self.assertEqual(len(grp["components"]), 3)
+        self.assertEqual(grp["merged_cycles"], [])
+        comp = {o["id"]: o["component"] for o in g["operations"]}
+        self.assertEqual(len(set(comp.values())), 3)
+        self.assertEqual(len(grp["feedback_edges"]), 1)
+        pos = {c: k for k, c in enumerate(grp["order"])}
+        fb = grp["feedback_edges"][0]
+        self.assertGreater(pos[fb["src"]], pos[fb["dst"]])
+        # every other component edge points forwards
+        back = [(e["src"], e["dst"]) for e in grp["component_edges"] if pos[e["src"]] > pos[e["dst"]]]
+        self.assertEqual(back, [(fb["src"], fb["dst"])])
+        self.assertLess(pos[comp["B"]], pos[comp["C"]])  # B writes the loan C reads
+        self.assertEqual(g["metrics"]["feedback_edges"], 1)
+
+    def test_order_cycle_minimises_backward_weight(self):
+        import req_graph
+        w = {("a", "b"): 5, ("b", "c"): 5, ("c", "a"): 1}
+        self.assertEqual(req_graph.order_cycle(["c", "b", "a"], w), ["a", "b", "c"])
+        old = req_graph.EXACT_ORDER_MAX
+        req_graph.EXACT_ORDER_MAX = 0   # the greedy path agrees here
+        try:
+            self.assertEqual(req_graph.order_cycle(["c", "b", "a"], w), ["a", "b", "c"])
+        finally:
+            req_graph.EXACT_ORDER_MAX = old
+
+    def test_state_entity_from_the_specs_alone(self):
+        """`signedIn` is in no document: one spec writes it, another reads it → an entity, an
+        edge and one group, without Domain.lean or a synonyms file."""
+        import req_graph
+        res = [result("login", spec("  password : String", "  signedIn : Bool")),
+               result("order", spec("  signedIn : Bool", "  placed : Bool")),
+               result("other", spec("  zorblax : Nat", "  done : Bool"))]
+        g = req_graph.build_graph(doc(), {"results": res}, None, {})
+        self.assertEqual(g["metrics"]["state_entities"], ["sign"])
+        ops = {o["id"]: o for o in g["operations"]}
+        self.assertEqual(ops["login"]["entities_written"], ["sign"])     # a Bool, but it is state
+        self.assertEqual(ops["order"]["entities_read"], ["sign"])
+        self.assertIn(("login", "order"), {(e["src"], e["dst"]) for e in g["edges"]})
+        self.assertEqual(ops["other"]["entities_written"], [])            # `done` is only ever a result
+        self.assertIn("other", g["isolated_operations"])
+        self.assertEqual(g["metrics"]["entities_used_by_source"], {"shared field": 1})
+
+    def test_helper_structures_are_entities_without_a_domain_file(self):
+        import req_graph
+        code = ("structure Ticket where\n  seat : Nat\n  deriving DecidableEq, Repr\n\n"
+                + spec("  tickets : List Ticket", "  tickets : List Ticket"))
+        g = req_graph.build_graph(doc(), {"results": [result("A", code), result("B", code)]}, None, {})
+        self.assertEqual(g["operations"][0]["reads"][0]["entity"], "ticket")
+        self.assertEqual(g["metrics"]["pct_fields_mapped"], 100.0)
+        self.assertEqual(g["metrics"]["groups"], 1)
+
+    def test_small_group_split_only_with_clear_communities(self):
+        import networkx as nx
+        import req_graph
+        two = nx.Graph()
+        for side in "ab":  # two triangles joined by one weak edge: real communities
+            ns = [f"{side}{k}" for k in range(3)]
+            two.add_edges_from((x, y, {"weight": 3}) for i, x in enumerate(ns) for y in ns[i + 1:])
+        two.add_edge("a0", "b0", weight=1)
+        comms, how, q = req_graph.split_group(two)
+        self.assertEqual((sorted(comms), how), ([["a0", "a1", "a2"], ["b0", "b1", "b2"]], "louvain"))
+        self.assertGreaterEqual(q, req_graph.MIN_MODULARITY)
+        clique = nx.complete_graph(["a", "b", "c", "d", "e"])
+        nx.set_edge_attributes(clique, 1, "weight")
+        comms, how, _ = req_graph.split_group(clique)   # no structure: one component
+        self.assertEqual(len(comms), 1)
+        self.assertTrue(how.startswith("connected"))
+        tiny = nx.path_graph(["a", "b", "c"])
+        self.assertEqual(req_graph.split_group(tiny)[1], "connected")   # below MIN_SPLIT_OPS
+
     def test_cycle_listed_and_merged(self):
-        g = self.split_each([
-            result("A", spec("  loan : Loan", "  books : List Book")),
-            result("B", spec("  books : List Book", "  loan : Loan")),
-            result("C", spec("  loan : Loan", "  shelf : Shelf")),
-        ])
+        """CF_GRAPH_CYCLES=merge (the v1 behaviour)."""
+        g = self.split_each([result(i, spec(a, b)) for i, a, b in self.CYCLE], cycles="merge")
         grp = g["groups"][0]
         self.assertFalse(grp["acyclic"])
         self.assertEqual(len(grp["cycles"]), 1)
