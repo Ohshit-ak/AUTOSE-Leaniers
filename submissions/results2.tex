@@ -1,0 +1,275 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.8cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{booktabs,tabularx,array}
+\usepackage{enumitem}
+\usepackage[table]{xcolor}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{microtype}
+\usepackage{pgfplots}
+\usepackage{listings}
+\pgfplotsset{compat=1.17}
+
+\setlist{nosep,leftmargin=1.2em}
+\titlespacing*{\section}{0pt}{8pt}{3pt}
+\titlespacing*{\subsection}{0pt}{6pt}{2pt}
+\titleformat{\section}{\large\bfseries}{\thesection}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\setlength{\parskip}{3pt}
+\setlength{\parindent}{0pt}
+\setlength{\emergencystretch}{2em}
+\hypersetup{colorlinks=true,urlcolor=blue,linkcolor=black}
+\newcommand{\cf}{ContractForge}
+\newcommand{\code}[1]{\texttt{\small #1}}
+
+\definecolor{okgreen}{HTML}{2E7D32}
+\definecolor{weakamber}{HTML}{C17A00}
+\definecolor{failred}{HTML}{B42318}
+\definecolor{rowgray}{HTML}{F2F4F7}
+
+\lstset{basicstyle=\ttfamily\footnotesize,backgroundcolor=\color{rowgray},frame=none,
+        columns=fullflexible,keepspaces=true,xleftmargin=4pt,xrightmargin=4pt,aboveskip=4pt,belowskip=4pt}
+
+% one issue = what happens / evidence / why it matters / proposed fix
+\newcommand{\what}{\par\smallskip\textbf{What happens.}~}
+\newcommand{\evidence}{\par\smallskip\textbf{Evidence.}~}
+\newcommand{\why}{\par\smallskip\textbf{Why it matters.}~}
+\newcommand{\fix}{\par\smallskip\textbf{Proposed fix.}~}
+
+\title{\vspace{-1.3cm}\textbf{\cf: The L0.5 Feedback Loop on gamma~j}\\[2pt]
+\large L0 $\rightarrow$ L0.5 loop $\rightarrow$ L1 $\rightarrow$ L2, and what the loop changes downstream}
+\author{Bavya Sri Kilari (2025701029), Akshith K (2024111004), Vivek R (2019112020)\\
+\small Autonomous Software Engineering, Monsoon 2026, IIIT Hyderabad}
+\date{\small 13 November 2026 \quad Repository: \href{https://github.com/Ohshit-ak/AUTOSE-Leaniers}{\nolinkurl{github.com/Ohshit-ak/AUTOSE-Leaniers}}}
+
+\begin{document}
+\maketitle
+\vspace{-0.9cm}
+
+% =====================================================================
+\section{Summary}
+Until now, an L0 spec that failed the L0.5 review was either dropped or regenerated once without being told why
+(\code{--on-l0-fail exclude|redo}). The new mode \code{--on-l0-fail loop} regenerates each failed spec with the L0.5
+reasons and the rejected spec in the prompt, for up to two rounds. A new spec replaces the old one only if its L0.5 status
+improves. Whatever still fails is excluded before L1. We ran it on gamma~j only, with L0 run once and then three L1+L2
+repetitions.
+\begin{itemize}
+\item \textbf{The loop works at L0.5.} It fixed \textbf{6 of 9} failed specs (5 in round 1, 1 in round 2): 5 now pass and 1
+      is flagged. Failures drop from 9 to 3, and \textbf{5 more specs} enter L1 (57 $\rightarrow$ 62). It took 8.5 minutes,
+      compared with 27 minutes for L0.
+\item \textbf{It adds about one verified spec.} Only 1 of the 5 repaired specs is verified end to end. Of the other four,
+      two fail PO3 in L2 and two fail PO2 in L1, in all three repetitions (Issue~2).
+\item \textbf{The end-to-end count dropped from 52.7 to 47.3, but the loop did not cause it.} L0 was regenerated with a
+      changed L0 prompt, and the new L0 was already weaker before the loop ran (57 pass vs 63). On the 17 specs whose text is
+      the same in both runs, the results are identical (Issue~1).
+\item \textbf{Flagged specs never reach L1}, so turning a fail into a flag has no effect on the results (Issue~3).
+\item \textbf{The 3 remaining failures are compile errors}, and round~2 repeats round~1's feedback word for word (Issue~4).
+\end{itemize}
+
+\subsection{Run setup}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+Document    & \code{0000 - gamma j} (74 parsed entries) \\
+Model       & \code{qwen2.5-7b-instruct} (Q4\_K\_M, llama.cpp), temperature 0.2 (0.7 on restart); open-weight only \\
+Harness     & L0 v10.1 + L0.5 loop (2 rounds, \code{CF\_L05\_ROUNDS}); chain-v4 for L1+L2. Commit \code{8d03bd5}, clean tree \\
+Job         & Slurm 76346 (\code{runs/qwen-l05loop-gammaj.sbatch}), GTX 1080 Ti \\
+Repetitions & L0 + loop: one run (seed 42). L1+L2: three repetitions (seeds 42, 43, 44), strict only (no fallback run) \\
+Baseline    & Frozen L0 \code{qwen-v10.1/rep1} (commit \code{b01f013}) and its chain run \code{qwen-chain-v4} \\
+Outputs     & \code{runs/0000 - gamma j/qwen-v10.1-l05loop/} (L0, \code{summary.md}) and \code{qwen-chain-v4-l05loop/} (L1+L2) \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Terms used in this report}
+\begin{tabularx}{\linewidth}{@{}lX@{}}
+\toprule
+L0.5 status & \emph{pass}: accepted, goes to L1. \emph{flag}: suspicious, kept for review but \emph{not} sent to the chain step.
+     \emph{fail}: rejected (does not compile, \code{post} accepts a forbidden output, a condition is always true, \dots). \\
+L0.5 loop & Regenerate every \emph{fail} with the reasons and the rejected spec appended to the prompt. Keep the new spec only if
+     its status is strictly better (fail $<$ flag $<$ pass). Repeat for at most 2 rounds, then exclude what still fails. \\
+repaired spec & A spec that failed L0.5 and passes (or is flagged) after the loop. \\
+end to end & Lean accepts one file with the spec, the architecture, PO1--PO3 and \code{theorem system\_ok : Spec.Satisfies \dots}. \\
+weak spec & A spec that an implementation made only of copied input fields and constants satisfies. \\
+\bottomrule
+\end{tabularx}
+
+% =====================================================================
+\section{What the loop did at L0.5}
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+L0.5 status & frozen L0 (\code{b01f013}) & this run, before loop & this run, after loop \\
+\midrule
+pass                       & 63 & 57 & \textbf{62} \\
+flag                       & 3  & 8  & 9  \\
+fail                       & 8  & 9  & \textbf{3} \\
+\midrule
+total                      & 74 & 74 & 74 \\
+into L1 (pass only)        & 61\textsuperscript{*} & 57 & \textbf{62} \\
+\bottomrule
+\end{tabular}
+\end{center}
+{\footnotesize \textsuperscript{*}The chain step takes specs that pass L0.5 \emph{and} were checked. In the frozen run, 2 of the 63
+passing specs (\code{3.4.3/S2}, \code{UC-administrator-manage-plug-in-options}) were not checked, so 61 went to L1.}
+
+\begin{table}[h]
+\centering\small
+\setlength{\tabcolsep}{4pt}
+\rowcolors{2}{white}{rowgray}
+\begin{tabularx}{\linewidth}{@{}llcllX@{}}
+\toprule
+Entry & kind & rounds & after loop & downstream (3 reps) & L0.5 reason fed back \\
+\midrule
+UC-sales-person-update-product-attributes & use case & 1 & \textcolor{okgreen}{pass} & \textcolor{okgreen}{verified 3/3}
+   & four conditions $x \geq 0$ on \code{Nat} fields are always true \\
+3.1.3/S2 & requirement & 1 & \textcolor{okgreen}{pass} & \textcolor{failred}{L2 PO3 fails}  & \code{post} accepts a forbidden output \\
+5.3/R3   & requirement & 1 & \textcolor{okgreen}{pass} & \textcolor{failred}{L2 PO3 fails}  & \code{post} accepts every changed output \\
+5.3/R4   & requirement & 1 & \textcolor{okgreen}{pass} & \textcolor{failred}{L1 PO2 fails}  & \code{post} accepts a forbidden output \\
+5.5/R1   & requirement & 1 & \textcolor{okgreen}{pass} & \textcolor{failred}{L1 PO2 fails}  & does not compile (instance synthesis error) \\
+UC-administrator-login-administrator & use case & 2 & \textcolor{weakamber}{flag} & not sent to L1 & \code{post} accepts a forbidden output \\
+DD-shipping-date               & data   & 2 & \textcolor{failred}{fail} & excluded & does not compile \\
+UC-customer-add-item-to-cart   & use case & 2 & \textcolor{failred}{fail} & excluded & does not compile \\
+UC-customer-checkout-an-order  & use case & 2 & \textcolor{failred}{fail} & excluded & does not compile \\
+\bottomrule
+\end{tabularx}
+\caption{The 9 entries that failed L0.5 before the loop. \emph{rounds}: loop rounds spent on the entry (an entry fixed in
+round~1 is not retried).}
+\label{tab:entries}
+\end{table}
+
+The loop fixes the failures that a sentence can explain: an always-true condition, or a \code{post} that is too loose (4 of
+the 5 passes). It does not fix compile errors: 3 of the 4 compile failures are still failing after two rounds.
+
+% =====================================================================
+\section{End-to-end results}
+Means over three L1+L2 repetitions (strict). The baseline uses the frozen L0; this run uses the new L0 after the loop.
+
+\begin{center}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+ & frozen L0 $\rightarrow$ \code{qwen-chain-v4} & this run $\rightarrow$ \code{qwen-chain-v4-l05loop} \\
+\midrule
+specs into L1                         & 61                      & 62 \\
+L1 accepted                           & 58.0 (58--58)           & 56.3 (56--57) \\
+\quad two-component architectures     & 1.0                     & 0.3 \\
+L1 failures: po2 / identity / type    & 0.7 / 2.0 / 0.3         & 4.7 / 1.0 / 0 \\
+L2 failures: po3                      & 5.3                     & 9.3 \\
+\midrule
+\textbf{end to end}                   & \textbf{52.7} (52--53)  & \textbf{47.3} (47--48) \\
+\quad on a non-trivial spec           & 30.7 (30--31)           & 26.0 (26--26) \\
+\quad requirement / data / use case   & 21.0 / 17 / 14.7        & 20.3 / 17 / 10.0 \\
+weak specs                            & 24                      & 23 \\
+minutes per repetition                & 11.5                    & 14.0 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Within this run, the loop's own contribution is $+1$: without it the 5 repaired specs would have been excluded, and only
+\code{UC-sales-person-update-product-attributes} is verified (in all three repetitions). So end to end would have been
+$47.3 - 1 = 46.3$ without the loop, and is 47.3 with it. Section~\ref{sec:issues} explains why the drop from 52.7 is not
+the loop's doing.
+
+% =====================================================================
+\clearpage
+\section{Issues, explained}\label{sec:issues}
+Each issue gives what happens, the evidence from this run, why it matters, and a proposed fix. None of the fixes have been
+made yet.
+
+% ---------------------------------------------------------------------
+\subsection*{Issue 1. This run cannot be compared with the frozen run}
+\what The job regenerated L0 instead of reusing the frozen \code{qwen-v10.1/rep1}. Both runs use seed 42, but the L0 prompt
+has changed since the frozen run: \code{prompt\_hash} is \code{a4ace6f72b38} at \code{b01f013} and \code{08c8321aa2dd} at
+\code{8d03bd5}. So two things changed at once, L0 and the loop.
+
+\evidence
+\begin{center}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Specs in both chain runs (56) & specs & e2e, frozen & e2e, this run \\
+\midrule
+identical Lean spec text          & 17 & 17.0 & 17.0 \\
+different Lean spec text          & 39 & 32.0 & 27.3 \\
+\bottomrule
+\end{tabular}
+\end{center}
+Where the spec text is the same, the results are the same. All of the drop comes from specs whose text changed:
+\code{1.4/S3}, \code{3.2.3/S1}, \code{5.3/R3}, \code{5.3/R4} and three administrator use cases (install patch, install
+plug-ins, remove plug-ins) are lost. \code{3.1.3/S3}, \code{SI-1.2} and \code{UC-administrator-add-user} are gained.
+Before the loop ran, the new L0 already had 6 fewer passing specs (57 vs 63).
+
+\why A reader comparing the two headline numbers would conclude that the loop costs 5 verified specs. It adds one. The
+difference between the two L0 runs is larger than the effect being measured.
+
+\fix Apply the loop to the \emph{frozen} L0: copy \code{qwen-v10.1/rep1} and run only the check stage with
+\code{--on-l0-fail loop}. Then L0 is identical and the loop is the only change. Separately, rerun L0 with the current prompt
+over three seeds to see how much L0 varies on its own.
+
+% ---------------------------------------------------------------------
+\subsection*{Issue 2. Passing L0.5 after feedback does not mean the spec is implementable}
+\what The loop makes a spec acceptable to the L0.5 review, but the repaired specs fail much more often later in the
+pipeline than the specs that passed on the first try.
+
+\evidence Repaired specs: 1 of 5 verified (20\%). Specs that passed without the loop: 46.3 of 57 (81\%). The four
+failures are the same in all three repetitions:
+\begin{itemize}
+\item \code{3.1.3/S2}, \code{5.3/R3}: routed single, L2 fails PO3 after 5 attempts.
+\item \code{5.3/R4}, \code{5.5/R1}: their new \code{post} relates two output fields, so they are routed to a split, and L1
+      fails PO2 in every repetition. The repaired \code{post} relates two output fields, which the router reads as an
+      intermediate result.
+\end{itemize}
+In the frozen run, \code{5.3/R3} and \code{5.3/R4} were routed single and verified with L2 on the first attempt. Their
+repaired versions here fail. Those frozen specs were never rejected by L0.5, so the two runs do not show whether
+the feedback made the specs harder or the new L0 sample did.
+PO2 failures went from 0.7 to 4.7 per repetition, and these two specs account for 2 of them.
+
+\why The loop raises the L0.5 pass count by 5, but that overstates its value: 4 of those 5 specs reach L1/L2 and still fail.
+
+\fix Report the loop's effect at the end-to-end level, not at L0.5. Look at the regenerated \code{post}s of \code{5.3/R4}
+and \code{5.5/R1}: if the feedback (``\code{post} accepts a forbidden output'') makes the model add an output-to-output
+relation, the split router will send the spec to L1 every time.
+
+% ---------------------------------------------------------------------
+\subsection*{Issue 3. Flagged specs never reach L1}
+\what The chain step reads only specs with status \emph{pass}. \code{UC-administrator-login-administrator} went from fail to
+flag in round~2, and the loop counted it as improved, but it is not used.
+
+\evidence 71 specs are pass or flag after the loop, but only 62 go to L1. All 9 flagged specs are left out, including the
+repaired one.
+
+\why Counting fail $\rightarrow$ flag as an improvement makes the loop look more useful than it is in the results.
+
+\fix Either loop on flags too (with the flag reason as feedback), or count only fail $\rightarrow$ pass as improved. Report
+the number of flagged specs next to the chain input.
+
+% ---------------------------------------------------------------------
+\subsection*{Issue 4. Compile errors are not fixed, and round 2 repeats round 1}
+\what When a regenerated spec is not better, the loop keeps the \emph{old} record. Round~2 then builds its feedback from that
+old record, so the model gets the same reasons and the same rejected spec as in round~1. It never sees why its round-1
+attempt failed.
+
+\evidence \code{DD-shipping-date}, \code{UC-customer-add-item-to-cart} and \code{UC-customer-checkout-an-order} fail to
+compile in both rounds, each after 5 attempts per round. Round~2 fixed 1 of 4 entries, against 5 of 9 in round~1.
+
+\why A second round with the same feedback is close to a blind retry. More rounds will cost time without fixing more.
+
+\fix Build round-$k$ feedback from the most recent attempt (its reasons and Lean error), while still keeping the better spec
+on disk. For compile errors, include the Lean error at its line, not only ``does not compile''.
+
+% =====================================================================
+\section{Suggested order of work}
+\begin{enumerate}
+\item \textbf{Measure the loop properly} (Issue 1): run the check stage with \code{--on-l0-fail loop} on a copy of the frozen L0,
+      then chain-v4 $\times$3. This is a short job and gives the number to report.
+\item \textbf{Feedback from the latest attempt} (Issue 4): a small change in \code{\_l05\_loop}, likely to help round~2.
+\item \textbf{Decide what to do with flags} (Issue 3): loop on them or stop counting fail $\rightarrow$ flag as improved.
+\item \textbf{Then run on the other 17 documents}: the loop is general (it uses only the L0.5 reasons), but report end to end
+      with and without it, from the same L0.
+\end{enumerate}
+
+\vfill
+{\footnotesize Numbers from \code{runs/0000 - gamma j/qwen-v10.1-l05loop/summary.md},
+\code{runs/0000 - gamma j/qwen-chain-v4-l05loop/rep\{1,2,3\}/l1l2.json}, \code{runs/0000 - gamma j/qwen-chain-v4/summary.md}
+and \code{runs/qwen-l05loop-gammaj.log}.}
+
+\end{document}
