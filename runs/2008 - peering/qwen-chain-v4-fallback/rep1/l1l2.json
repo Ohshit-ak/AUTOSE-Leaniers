@@ -1,0 +1,41 @@
+[
+  {
+    "id": "4.2/S4",
+    "kind": "requirement",
+    "requirement_text": "Messages can then be sent bi-directionally between the server and network elements.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ serverMessages := x.serverMessages, networkElementMessages := x.networkElementMessages }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { serverMessages := x.serverMessages, networkElementMessages := x.networkElementMessages }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.3
+  }
+]

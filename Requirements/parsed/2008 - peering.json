@@ -1,0 +1,1627 @@
+{
+  "schema_version": "1.0",
+  "source": {
+    "file": "2008 - peering.xml",
+    "sha256": "c9eaf14536e9f68fcce363482956445177b3690b0ff9573d6d158162494488d6"
+  },
+  "titles": [],
+  "stats": {
+    "requirements": 1,
+    "data_constraints": 0,
+    "use_cases": 0,
+    "dropped": 227
+  },
+  "glossary": [],
+  "requirements": [
+    {
+      "id": "4.2/S4",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "4.2",
+      "section_path": [
+        "External Interface Requirements",
+        "Communications Interfaces"
+      ],
+      "text": "Messages can then be sent bi-directionally between the server and network elements.",
+      "signals": [
+        "sent"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    }
+  ],
+  "data_dictionary": [],
+  "use_cases": [],
+  "dropped": [
+    {
+      "id": "1.1/S1",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "This document describes the requirements specification (SRS) for the software infrastructure (or product) that enables the internetworking of Content Delivery Networks (CDNs) through peering, henceforth termed as 'CDN peering', and provides an overall description of it.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "1.1/S2",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "It presents a means for distinct CDNs to coordinate and cooperate with other CDNs, by investigating and developing (a) models for effective internetworking between CDNs though peering; (b) protocols for service delivery in a cooperative environment of CDNs; (c) some concrete examples (technology trends) that exhibits the notion of content networking; and (d) policies for autonomic management of service level through resource negotiation in an on-demand basis.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "1.1/S3",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "Thus, this document provides a basis for evaluating the proposal for internetworking between CDNs.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "1.1/S4",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "This is the version 0.1 of the software requirements specification.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "1.2/S1",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "When writing this SRS for CDN peering, the following terminologies are used:",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.2/I1",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "Web server (WS): The container of content comprising of two layersoverlay, which is a collection of Web service host (e.g. Apache, Tomcat), Service Level Agreement (SLA)- allocator, and policy agent, and core, which refers to the underlying hardware infrastructure.",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.2/I2",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "Mediator: A policy-driven entity, authoritative for policy negotiation and management.",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.2/I3",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "Service registry (SR): Discovers and stores resource and policy information in local domain.",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.2/I4",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "Peering Agent (PA): A resource discovery module in the peering CDNs environment.",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.2/I5",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "Policy repository (PR): A storage of Web server, mediator and peering policies.",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.2/I6",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "PWS: A set of Web server-specific rules for content storage and management.",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.2/I7",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "PM: A set of mediator-specific rules for interaction and negotiation.",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.2/I8",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "PPeering: A set of rules for creation and growth of the peering arrangement.",
+      "reason": "non-normative section: Document Conventions and Terminology"
+    },
+    {
+      "id": "1.3/S1",
+      "source": "requirement",
+      "section": "1.3",
+      "text": "This document is written for the researchers, software developers, advanced practitioners, documentation writers, and users involved in CDN domain to initiation an open discussion for exploring development opportunities regarding the internetworking between CDNs.",
+      "reason": "non-normative section: Intended Audience and Reading Suggestions"
+    },
+    {
+      "id": "1.3/S2",
+      "source": "requirement",
+      "section": "1.3",
+      "text": "Section 2 discusses the steps that are to be undertaken to \"bring-up\" or \"cease\" an internetworking arrangement between CDNs.",
+      "reason": "non-normative section: Intended Audience and Reading Suggestions"
+    },
+    {
+      "id": "1.3/S3",
+      "source": "requirement",
+      "section": "1.3",
+      "text": "In the next section, system features with their functional requirements are presented to highlight the major services provided by the intended product.",
+      "reason": "non-normative section: Intended Audience and Reading Suggestions"
+    },
+    {
+      "id": "1.3/S4",
+      "source": "requirement",
+      "section": "1.3",
+      "text": "Then the external interface requirements highlighting the logical characteristics of each interface between the software product and the users are discussed.",
+      "reason": "non-normative section: Intended Audience and Reading Suggestions"
+    },
+    {
+      "id": "1.3/S5",
+      "source": "requirement",
+      "section": "1.3",
+      "text": "Finally, this specification is concluded with the reference documents on which this document is based on.",
+      "reason": "non-normative section: Intended Audience and Reading Suggestions"
+    },
+    {
+      "id": "1.4/S1",
+      "source": "requirement",
+      "section": "1.4",
+      "text": "The final product enabling CDN peering assists in coordinated and cooperative content delivery via internetworking among distinct CDNs to allow providers to rapidly \"scale-out\" to meet both flash crowds and anticipated increases in demand, and remove the need for a single CDN to provision resources.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.4/S2",
+      "source": "requirement",
+      "section": "1.4",
+      "text": "An ad-hoc or planned peering of CDNs requires fundamental research to be undertaken to address the core problems of measuring and disseminating load information, performing request assignment and redirection, enabling content replication and determining appropriate compensation among participants on a geographically distributed \"Internet\" scale.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.4/S3",
+      "source": "requirement",
+      "section": "1.4",
+      "text": "In contrast to a single CDN, for which these issues are deeply interrelated and co-dependent, the main thrust for the final product enabling CDN peering is to consider them in a coordinated and cooperative manner among many peered CDNs, whilst satisfying the complex multi-dimensional constraints placed on each individual provider.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.4/S4",
+      "source": "requirement",
+      "section": "1.4",
+      "text": "Each provider must ensure that their individual SLAs are met when serving content for its own customers to end users, while meeting any obligations it has made when participating in a group of many providers.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1.5/S1",
+      "source": "requirement",
+      "section": "1.5",
+      "text": "This document builds on the following references:",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "1.5/I1",
+      "source": "requirement",
+      "section": "1.5",
+      "text": "An introduction to CDN technologies [1].",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "1.5/I2",
+      "source": "requirement",
+      "section": "1.5",
+      "text": "The research problem for internetworking of CDNs [2]",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "1.5/I3",
+      "source": "requirement",
+      "section": "1.5",
+      "text": "The architecture for CDN peering [3].",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "1.5/I4",
+      "source": "requirement",
+      "section": "1.5",
+      "text": "The performance models to demonstrate the effects of peering and to predict user perceived performance [4].",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "1.5/I5",
+      "source": "requirement",
+      "section": "1.5",
+      "text": "CDN peering models along with the challenges for implementation [5].",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "2.1/S1",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "CDN peering allows different CDN providers to share resources in order to provide larger scale and/or reach to each participant than they could not achieve otherwise.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/S2",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "It is formed by a set of autonomous CDNs, which cooperate through a mechanism that provides facilities and infrastructure for cooperation in order to virtualize multiple providers.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/S3",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "It is expected that an effective peering arrangement between CDNs would require multiple steps to occur.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/I1",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "Initiation: A CDN's reach and scale is limited by its ability to handle peak load, cost of equipment, scalable infrastructure, and/or demand for the increased coverage of its infrastructure. Peering allows a particular CDN to achieve larger scale/reach through resource sharing with other CDN(s). It is triggered by an initialization request sent to the mediator under exceptional circumstances, e.g. flash crowds, when the (primary) CDN realizes that it cannot handle a part of the workload on its Web Servers (WSs). The triggering condition must consider the expected and unexpected load increases in the initiating CDN.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/I2",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "Negotiated relationship: The controlling interest of a CDN to interconnect with other CDNs leads to the creation of a negotiated relationship. In the business domain, this relationship (most likely) would take the form of a legal document which describes the expected level of services from the involving parties such as storage requirements, the required rate of transfer, cost of services; the expected duration of receiving service, penalties for service violations, and other preconditions such as the initiating CDN's preference to gain resources at a particular region. Negotiated relationships can also be established through means nontechnical terms (financial statement) or technical terms (SLAs). Thus, negotiated relationships must specify the interactions among entities including service administration, coordination and disband (or re-arrangement) of internetworked CDNs. In the CDN peering architecture, the mediator instance obtains the resource and access information from the Service Registry (SR), whilst SLAs and other policies from the Policy Repository (PR). The mediator instance on the primary CDN's behalf generates its service requirements based on the current circumstance and SLA requirements of its customer(s). Therefore, divergent policies are allowed that specify the information that can be shared during interaction through providing a certain level of visibility to preserve privacy.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/I3",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "Resource discovery: Once the initiating CDN identifies its roles and activities through the created negotiated relationships for coordination and cooperation between CDNs, the next step is to choose potential CDNs to peer with. The mediator instance passes the service requirements to the local PA to discover external resources from peers. The PA performs the resource discovery process through predicting performance of the peers, working around issues of separate administration and limited information sharing among enlisted CDNs. If there are any preexisting peering arrangements (for a long term scenario) then these will be returned at this point. Otherwise, it carries out short term negotiations with the Peering Agent (PA) identified peering targets.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/I4",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "CDN peering protocols: The next step is to configure the 'CDN peering' protocols at the conduit of the respective CDNs in order to technically support the terms and policies implicitly specified through the negotiated relationships. This step includes advertising the configurations (topology aspects, geographical proximity, capability, performance, etc.) of enlisted CDNs through inter-PA communication. On establishment of a peering arrangement, these protocols also allow participating CDNs to exchange information regarding the content availability and assists to redirect requests to an optimal peer. Request-redirection in a peering arrangement depends on the content distribution and request-routing policies (specified in the CDN peering protocols) associated with the content as well as the specific algorithms and methods used for directing these requests.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/I5",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "Operational management: When the primary CDN acquires sufficient resources from the peers to meet its SLA with the customer, the new peering arrangement becomes operational. Hence, necessary functional policies are deployed and administered in an effective way. Once a peering arrangement is established, all participating parties cooperate in the execution of common goal(s). Peering also enables the CDNs to exchange accounting information to perform billing based on the negotiated relationships. If no CDN is interested in such peering, peering arrangement creation through re-negotiation is resumed by tuning the negotiated relationships with reconsidered service requirements.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/I6",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "Disband or re-arrangement: An existing peering arrangement may need to either disband or re-arrange itself (within the scope of the negotiated relationships) if any of the following conditions hold: (a) the circumstances under which the arrangement was formed no longer hold; (b) peering is no longer beneficial for the participating CDNs; (c) an existing peering arrangement needs to be expanded further in order to deal with additional load; or (d) participating CDNs are not meeting their agreed upon contributions.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.1/S4",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "Figure 1 presents the interaction flows within the architecture of the CDN peering with an abstraction on its components.",
+      "reason": "non-normative section: Product Perspective"
+    },
+    {
+      "id": "2.2/S1",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The software infrastructure enabling peering between CDNs can be featured with the following major goals:",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I1",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "Development and validation of peering and manage the complexity of content delivery across Web servers of multiple CDNs that scale across the globe.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I2",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "Decrease cost of Web access, increase QoS through reduced latency, reduce server load, and bandwidth consumption (by a particular CDN server), thus improving the performance of content delivery.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I3",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "Assists an existing CDN to alleviate congestions by detecting and handling short-term load spikes (i.e. flash crowds) effectively.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S2",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The operations performed by the product components [3] assist to realize the above goals.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S3",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "Component-wise major functions are noted below.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S4",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The functions of the Web server(s) and its constituents are as follows,",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I4",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "A Web server replicates content on-demand from the origin server and stores it for future use.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I5",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "In the event of Web hotspot, it initiates request to trigger peering.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I6",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The Web services host ensures the delivery of content to end-users based on the negotiated policies with other CDNs.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I7",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The policy agent is responsible (in conjunction with the mediator) for determining which resources can be delegated and under what conditions (policies) delegation is permitted.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I8",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The SLA-allocator performs the provisioning and reservation of Web server's resources (e.g. CPU, bandwidth, storage etc.) to satisfy both local and delegated SLAs, and ensures that the terms of the SLAs are enforced.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I9",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The Web servers' underlying algorithms perform on-demand caching, content selection, and routing between servers.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S5",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The Mediator performs the following major functions,",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I10",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It generates service requirements as the basis for negotiated relationships.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I11",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It passes the service requirements to the PA.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I12",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It works in conjunction with its local PA to discover external resources and to negotiate with other CDNs.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I13",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "Once a peering arrangement is established, it controls what portion of the Web traffic (i.e. end-user requests) is redirected to the Web servers of the peering CDNs, which content is replicated there, how the replication decision is taken, and which replication policies are being used.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I14",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It ensures that the participating entities are able to adapt to changing circumstances (agility) and are able to achieve their objectives in a dynamic and uncertain environment (resilience)",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S6",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The main functions of the Service Registry are as follows,",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I15",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It encapsulates the resource and service information for each CDN.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I16",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It helps in discovering local resources through enabling the Web servers of CDN providers to register and publish their resource, service and policy details.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I17",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "In the face of traffic surges, it supplies any necessary local resource information to the mediator.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I18",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "When a new peering arrangement is established, an instance of the service registry is created that encapsulates all local and delegated external CDN resources.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S7",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The Policy Repository is used to perform the following functions,",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I19",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It virtualizes all of the policies within a peering arrangement including PWS, PM, and PPeering (i.e. Web server-specific policies, mediator policies, peering policies), along with any delegated policies for resources as a result of the peering arrangement.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I20",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It provides a set of rules to the mediator to administer, manage, and control access to the resources in a peering arrangement.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I21",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It returns existing peering policies to the PA during the establishment of long-term peering arrangements.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S8",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "A Peering Agent carries out the following major functions,",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I22",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It acts as a policy-driven resource discovery module for establishing negotiations.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I23",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It exchanges policy, resource information, and service requirements with external PAs.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I24",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "It is used as a conduit by the mediator to establish negotiations with PAs of other peers and to acquire resources from them.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S9",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "The operations performed by the components of the CDN peering is driven by semi-autonomous logic that ensures content is served reliably through content replication, request-routing and redirection whilst maintaining constant awareness of the health (e.g. load information) of participants.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/S10",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "These major architectural features of the CDN peering are briefly described in the following:",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I25",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "Content replication is performed using a cooperative pull-based approach where participating CDNs assist each others in serving data. Thus, content replication is featured through extending it to participating servers from the peers in a given peering arrangement, subject to the available resources they contribute",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I26",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "Load distribution is performed by measuring the load information and disseminating it within individual CDNs and amongst other CDNs using a hierarchical approach, where current bandwidth and resource usage of web servers in a CDN is reported to the CDN gateway (i.e. mediator, PA and policy repository as a single conceptual entity) in a periodic or thresholdbased manner. The gateways of participating CDNs then communicate aggregated load information describing the load of their constituent servers.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.2/I27",
+      "source": "requirement",
+      "section": "2.2",
+      "text": "Request assignment and redirection is performed at multiple levels - at the DNS, at the gateways to local clusters, and also (redirection) between servers in a cluster. Therefore, endusers can be assigned via DNS (by the peering agents of participating CDNs updating their DNS records regularly) and also via redirection at the CDN gateway when appropriate.",
+      "reason": "non-normative section: Product Features"
+    },
+    {
+      "id": "2.3/S1",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "The users of the software infrastructure enabling CDN peering can be differentiated by using their membership and contributions to the system.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S2",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "A given peering arrangement consists of explicit and implicit members.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S3",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "Explicit members include the primary CDN, which is the initiator of a peering relationship, and any peering CDNs who cooperate for resource sharing.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S4",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "Implicit members are content providers and end-users.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S5",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "Implicit members are transparent to a peering arrangement but they share the benefit from it.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S6",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "In addition, users can vary based on the purpose, size, scope and duration of peering.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S7",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "For instance, a short-term peering arrangement is to be automated to react within a tight time frameas it is unlikely that a human directed negotiation would occur quickly enough to satisfy the evolved niche.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S8",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "On the other hand, establishment of a long-term peering arrangement calls for a human-directed agent to ensure that any resulting decisions comply with participating CDNs' strategic goals.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S9",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "Users can also be classified because of the preferential treatment that they may receive due to the policy that pertains to a particular provider's business logic.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S10",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "Moreover, individual users (or a group of users) can have dynamic QoS requirements depending on the situations that will result in \"customized\" content delivery.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.3/S11",
+      "source": "requirement",
+      "section": "2.3",
+      "text": "Thus, users (or class of users) can be differentiated based on userdefined QoS specifications while accessing the service.",
+      "reason": "non-normative section: User Classes and Characteristics"
+    },
+    {
+      "id": "2.4/S1",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "The product (i.e. prototype system) enabling CDN peering is expected to be deployed it in a realworld test bed such as PlanetLab for global testing, observations, and for performance evaluation.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.4/S2",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "In this regard, existing Web services technologies will be studied in detail to examine the feasibility of leveraging them.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.4/S3",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "A modular implementation stack could be developed on top of the existing standard application layer (e.g.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.4/S4",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "Apache, Tomcat) and protocols (e.g.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.4/S5",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "HTTP, CDI, HTPC).",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.4/S6",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "A modular implementation approach would be useful to perform testing on modules at different stages to ensure correct implementation.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.4/S7",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "It is anticipated that a cryptographically secure auction-based framework will be used to assist content replication among peered CDNs to allow incentives for all participants.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.4/S8",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "Load information could be measured and disseminated within individual CDNs and among other CDNs using distributed load indices such as Distributed Hash Table (DHT) or variations of it.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.4/S9",
+      "source": "requirement",
+      "section": "2.4",
+      "text": "Request assignment and redirection could predominantly rely on DNS-level end-user assignment combined with a rudimentary request assignment policy such as weighted round-robin or least-loaded-first, which updates the DNS records to point to the most appropriate replica server of the peers.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.5/S1",
+      "source": "requirement",
+      "section": "2.5",
+      "text": "The challenges in developing the product include virtualization of multiple providers and offloading end-user requests from the primary CDN provider to peers based on cost, performance and load.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.5/S2",
+      "source": "requirement",
+      "section": "2.5",
+      "text": "Due to the proprietary nature of existing CDNs, limited information about response time or service cost is typically available from individual CDNs, and load balancing control is retained by an individual provider within its own Web servers.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.5/S3",
+      "source": "requirement",
+      "section": "2.5",
+      "text": "Therefore, request-redirections must occur over distributed sets of Web servers belonging to multiple CDN providers, without the benefit of the full information available, as in the single provider case.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.5/S4",
+      "source": "requirement",
+      "section": "2.5",
+      "text": "Moreover, an implementation model for the product enabling CDN peering could be based on a complex combination of attributes such as Web server responsiveness or load, expected network delay, or geographic location.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.5/S5",
+      "source": "requirement",
+      "section": "2.5",
+      "text": "Several of these potential attributes vary over time and there is no single repository for listing the value of attributes such as geographic location or expected delay for all Internet-connected systems.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.5/S6",
+      "source": "requirement",
+      "section": "2.5",
+      "text": "It is anticipated that the values used in a CDN peering implementation model are likely to be based on heuristics.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.6/S1",
+      "source": "requirement",
+      "section": "2.6",
+      "text": "Along with the software product, a user manual would be written to help people understand the working methodology and usage of the developed prototype system.",
+      "reason": "non-normative section: User Documentation"
+    },
+    {
+      "id": "2.6/S2",
+      "source": "requirement",
+      "section": "2.6",
+      "text": "It would be written for nontechnical individuals and the level of content or terminology would differ considerably from, for example, a System Administration Guide, which is more detailed and complex.",
+      "reason": "non-normative section: User Documentation"
+    },
+    {
+      "id": "2.6/S3",
+      "source": "requirement",
+      "section": "2.6",
+      "text": "The user manual would follow common user documentation styles capturing purpose and scope of the product along with key system features and operations; step-by-step instructions for using the system including conventions, messaging structures, quick references, tips for errors and malfunctions; pointers to reference documents; and glossary of terms.",
+      "reason": "non-normative section: User Documentation"
+    },
+    {
+      "id": "2.7/S1",
+      "source": "requirement",
+      "section": "2.7",
+      "text": "The product would build on leveraging existing systems.",
+      "reason": "non-normative section: Assumptions and Dependencies"
+    },
+    {
+      "id": "2.7/S2",
+      "source": "requirement",
+      "section": "2.7",
+      "text": "In this regard, necessary inspirations could be obtained by analyzing related systems such as CoDeeN, Coral, Globule, and MotusNet.",
+      "reason": "non-normative section: Assumptions and Dependencies"
+    },
+    {
+      "id": "2.7/S3",
+      "source": "requirement",
+      "section": "2.7",
+      "text": "In particular, the design and implementation approach of MotusNet could be helpful to draw a clear guideline for developing the intended prototype.",
+      "reason": "non-normative section: Assumptions and Dependencies"
+    },
+    {
+      "id": "3/S1",
+      "source": "requirement",
+      "section": "3",
+      "text": "The major services and functional requirements for the product can be illustrated by system features.",
+      "reason": "vague: major"
+    },
+    {
+      "id": "3/S2",
+      "source": "requirement",
+      "section": "3",
+      "text": "This section is organized by use cases for major system features.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3/S3",
+      "source": "requirement",
+      "section": "3",
+      "text": "In the following, necessary description is provided for each use cases in the system.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3/S4",
+      "source": "requirement",
+      "section": "3",
+      "text": "Each use case description provides information of the associated actors, triggering condition, preconditions, postconditions, response sequences, exceptions and functional requirements (assumptions).",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3/S5",
+      "source": "requirement",
+      "section": "3",
+      "text": "Being a major important section of the SRS, this section is expected to go through iterative improvement to make the most logical sense for the intended product.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1/S1",
+      "source": "requirement",
+      "section": "3.1",
+      "text": "This feature is associated with the registration of resource and service information of each CDN to its SR.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1/S2",
+      "source": "requirement",
+      "section": "3.1",
+      "text": "The use case for this feature is shown in Figure 2.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.1/S1",
+      "source": "requirement",
+      "section": "3.1.1",
+      "text": "WS: Publishes its resource and service information to the SR.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.1/S2",
+      "source": "requirement",
+      "section": "3.1.1",
+      "text": "SR: Registers available local resources at the CDN provider and updates them.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.1/S3",
+      "source": "requirement",
+      "section": "3.1.1",
+      "text": "Mediator: Collects up-to-date resource information from SR.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.2/S1",
+      "source": "requirement",
+      "section": "3.1.2",
+      "text": "Service registration is triggered when either one of the following occurs: (a) resources are available as a provider starts operating; (b) previously registered resource information needs to be updated; (c) available local resource information is required in the event of traffic surges; and (d) local and delegated external resource information is to be encapsulated in an SR instance included in an established peering arrangement.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.3/S1",
+      "source": "requirement",
+      "section": "3.1.3",
+      "text": "Available local resources of a CDN provider are detected along with their service information such as CPU, storage, upload and download rate, etc.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.3/S2",
+      "source": "requirement",
+      "section": "3.1.3",
+      "text": "These resources could be provisioned and reserved to satisfy SLAs.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.4/S1",
+      "source": "requirement",
+      "section": "3.1.4",
+      "text": "Resources are registered in the service registry and being updated in a regular basis.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.5/I1",
+      "source": "requirement",
+      "section": "3.1.5",
+      "text": "Each CDN Web server publishes resource and service information.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.1.5/I2",
+      "source": "requirement",
+      "section": "3.1.5",
+      "text": "If it is a new resource, its service information is registered in the SR with a new resource ID. Resource ID counter is incremented.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.1.5/I3",
+      "source": "requirement",
+      "section": "3.1.5",
+      "text": "Else, resource information in SR is updated in a regular basis.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.1.5/I4",
+      "source": "requirement",
+      "section": "3.1.5",
+      "text": "In the face of traffic surges, information on available local resources along withtheir IDs is supplied to the Mediator.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.1.5/I5",
+      "source": "requirement",
+      "section": "3.1.5",
+      "text": "Local and delegated external resource information is encapsulated in the SR instance in the established peering arrangement.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.1.6/S1",
+      "source": "requirement",
+      "section": "3.1.6",
+      "text": "If a resource fails, its service information is removed from SR and the resource ID counter is decremented.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.7/R1",
+      "source": "requirement",
+      "section": "3.1.7",
+      "text": "The format for service information description is defined",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.7/R1#2",
+      "source": "requirement",
+      "section": "3.1.7",
+      "text": "The format for service information description is defined",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.7/R2",
+      "source": "requirement",
+      "section": "3.1.7",
+      "text": "The interaction protocol between Web Server-SR, SR-mediator is defined.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.7/R3",
+      "source": "requirement",
+      "section": "3.1.7",
+      "text": "Resource provisioning, delegation and reservation policies are in place",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.1.7/R4",
+      "source": "requirement",
+      "section": "3.1.7",
+      "text": "There is an established norm that any resource failure will be reported",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3.1.7/R5",
+      "source": "requirement",
+      "section": "3.1.7",
+      "text": "The interaction protocol between Web Server-SR, SR-mediator is defined.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2/S1",
+      "source": "requirement",
+      "section": "3.2",
+      "text": "This feature relates to the initialization of peering between CDNs.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2/S2",
+      "source": "requirement",
+      "section": "3.2",
+      "text": "The use case for this feature is shown in Figure 3.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.1/S1",
+      "source": "requirement",
+      "section": "3.2.1",
+      "text": "End-user: Requests for content.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.1/S2",
+      "source": "requirement",
+      "section": "3.2.1",
+      "text": "Mediator: Receives initiation request from WS to trigger peering.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.2/S1",
+      "source": "requirement",
+      "section": "3.2.2",
+      "text": "It is invoked when a (primary) CDN realizes that it cannot handle a part of the workload on its WS(s).",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.2/S2",
+      "source": "requirement",
+      "section": "3.2.2",
+      "text": "The triggering condition considers the expected and unexpected load increases in the initiating (primary) CDN.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.3/S1",
+      "source": "requirement",
+      "section": "3.2.3",
+      "text": "Exceptional circumstances such as flash crowds have occurred to place unanticipated load on CDN WSs.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.4/S1",
+      "source": "requirement",
+      "section": "3.2.4",
+      "text": "An initialization request is sent to the mediator to trigger peering.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.5/I1",
+      "source": "requirement",
+      "section": "3.2.5",
+      "text": "End users request for content from CDN WSs.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.5/I2",
+      "source": "requirement",
+      "section": "3.2.5",
+      "text": "Flash crowds occurred due to a sudden burst in traffic.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.5/I3",
+      "source": "requirement",
+      "section": "3.2.5",
+      "text": "Flash crowds occurred due to a sudden burst in traffic.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.5/I4",
+      "source": "requirement",
+      "section": "3.2.5",
+      "text": "Flash crowds occurred due to a sudden burst in traffic.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.6/S1",
+      "source": "requirement",
+      "section": "3.2.6",
+      "text": "If the user requests experience service timeout (threshold), initiation request is cancelled.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.7/R1",
+      "source": "requirement",
+      "section": "3.2.7",
+      "text": "Malicious requests are detected and rejected.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.7/R2",
+      "source": "requirement",
+      "section": "3.2.7",
+      "text": "Web servers have already replicated necessary content.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.7/R3",
+      "source": "requirement",
+      "section": "3.2.7",
+      "text": "Both anticipated and unanticipated user requests (traffic) are considered.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.2.7/R4",
+      "source": "requirement",
+      "section": "3.2.7",
+      "text": "The format for service information description is defined",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3/S1",
+      "source": "requirement",
+      "section": "3.3",
+      "text": "On receipt of the initialization request to trigger peering, the mediator of the primary CDN invokes negotiation.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3/S2",
+      "source": "requirement",
+      "section": "3.3",
+      "text": "Figure 4 shows use case for this feature.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3.1/S1",
+      "source": "requirement",
+      "section": "3.3.1",
+      "text": "SR: Sends resource and access information.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3.1/S2",
+      "source": "requirement",
+      "section": "3.3.1",
+      "text": "PR: Sends policy information for establishing negotiated relationships PA: Receives service requirements from the mediator.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3.2/S1",
+      "source": "requirement",
+      "section": "3.3.2",
+      "text": "Upon receiving the initialization request to trigger peering, the mediator generates service requirements and passes it to local PA.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3.3/S1",
+      "source": "requirement",
+      "section": "3.3.3",
+      "text": "Initialization request is received.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3.4/S1",
+      "source": "requirement",
+      "section": "3.3.4",
+      "text": "Service requirements are generated and they are sent to the local PA.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3.5/I1",
+      "source": "requirement",
+      "section": "3.3.5",
+      "text": "An initialization request to activate peering is received by the mediator.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.3.5/I2",
+      "source": "requirement",
+      "section": "3.3.5",
+      "text": "The mediator instance obtains resource and access information from the SR and policy information from PR to establish negotiation.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.3.5/I3",
+      "source": "requirement",
+      "section": "3.3.5",
+      "text": "The mediator generates service requirements.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.3.5/I4",
+      "source": "requirement",
+      "section": "3.3.5",
+      "text": "If the service requirements are acceptable according to the provider's policy, mediator passes it to the local PA.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.3.5/I5",
+      "source": "requirement",
+      "section": "3.3.5",
+      "text": "Else, reject user requests.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.3.6/S1",
+      "source": "requirement",
+      "section": "3.3.6",
+      "text": "If the user requests can not be accepted according the provider policies, service requirements are not passed to the local PA.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3.3.7/R1",
+      "source": "requirement",
+      "section": "3.3.7",
+      "text": "The format of service requirements is defined.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3.7/R2",
+      "source": "requirement",
+      "section": "3.3.7",
+      "text": "Mediator-SR, mediator-PR, mediator-PA interaction protocols are defined.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.3.7/R3",
+      "source": "requirement",
+      "section": "3.3.7",
+      "text": "Mediator works in conjunction with the PA to establish negotiation.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4/S1",
+      "source": "requirement",
+      "section": "3.4",
+      "text": "The PA of a given primary CDN negotiates with PAs of the peers to perform external resource discovery.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4/S2",
+      "source": "requirement",
+      "section": "3.4",
+      "text": "Figure 5 shows the use case related to this feature.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.1/S1",
+      "source": "requirement",
+      "section": "3.4.1",
+      "text": "External PA: Negotiates with the PA of the primary CDN.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.1/S2",
+      "source": "requirement",
+      "section": "3.4.1",
+      "text": "PR: Receives negotiated policies from the local PA.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.2/S1",
+      "source": "requirement",
+      "section": "3.4.2",
+      "text": "Local PA communicates with the PAs of peers to discover external resources.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.3/S1",
+      "source": "requirement",
+      "section": "3.4.3",
+      "text": "Service requirements are received from the mediator.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.4/S1",
+      "source": "requirement",
+      "section": "3.4.4",
+      "text": "Negotiation is performed and a peering arrangement is established through inter-PA communications.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.5/I1",
+      "source": "requirement",
+      "section": "3.4.5",
+      "text": "Local PA receives service requirements from the mediator.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.4.5/I2",
+      "source": "requirement",
+      "section": "3.4.5",
+      "text": "If any peering policies exist, they are returned to establish long-term peering arrangement.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.4.5/I3",
+      "source": "requirement",
+      "section": "3.4.5",
+      "text": "Else, short-term negotiation is performed.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.4.5/I4",
+      "source": "requirement",
+      "section": "3.4.5",
+      "text": "Local PA in conjunction with the mediator interacts with external PAs through inter-PA communication protocol.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.4.5/I5",
+      "source": "requirement",
+      "section": "3.4.5",
+      "text": "External resources are discovered and negotiation is performed with selected CDN peers.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.4.5/I6",
+      "source": "requirement",
+      "section": "3.4.5",
+      "text": "If sufficient resources are acquired, a peering arrangement is established",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.4.5/I7",
+      "source": "requirement",
+      "section": "3.4.5",
+      "text": "Else, mediator re-evaluates service requirements and sends to the local PA to perform re-negotiation.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.4.6/S1",
+      "source": "requirement",
+      "section": "3.4.6",
+      "text": "If the user requests can not be accepted according the provider policies, service requirements are not passed to the local PA.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3.4.7/R1",
+      "source": "requirement",
+      "section": "3.4.7",
+      "text": "Interaction protocols between PAs are identified.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.7/R2",
+      "source": "requirement",
+      "section": "3.4.7",
+      "text": "Malicious requests are identified and acted upon.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.7/R3",
+      "source": "requirement",
+      "section": "3.4.7",
+      "text": "There are existing policies for long-term peering arrangement.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.4.7/R4",
+      "source": "requirement",
+      "section": "3.4.7",
+      "text": "There is procedure to perform short-term negotiation.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5/S1",
+      "source": "requirement",
+      "section": "3.5",
+      "text": "This feature is responsible for the inter-CDN protocol configuration, resource initialization and for ensuring effective operations of the established peering arrangement.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5/S2",
+      "source": "requirement",
+      "section": "3.5",
+      "text": "The use case for this feature is shown in Figure 6.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.1/S1",
+      "source": "requirement",
+      "section": "3.5.1",
+      "text": "External PA: Exchanges configurations and content availability information, and accepts requests to an optimal peer.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.1/S2",
+      "source": "requirement",
+      "section": "3.5.1",
+      "text": "PR: Assists in enforcing negotiated policies.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.2/S1",
+      "source": "requirement",
+      "section": "3.5.2",
+      "text": "Once policies are negotiated and a peering arrangement is established, PAs interact each other in the execution of common goal(s).",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.3/S1",
+      "source": "requirement",
+      "section": "3.5.3",
+      "text": "A peering arrangement is established.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.4/S1",
+      "source": "requirement",
+      "section": "3.5.4",
+      "text": "Necessary functions policies are deployed and administration for effective operations.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.5/I1",
+      "source": "requirement",
+      "section": "3.5.5",
+      "text": "Once a peering arrangement is established, the initiating primary CDN through its local PA advertise configuration information to technically support the negotiated relationships between enlisted CDNs.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.5.5/I2",
+      "source": "requirement",
+      "section": "3.5.5",
+      "text": "PAs exchange content availability and load information to identify an optimal peer to handle user requests.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.5.5/I3",
+      "source": "requirement",
+      "section": "3.5.5",
+      "text": "Request is redirected to an optimal peer's Web server.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.5.5/I4",
+      "source": "requirement",
+      "section": "3.5.5",
+      "text": "PAs exchange accounting information to perform billing based on negotiated relationships.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.5.5/I5",
+      "source": "requirement",
+      "section": "3.5.5",
+      "text": "The policy repository instance in the established peering arrangement assists in the deployment, administration and enforcement of the functional policies.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.5.6/S1",
+      "source": "requirement",
+      "section": "3.5.6",
+      "text": "If a peered CDN provider refuses to accept user requests, a given peering arrangement ceases.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.7/R1",
+      "source": "requirement",
+      "section": "3.5.7",
+      "text": "Negotiation is established between selected CDN peers.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.7/R2",
+      "source": "requirement",
+      "section": "3.5.7",
+      "text": "Primary CDN has already acquired sufficient external resources.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.7/R3",
+      "source": "requirement",
+      "section": "3.5.7",
+      "text": "Functional policies are identified and deployed.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.5.7/R4",
+      "source": "requirement",
+      "section": "3.5.7",
+      "text": "Effective content delivery is ensured through SLA satisfaction.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6/S1",
+      "source": "requirement",
+      "section": "3.6",
+      "text": "There could be circumstances under which a given peering arrangement may need to disband or rearranges itself.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6/S2",
+      "source": "requirement",
+      "section": "3.6",
+      "text": "This feature is associated with the use case shown in Figure 7.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6.1/S1",
+      "source": "requirement",
+      "section": "3.6.1",
+      "text": "External PA: Interactions with local PA of the primary CDN.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6.2/S1",
+      "source": "requirement",
+      "section": "3.6.2",
+      "text": "Any of the termination condition holds.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6.3/S1",
+      "source": "requirement",
+      "section": "3.6.3",
+      "text": "There is an established peering arrangement.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6.4/S1",
+      "source": "requirement",
+      "section": "3.6.4",
+      "text": "A given peering arrangement is disband or it is re-arranged.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6.5/I1",
+      "source": "requirement",
+      "section": "3.6.5",
+      "text": "A given peering arrangement is currently in operation and peers are cooperating for effective content delivery.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.6.5/I2",
+      "source": "requirement",
+      "section": "3.6.5",
+      "text": "If any of the termination condition holds, the local PA disbands or re-arranges the peering arrangement.",
+      "reason": "non-normative section: Stimulus/Response Sequences"
+    },
+    {
+      "id": "3.6.6/S1",
+      "source": "requirement",
+      "section": "3.6.6",
+      "text": "If there are exceptional circumstances such as natural disaster, theft, etc. for which any peer is unable to honor the negotiated relationships, a given peering arrangement is not disband or re-arranged and SLA conditions are bypassed.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6.7/R1",
+      "source": "requirement",
+      "section": "3.6.7",
+      "text": "Policies identifying the consequences of SLA violation are defined.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6.7/R2",
+      "source": "requirement",
+      "section": "3.6.7",
+      "text": "Policies are in place to perform renegotiation for problem resolution.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3.6.7/R3",
+      "source": "requirement",
+      "section": "3.6.7",
+      "text": "Policies are in place to perform renegotiation for problem resolution.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.1/S1",
+      "source": "requirement",
+      "section": "4.1",
+      "text": "This section describes the logical characteristics of each interface between the intended software product and the users.",
+      "reason": "non-normative section: User Interfaces"
+    },
+    {
+      "id": "4.1/S2",
+      "source": "requirement",
+      "section": "4.1",
+      "text": "For user interface design, common GUI standards will be followed along with the presence of keyboard shortcuts, error message display standards etc., and standard buttons and functions (i.e. help) will appear on every screen.",
+      "reason": "non-normative section: User Interfaces"
+    },
+    {
+      "id": "4.1/S3",
+      "source": "requirement",
+      "section": "4.1",
+      "text": "Details of the user interface design are intended to be documented in a separate user interface specification.",
+      "reason": "non-normative section: User Interfaces"
+    },
+    {
+      "id": "4.2/S1",
+      "source": "requirement",
+      "section": "4.2",
+      "text": "As mentioned earlier, the intended product to exploit existing Web service technologies to leverage existing infrastructures through building an overlay.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.2/S2",
+      "source": "requirement",
+      "section": "4.2",
+      "text": "The communication among software component would be performed through message passing over the IP network.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.2/S3",
+      "source": "requirement",
+      "section": "4.2",
+      "text": "From a technical point of view, TCP/IP will be used as the transport protocol, where each CDN server establishes a TCP connection to the network elements using a well-known port number.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.2/S5",
+      "source": "requirement",
+      "section": "4.2",
+      "text": "All messages consist of a fixed length-header containing the total data length and a request followed by a reply or an acknowledgement.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.2/S6",
+      "source": "requirement",
+      "section": "4.2",
+      "text": "Interaction among surrogates will be performed using HTTP or FTP.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "5/I1",
+      "source": "requirement",
+      "section": "5",
+      "text": "Pathan, M., Buyya, R., Vakali, A. CDNs: State of the Art, Insights, and Imperatives. Content Delivery Networks. Buyya, R., Pathan, M., and Vakali, A. (eds.), Springer-Verlag, Germany, Mar. 2008.",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "5/I2",
+      "source": "requirement",
+      "section": "5",
+      "text": "Buyya, R., Pathan, M., Broberg, J., and Tari, Z. A Case for Peering of Content Delivery Networks, IEEE Distributed Systems Online, 7(10), USA, Oct. 2006.",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "5/I3",
+      "source": "requirement",
+      "section": "5",
+      "text": "Pathan, M., Bubendorfer, K., Kim, K. H., and An Architecture for Virtual Organization (VO)-Based Effective Peering of Content Delivery Networks, UPGRADE-CN'07, In Proc. of the 16th IEEE International Symposium on High Performance Distributed Computing (HPDC), USA, Jun. 2007.",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "5/I4",
+      "source": "requirement",
+      "section": "5",
+      "text": "Pathan, M., Broberg, J., and Buyya, R. An Approach for QoS-Aware Performance Modeling of Peering Content Delivery Networks. Technical Report, GRIDS-TR-2007-19, Grid Computing and Distributed Systems Laboratory, University of Melbourne, Australia, Oct. 2007.",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "5/I5",
+      "source": "requirement",
+      "section": "5",
+      "text": "Pathan, M., Buyya, R., Broberg, J. Internetworking of CDNs. Content Delivery Networks. Buyya, R., Pathan, M., and Vakali, A. (eds.), Springer-Verlag, Germany, Mar. 2008.",
+      "reason": "non-normative section: References"
+    }
+  ]
+}

@@ -1,0 +1,2073 @@
+{
+  "source": {
+    "file": "2007-ertms.xml",
+    "sha256": "b6710cd2a97978bc6a6df86e367a935b97c99518bac54f1ccf3ee2c28fa19cb4"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v10.1",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "1b2599c",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 51,
+    "compiles": 45,
+    "rejects_bad_example": 30,
+    "checked": 42,
+    "failed": 9,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "3.10.1.6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Once received onboard the national values shall remain valid even if the onboard equipment is switched off",
+      "text_predicate": "Requirement 3.10.1.6 (General requirements > National values):\nOnce received onboard the national values shall remain valid even if the onboard equipment is switched off",
+      "lean_predicate": "structure Input where\n  nationalValues : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  nationalValues : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.nationalValues ≠ \"\"\n  post := fun i o => o.nationalValues = i.nationalValues\n\nexample : Spec.pre { nationalValues := \"values\" } ∧\n          Spec.post { nationalValues := \"values\" } { nationalValues := \"values\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { nationalValues := \"ValidValue\" } ∧ ¬ Spec.post { nationalValues := \"ValidValue\" } { nationalValues := \"InvalidValue\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { nationalValues := \"ValidValue\" } ∧ ¬ Spec.post { nationalValues := \"ValidValue\" } { nationalValues := \"InvalidValue\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that national values should remain valid even if the equipment is switched off, meaning the national values should not change.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.10.1.2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Default values shall be harmonised values, permanently stored in all ERTMS/ETCS on board equipment",
+      "text_predicate": "Requirement 3.10.1.2 (General requirements > Default values for the national values):\nDefault values shall be harmonised values, permanently stored in all ERTMS/ETCS on board equipment",
+      "lean_predicate": "structure Input where\n  harmonisedValues : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  harmonisedValues : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.harmonisedValues.Nodup\n  post := fun i o => o.harmonisedValues = i.harmonisedValues\n\nexample : Spec.pre { harmonisedValues := [\"value1\", \"value2\"] } ∧\n          Spec.post { harmonisedValues := [\"value1\", \"value2\"] }\n                    { harmonisedValues := [\"value1\", \"value2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { harmonisedValues := [\"harmonised1\", \"harmonised2\"] } ∧ ¬ Spec.post { harmonisedValues := [\"harmonised1\", \"harmonised2\"] } { harmonisedValues := [\"nonHarmonised1\", \"nonHarmonised2\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { harmonisedValues := [\"harmonised1\", \"harmonised2\"] } ∧ ¬ Spec.post { harmonisedValues := [\"harmonised1\", \"harmonised2\"] } { harmonisedValues := [\"nonHarmonised1\", \"nonHarmonised2\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that default values shall be harmonised values, permanently stored in all ERTMS/ETCS on board equipment. A buggy system might return non-harmonised values.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.2.10",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Current train data shall be stored (except at transition to shunting) in the ETCS equipment until the traction unit is not operative.",
+      "text_predicate": "Requirement 4.1.2.10 (Functions > Operational Functions > Train and driver Data Entry):\nCurrent train data shall be stored (except at transition to shunting) in the ETCS equipment until the traction unit is not operative.",
+      "lean_predicate": "structure TrainData where\n  current : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  tractionUnitOperative : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  currentTrainData : Option TrainData\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => (o.currentTrainData = some { current := \"current train data\" } ↔\n                      ¬i.tractionUnitOperative) ∧\n                     (o.currentTrainData = none ↔\n                      i.tractionUnitOperative)\n\nexample : Spec.pre { tractionUnitOperative := true } ∧\n          Spec.post { tractionUnitOperative := true }\n                     { currentTrainData := none } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { tractionUnitOperative := true } ∧ ¬ Spec.post { tractionUnitOperative := true } { currentTrainData := some { current := \"current train data\" } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { tractionUnitOperative := true } ∧ ¬ Spec.post { tractionUnitOperative := true } { currentTrainData := some { current := \"current train data\" } } := by\n  unfold Spec; decide",
+          "why": "The output should not contain any `currentTrainData` when the traction unit is operative, but it does.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 25.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "4.1.2.11",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Stored train data shall be offered to the driver to be confirmed when Data Entry starts.",
+      "text_predicate": "Requirement 4.1.2.11 (Functions > Operational Functions > Train and driver Data Entry):\nStored train data shall be offered to the driver to be confirmed when Data Entry starts.",
+      "lean_predicate": "structure Train where\n  id : Nat\n  destination : String\n  schedule : String\n  deriving DecidableEq, Repr\n\nstructure Driver where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  trains : List Train\n  driver : Driver\n  deriving DecidableEq, Repr\n\nstructure Output where\n  trains : List Train\n  driver : Driver\n  confirmed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.trains.Nodup\n  post := fun i o => o.confirmed = true ∧\n                     (o.trains = i.trains) ∧\n                     (o.driver = i.driver)\n\nexample : Spec.pre { trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }],\n                     driver := { name := \"John Doe\" } } ∧\n          Spec.post { trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }],\n                      driver := { name := \"John Doe\" } }\n                    { confirmed := true, trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }],\n                      driver := { name := \"John Doe\" } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }], driver := { name := \"John Doe\" } } ∧ ¬ Spec.post { trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }], driver := { name := \"John Doe\" } } { trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }], driver := { name := \"John Doe\" }, confirmed := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }], driver := { name := \"John Doe\" } } ∧ ¬ Spec.post { trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }], driver := { name := \"John Doe\" } } { trains := [{ id := 1, destination := \"New York\", schedule := \"10:00\" }], driver := { name := \"John Doe\" }, confirmed := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the driver should be offered the trains to confirm, but a buggy system might not offer this confirmation, thus `confirmed` would be `false`.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.2.14b",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The change of driver identification during a journey or a Train Running Number shall be possible",
+      "text_predicate": "Requirement 4.1.2.14b (Functions > Operational Functions > Train and driver Data Entry):\nThe change of driver identification during a journey or a Train Running Number shall be possible",
+      "lean_predicate": "structure Driver where\n  id : Nat\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Train where\n  runningNumber : Nat\n  drivers : List Driver\n  currentDriverIndex : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  train : Train\n  newDriverId : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  train : Train\n  success : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.newDriverId ≠ 0\n  post := fun i o => o.success ↔\n    ∃ d ∈ i.train.drivers, d.id = i.newDriverId ∧\n    (o.train.currentDriverIndex = i.train.currentDriverIndex + 1 ∨\n     o.train.currentDriverIndex = 0 ∧ i.train.drivers.length = 1) ∧\n    o.train.runningNumber = i.train.runningNumber ∧\n    o.train.drivers = i.train.drivers\n\nexample : Spec.pre { train := { runningNumber := 1234, drivers := [{ id := 1, name := \"Driver1\" }, { id := 2, name := \"Driver2\" }], currentDriverIndex := 0 },\n                     newDriverId := 2 } ∧\n          Spec.post { train := { runningNumber := 1234, drivers := [{ id := 1, name := \"Driver1\" }, { id := 2, name := \"Driver2\" }], currentDriverIndex := 0 },\n                      newDriverId := 2 }\n                    { train := { runningNumber := 1234, drivers := [{ id := 1, name := \"Driver1\" }, { id := 2, name := \"Driver2\" }], currentDriverIndex := 1 },\n                      success := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { train := { runningNumber := 1234, drivers := [Driver.id 1 name \"Driver1\", Driver.id 2 name \"Driver2\"], currentDriverIndex := 0 }, newDriverId := 2 } ∧ ¬ Spec.post { train := { runningNumber := 1234, drivers := [Driver.id 1 name \"Driver1\", Driver.id 2 name \"Driver2\"], currentDriverIndex := 0 }, newDriverId := 2 } { train := { runningNumber := 1234, drivers := [Driver.id 1 name \"Driver1\", Driver.id 2 name \"Driver2\"], currentDriverIndex := 0 }, success := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { train := { runningNumber := 1234, drivers := [Driver.id 1 name \"Driver1\", Driver.id 2 name \"Driver2\"], currentDriverIndex := 0 }, newDriverId := 2 } ∧ ¬ Spec.post { train := { runningNumber := 1234, drivers := [Driver.id 1 name \"Driver1\", Driver.id 2 name \"Driver2\"], currentDriverIndex := 0 }, newDriverId := 2 } { train := { runningNumber := 1234, drivers := [Driver.id 1 name \"Driver1\", Driver.id 2 name \"Driver2\"], currentDriverIndex := 0 }, success := true } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow changing the driver identification without updating the currentDriverIndex",
+          "outcome": "not usable: failed to synthesize instance of type class\n  OfNat Driver 1\nnumerals are polymorphic in Lean, but the numeral `1` cannot be used in a context where the expected type is\n  Driver\ndue to the absence of the instance above\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command."
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 19.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.3.2a",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Transfer to Shunting on driver's selection shall only be possible when stationary.",
+      "text_predicate": "Requirement 4.1.3.2a (Functions > Operational Functions > Shunting operation):\nTransfer to Shunting on driver's selection shall only be possible when stationary.",
+      "lean_predicate": "structure Input where\n  stationary : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  transferred : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.stationary\n  post := fun i o => o.transferred = true ↔ i.stationary\n\nexample : Spec.pre { stationary := true } ∧\n          Spec.post { stationary := true } { transferred := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { stationary := false } ∧ ¬ Spec.post { stationary := false } { transferred := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { stationary := false } ∧ ¬ Spec.post { stationary := false } { transferred := true } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids transferring when not stationary",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.3.2d",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Permission received shall be indicated to the driver.",
+      "text_predicate": "Requirement 4.1.3.2d (Functions > Operational Functions > Shunting operation):\nPermission received shall be indicated to the driver.",
+      "lean_predicate": "structure Input where\n  permissionReceived : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  indicatedToDriver : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.permissionReceived = true\n  post := fun i o => o.indicatedToDriver = true\n\nexample : Spec.pre { permissionReceived := true } ∧\n          Spec.post { permissionReceived := true }\n                    { indicatedToDriver := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { permissionReceived := true } ∧ ¬ Spec.post { permissionReceived := true } { indicatedToDriver := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { permissionReceived := true } ∧ ¬ Spec.post { permissionReceived := true } { indicatedToDriver := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the permission received must be indicated to the driver, so indicating false when permission is received violates this.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.3.4b",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Before authomatic transition to Shunting, ETCS shall request confirmation from the driver.",
+      "text_predicate": "Requirement 4.1.3.4b (Functions > Operational Functions > Shunting operation):\nBefore authomatic transition to Shunting, ETCS shall request confirmation from the driver.",
+      "lean_predicate": "structure Input where\n  driverConfirmed : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  driverConfirmed : Bool\n  shuntingStarted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.driverConfirmed = false\n  post := fun i o => (o.driverConfirmed = i.driverConfirmed ∧\n                      o.shuntingStarted = false) ↔\n                    (o.driverConfirmed = true ∧\n                     o.shuntingStarted = true)\n\nexample : Spec.pre { driverConfirmed := false } ∧\n          Spec.post { driverConfirmed := false }\n                     { driverConfirmed := true, shuntingStarted := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { driverConfirmed := false } ∧ ¬ Spec.post { driverConfirmed := false } { driverConfirmed := true, shuntingStarted := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { driverConfirmed := false } ∧ ¬ Spec.post { driverConfirmed := false } { driverConfirmed := true, shuntingStarted := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that ETCS shall request confirmation from the driver before automatically transitioning to Shunting. A buggy system would not request confirmation, so the driverConfirmed field should remain false.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.4.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Partial Supervision shall be selected either by the Driver, or by information received from track-to-train transmission.",
+      "text_predicate": "Requirement 4.1.4.1 (Functions > Operational Functions > Partial Supervision):\nPartial Supervision shall be selected either by the Driver, or by information received from track-to-train transmission.",
+      "lean_predicate": "structure Input where\n  driverSelection : Bool\n  trackToTrain    : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  partialSupervision : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.driverSelection ∨ i.trackToTrain\n  post := fun i o => o.partialSupervision = true ↔ (i.driverSelection ∨ i.trackToTrain)\n\nexample : Spec.pre { driverSelection := true, trackToTrain := false } ∧\n          Spec.post { driverSelection := true, trackToTrain := false }\n                    { partialSupervision := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { driverSelection := false, trackToTrain := false } ∧ ¬ Spec.post { driverSelection := false, trackToTrain := false } { partialSupervision := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { driverSelection := false, trackToTrain := false } ∧ ¬ Spec.post { driverSelection := false, trackToTrain := false } { partialSupervision := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that Partial Supervision shall be selected either by the Driver, or by information received from track-to-train transmission. The input provided does not satisfy this condition as neither driverSelection nor trackToTrain is true.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.4.2a",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "If acknowledgement is specified the driver shall acknowledge transfer from Full Supervision to Partial Supervision within 5 seconds",
+      "text_predicate": "Requirement 4.1.4.2a (Functions > Operational Functions > Partial Supervision):\nIf acknowledgement is specified the driver shall acknowledge transfer from Full Supervision to Partial Supervision within 5 seconds\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` <= 5000000 (us, operation: If acknowledgement is specified the driver shall acknowledge transfer from Full Supervision to Partial Supervision)",
+      "lean_predicate": "structure Input where\n  acknowledged : Bool\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  acknowledged : Bool\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.acknowledged\n  post := fun i o => o.acknowledged = i.acknowledged ∧\n                     o.elapsedMicros ≤ 5000000\n\nexample : Spec.pre { acknowledged := true, elapsedMicros := 0 } ∧\n          Spec.post { acknowledged := true, elapsedMicros := 4999999 }\n                    { acknowledged := true, elapsedMicros := 4999999 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 26.3,
+      "error": "L0.5: The example gives `Spec.pre` and `Spec.post` different input records. Use exactly the same input record in both.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "compiles, but the generation loop's own checks failed: L0.5: The example gives `Spec.pre` and `Spec.post` different input records. Use exactly the same input record in both."
+        ]
+      }
+    },
+    {
+      "id": "4.1.5.1a",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Transferring to Full Supervision shall occur automatically when a movement authority and all other necessary information is received through track-to-train transmission.",
+      "text_predicate": "Requirement 4.1.5.1a (Functions > Operational Functions > Full Supervision operation):\nTransferring to Full Supervision shall occur automatically when a movement authority and all other necessary information is received through track-to-train transmission.",
+      "lean_predicate": "structure Input where\n  movementAuthorityReceived : Bool\n  allNecessaryInfoReceived  : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  inFullSupervision : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.movementAuthorityReceived ∧ i.allNecessaryInfoReceived\n  post := fun i o => o.inFullSupervision = true\n\nexample : Spec.pre { movementAuthorityReceived := true, allNecessaryInfoReceived := true } ∧\n          Spec.post { movementAuthorityReceived := true, allNecessaryInfoReceived := true }\n                    { inFullSupervision := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { movementAuthorityReceived := true, allNecessaryInfoReceived := true } ∧ ¬ Spec.post { movementAuthorityReceived := true, allNecessaryInfoReceived := true } { inFullSupervision := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { movementAuthorityReceived := true, allNecessaryInfoReceived := true } ∧ ¬ Spec.post { movementAuthorityReceived := true, allNecessaryInfoReceived := true } { inFullSupervision := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that transferring to Full Supervision should occur automatically when both the movement authority and all other necessary information are received. A buggy system might incorrectly set `inFullSupervision` to `false` even though both conditions are met.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.5.1b",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "It shall be possible for the trackside to ask a driver for confirmation about the occupancy of the track ahead before sending a Full Supervision movement authority.",
+      "text_predicate": "Requirement 4.1.5.1b (Functions > Operational Functions > Full Supervision operation):\nIt shall be possible for the trackside to ask a driver for confirmation about the occupancy of the track ahead before sending a Full Supervision movement authority.",
+      "lean_predicate": "structure Input where\n  track_occupancy : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  confirmed : Bool\n  track_occupancy : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.track_occupancy ≠ \"\"\n  post := fun i o => o.confirmed = true ↔\n    (i.track_occupancy = \"empty\" → o.track_occupancy = \"empty\") ∧\n    (i.track_occupancy = \"occupied\" → o.track_occupancy = \"occupied\")\n\nexample : Spec.pre { track_occupancy := \"empty\" } ∧\n          Spec.post { track_occupancy := \"empty\" }\n                    { confirmed := true, track_occupancy := \"empty\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { track_occupancy := \"occupied\" } ∧ ¬ Spec.post { track_occupancy := \"occupied\" } { confirmed := true, track_occupancy := \"empty\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { track_occupancy := \"occupied\" } ∧ ¬ Spec.post { track_occupancy := \"occupied\" } { confirmed := true, track_occupancy := \"empty\" } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids the trackside from receiving a confirmation that the track is empty when it is actually occupied.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.5.5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The trainborne equipment shall remain in Full Supervision until the trainborne equipment is not active any longer, when Shunting is selected or when Partial Supervision information is received.",
+      "text_predicate": "Requirement 4.1.5.5 (Functions > Operational Functions > Full Supervision operation):\nThe trainborne equipment shall remain in Full Supervision until the trainborne equipment is not active any longer, when Shunting is selected or when Partial Supervision information is received.",
+      "lean_predicate": "structure Input where\n  active : Bool\n  shuntingSelected : Bool\n  partialSupervisionInfoReceived : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  fullSupervision : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.active\n  post := fun i o => (o.fullSupervision = true ↔ i.active) ∧\n                     (o.fullSupervision = false ↔\n                      (i.shuntingSelected ∧ i.active) ∨\n                      (i.partialSupervisionInfoReceived ∧ i.active))\n\nexample : Spec.pre { active := true, shuntingSelected := false, partialSupervisionInfoReceived := false } ∧ Spec.post { active := true, shuntingSelected := false, partialSupervisionInfoReceived := false } { fullSupervision := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { active := true, shuntingSelected := false, partialSupervisionInfoReceived := false } ∧ ¬ Spec.post { active := true, shuntingSelected := false, partialSupervisionInfoReceived := false } { fullSupervision := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { active := true, shuntingSelected := false, partialSupervisionInfoReceived := false } ∧ ¬ Spec.post { active := true, shuntingSelected := false, partialSupervisionInfoReceived := false } { fullSupervision := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that Full Supervision should remain until the trainborne equipment is not active any longer, or when Shunting is selected or when Partial Supervision information is received. A buggy system might incorrectly end Full Supervision when the trainborne equipment is still active but Shunting is not selected and no Partial Supervision information is received.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 17.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.8.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Unfitted operation shall be possible if ordered by trackside",
+      "text_predicate": "Requirement 4.1.8.1 (Functions > Operational Functions > Unfitted Line Operation):\nUnfitted operation shall be possible if ordered by trackside",
+      "lean_predicate": "structure Input where\n  ordered : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  operationPossible : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.ordered\n  post := fun i o => o.operationPossible ↔ i.ordered\n\nexample : Spec.pre { ordered := true } ∧\n          Spec.post { ordered := true } { operationPossible := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { ordered := true } ∧ ¬ Spec.post { ordered := true } { operationPossible := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { ordered := true } ∧ ¬ Spec.post { ordered := true } { operationPossible := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that operationPossible should be true if ordered is true, but a buggy system might return false",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 6.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.8.5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The onboard shall be capable to switch to another ETCS status when transmitted from trackside",
+      "text_predicate": "Requirement 4.1.8.5 (Functions > Operational Functions > Unfitted Line Operation):\nThe onboard shall be capable to switch to another ETCS status when transmitted from trackside",
+      "lean_predicate": "structure Input where\n  currentStatus : String\n  newStatus     : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  switched      : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.currentStatus ≠ \"\" ∧ i.newStatus ≠ \"\"\n  post := fun i o => o.switched = true ↔\n    (i.currentStatus = \"Fitted\" ∧ i.newStatus = \"Unfitted\") ∨\n    (i.currentStatus = \"Unfitted\" ∧ i.newStatus = \"Fitted\")\n\nexample : Spec.pre { currentStatus := \"Fitted\", newStatus := \"Unfitted\" } ∧\n          Spec.post { currentStatus := \"Fitted\", newStatus := \"Unfitted\" }\n                    { switched := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { currentStatus := \"Active\", newStatus := \"Standby\" } ∧ ¬ Spec.post { currentStatus := \"Active\", newStatus := \"Standby\" } { switched := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { currentStatus := \"Active\", newStatus := \"Standby\" } ∧ ¬ Spec.post { currentStatus := \"Active\", newStatus := \"Standby\" } { switched := true } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids switching to another status when the current status is not \"Fitted\" or \"Unfitted\"",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.1.3a#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "It shall be possible to send information on adhesion conditions from trackside.",
+      "text_predicate": "Requirement 4.1.1.3a#2 (Functions > Infrastructure Functions):\nIt shall be possible to send information on adhesion conditions from trackside.",
+      "lean_predicate": "structure AdhesionCondition where\n  frictionCoefficient : Nat\n  temperature         : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  conditions : List AdhesionCondition\n  deriving DecidableEq, Repr\n\nstructure Output where\n  conditions : List AdhesionCondition\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.conditions = i.conditions\n\nexample : Spec.pre { conditions := [{ frictionCoefficient := 5, temperature := 100 }] } ∧\n          Spec.post { conditions := [{ frictionCoefficient := 5, temperature := 100 }] }\n                    { conditions := [{ frictionCoefficient := 5, temperature := 100 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { conditions := [AdhesionCondition.frictionCoefficient 0.8 temperature 25] } ∧ ¬ Spec.post { conditions := [AdhesionCondition.frictionCoefficient 0.8 temperature 25] } { conditions := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { conditions := [AdhesionCondition.frictionCoefficient 0.8 temperature 25] } ∧ ¬ Spec.post { conditions := [AdhesionCondition.frictionCoefficient 0.8 temperature 25] } { conditions := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that information on adhesion conditions from trackside can be sent, but it does not specify that the conditions can be altered or removed in the output.",
+          "outcome": "not usable: failed to synthesize instance of type class\n  OfScientific AdhesionCondition\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command."
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.1.3b",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "It shall also be possible, to allow the driver to change the adhesion conditions; in this case information from trackside has priority.",
+      "text_predicate": "Requirement 4.1.1.3b (Functions > Infrastructure Functions):\nIt shall also be possible, to allow the driver to change the adhesion conditions; in this case information from trackside has priority.",
+      "lean_predicate": "structure Input where\n  adhesionConditions : String\n  tracksideInfo      : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  adhesionConditions : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.adhesionConditions ≠ \"\" ∧ i.tracksideInfo ≠ \"\"\n  post := fun i o => o.adhesionConditions = \n    if i.tracksideInfo = i.adhesionConditions then i.adhesionConditions \n    else i.tracksideInfo\n\nexample : Spec.pre { adhesionConditions := \"dry\", tracksideInfo := \"wet\" } ∧\n          Spec.post { adhesionConditions := \"dry\", tracksideInfo := \"wet\" }\n                    { adhesionConditions := \"wet\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { adhesionConditions := \"dry\", tracksideInfo := \"wet\" } ∧ ¬ Spec.post { adhesionConditions := \"dry\", tracksideInfo := \"wet\" } { adhesionConditions := \"dry\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { adhesionConditions := \"dry\", tracksideInfo := \"wet\" } ∧ ¬ Spec.post { adhesionConditions := \"dry\", tracksideInfo := \"wet\" } { adhesionConditions := \"dry\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that if the trackside info is different from the adhesion conditions, the trackside info should have priority. A buggy system might return the original adhesion conditions instead.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.1.4a",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The trackside shall be able to send information for the calculation of speed profiles.",
+      "text_predicate": "Requirement 4.1.1.4a (Functions > Infrastructure Functions):\nThe trackside shall be able to send information for the calculation of speed profiles.",
+      "lean_predicate": "structure Input where\n  speed : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  profile : List Nat\n  sum : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.speed ≤ 1000\n  post := fun i o => o.valid = true ∧\n                     o.profile.length = 10 ∧\n                     o.profile.all (fun p => 0 ≤ p ∧ p ≤ 100) ∧\n                     o.profile.sum = i.speed\n\nexample : Spec.pre { speed := 500 } ∧\n          Spec.post { speed := 500 }\n                    { valid := true, profile := [50, 50, 50, 50, 50, 50, 50, 50, 50, 50], sum := 500 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { speed := 500 } ∧ ¬ Spec.post { speed := 500 } { valid := true, profile := [1, 2, 3], sum := 500 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { speed := 500 } ∧ ¬ Spec.post { speed := 500 } { valid := true, profile := [1, 2, 3], sum := 500 } := by\n  unfold Spec; decide",
+          "why": "The output does not satisfy the postcondition, as the profile length is not 10",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 16.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.1.1.5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Track to train transmission shall provide the capability to send different speed profiles for specific train categories.",
+      "text_predicate": "Requirement 4.1.1.5 (Functions > Infrastructure Functions):\nTrack to train transmission shall provide the capability to send different speed profiles for specific train categories.",
+      "lean_predicate": "structure SpeedProfile where\n  category : String\n  speeds   : List Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  profiles : List SpeedProfile\n  deriving DecidableEq, Repr\n\nstructure Output where\n  selected : SpeedProfile\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.profiles.Nodup\n  post := fun i o => o.selected.category = i.profiles.map (fun p => p.category).head\n                    ∧ o.selected.speeds = i.profiles.map (fun p => p.speeds).head\n\nexample : Spec.pre { profiles := [{ category := \"category1\", speeds := [50, 60] },\n                                   { category := \"category2\", speeds := [70, 80] }] } ∧\n          Spec.post { profiles := [{ category := \"category1\", speeds := [50, 60] },\n                                   { category := \"category2\", speeds := [70, 80] }] }\n                    { selected := { category := \"category1\", speeds := [50, 60] } } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 43.0,
+      "error": "<generated>:19:80: error(lean.invalidField): Invalid field `head`: The environment does not contain `Function.head`, so it is not possible to project the field `head` from an expression\n  fun p => ?m.11\nof type `(p : ?m.9) → ?m.12 p`\n<generated>:20:77: error(lean.invalidField): Invalid field `head`: The environment does not contain `Function.head`, so it is not possible to project the field `head` from an expression\n  fun p => ?m.18\nof type `(p : ?m.16) → ?m.19 p`\n<generated>:19:68: error(lean.invalidField): Invalid field notation: Type of\n  p\nis not known; cannot resolve field `category`\n\nHint: Consider replacing the field projection `.category` with a call to the function `SpeedProfile.category`.\n<generated>:20:67: error(lean.invalidField): Invalid field notation: Type of\n  p\nis not known; cannot resolve field `speeds`\n\nHint: Consider replacing the field projection `.speeds` with a call to the function `SpeedProfile.speeds`.\n<generated>:22:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.2.2.3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Together with the movement authority, the on board shall be able to receive one or more time-out(s) for certain sections of the movement authority, and shorten the movement authority accordingly when a time out expires.",
+      "text_predicate": "Requirement 4.2.2.3 (Functions > Infrastructure Functions > End of movement authority):\nTogether with the movement authority, the on board shall be able to receive one or more time-out(s) for certain sections of the movement authority, and shorten the movement authority accordingly when a time out expires.",
+      "lean_predicate": "structure Input where\n  movementAuthority : String\n  timeOuts         : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  shortenedAuthority : String\n  remainingTimeouts : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.movementAuthority ≠ \"\" ∧ i.timeOuts.Nodup\n  post := fun i o => o.shortenedAuthority = i.movementAuthority ∧\n                     o.remainingTimeouts = i.timeOuts ∧\n                     o.remainingTimeouts.length ≤ i.timeOuts.length ∧\n                     (∀ t ∈ i.timeOuts, t ∈ o.remainingTimeouts ∨\n                     (o.shortenedAuthority.length < i.movementAuthority.length ∧\n                     o.shortenedAuthority = i.movementAuthority[0:t.length]))\n\nexample : Spec.pre { movementAuthority := \"A1B2C3\", timeOuts := [\"A1\", \"C3\"] } ∧\n          Spec.post { movementAuthority := \"A1B2C3\", timeOuts := [\"A1\", \"C3\"] }\n                    { shortenedAuthority := \"B2\", remainingTimeouts := [\"C3\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 44.8,
+      "error": "<generated>:21:44: error: Type mismatch\n  Array.toSubarray ?m.24 0 t.length\nhas type\n  Subarray ?m.23\nbut is expected to have type\n  String\n<generated>:21:44: error: Application type mismatch: The argument\n  i.movementAuthority\nhas type\n  String\nbut is expected to have type\n  Array ?m.23\nin the application\n  @Array.toSubarray ?m.23 i.movementAuthority\n<generated>:23:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.2.3.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Using train data and infrastructure data, braking curves shall be calculated taking into account the target information but not the location of vehicles occupying the track.",
+      "text_predicate": "Requirement 4.2.3.1 (Functions > Infrastructure Functions > Supervision of driving into a section of track which could be occupied (On Sight operation)):\nUsing train data and infrastructure data, braking curves shall be calculated taking into account the target information but not the location of vehicles occupying the track.",
+      "lean_predicate": "structure Train where\n  id      : Nat\n  speed   : Nat\n  braking : Nat\n  deriving DecidableEq, Repr\n\nstructure Infrastructure where\n  sections : List Section\n  deriving DecidableEq, Repr\n\nstructure Section where\n  id        : Nat\n  length    : Nat\n  occupied  : Option Train\n  deriving DecidableEq, Repr\n\nstructure Input where\n  trains   : List Train\n  infra    : Infrastructure\n  targetSpeed : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  brakingCurves : List (Nat × Nat)\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.trains.Nodup ∧ i.infra.sections.Nodup\n  post := fun i o => \n    (∀ s ∈ i.infra.sections, \n     o.brakingCurves.length = s.length ∧\n     ∀ j in i.trains.filter (fun t => t.id = s.occupied.getD none).map (fun t => t.id),\n       (∃ curve ∈ o.brakingCurves, \n        curve.1 = j ∧ curve.2 = (i.targetSpeed - i.trains.filter (fun t => t.id = j).map (fun t => t.speed).sum) / s.length))\n\nexample : Spec.pre { trains := [{ id := 1, speed := 60, braking := 10 },\n                                 { id := 2, speed := 50, braking := 15 }],\n                     infra := { sections := [{ id := 1, length := 100, occupied := some { id := 1, speed := 60, braking := 10 }},\n                                             { id := 2, length := 150, occupied := none }] },\n                     targetSpeed := 70 } ∧\n          Spec.post { trains := [{ id := 1, speed := 60, braking := 10 },\n                                  { id := 2, speed := 50, braking := 15 }],\n                      infra := { sections := [{ id := 1, length := 100, occupied := some { id := 1, speed := 60, braking := 10 }},\n                                              { id := 2, length := 150, occupied := none }] },\n                      targetSpeed := 70 }\n                    { brakingCurves := [{ 1, 10 }, { 2, 15 }] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 66.0,
+      "error": "<generated>:12:11: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  Decidable (a✝ = b✝)\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:12:24: error: typeclass instance problem is stuck\n  Repr (List ?m.5)\n\nNote: Lean will not try to resolve this typeclass instance problem because the type argument to `Repr` contains metavariables. This argument must be fully determined before Lean will try to resolve the typeclass.\n\nHint: Adding type annotations and supplying implicit arguments to functions can give Lean more information for typeclass resolution. For example, if you have a variable `x` that you intend to be a `Nat`, but Lean reports it as having an unresolved type like `?m`, replacing `x` with `(x : Nat)` can get typeclass resolution un-stuck.\n<generated>:35:8: error: unexpected token 'in'; expected ',' or binderPred\n<generated>:30:20: error: Application type mismatch: The argument\n  Input\nhas type\n  Type 1\nof sort `Type 2` but is expected to have type\n  Type\nof sort `Type 1` in the application\n  Contract Input\n<generated>:49:40: error: overloaded, errors \n  failed to synthesize instance of type class\n    Singleton ?m.14 (Nat × Nat)\n  \n  Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n  \n  49:42 unsupported structure instance field abbreviation, expecting identifier\n<generated>:49:51: error: overloaded, errors \n  failed to synthesize instance of type class\n    Singleton ?m.15 (Nat × Nat)\n  \n  Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n  \n  49:53 unsupported structure instance field abbreviation, expecting identifier\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.2.3.6b",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The train shall, as a minimum, be supervised to a ceiling speed; the supervised speed shall not be shown on the DMI unless selected by the driver.",
+      "text_predicate": "Requirement 4.2.3.6b (Functions > Infrastructure Functions > Supervision of driving into a section of track which could be occupied (On Sight operation)):\nThe train shall, as a minimum, be supervised to a ceiling speed; the supervised speed shall not be shown on the DMI unless selected by the driver.",
+      "lean_predicate": "structure Input where\n  ceilingSpeed : Nat\n  supervisedSpeed : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  dmiDisplay : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.ceilingSpeed\n  post := fun i o => (o.dmiDisplay = true ↔ i.supervisedSpeed = i.ceilingSpeed) ∧\n                     (o.dmiDisplay = false → i.supervisedSpeed ≠ i.ceilingSpeed)\n\nexample : Spec.pre { ceilingSpeed := 60, supervisedSpeed := 50 } ∧\n          Spec.post { ceilingSpeed := 60, supervisedSpeed := 50 }\n                    { dmiDisplay := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { ceilingSpeed := 60, supervisedSpeed := 50 } ∧ ¬ Spec.post { ceilingSpeed := 60, supervisedSpeed := 50 } { dmiDisplay := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { ceilingSpeed := 60, supervisedSpeed := 50 } ∧ ¬ Spec.post { ceilingSpeed := 60, supervisedSpeed := 50 } { dmiDisplay := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the supervised speed should not be shown on the DMI unless selected by the driver. Here, the supervised speed is shown even though it is not equal to the ceiling speed.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.2.3.6c",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The target distance shall not be shown on the DMI unless selected by the driver.",
+      "text_predicate": "Requirement 4.2.3.6c (Functions > Infrastructure Functions > Supervision of driving into a section of track which could be occupied (On Sight operation)):\nThe target distance shall not be shown on the DMI unless selected by the driver.",
+      "lean_predicate": "structure Input where\n  targetDistance : Option Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  targetDistance : Option Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.targetDistance = i.targetDistance\n\nexample : Spec.pre { targetDistance := none } ∧\n          Spec.post { targetDistance := none } { targetDistance := none } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { targetDistance := none } ∧ ¬ Spec.post { targetDistance := none } { targetDistance := some 500 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { targetDistance := none } ∧ ¬ Spec.post { targetDistance := none } { targetDistance := some 500 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the target distance shall not be shown on the DMI unless selected by the driver. Therefore, if the target distance is not selected, it should not be shown.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 6.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)",
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "4.3.1.2a",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "ETCS shall calculate the permitted speed for the train for all locations of the authorised movement.",
+      "text_predicate": "Requirement 4.3.1.2a (Functions > Trainborne Functions):\nETCS shall calculate the permitted speed for the train for all locations of the authorised movement.",
+      "lean_predicate": "structure Location where\n  id : Nat\n  speedLimit : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  locations : List Location\n  deriving DecidableEq, Repr\n\nstructure Output where\n  permittedSpeeds : List Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.locations.Nodup\n  post := fun i o => o.permittedSpeeds.length = i.locations.length ∧\n                     (∀ j ∈ i.locations, o.permittedSpeeds.contains j.speedLimit = true)\n\nexample : Spec.pre { locations := [{ id := 1, speedLimit := 80 }, { id := 2, speedLimit := 120 }] } ∧\n          Spec.post { locations := [{ id := 1, speedLimit := 80 }, { id := 2, speedLimit := 120 }] }\n                    { permittedSpeeds := [80, 120] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { locations := [⟨0, 50⟩, ⟨1, 60⟩] } ∧ ¬ Spec.post { locations := [⟨0, 50⟩, ⟨1, 60⟩] } { permittedSpeeds := [50, 70] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { locations := [⟨0, 50⟩, ⟨1, 60⟩] } ∧ ¬ Spec.post { locations := [⟨0, 50⟩, ⟨1, 60⟩] } { permittedSpeeds := [50, 70] } := by\n  unfold Spec; decide",
+          "why": "The output does not contain the speed limit of one of the locations, violating the postcondition",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 31.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.2.1a",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Based on all relevant data, the ETCS shall calculate an emergency braking curve and a service braking curve",
+      "text_predicate": "Requirement 4.3.2.1a (Functions > Trainborne Functions > Dynamic train speed profile calculation):\nBased on all relevant data, the ETCS shall calculate an emergency braking curve and a service braking curve",
+      "lean_predicate": "structure Input where\n  speedProfile : List Nat\n  emergencyBrakeThreshold : Nat\n  serviceBrakeThreshold : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  emergencyBrakingCurve : List Nat\n  serviceBrakingCurve : List Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.speedProfile.Nodup ∧\n                 0 < i.emergencyBrakeThreshold ∧\n                 0 < i.serviceBrakeThreshold\n  post := fun i o => o.emergencyBrakingCurve.length = i.speedProfile.length ∧\n                     o.serviceBrakingCurve.length = i.speedProfile.length ∧\n                     ∀ n ∈ i.speedProfile, o.emergencyBrakingCurve[n] ≤ i.emergencyBrakeThreshold ∧\n                     ∀ n ∈ i.speedProfile, o.serviceBrakingCurve[n] ≤ i.serviceBrakeThreshold\n\nexample : Spec.pre { speedProfile := [10, 20, 30], emergencyBrakeThreshold := 50, serviceBrakeThreshold := 40 } ∧\n          Spec.post { speedProfile := [10, 20, 30], emergencyBrakeThreshold := 50, serviceBrakeThreshold := 40 }\n                    { emergencyBrakingCurve := [10, 20, 30], serviceBrakingCurve := [10, 20, 30] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 52.2,
+      "error": "<generated>:21:43: error: failed to prove index is valid, possible solutions:\n  - Use `have`-expressions to prove the index is valid\n  - Use `a[i]!` notation instead, runtime check is performed, and 'Panic' error message is produced if index is not valid\n  - Use `a[i]?` notation instead, result is an `Option` type\n  - Use `a[i]'h` notation instead, where `h` is a proof that index is valid\ni : Input\no : Output\nn : Nat\n⊢ n < o.emergencyBrakingCurve.length\n<generated>:22:43: error: failed to prove index is valid, possible solutions:\n  - Use `have`-expressions to prove the index is valid\n  - Use `a[i]!` notation instead, runtime check is performed, and 'Panic' error message is produced if index is not valid\n  - Use `a[i]?` notation instead, result is an `Option` type\n  - Use `a[i]'h` notation instead, where `h` is a proof that index is valid\ni : Input\no : Output\nn✝ n : Nat\n⊢ n < o.serviceBrakingCurve.length\n<generated>:24:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.2.1b",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Based on all relevant data, the ETCS shall calculate an emergency braking curve and a service braking curve",
+      "text_predicate": "Requirement 4.3.2.1b (Functions > Trainborne Functions > Dynamic train speed profile calculation):\nBased on all relevant data, the ETCS shall calculate an emergency braking curve and a service braking curve",
+      "lean_predicate": "structure Input where\n  speedProfile : List Nat\n  emergencyBrakeThreshold : Nat\n  serviceBrakeThreshold : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  emergencyBrakingCurve : List Nat\n  serviceBrakingCurve : List Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.speedProfile.Nodup ∧\n                 0 < i.emergencyBrakeThreshold ∧\n                 0 < i.serviceBrakeThreshold\n  post := fun i o => o.emergencyBrakingCurve.length = i.speedProfile.length ∧\n                     o.serviceBrakingCurve.length = i.speedProfile.length ∧\n                     ∀ n ∈ i.speedProfile, o.emergencyBrakingCurve[n] ≤ i.emergencyBrakeThreshold ∧\n                     ∀ n ∈ i.speedProfile, o.serviceBrakingCurve[n] ≤ i.serviceBrakeThreshold\n\nexample : Spec.pre { speedProfile := [10, 20, 30], emergencyBrakeThreshold := 50, serviceBrakeThreshold := 40 } ∧\n          Spec.post { speedProfile := [10, 20, 30], emergencyBrakeThreshold := 50, serviceBrakeThreshold := 40 }\n                    { emergencyBrakingCurve := [10, 20, 30], serviceBrakingCurve := [10, 20, 30] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 63.0,
+      "error": "<generated>:21:43: error: failed to prove index is valid, possible solutions:\n  - Use `have`-expressions to prove the index is valid\n  - Use `a[i]!` notation instead, runtime check is performed, and 'Panic' error message is produced if index is not valid\n  - Use `a[i]?` notation instead, result is an `Option` type\n  - Use `a[i]'h` notation instead, where `h` is a proof that index is valid\ni : Input\no : Output\nn : Nat\n⊢ n < o.emergencyBrakingCurve.length\n<generated>:22:43: error: failed to prove index is valid, possible solutions:\n  - Use `have`-expressions to prove the index is valid\n  - Use `a[i]!` notation instead, runtime check is performed, and 'Panic' error message is produced if index is not valid\n  - Use `a[i]?` notation instead, result is an `Option` type\n  - Use `a[i]'h` notation instead, where `h` is a proof that index is valid\ni : Input\no : Output\nn✝ n : Nat\n⊢ n < o.serviceBrakingCurve.length\n<generated>:24:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.2.7",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Where failure to apply the full service brake is detected the emergency brake shall stop the train in rear of the danger point.",
+      "text_predicate": "Requirement 4.3.2.7 (Functions > Trainborne Functions > Dynamic train speed profile calculation):\nWhere failure to apply the full service brake is detected the emergency brake shall stop the train in rear of the danger point.",
+      "lean_predicate": "structure Input where\n  currentSpeed : Nat\n  targetSpeed  : Nat\n  brakeApplied : Bool\n  dangerPoint  : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  stopped : Bool\n  stoppingPoint : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.brakeApplied = false\n  post := fun i o => (o.stopped = true ↔\n    i.brakeApplied = true ∧ i.currentSpeed ≤ i.dangerPoint) ∧\n                     (o.stopped = false →\n                      o.stoppingPoint = i.dangerPoint + 1 + (i.currentSpeed - i.targetSpeed) / 2)\n\nexample : Spec.pre { currentSpeed := 100, targetSpeed := 0, brakeApplied := false,\n                     dangerPoint := 500 } ∧\n          Spec.post { currentSpeed := 100, targetSpeed := 0, brakeApplied := false,\n                      dangerPoint := 500 }\n                    { stopped := true, stoppingPoint := 500 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 46.8,
+      "error": "<generated>:28:15: error: Tactic `decide` proved that the proposition\n  { pre := fun i => i.brakeApplied = false,\n          post := fun i o =>\n            (o.stopped = true ↔ i.brakeApplied = true ∧ i.currentSpeed ≤ i.dangerPoint) ∧\n              (o.stopped = false → o.stoppingPoint = i.dangerPoint + 1 + (i.currentSpeed - i.targetSpeed) / 2) }.pre\n      { currentSpeed := 100, targetSpeed := 0, brakeApplied := false, dangerPoint := 500 } ∧\n    { pre := fun i => i.brakeApplied = false,\n          post := fun i o =>\n            (o.stopped = true ↔ i.brakeApplied = true ∧ i.currentSpeed ≤ i.dangerPoint) ∧\n              (o.stopped = false → o.stoppingPoint = i.dangerPoint + 1 + (i.currentSpeed - i.targetSpeed) / 2) }.post\n      { currentSpeed := 100, targetSpeed := 0, brakeApplied := false, dangerPoint := 500 }\n      { stopped := true, stoppingPoint := 500 }\nis false\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.3.2d",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the release speed is calculated on board it shall ensure that the train will stop before reaching the danger point",
+      "text_predicate": "Requirement 4.3.3.2d (Functions > Trainborne Functions > Release speed calculation):\nIf the release speed is calculated on board it shall ensure that the train will stop before reaching the danger point",
+      "lean_predicate": "structure Input where\n  distanceToDangerPoint : Nat\n  maxDecelerationRate   : Nat\n  initialSpeed          : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  releaseSpeed : Nat\n  shallStopBeforeDanger : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.distanceToDangerPoint ∧ 0 < i.maxDecelerationRate ∧ 0 < i.initialSpeed\n  post := fun i o => o.shallStopBeforeDanger ↔\n    (o.releaseSpeed = 0 ∧ i.initialSpeed ≤ i.maxDecelerationRate * i.distanceToDangerPoint) ∨\n    (o.releaseSpeed > 0 ∧\n     (o.releaseSpeed ≤ i.initialSpeed ∧\n      o.releaseSpeed ≤ i.maxDecelerationRate * (i.distanceToDangerPoint - 1) + o.releaseSpeed))\n\nexample : Spec.pre { distanceToDangerPoint := 100, maxDecelerationRate := 5, initialSpeed := 100 } ∧\n          Spec.post { distanceToDangerPoint := 100, maxDecelerationRate := 5, initialSpeed := 100 }\n                    { releaseSpeed := 50, shallStopBeforeDanger := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 52.7,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { distanceToDangerPoint := 100, maxDecelerationRate := 5, initialSpeed := 50 } { releaseSpeed := 50, shallStopBeforeDanger := true }` holds, but the requirement forbids this output for this input (The train will not stop before reaching the danger point). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "compiles, but the generation loop's own checks failed: L0.5: your spec accepts a forbidden behaviour: `Spec.post { distanceToDangerPoint := 100, maxDecelerationRate := 5, initialSpeed := 50 } { releaseSpeed := 50, shallStopBeforeDanger := true }` holds, but the requirement forbids this output for this input (The train will not stop before reaching the d"
+        ]
+      }
+    },
+    {
+      "id": "4.3.3.3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When the train is stationary or after a certain time (e.g. the time for \"route releasing\" of the overlap, the release speed calculation shall be based on the distance to the danger point (if calculated on-board). The condition for this change shall be defined for each target as infrastructure data.",
+      "text_predicate": "Requirement 4.3.3.3 (Functions > Trainborne Functions > Release speed calculation):\nWhen the train is stationary or after a certain time (e.g. the time for \"route releasing\" of the overlap, the release speed calculation shall be based on the distance to the danger point (if calculated on-board). The condition for this change shall be defined for each target as infrastructure data.",
+      "lean_predicate": "structure Input where\n  distanceToDangerPoint : Nat\n  timeSinceStationary   : Nat\n  infrastructureData    : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  releaseSpeed : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.timeSinceStationary = 0 ∨ i.timeSinceStationary ≥ i.infrastructureData\n  post := fun i o => (o.releaseSpeed = 0 ↔ i.timeSinceStationary = 0) ∧\n                     (o.releaseSpeed ≠ 0 ↔\n                      i.timeSinceStationary ≥ i.infrastructureData ∧\n                      o.releaseSpeed = i.distanceToDangerPoint)\n\nexample : Spec.pre { distanceToDangerPoint := 100, timeSinceStationary := 0,\n                     infrastructureData := 60 } ∧\n          Spec.post { distanceToDangerPoint := 100, timeSinceStationary := 0,\n                      infrastructureData := 60 }\n                    { releaseSpeed := 0 } := by\n  unfold Spec; decide\n\nexample : Spec.pre { distanceToDangerPoint := 100, timeSinceStationary := 120,\n                     infrastructureData := 60 } ∧\n          Spec.post { distanceToDangerPoint := 100, timeSinceStationary := 120,\n                      infrastructureData := 60 }\n                    { releaseSpeed := 100 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { distanceToDangerPoint := 100, timeSinceStationary := 50, infrastructureData := 60 } ∧ ¬ Spec.post { distanceToDangerPoint := 100, timeSinceStationary := 50, infrastructureData := 60 } { releaseSpeed := 50 } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { distanceToDangerPoint := 100, timeSinceStationary := 50, infrastructureData := 60 } ∧ ¬ Spec.post { distanceToDangerPoint := 100, timeSinceStationary := 50, infrastructureData := 60 } { releaseSpeed := 50 } := by\n  unfold Spec; decide",
+          "why": "The output does not match the requirement when the train is not stationary and timeSinceStationary is less than infrastructureData",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 68.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.4.2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "On lines fitted with RBC, the ETCS trainborne equipment shall be able to transmit the location of the entire train to the RBC.",
+      "text_predicate": "Requirement 4.3.4.2 (Functions > Trainborne Functions > Train location):\nOn lines fitted with RBC, the ETCS trainborne equipment shall be able to transmit the location of the entire train to the RBC.",
+      "lean_predicate": "structure Input where\n  trainLocation : Nat -- location of the train in some unit (e.g., meters)\n  deriving DecidableEq, Repr\n\nstructure Output where\n  transmitted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true -- no assumptions about the input\n  post := fun i o => o.transmitted = true ↔ 0 ≤ i.trainLocation\n\nexample : Spec.pre { trainLocation := 1000 } ∧\n          Spec.post { trainLocation := 1000 } { transmitted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { trainLocation := -1 } ∧ ¬ Spec.post { trainLocation := -1 } { transmitted := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { trainLocation := -1 } ∧ ¬ Spec.post { trainLocation := -1 } { transmitted := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the ETCS trainborne equipment shall transmit the location of the train to the RBC, which implies that the location must be non-negative. A negative location violates this requirement.",
+          "outcome": "not usable: failed to synthesize instance of type class\n  Neg Nat\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command."
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.6.6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The driver shall have the possibility to select the language, this does not concern non pre-defined texts sent from the trackside.",
+      "text_predicate": "Requirement 4.3.6.6 (Functions > Trainborne Functions > Indication displayed on the DMI):\nThe driver shall have the possibility to select the language, this does not concern non pre-defined texts sent from the trackside.",
+      "lean_predicate": "structure Input where\n  language : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  language : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.language ≠ \"\"\n  post := fun i o => o.language = i.language\n\nexample : Spec.pre { language := \"en\" } ∧\n          Spec.post { language := \"en\" } { language := \"en\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { language := \"French\" } ∧ ¬ Spec.post { language := \"French\" } { language := \"Non pre-defined text from trackside\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { language := \"French\" } ∧ ¬ Spec.post { language := \"French\" } { language := \"Non pre-defined text from trackside\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that non pre-defined texts sent from the trackside should not concern the selection of the language.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.7.2",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "Within the braking curve area, a warning shall be given to the driver to enable him to react and avoid intervention from ETCS equipment at least 5 sec. before the intervention.",
+      "text_predicate": "Requirement 4.3.7.2 (Functions > Trainborne Functions > Indication displayed on the DMI > Supervision of movement authorities and speed limits):\nWithin the braking curve area, a warning shall be given to the driver to enable him to react and avoid intervention from ETCS equipment at least 5 sec. before the intervention.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` >= 5000000 (us, operation: Within the braking curve area, a warning shall be given to the driver to enable him to react and avoid intervention from ETCS equipment at least)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros ≥ 5000000\n\nexample : Spec.pre {} ∧ Spec.post {} { elapsedMicros := 5000001 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 4000000, … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 4000000, … } := by\n  unfold Spec; decide",
+          "why": "The output does not meet the requirement of giving a warning at least 5 seconds before intervention.",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 20.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.10.2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "All data entered, received or indicated to the driver shall be recorded onboard. All data shall be related to UTC (Universal Time Corrected) and a reference point.",
+      "text_predicate": "Requirement 4.3.10.2 (Functions > Trainborne Functions > Indication displayed on the DMI > Recording the ETCS information):\nAll data entered, received or indicated to the driver shall be recorded onboard. All data shall be related to UTC (Universal Time Corrected) and a reference point.",
+      "lean_predicate": "structure Input where\n  data : List String\n  referencePoint : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  recordedData : List String\n  referencePoint : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.data ≠ []\n  post := fun i o => o.recordedData = i.data ∧ o.referencePoint = i.referencePoint\n\nexample : Spec.pre { data := [\"data1\", \"data2\"], referencePoint := 12345 } ∧\n          Spec.post { data := [\"data1\", \"data2\"], referencePoint := 12345 }\n                    { recordedData := [\"data1\", \"data2\"], referencePoint := 12345 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { data := [\"ETCS Information\"], referencePoint := 1456 } ∧ ¬ Spec.post { data := [\"ETCS Information\"], referencePoint := 1456 } { recordedData := [], referencePoint := 1456 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { data := [\"ETCS Information\"], referencePoint := 1456 } ∧ ¬ Spec.post { data := [\"ETCS Information\"], referencePoint := 1456 } { recordedData := [], referencePoint := 1456 } := by\n  unfold Spec; decide",
+          "why": "The output does not record the data, violating the requirement that all data entered shall be recorded onboard.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.10.5",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The retention period for the recorded data will be different and two levels are foreseen: Data to enable investigation of accidents need only be stored for at least 24 hours, and shall be very detailed. Operational data to enable assessment of driver performance shall be stored for at least one week.",
+      "text_predicate": "Requirement 4.3.10.5 (Functions > Trainborne Functions > Indication displayed on the DMI > Recording the ETCS information):\nThe retention period for the recorded data will be different and two levels are foreseen: Data to enable investigation of accidents need only be stored for at least 24 hours, and shall be very detailed. Operational data to enable assessment of driver performance shall be stored for at least one week.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` >= 86400000000 (us, operation: The retention period for the recorded data will be different and two levels are foreseen: Data to enable investigation of accidents need only be stored for at least)",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.elapsedMicros ≥ 86400000000\n\nexample : Spec.pre { } ∧ Spec.post { } { elapsedMicros := 86400000000 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 86399999999, … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { elapsedMicros := 86399999999, … } := by\n  unfold Spec; decide",
+          "why": "The output does not meet the requirement as the data retention period for accident investigation is less than 24 hours",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ]
+      }
+    },
+    {
+      "id": "4.3.10.7",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The following information shall be recorded: any transition of Level and of operational status the driver's confirmation of transition to shunting train supervision data and information received from national train control systems actual speed full service brake intervention emergency brake intervention applying the train trip function selection of the override control override of the route suitability function isolation of on board ETCS equipmen data entered, recieved or indicated to the driver",
+      "text_predicate": "Requirement 4.3.10.7 (Functions > Trainborne Functions > Indication displayed on the DMI > Recording the ETCS information):\nThe following information shall be recorded: any transition of Level and of operational status the driver's confirmation of transition to shunting train supervision data and information received from national train control systems actual speed full service brake intervention emergency brake intervention applying the train trip function selection of the override control override of the route suitability function isolation of on board ETCS equipmen data entered, recieved or indicated to the driver",
+      "lean_predicate": "structure Input where\n  level : Nat\n  operational_status : String\n  shunting_confirmation : Bool\n  shunting_data : Bool\n  national_train_control_data : Bool\n  actual_speed : Nat\n  full_service_brake : Bool\n  emergency_brake : Bool\n  train_trip_function : Bool\n  override_control : Bool\n  route_suitability_function : Bool\n  isolation_of_ets : Bool\n  data_entered : String\n  data_received : String\n  data_indicated : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  level : Nat\n  operational_status : String\n  shunting_confirmation : Bool\n  shunting_data : Bool\n  national_train_control_data : Bool\n  actual_speed : Nat\n  full_service_brake : Bool\n  emergency_brake : Bool\n  train_trip_function : Bool\n  override_control : Bool\n  route_suitability_function : Bool\n  isolation_of_ets : Bool\n  data_entered : String\n  data_received : String\n  data_indicated : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => \n    o.level = i.level ∧\n    o.operational_status = i.operational_status ∧\n    o.shunting_confirmation = i.shunting_confirmation ∧\n    o.shunting_data = i.shunting_data ∧\n    o.national_train_control_data = i.national_train_control_data ∧\n    o.actual_speed = i.actual_speed ∧\n    o.full_service_brake = i.full_service_brake ∧\n    o.emergency_brake = i.emergency_brake ∧\n    o.train_trip_function = i.train_trip_function ∧\n    o.override_control = i.override_control ∧\n    o.route_suitability_function = i.route_suitability_function ∧\n    o.isolation_of_ets = i.isolation_of_ets ∧\n    o.data_entered = i.data_entered ∧\n    o.data_received = i.data_received ∧\n    o.data_indicated = i.data_indicated\n\nexample : Spec.pre { level := 1, operational_status := \"normal\", shunting_confirmation := false,\n                     shunting_data := false, national_train_control_data := false,\n                     actual_speed := 50, full_service_brake := false, emergency_brake := false,\n                     train_trip_function := false, override_control := false,\n                     route_suitability_function := false, isolation_of_ets := false,\n                     data_entered := \"data1\", data_received := \"data2\", data_indicated := \"data3\" } ∧\n          Spec.post { level := 1, operational_status := \"normal\", shunting_confirmation := false,\n                      shunting_data := false, national_train_control_data := false,\n                      actual_speed := 50, full_service_brake := false, emergency_brake := false,\n                      train_trip_function := false, override_control := false,\n                      route_suitability_function := false, isolation_of_ets := false,\n                      data_entered := \"data1\", data_received := \"data2\", data_indicated := \"data3\" }\n                    { level := 1, operational_status := \"normal\", shunting_confirmation := false,\n                      shunting_data := false, national_train_control_data := false,\n                      actual_speed := 50, full_service_brake := false, emergency_brake := false,\n                      train_trip_function := false, override_control := false,\n                      route_suitability_function := false, isolation_of_ets := false,\n                      data_entered := \"data1\", data_received := \"data2\", data_indicated := \"data3\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 117.3,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { level := 1, operational_status := \"normal\", shunting_confirmation := false, shunting_data := false, national_train_control_data := false, actual_speed := 60, full_service_brake := false, emergency_brake := false, train_trip_function := false, override_control := false, route_suitability_function := false, isolation_of_ets := false, data_entered := \"\", data_received := \"\", data_indicated := \"\" } { level := 1, operational_status := \"normal\", shunting_confirmation := false, shunting_data := false, national_train_control_data := false, actual_speed := 60, full_service_brake := false, emergency_brake := false, train_trip_function := false, override_control := false, route_suitability_function := false, isolation_of_ets := false, data_entered := \"\", data_received := \"\", data_indicated := \"\" }` holds, but the requirement forbids this output for this input (The requirement does not allow any transitions of Level or operational status to be recorded as the same as the input.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "compiles, but the generation loop's own checks failed: L0.5: your spec accepts a forbidden behaviour: `Spec.post { level := 1, operational_status := \"normal\", shunting_confirmation := false, shunting_data := false, national_train_control_data := false, actual_speed := 60, full_service_brake := false, emergency_brake := false, train_trip_function := fals"
+        ]
+      }
+    },
+    {
+      "id": "4.4.1.2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Information received shall not influence the traction unit(s) with in-operative cabs.",
+      "text_predicate": "Requirement 4.4.1.2 (Functions > Special Operations > Using multiple traction units):\nInformation received shall not influence the traction unit(s) with in-operative cabs.",
+      "lean_predicate": "structure TractionUnit where\n  cabStatus : Bool -- true if the cab is in-operative, false otherwise\n  powerLevel : Nat -- power level of the traction unit\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cabStatuses : List TractionUnit\n  receivedInfo : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  cabStatuses : List TractionUnit\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.receivedInfo ≠ \"\"\n  post := fun i o => o.cabStatuses = i.cabStatuses ∧\n                     (o.cabStatuses.map (fun u => u.cabStatus) = i.cabStatuses.map (fun u => u.cabStatus))\n\nexample : Spec.pre { cabStatuses := [{ cabStatus := true, powerLevel := 50 },\n                                      { cabStatus := false, powerLevel := 100 }],\n                     receivedInfo := \"new data\" } ∧\n          Spec.post { cabStatuses := [{ cabStatus := true, powerLevel := 50 },\n                                       { cabStatus := false, powerLevel := 100 }],\n                      receivedInfo := \"new data\" }\n                    { cabStatuses := [{ cabStatus := true, powerLevel := 50 },\n                                      { cabStatus := false, powerLevel := 100 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { cabStatuses := [{ cabStatus := true, powerLevel := 50 }, { cabStatus := false, powerLevel := 75 }], receivedInfo := \"some info\" } ∧ ¬ Spec.post { cabStatuses := [{ cabStatus := true, powerLevel := 50 }, { cabStatus := false, powerLevel := 75 }], receivedInfo := \"some info\" } { cabStatuses := [{ cabStatus := false, powerLevel := 50 }, { cabStatus := false, powerLevel := 75 }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { cabStatuses := [{ cabStatus := true, powerLevel := 50 }, { cabStatus := false, powerLevel := 75 }], receivedInfo := \"some info\" } ∧ ¬ Spec.post { cabStatuses := [{ cabStatus := true, powerLevel := 50 }, { cabStatus := false, powerLevel := 75 }], receivedInfo := \"some info\" } { cabStatuses := [{ cabStatus := false, powerLevel := 50 }, { cabStatus := false, powerLevel := 75 }] } := by\n  unfold Spec; decide",
+          "why": "The output should not change the cabStatus of any traction unit based on the receivedInfo.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 28.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.4.7.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "It shall be possible to drive the train backwards in a supervised way (speed and distance) according to information received from trackside",
+      "text_predicate": "Requirement 4.4.7.1 (Functions > Special Operations > Train reversing):\nIt shall be possible to drive the train backwards in a supervised way (speed and distance) according to information received from trackside",
+      "lean_predicate": "structure Input where\n  speedLimit : Nat\n  distance   : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  speed : Nat\n  distanceTraveled : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.speedLimit ∧ 0 < i.distance\n  post := fun i o => (o.speed = i.speedLimit ∧ o.distanceTraveled = i.distance) ↔\n                     (0 < i.speedLimit ∧ 0 < i.distance)\n\nexample : Spec.pre { speedLimit := 10, distance := 50 } ∧\n          Spec.post { speedLimit := 10, distance := 50 }\n                    { speed := 10, distanceTraveled := 50 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { speedLimit := 60, distance := 1000 } ∧ ¬ Spec.post { speedLimit := 60, distance := 1000 } { speed := 60, distanceTraveled := 500 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { speedLimit := 60, distance := 1000 } ∧ ¬ Spec.post { speedLimit := 60, distance := 1000 } { speed := 60, distanceTraveled := 500 } := by\n  unfold Spec; decide",
+          "why": "The output does not match the requirement as it does not reverse the train according to the speed limit and distance",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.5.2.2a",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The driver shall select an override control according to the permission received.",
+      "text_predicate": "Requirement 4.5.2.2a (Functions > Functions required in the event of incidents or other (non ETCS) system failures > Passing a stop signal with restricted movement authority):\nThe driver shall select an override control according to the permission received.",
+      "lean_predicate": "structure OverrideControl where\n  id : Nat\n  permission : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  overrideControls : List OverrideControl\n  permissionReceived : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  selectedControl : OverrideControl\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.overrideControls.Nodup ∧ i.permissionReceived ≠ \"\"\n  post := fun i o => \n    ∃ c ∈ i.overrideControls, c.permission = i.permissionReceived ∧\n    o.selectedControl = c\n\nexample : Spec.pre { overrideControls := [{ id := 1, permission := \"allow\" },\n                                           { id := 2, permission := \"deny\" }],\n                     permissionReceived := \"allow\" } ∧\n          Spec.post { overrideControls := [{ id := 1, permission := \"allow\" },\n                                            { id := 2, permission := \"deny\" }],\n                      permissionReceived := \"allow\" }\n                    { selectedControl := { id := 1, permission := \"allow\" } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { overrideControls := [{ id := 1, permission := \"speed\" }, { id := 2, permission := \"stop\" }], permissionReceived := \"stop\" } ∧ ¬ Spec.post { overrideControls := [{ id := 1, permission := \"speed\" }, { id := 2, permission := \"stop\" }], permissionReceived := \"stop\" } { selectedControl := { id := 1, permission := \"speed\" } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { overrideControls := [{ id := 1, permission := \"speed\" }, { id := 2, permission := \"stop\" }], permissionReceived := \"stop\" } ∧ ¬ Spec.post { overrideControls := [{ id := 1, permission := \"speed\" }, { id := 2, permission := \"stop\" }], permissionReceived := \"stop\" } { selectedControl := { id := 1, permission := \"speed\" } } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the driver shall select an override control according to the permission received. A buggy system might select an override control that does not match the permission received.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "4.5.2.5b",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The supervised speed shall not be shown on the DMI.",
+      "text_predicate": "Requirement 4.5.2.5b (Functions > Functions required in the event of incidents or other (non ETCS) system failures > Passing a stop signal with restricted movement authority):\nThe supervised speed shall not be shown on the DMI.",
+      "lean_predicate": "structure Input where\n  speed : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  speedVisible : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.speed = 0\n  post := fun i o => o.speedVisible = false\n\nexample : Spec.pre { speed := 0 } ∧ Spec.post { speed := 0 } { speedVisible := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { speed := 10 } ∧ ¬ Spec.post { speed := 10 } { speedVisible := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { speed := 10 } ∧ ¬ Spec.post { speed := 10 } { speedVisible := true } := by\n  unfold Spec; decide",
+          "why": "The output shows the speed, which is forbidden by the requirement.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 24.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.6.4.7",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When a train has received an emergency stop ETCS shall command the emergency brake.",
+      "text_predicate": "Requirement 4.6.4.7 (Functions > Protection Functions > Emergency stop to train(s)):\nWhen a train has received an emergency stop ETCS shall command the emergency brake.",
+      "lean_predicate": "structure Train where\n  id : Nat\n  status : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  trains : List Train\n  deriving DecidableEq, Repr\n\nstructure Output where\n  trains : List Train\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.trains.Nodup\n  post := fun i o => o.trains = i.trains ∧\n                     (∀ t ∈ o.trains, t.status = \"emergency brake\" ↔\n                      ∃ t' ∈ i.trains, t'.id = t.id ∧ t'.status = \"emergency stop\")\n\nexample : Spec.pre { trains := [] } ∧ Spec.post { trains := [] } { trains := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { trains := [ { id := 1, status := \"emergency stop\" }, { id := 2, status := \"normal\" } ] } ∧ ¬ Spec.post { trains := [ { id := 1, status := \"emergency stop\" }, { id := 2, status := \"normal\" } ] } { trains := [ { id := 1, status := \"emergency brake\" }, { id := 2, status := \"normal\" } ] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { trains := [ { id := 1, status := \"emergency stop\" }, { id := 2, status := \"normal\" } ] } ∧ ¬ Spec.post { trains := [ { id := 1, status := \"emergency stop\" }, { id := 2, status := \"normal\" } ] } { trains := [ { id := 1, status := \"emergency brake\" }, { id := 2, status := \"normal\" } ] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that when a train has received an emergency stop, ETCS shall command the emergency brake. The output should not have any train in the \"emergency brake\" status if no train was in the \"emergency stop\" status in the input.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 14.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "4.7.1.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The ETCS trainborne equipment shall transmit its own train identification to the RBC.",
+      "text_predicate": "Requirement 4.7.1.1 (Functions > Train Control Centre Functions > Train identification):\nThe ETCS trainborne equipment shall transmit its own train identification to the RBC.",
+      "lean_predicate": "structure TrainIdentification where\n  id : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  trainId : TrainIdentification\n  deriving DecidableEq, Repr\n\nstructure Output where\n  trainId : TrainIdentification\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.trainId = i.trainId\n\nexample : Spec.pre { trainId := { id := 12345 } } ∧\n          Spec.post { trainId := { id := 12345 } } { trainId := { id := 12345 } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { trainId := { id := 12345 } } ∧ ¬ Spec.post { trainId := { id := 12345 } } { trainId := { id := 67890 } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { trainId := { id := 12345 } } ∧ ¬ Spec.post { trainId := { id := 12345 } } { trainId := { id := 67890 } } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the ETCS trainborne equipment shall transmit its own train identification to the RBC. A wrong output would be one where the train identification does not match, implying a different train's ID was sent.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "4.8.8.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "It shall be possible to send plain text messages from track to train.",
+      "text_predicate": "Requirement 4.8.8.1 (Functions > Additional Functions > Plain text transmission):\nIt shall be possible to send plain text messages from track to train.",
+      "lean_predicate": "structure Input where\n  message : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  received : Bool\n  message  : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.message ≠ \"\"\n  post := fun i o => o.received = true ∧ o.message = i.message\n\nexample : Spec.pre { message := \"Hello, train!\" } ∧\n          Spec.post { message := \"Hello, train!\" }\n                    { received := true, message := \"Hello, train!\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { message := \"\" } ∧ ¬ Spec.post { message := \"\" } { received := true, message := \"\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { message := \"\" } ∧ ¬ Spec.post { message := \"\" } { received := true, message := \"\" } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids the message from being an empty string, but the output does not reflect this.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.8.8.5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The onboard equipment shall display plain text messages as received.",
+      "text_predicate": "Requirement 4.8.8.5 (Functions > Additional Functions > Plain text transmission):\nThe onboard equipment shall display plain text messages as received.",
+      "lean_predicate": "structure Input where\n  message : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  displayed : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.displayed = i.message\n\nexample : Spec.pre { message := \"Hello, world!\" } ∧\n          Spec.post { message := \"Hello, world!\" } { displayed := \"Hello, world!\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { message := \"Warning: Low battery!\" } ∧ ¬ Spec.post { message := \"Warning: Low battery!\" } { displayed := \"Fix: Replace battery!\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { message := \"Warning: Low battery!\" } ∧ ¬ Spec.post { message := \"Warning: Low battery!\" } { displayed := \"Fix: Replace battery!\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the onboard equipment shall display plain text messages as received, meaning it should not alter the message.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.8.9.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "It shall be possible to send fixed text messages from track to train",
+      "text_predicate": "Requirement 4.8.9.1 (Functions > Additional Functions > Fixed text messages):\nIt shall be possible to send fixed text messages from track to train",
+      "lean_predicate": "structure Input where\n  message : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sent : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.message ≠ \"\"\n  post := fun i o => o.sent = true\n\nexample : Spec.pre { message := \"Fixed message\" } ∧\n          Spec.post { message := \"Fixed message\" } { sent := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { message := \"Fixed text message\" } ∧ ¬ Spec.post { message := \"Fixed text message\" } { sent := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { message := \"Fixed text message\" } ∧ ¬ Spec.post { message := \"Fixed text message\" } { sent := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the system shall send fixed text messages, so sending false is a violation.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 6.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.8.10.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "It shall be possible to send information regarding the inhibition of the following different types of brake: Regenerative brake Eddy current brake Magnetic shoe brake",
+      "text_predicate": "Requirement 4.8.10.1 (Functions > Additional Functions > Management of special brakes):\nIt shall be possible to send information regarding the inhibition of the following different types of brake: Regenerative brake Eddy current brake Magnetic shoe brake",
+      "lean_predicate": "structure Input where\n  brakeType : String\n  inhibited : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  brakeType : String\n  inhibited : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.brakeType ∈ [\"Regenerative brake\", \"Eddy current brake\", \"Magnetic shoe brake\"]\n  post := fun i o => o.brakeType = i.brakeType ∧ o.inhibited = i.inhibited\n\nexample : Spec.pre { brakeType := \"Regenerative brake\", inhibited := true } ∧\n          Spec.post { brakeType := \"Regenerative brake\", inhibited := true }\n                     { brakeType := \"Regenerative brake\", inhibited := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { brakeType := \"Regenerative brake\", inhibited := true } ∧ ¬ Spec.post { brakeType := \"Regenerative brake\", inhibited := true } { brakeType := \"Disc brake\", inhibited := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { brakeType := \"Regenerative brake\", inhibited := true } ∧ ¬ Spec.post { brakeType := \"Regenerative brake\", inhibited := true } { brakeType := \"Disc brake\", inhibited := true } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow any other brake type besides the specified ones.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.9.5.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The ETCS on-board shall be capable of sending to the trackside train integrity information detected by a system outside ETCS",
+      "text_predicate": "Requirement 4.9.5.1 (Functions > Functions primarily related to RBC > Train Integrity):\nThe ETCS on-board shall be capable of sending to the trackside train integrity information detected by a system outside ETCS",
+      "lean_predicate": "structure Input where\n  integrityInfo : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sentToTrackside : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.integrityInfo ≠ \"\"\n  post := fun i o => o.sentToTrackside = true\n\nexample : Spec.pre { integrityInfo := \"Integrity OK\" } ∧\n          Spec.post { integrityInfo := \"Integrity OK\" }\n                    { sentToTrackside := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { integrityInfo := \"valid integrity info\" } ∧ ¬ Spec.post { integrityInfo := \"valid integrity info\" } { sentToTrackside := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { integrityInfo := \"valid integrity info\" } ∧ ¬ Spec.post { integrityInfo := \"valid integrity info\" } { sentToTrackside := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the ETCS on-board shall send the integrity information to the trackside. A buggy system might not send the information at all, resulting in `sentToTrackside` being false.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.9.5.4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The driver shall be able to confirm the train integrity to the RBC manually. The confirmation requires the train to be stationary.",
+      "text_predicate": "Requirement 4.9.5.4 (Functions > Functions primarily related to RBC > Train Integrity):\nThe driver shall be able to confirm the train integrity to the RBC manually. The confirmation requires the train to be stationary.",
+      "lean_predicate": "structure Input where\n  isStationary : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  confirmed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.isStationary\n  post := fun i o => o.confirmed = true\n\nexample : Spec.pre { isStationary := true } ∧ Spec.post { isStationary := true } { confirmed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { isStationary := false } ∧ ¬ Spec.post { isStationary := false } { confirmed := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { isStationary := false } ∧ ¬ Spec.post { isStationary := false } { confirmed := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the train must be stationary for the confirmation to be valid, but the output does not reflect this.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.9.9.1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The on board shall be capable of sending train data to the trackside after confirmation by the driver, or when entering the RBC area",
+      "text_predicate": "Requirement 4.9.9.1 (Functions > Functions primarily related to RBC > Train Data to be sent to trackside):\nThe on board shall be capable of sending train data to the trackside after confirmation by the driver, or when entering the RBC area",
+      "lean_predicate": "structure TrainData where\n  speed   : Nat\n  location: String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  driverConfirmed : Bool\n  enteringRBC     : Bool\n  trainData       : TrainData\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sentToTrackside : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.driverConfirmed ∨ i.enteringRBC\n  post := fun i o => o.sentToTrackside ↔\n    (i.driverConfirmed → i.trainData.speed ≤ 100) ∧\n    (i.enteringRBC → i.trainData.location ≠ \"outsideRBC\")\n\nexample : Spec.pre { driverConfirmed := true, enteringRBC := false,\n                     trainData := { speed := 50, location := \"insideRBC\" } } ∧\n          Spec.post { driverConfirmed := true, enteringRBC := false,\n                      trainData := { speed := 50, location := \"insideRBC\" } }\n                    { sentToTrackside := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { driverConfirmed := false, enteringRBC := true, trainData := { speed := 50, location := \"outsideRBC\" } } ∧ ¬ Spec.post { driverConfirmed := false, enteringRBC := true, trainData := { speed := 50, location := \"outsideRBC\" } } { sentToTrackside := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { driverConfirmed := false, enteringRBC := true, trainData := { speed := 50, location := \"outsideRBC\" } } ∧ ¬ Spec.post { driverConfirmed := false, enteringRBC := true, trainData := { speed := 50, location := \"outsideRBC\" } } { sentToTrackside := true } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow sending train data if the train is outside the RBC area and the driver has not confirmed",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.9.9.2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The following train data shall be sent from the on board to the trackside: Train running number STM ready for use train gauge Max. axle load status of air tight system type of el. power accepted international train category max. train speed train length",
+      "text_predicate": "Requirement 4.9.9.2 (Functions > Functions primarily related to RBC > Train Data to be sent to trackside):\nThe following train data shall be sent from the on board to the trackside: Train running number STM ready for use train gauge Max. axle load status of air tight system type of el. power accepted international train category max. train speed train length",
+      "lean_predicate": "structure TrainData where\n  runningNumber : String\n  gauge         : Nat\n  maxAxleLoad   : Nat\n  airTight      : Bool\n  elPowerType   : String\n  intCategory   : String\n  maxSpeed      : Nat\n  length        : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  runningNumber : String\n  gauge         : Nat\n  maxAxleLoad   : Nat\n  airTight      : Bool\n  elPowerType   : String\n  intCategory   : String\n  maxSpeed      : Nat\n  length        : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  runningNumber : String\n  gauge         : Nat\n  maxAxleLoad   : Nat\n  airTight      : Bool\n  elPowerType   : String\n  intCategory   : String\n  maxSpeed      : Nat\n  length        : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.runningNumber = i.runningNumber ∧\n                     o.gauge = i.gauge ∧\n                     o.maxAxleLoad = i.maxAxleLoad ∧\n                     o.airTight = i.airTight ∧\n                     o.elPowerType = i.elPowerType ∧\n                     o.intCategory = i.intCategory ∧\n                     o.maxSpeed = i.maxSpeed ∧\n                     o.length = i.length\n\nexample : Spec.pre { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000,\n                     airTight := true, elPowerType := \"AC\", intCategory := \"IC\",\n                     maxSpeed := 200, length := 200 } ∧\n          Spec.post { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000,\n                      airTight := true, elPowerType := \"AC\", intCategory := \"IC\",\n                      maxSpeed := 200, length := 200 }\n                    { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000,\n                      airTight := true, elPowerType := \"AC\", intCategory := \"IC\",\n                      maxSpeed := 200, length := 200 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000, airTight := true, elPowerType := \"AC\", intCategory := \"IC\", maxSpeed := 200, length := 200 } ∧ ¬ Spec.post { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000, airTight := true, elPowerType := \"AC\", intCategory := \"IC\", maxSpeed := 200, length := 200 } { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000, airTight := true, elPowerType := \"AC\", intCategory := \"IC\", maxSpeed := 200, length := 200, extraField := 123 } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000, airTight := true, elPowerType := \"AC\", intCategory := \"IC\", maxSpeed := 200, length := 200 } ∧ ¬ Spec.post { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000, airTight := true, elPowerType := \"AC\", intCategory := \"IC\", maxSpeed := 200, length := 200 } { runningNumber := \"12345\", gauge := 1435, maxAxleLoad := 25000, airTight := true, elPowerType := \"AC\", intCategory := \"IC\", maxSpeed := 200, length := 200, extraField := 123 } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow any extra fields in the output.",
+          "outcome": "not usable: `extraField` is not a field of structure `Output`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 26.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.9.10.5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The driver shall be able to use the Reversing function without needing to re-confirm the train data.",
+      "text_predicate": "Requirement 4.9.10.5 (Functions > Functions primarily related to RBC > Reversing):\nThe driver shall be able to use the Reversing function without needing to re-confirm the train data.",
+      "lean_predicate": "structure Input where\n  trainData : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  trainData : String\n  reversed  : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.trainData ≠ \"\"\n  post := fun i o => o.trainData = i.trainData ∧\n                     o.reversed = true\n\nexample : Spec.pre { trainData := \"12345\" } ∧\n          Spec.post { trainData := \"12345\" }\n                    { trainData := \"12345\", reversed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { trainData := \"12345\" } ∧ ¬ Spec.post { trainData := \"12345\" } { trainData := \"54321\", reversed := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { trainData := \"12345\" } ∧ ¬ Spec.post { trainData := \"12345\" } { trainData := \"54321\", reversed := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the driver should not need to re-confirm the train data,",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.2.1.2c",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In ETCS with RBC this restriction on performance shall, if possible be transmitted to the RBC.",
+      "text_predicate": "Requirement 5.2.1.2c (Failures and Fall-back Procedures > On board equipment failures):\nIn ETCS with RBC this restriction on performance shall, if possible be transmitted to the RBC.",
+      "lean_predicate": "structure Input where\n  equipmentFailure : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  transmittedToRBC : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.equipmentFailure = true\n  post := fun i o => o.transmittedToRBC = true ↔\n    (i.equipmentFailure = true)\n\nexample : Spec.pre { equipmentFailure := true } ∧\n          Spec.post { equipmentFailure := true }\n                    { transmittedToRBC := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { equipmentFailure := true } ∧ ¬ Spec.post { equipmentFailure := true } { transmittedToRBC := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { equipmentFailure := true } ∧ ¬ Spec.post { equipmentFailure := true } { transmittedToRBC := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that if possible, the restriction on performance shall be transmitted to the RBC. A buggy system might not transmit the failure, violating this requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 36,
+    "flag": 9,
+    "fail": 6
+  }
+}

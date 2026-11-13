@@ -1,0 +1,21 @@
+import ContractForge
+open ContractForge
+
+-- 3.4.1/S8: This should greatly simplify the coordination problem posed by the large number of simultaneous users (as already described in the Capacity requirements, Section 3.2.2).
+-- compiles: True · rejects_bad_example: True · checked: True
+
+structure Input where
+  userCount : Nat
+  deriving DecidableEq, Repr
+
+structure Output where
+  userCount : Nat
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.userCount > 0
+  post := fun i o => o.userCount = i.userCount ∧
+                     (i.userCount ≥ 100 → o.userCount ≥ 101)
+
+example : Spec.pre { userCount := 1 } ∧ Spec.post { userCount := 1 } { userCount := 1 } := by
+  unfold Spec; decide

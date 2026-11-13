@@ -1,0 +1,1412 @@
+[
+  {
+    "id": "3.10.1.6",
+    "kind": "requirement",
+    "requirement_text": "Once received onboard the national values shall remain valid even if the onboard equipment is switched off",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ nationalValues := x.nationalValues }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { nationalValues := x.nationalValues }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.5
+  },
+  {
+    "id": "3.10.1.2",
+    "kind": "requirement",
+    "requirement_text": "Default values shall be harmonised values, permanently stored in all ERTMS/ETCS on board equipment",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ harmonisedValues := x.harmonisedValues }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { harmonisedValues := x.harmonisedValues }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.6
+  },
+  {
+    "id": "4.1.2.11",
+    "kind": "requirement",
+    "requirement_text": "Stored train data shall be offered to the driver to be confirmed when Data Entry starts.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ trains := x.trains, driver := x.driver, confirmed := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { trains := x.trains, driver := x.driver, confirmed := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.7
+  },
+  {
+    "id": "4.1.2.14b",
+    "kind": "requirement",
+    "requirement_text": "The change of driver identification during a journey or a Train Running Number shall be possible",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { train := x.train,\n    success := \n      ∃ d ∈ x.train.drivers, d.id = x.newDriverId ∧\n      (x.train.currentDriverIndex = x.train.currentDriverIndex + 1 ∨\n       x.train.currentDriverIndex = 0 ∧ x.train.drivers.length = 1) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.1
+  },
+  {
+    "id": "4.1.3.2a",
+    "kind": "requirement",
+    "requirement_text": "Transfer to Shunting on driver's selection shall only be possible when stationary.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ transferred := x.stationary }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { transferred := x.stationary }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.5
+  },
+  {
+    "id": "4.1.3.2d",
+    "kind": "requirement",
+    "requirement_text": "Permission received shall be indicated to the driver.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ indicatedToDriver := x.permissionReceived }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { indicatedToDriver := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.4
+  },
+  {
+    "id": "4.1.3.4b",
+    "kind": "requirement",
+    "requirement_text": "Before authomatic transition to Shunting, ETCS shall request confirmation from the driver.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ driverConfirmed := x.driverConfirmed, shuntingStarted := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `(o.driverConfirmed = i.driverConfirmed ∧\n                      o.shuntingStarted = false) ↔\n                    (o.driverConfirmed = true ∧\n                     o.shuntingStarted = true)`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { driverConfirmed := x.driverConfirmed, shuntingStarted := false }"
+      }
+    ],
+    "seconds": 24.7
+  },
+  {
+    "id": "4.1.4.1",
+    "kind": "requirement",
+    "requirement_text": "Partial Supervision shall be selected either by the Driver, or by information received from track-to-train transmission.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ partialSupervision := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { partialSupervision := decide (x.driverSelection ∨ x.trackToTrain) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.0
+  },
+  {
+    "id": "4.1.5.1a",
+    "kind": "requirement",
+    "requirement_text": "Transferring to Full Supervision shall occur automatically when a movement authority and all other necessary information is received through track-to-train transmission.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ inFullSupervision := x.movementAuthorityReceived }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { inFullSupervision := decide (x.movementAuthorityReceived ∧ x.allNecessaryInfoReceived) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.1
+  },
+  {
+    "id": "4.1.5.1b",
+    "kind": "requirement",
+    "requirement_text": "It shall be possible for the trackside to ask a driver for confirmation about the occupancy of the track ahead before sending a Full Supervision movement authority.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ confirmed := true, track_occupancy := x.track_occupancy }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { confirmed := true, track_occupancy := x.track_occupancy }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.2
+  },
+  {
+    "id": "4.1.5.5",
+    "kind": "requirement",
+    "requirement_text": "The trainborne equipment shall remain in Full Supervision until the trainborne equipment is not active any longer, when Shunting is selected or when Partial Supervision information is received.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.fullSupervision = false ↔\n                      (i.shuntingSelected ∧ i.active) ∨\n                      (i.partialSupervisionInfoReceived ∧ i.active)`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "static",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { fullSupervision := decide (x.active) }"
+      }
+    ],
+    "seconds": 29.5
+  },
+  {
+    "id": "4.1.8.1",
+    "kind": "requirement",
+    "requirement_text": "Unfitted operation shall be possible if ordered by trackside",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ operationPossible := x.ordered }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { operationPossible := x.ordered }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.9
+  },
+  {
+    "id": "4.1.8.5",
+    "kind": "requirement",
+    "requirement_text": "The onboard shall be capable to switch to another ETCS status when transmitted from trackside",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { switched := decide (x.currentStatus = \"Fitted\" ∧ x.newStatus = \"Unfitted\") ∨\n                (x.currentStatus = \"Unfitted\" ∧ x.newStatus = \"Fitted\") }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.9
+  },
+  {
+    "id": "4.1.1.3a#2",
+    "kind": "requirement",
+    "requirement_text": "It shall be possible to send information on adhesion conditions from trackside.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ conditions := x.conditions }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { conditions := x.conditions }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.0
+  },
+  {
+    "id": "4.1.1.3b",
+    "kind": "requirement",
+    "requirement_text": "It shall also be possible, to allow the driver to change the adhesion conditions; in this case information from trackside has priority.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ adhesionConditions := x.tracksideInfo }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { adhesionConditions := if x.tracksideInfo = x.adhesionConditions then x.adhesionConditions else x.tracksideInfo }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.4
+  },
+  {
+    "id": "4.1.1.4a",
+    "kind": "requirement",
+    "requirement_text": "The trackside shall be able to send information for the calculation of speed profiles.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:32:15: error(lean.unknownIdentifier): Unknown constant `List.repeat`\n",
+        "error_class": "unknown-name",
+        "stages": [
+          "names",
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { valid := true,\n    profile := List.repeat (x.speed / 10) 10,\n    sum := x.speed }"
+      }
+    ],
+    "seconds": 11.5
+  },
+  {
+    "id": "4.2.3.6b",
+    "kind": "requirement",
+    "requirement_text": "The train shall, as a minimum, be supervised to a ceiling speed; the supervised speed shall not be shown on the DMI unless selected by the driver.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { dmiDisplay := decide (x.supervisedSpeed = x.ceilingSpeed) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.3
+  },
+  {
+    "id": "4.3.1.2a",
+    "kind": "requirement",
+    "requirement_text": "ETCS shall calculate the permitted speed for the train for all locations of the authorised movement.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { permittedSpeeds := x.locations.map (fun l => l.speedLimit) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.8
+  },
+  {
+    "id": "4.3.3.3",
+    "kind": "requirement",
+    "requirement_text": "When the train is stationary or after a certain time (e.g. the time for \"route releasing\" of the overlap, the release speed calculation shall be based on the distance to the danger point (if calculated on-board). The condition for this change shall be defined for each target as infrastructure data.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.releaseSpeed = 0 ↔ i.timeSinceStationary = 0`; `o.releaseSpeed ≠ 0 ↔\n                      i.timeSinceStationary ≥ i.infrastructureData ∧\n                      o.releaseSpeed = i.distanceToDangerPoint`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "static",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { releaseSpeed := if x.timeSinceStationary = 0 then 0 else x.distanceToDangerPoint }"
+      }
+    ],
+    "seconds": 32.5
+  },
+  {
+    "id": "4.3.4.2",
+    "kind": "requirement",
+    "requirement_text": "On lines fitted with RBC, the ETCS trainborne equipment shall be able to transmit the location of the entire train to the RBC.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ transmitted := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { transmitted := decide (0 ≤ x.trainLocation) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.7
+  },
+  {
+    "id": "4.3.6.6",
+    "kind": "requirement",
+    "requirement_text": "The driver shall have the possibility to select the language, this does not concern non pre-defined texts sent from the trackside.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ language := x.language }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { language := x.language }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.6
+  },
+  {
+    "id": "4.3.7.2",
+    "kind": "requirement",
+    "requirement_text": "Within the braking curve area, a warning shall be given to the driver to enable him to react and avoid intervention from ETCS equipment at least 5 sec. before the intervention.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 5000000 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "4.3.10.2",
+    "kind": "requirement",
+    "requirement_text": "All data entered, received or indicated to the driver shall be recorded onboard. All data shall be related to UTC (Universal Time Corrected) and a reference point.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ recordedData := x.data, referencePoint := x.referencePoint }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { recordedData := x.data, referencePoint := x.referencePoint }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.0
+  },
+  {
+    "id": "4.4.1.2",
+    "kind": "requirement",
+    "requirement_text": "Information received shall not influence the traction unit(s) with in-operative cabs.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ cabStatuses := x.cabStatuses }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { cabStatuses := x.cabStatuses }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.2
+  },
+  {
+    "id": "4.4.7.1",
+    "kind": "requirement",
+    "requirement_text": "It shall be possible to drive the train backwards in a supervised way (speed and distance) according to information received from trackside",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ speed := x.speedLimit, distanceTraveled := x.distance }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { speed := x.speedLimit, distanceTraveled := x.distance }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.0
+  },
+  {
+    "id": "4.5.2.5b",
+    "kind": "requirement",
+    "requirement_text": "The supervised speed shall not be shown on the DMI.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ speedVisible := false }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.speedVisible = false`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "static",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { speedVisible := x.speed = 0 }"
+      }
+    ],
+    "seconds": 19.4
+  },
+  {
+    "id": "4.8.8.1",
+    "kind": "requirement",
+    "requirement_text": "It shall be possible to send plain text messages from track to train.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ received := true, message := x.message }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { received := true, message := x.message }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "4.8.8.5",
+    "kind": "requirement",
+    "requirement_text": "The onboard equipment shall display plain text messages as received.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ displayed := x.message }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { displayed := x.message }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.4
+  },
+  {
+    "id": "4.8.9.1",
+    "kind": "requirement",
+    "requirement_text": "It shall be possible to send fixed text messages from track to train",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ sent := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { sent := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.3
+  },
+  {
+    "id": "4.8.10.1",
+    "kind": "requirement",
+    "requirement_text": "It shall be possible to send information regarding the inhibition of the following different types of brake: Regenerative brake Eddy current brake Magnetic shoe brake",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ brakeType := x.brakeType, inhibited := x.inhibited }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { brakeType := x.brakeType, inhibited := x.inhibited }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.4
+  },
+  {
+    "id": "4.9.5.1",
+    "kind": "requirement",
+    "requirement_text": "The ETCS on-board shall be capable of sending to the trackside train integrity information detected by a system outside ETCS",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ sentToTrackside := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { sentToTrackside := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.5
+  },
+  {
+    "id": "4.9.5.4",
+    "kind": "requirement",
+    "requirement_text": "The driver shall be able to confirm the train integrity to the RBC manually. The confirmation requires the train to be stationary.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ confirmed := x.isStationary }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { confirmed := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.4
+  },
+  {
+    "id": "4.9.9.1",
+    "kind": "requirement",
+    "requirement_text": "The on board shall be capable of sending train data to the trackside after confirmation by the driver, or when entering the RBC area",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { sentToTrackside := \n    (x.driverConfirmed → x.trainData.speed ≤ 100) ∧\n    (x.enteringRBC → x.trainData.location ≠ \"outsideRBC\") }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.4
+  },
+  {
+    "id": "4.9.9.2",
+    "kind": "requirement",
+    "requirement_text": "The following train data shall be sent from the on board to the trackside: Train running number STM ready for use train gauge Max. axle load status of air tight system type of el. power accepted international train category max. train speed train length",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ runningNumber := x.runningNumber, gauge := x.gauge, maxAxleLoad := x.maxAxleLoad, airTight := x.airTight, elPowerType := x.elPowerType, intCategory := x.intCategory, maxSpeed := x.maxSpeed, length := x.length }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { runningNumber := x.runningNumber, gauge := x.gauge, maxAxleLoad := x.maxAxleLoad, airTight := x.airTight, elPowerType := x.elPowerType, intCategory := x.intCategory, maxSpeed := x.maxSpeed, length := x.length }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 10.0
+  },
+  {
+    "id": "4.9.10.5",
+    "kind": "requirement",
+    "requirement_text": "The driver shall be able to use the Reversing function without needing to re-confirm the train data.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ trainData := x.trainData, reversed := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { trainData := x.trainData, reversed := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.7
+  },
+  {
+    "id": "5.2.1.2c",
+    "kind": "requirement",
+    "requirement_text": "In ETCS with RBC this restriction on performance shall, if possible be transmitted to the RBC.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ transmittedToRBC := x.equipmentFailure }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { transmittedToRBC := decide (x.equipmentFailure) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.5
+  }
+]

@@ -1,0 +1,618 @@
+{
+  "source": {
+    "file": "2010-blitdraft.xml",
+    "sha256": "7ce6730644bbf3d01934a79968e2617f60abd2020342b3e2951da03a63909989"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v10.1",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "1b2599c",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 13,
+    "compiles": 12,
+    "rejects_bad_example": 7,
+    "checked": 9,
+    "failed": 4,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "2.1.1.2.1.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "A user with admin privileges shall be able to Add/Create a new user and associate the user with specified role(s) in the system.",
+      "text_predicate": "Requirement 2.1.1.2.1.1/S1 (Specific Requirements > Functionality > Module: Admin > Use Case: xxx Page, UC ID: UC_RR_xxx_xxx_000 > Action: Create/Add User):\nA user with admin privileges shall be able to Add/Create a new user and associate the user with specified role(s) in the system.",
+      "lean_predicate": "structure Role where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure User where\n  username : String\n  password : String\n  roles    : List Role\n  deriving DecidableEq, Repr\n\nstructure Input where\n  username  : String\n  password  : String\n  roles     : List Role\n  admin     : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  success   : Bool\n  new_user  : User\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.admin = true\n  post := fun i o => o.success ↔\n    (i.username ≠ \"\" ∧ i.password ≠ \"\" ∧ i.roles.Nodup ∧\n     ∃ r ∈ i.roles, r.name = \"admin\") ∧\n    o.new_user = { username := i.username, password := i.password, roles := i.roles }\n\nexample : Spec.pre { username := \"admin\", password := \"pass\", roles := [], admin := true } ∧ Spec.post { username := \"admin\", password := \"pass\", roles := [], admin := true } { success := false, new_user := { username := \"admin\", password := \"pass\", roles := [] } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { username := \"\", password := \"test\", roles := [], admin := true } ∧ ¬ Spec.post { username := \"\", password := \"test\", roles := [], admin := true } { success := true, new_user := { username := \"\", password := \"test\", roles := [] } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { username := \"\", password := \"test\", roles := [], admin := true } ∧ ¬ Spec.post { username := \"\", password := \"test\", roles := [], admin := true } { success := true, new_user := { username := \"\", password := \"test\", roles := [] } } := by\n  unfold Spec; decide",
+          "why": "The output should not succeed as the username is empty, but it does.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 33.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1.2.1.5/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user shall be able to create/add a new user manually or from a template.",
+      "text_predicate": "Requirement 2.1.1.2.1.5/S1 (Specific Requirements > Functionality > Module: Admin > Use Case: xxx Page, UC ID: UC_RR_xxx_xxx_000 > Action: Create/Add User):\nThe user shall be able to create/add a new user manually or from a template.",
+      "lean_predicate": "structure User where\n  username : String\n  password : String\n  email    : String\n  role     : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  users : List User\n  template : Option User\n  deriving DecidableEq, Repr\n\nstructure Output where\n  users : List User\n  added : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.template.isNone ∨ i.users.Nodup\n  post := fun i o => o.added = true ↔\n    (i.template.isNone →\n      ∃ u ∈ i.users, u.username ≠ \"\" ∧ u.password ≠ \"\" ∧ u.email ≠ \"\" ∧ u.role ≠ \"\" ∧\n      o.users.contains u ∧ o.users.count u = i.users.count u + 1) ∧\n    (i.template.isSome →\n      o.users.contains i.template.getD { username := \"\", password := \"\", email := \"\", role := \"\" } ∧\n      o.users.count i.template.getD { username := \"\", password := \"\", email := \"\", role := \"\" } = i.users.count i.template.getD { username := \"\", password := \"\", email := \"\", role := \"\" } + 1)\n\nexample : Spec.pre { users := [{ username := \"user1\", password := \"pass1\", email := \"email1\", role := \"admin\" }],\n                     template := none } ∧\n          Spec.post { users := [{ username := \"user1\", password := \"pass1\", email := \"email1\", role := \"admin\" }],\n                      template := none }\n                    { users := [{ username := \"user1\", password := \"pass1\", email := \"email1\", role := \"admin\" }],\n                      added := true } := by\n  unfold Spec; decide\n\nexample : Spec.pre { users := [{ username := \"user1\", password := \"pass1\", email := \"email1\", role := \"admin\" }],\n                     template := some { username := \"user2\", password := \"pass2\", email := \"email2\", role := \"user\" } } ∧\n          Spec.post { users := [{ username := \"user1\", password := \"pass1\", email := \"email1\", role := \"admin\" }],\n                      template := some { username := \"user2\", password := \"pass2\", email := \"email2\", role := \"user\" } }\n                    { users := [{ username := \"user1\", password := \"pass1\", email := \"email1\", role := \"admin\" },\n                                { username := \"user2\", password := \"pass2\", email := \"email2\", role := \"user\" }],\n                      added := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 67.8,
+      "error": "<generated>:28:23: error: Application type mismatch: The argument\n  i.template.getD\nhas type\n  User → User\nbut is expected to have type\n  User\nin the application\n  o.users.contains i.template.getD\n<generated>:29:6: error: Application type mismatch: The argument\n  o.users\nhas type\n  List User\nbut is expected to have type\n  List (User → User)\nin the application\n  List.count i.template.getD o.users\n<generated>:29:98: error: Application type mismatch: The argument\n  i.users\nhas type\n  List User\nbut is expected to have type\n  List (User → User)\nin the application\n  List.count i.template.getD i.users\n<generated>:31:0: warning: declaration uses `sorry`\n<generated>:39:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1.2.1.6/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user record shall inherit all specified role(s) settings in the template when the user record is created from the user template",
+      "text_predicate": "Requirement 2.1.1.2.1.6/S1 (Specific Requirements > Functionality > Module: Admin > Use Case: xxx Page, UC ID: UC_RR_xxx_xxx_000 > Action: Create/Add User):\nThe user record shall inherit all specified role(s) settings in the template when the user record is created from the user template",
+      "lean_predicate": "structure Role where\n  name : String\n  settings : String\n  deriving DecidableEq, Repr\n\nstructure User where\n  name : String\n  roles : List Role\n  deriving DecidableEq, Repr\n\nstructure Input where\n  template : User\n  newRoles : List Role\n  deriving DecidableEq, Repr\n\nstructure Output where\n  user : User\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.template.name ≠ \"\" ∧ i.newRoles.Nodup\n  post := fun i o => o.user.name = i.template.name ∧\n                     o.user.roles = i.template.roles ++ i.newRoles\n\nexample : Spec.pre { template := { name := \"Alice\", roles := [{ name := \"admin\", settings := \"high\" }] },\n                     newRoles := [{ name := \"user\", settings := \"medium\" }] } ∧\n          Spec.post { template := { name := \"Alice\", roles := [{ name := \"admin\", settings := \"high\" }] },\n                      newRoles := [{ name := \"user\", settings := \"medium\" }] }\n                    { user := { name := \"Alice\", roles := [{ name := \"admin\", settings := \"high\" }, { name := \"user\", settings := \"medium\" }] } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { template := { name := \"JohnDoe\", roles := [Role.name \"Admin\" settings \"FullAccess\"] }, newRoles := [] } ∧ ¬ Spec.post { template := { name := \"JohnDoe\", roles := [Role.name \"Admin\" settings \"FullAccess\"] }, newRoles := [] } { user := { name := \"JohnDoe\", roles := [] } } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { template := { name := \"JohnDoe\", roles := [Role.name \"Admin\" settings \"FullAccess\"] }, newRoles := [] } ∧ ¬ Spec.post { template := { name := \"JohnDoe\", roles := [Role.name \"Admin\" settings \"FullAccess\"] }, newRoles := [] } { user := { name := \"JohnDoe\", roles := [] } } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the user record shall inherit all specified role(s) settings in the template, but a buggy system might not include any roles from the template.",
+          "outcome": "not usable: Application type mismatch: The argument\n  \"Admin\"\nhas type\n  String\nbut is expected to have type\n  Role\nin the application\n  Role.name \"Admin\""
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "2.1.1.2.1.7/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user shall be able to add additional roles manually while creating/adding a new user from a user template.",
+      "text_predicate": "Requirement 2.1.1.2.1.7/S1 (Specific Requirements > Functionality > Module: Admin > Use Case: xxx Page, UC ID: UC_RR_xxx_xxx_000 > Action: Create/Add User):\nThe user shall be able to add additional roles manually while creating/adding a new user from a user template.",
+      "lean_predicate": "structure Role where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure User where\n  username : String\n  roles    : List Role\n  deriving DecidableEq, Repr\n\nstructure Input where\n  templateUser : User\n  additionalRoles : List Role\n  deriving DecidableEq, Repr\n\nstructure Output where\n  newUser : User\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.templateUser.username ≠ \"\" ∧ i.additionalRoles.Nodup\n  post := fun i o => o.newUser.username = i.templateUser.username ∧\n                     o.newUser.roles = i.templateUser.roles ++ i.additionalRoles\n\nexample : Spec.pre { templateUser := { username := \"newuser\", roles := [] },\n                     additionalRoles := [{ name := \"admin\" }, { name := \"editor\" }] } ∧\n          Spec.post { templateUser := { username := \"newuser\", roles := [] },\n                      additionalRoles := [{ name := \"admin\" }, { name := \"editor\" }] }\n                    { newUser := { username := \"newuser\", roles := [{ name := \"admin\" }, { name := \"editor\" }] } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 48.6,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { templateUser := { username := \"testUser\", roles := [] }, additionalRoles := [] } { newUser := { username := \"testUser\", roles := [] } }` holds, but the requirement forbids this output for this input (The requirement does not allow the additional roles to be empty or not provided, but a buggy system might return them as an empty list.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "2.1.1.2.1.8/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall save the user info to the database with specified roles associated with divisions for the newly created/added user.",
+      "text_predicate": "Requirement 2.1.1.2.1.8/S1 (Specific Requirements > Functionality > Module: Admin > Use Case: xxx Page, UC ID: UC_RR_xxx_xxx_000 > Action: Create/Add User):\nThe system shall save the user info to the database with specified roles associated with divisions for the newly created/added user.",
+      "lean_predicate": "structure Role where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Division where\n  id   : Nat\n  name : String\n  deriving DecidableEq, Repr\n\nstructure User where\n  username : String\n  roles    : List Role\n  divisions : List Division\n  deriving DecidableEq, Repr\n\nstructure Input where\n  username : String\n  roles    : List Role\n  divisions : List Division\n  deriving DecidableEq, Repr\n\nstructure Output where\n  username : String\n  roles    : List Role\n  divisions : List Division\n  saved    : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\" ∧ i.roles.Nodup ∧ i.divisions.Nodup\n  post := fun i o => o.username = i.username ∧ o.roles = i.roles ∧\n                     o.divisions = i.divisions ∧\n                     o.saved = true\n\nexample : Spec.pre { username := \"newuser\", roles := [ { name := \"admin\" }, { name := \"editor\" } ],\n                     divisions := [ { id := 1, name := \"Sales\" }, { id := 2, name := \"Marketing\" } ] } ∧\n          Spec.post { username := \"newuser\", roles := [ { name := \"admin\" }, { name := \"editor\" } ],\n                      divisions := [ { id := 1, name := \"Sales\" }, { id := 2, name := \"Marketing\" } ] }\n                    { username := \"newuser\", roles := [ { name := \"admin\" }, { name := \"editor\" } ],\n                      divisions := [ { id := 1, name := \"Sales\" }, { id := 2, name := \"Marketing\" } ], saved := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { username := \"newuser\", roles := [], divisions := [] } ∧ ¬ Spec.post { username := \"newuser\", roles := [], divisions := [] } { username := \"newuser\", roles := [], divisions := [], saved := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { username := \"newuser\", roles := [], divisions := [] } ∧ ¬ Spec.post { username := \"newuser\", roles := [], divisions := [] } { username := \"newuser\", roles := [], divisions := [], saved := false } := by\n  unfold Spec; decide",
+          "why": "The system is supposed to save the user info with specified roles associated with divisions, not just return the input without saving.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 32.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1.2.1.9/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall perform a search on the [system name] user display name and user name columns in the user tables to find the user and verify the user's existence.",
+      "text_predicate": "Requirement 2.1.1.2.1.9/S1 (Specific Requirements > Functionality > Module: Admin > Use Case: xxx Page, UC ID: UC_RR_xxx_xxx_000 > Action: Create/Add User):\nThe system shall perform a search on the [system name] user display name and user name columns in the user tables to find the user and verify the user's existence.",
+      "lean_predicate": "structure Input where\n  displayName : String\n  userName    : String\n  userTables  : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  exists_ : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.displayName ≠ \"\" ∨ i.userName ≠ \"\"\n  post := fun i o => o.exists_ = true ↔\n    (i.userTables.any (fun table => table.contains i.displayName) ∨\n     i.userTables.any (fun table => table.contains i.userName))\n\nexample : Spec.pre { displayName := \"John Doe\", userName := \"johndoe\", userTables := [] } ∧ Spec.post { displayName := \"John Doe\", userName := \"johndoe\", userTables := [] } { exists_ := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { displayName := \"JohnDoe\", userName := \"johndoe\", userTables := [\"otherUserTable\"] } ∧ ¬ Spec.post { displayName := \"JohnDoe\", userName := \"johndoe\", userTables := [\"otherUserTable\"] } { exists_ := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { displayName := \"JohnDoe\", userName := \"johndoe\", userTables := [\"otherUserTable\"] } ∧ ¬ Spec.post { displayName := \"JohnDoe\", userName := \"johndoe\", userTables := [\"otherUserTable\"] } { exists_ := true } := by\n  unfold Spec; decide",
+          "why": "The system should not return that the user exists if neither the display name nor the user name are found in any table.",
+          "outcome": "not usable: Tactic `decide` failed for proposition\n  ¬{ pre := fun i => i.displayName ≠ \"\" ∨ i.userName ≠ \"\",\n          post := fun i o =>\n            o.exists_ = true ↔\n              (i.userTables.any fun table => table.contains i.displayName) = true ∨\n                (i.userTables.any fun table => table.contains i.userName) = true }.post\n      { displayName := \"JohnDoe\", userName := \"johndoe\", userTables := [\"otherUserTable\"] } { exists_ := true }\nbecause its `Decidable` instance\n  instDecidableNot\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `instDecidableEqBool`, `instDecidableIff`, `instDecidableNot`, `instDecidableOr`, `Bool.decEq`, and `Classical.propDecidable`, reduction got stuck at the `Decidable` instance\n  match\n    { displayName := \"JohnDoe\", userName := \"johndoe\", userTables := [\"otherUserTable\"] }.userTables.any fun table =>\n      table.contains { displayName := \"JohnDoe\", userName := \"johndoe\", userTables := [\"otherUserTable\"] }.displayName,\n    true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 15.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [
+            "renamed keyword field `exists` to `exists_`"
+          ],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1.2.1.10/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall perform a search in the Active Directory to verify the status of the user - Active/Inactive within the company-when the user attempts to create/add a new user in the [system name] system.",
+      "text_predicate": "Requirement 2.1.1.2.1.10/S1 (Specific Requirements > Functionality > Module: Admin > Use Case: xxx Page, UC ID: UC_RR_xxx_xxx_000 > Action: Create/Add User):\nThe system shall perform a search in the Active Directory to verify the status of the user - Active/Inactive within the company-when the user attempts to create/add a new user in the [system name] system.",
+      "lean_predicate": "structure Input where\n  username : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  status  : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\"\n  post := fun i o => o.status = \"Active\" ↔\n    (i.username = \"admin\" → o.status = \"Active\") ∧\n    (i.username ≠ \"admin\" → o.status = \"Inactive\")\n\nexample : Spec.pre { username := \"john\" } ∧ Spec.post { username := \"john\" } { status := \"\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 28.8,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` mentions `o.status` but still holds when `o.status` is `\"#\"` instead of `\"\"` for the example input. The requirement says: \"The system shall perform a search in the Active Directory to verify the status of the user - Active/Inactive within the company-when the user attempts to create/add a new user in the [system name] system.\" Add a condition on `o.status` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1.2.1.11/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall generate a standard confirmation message after saving data and warning/caution messages after the cancel or close button is clicked.",
+      "text_predicate": "Requirement 2.1.1.2.1.11/S1 (Specific Requirements > Functionality > Module: Admin > Use Case: xxx Page, UC ID: UC_RR_xxx_xxx_000 > Action: Create/Add User):\nThe system shall generate a standard confirmation message after saving data and warning/caution messages after the cancel or close button is clicked.",
+      "lean_predicate": "structure Input where\n  username : String\n  password : String\n  confirm  : Bool\n  cancel   : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.username ≠ \"\" ∧ i.password ≠ \"\"\n  post := fun i o => (o.message = \"User data saved successfully.\" ↔ i.confirm) ∧\n                     (o.message = \"Operation cancelled.\" ↔ i.cancel)\n\nexample : Spec.pre { username := \"test\", password := \"pass\", confirm := true, cancel := false } ∧\n          Spec.post { username := \"test\", password := \"pass\", confirm := true, cancel := false }\n                    { message := \"User data saved successfully.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { username := \"testuser\", password := \"testpass\", confirm := true, cancel := false } ∧ ¬ Spec.post { username := \"testuser\", password := \"testpass\", confirm := true, cancel := false } { message := \"\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { username := \"testuser\", password := \"testpass\", confirm := true, cancel := false } ∧ ¬ Spec.post { username := \"testuser\", password := \"testpass\", confirm := true, cancel := false } { message := \"\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the system should generate a standard confirmation message after saving data, but a buggy system might return an empty message.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.1.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The Project Team must demonstrate mockups of UI changes to project stakeholders early in the development process.",
+      "text_predicate": "Requirement 2.2.1.1/S1 (Specific Requirements > Usability > User Interface Guidelines):\nThe Project Team must demonstrate mockups of UI changes to project stakeholders early in the development process.",
+      "lean_predicate": "structure Mockup where\n  changes : List String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  stakeholders : List String\n  changes      : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  demonstrated : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.stakeholders ≠ [] ∧ i.changes ≠ []\n  post := fun i o => o.demonstrated = true ↔\n    (∃ s ∈ i.stakeholders, ∃ c ∈ i.changes, c = s)\n\nexample : Spec.pre { stakeholders := [\"Alice\", \"Bob\"], changes := [\"Login screen\", \"Dashboard\"] } ∧ Spec.post { stakeholders := [\"Alice\", \"Bob\"], changes := [\"Login screen\", \"Dashboard\"] } { demonstrated := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { stakeholders := [\"Alice\", \"Bob\"], changes := [\"New Login Screen\"] } ∧ ¬ Spec.post { stakeholders := [\"Alice\", \"Bob\"], changes := [\"New Login Screen\"] } { demonstrated := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { stakeholders := [\"Alice\", \"Bob\"], changes := [\"New Login Screen\"] } ∧ ¬ Spec.post { stakeholders := [\"Alice\", \"Bob\"], changes := [\"New Login Screen\"] } { demonstrated := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that mockups must be demonstrated to stakeholders early in the development process, but this output does not demonstrate to any stakeholder.",
+          "outcome": "accepted"
+        }
+      ],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 34.2,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { stakeholders := [\"Alice\", \"Bob\"], changes := [\"New Login Screen\"] } { demonstrated := false }` holds, but the requirement forbids this output for this input (The requirement states that mockups must be demonstrated to stakeholders early in the development process, but this output does not demonstrate to any stakeholder.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { stakeholders := [\"Alice\", \"Bob\"], changes := [\"New Login Screen\"] } ∧ ¬ Spec.post { stakeholders := [\"Alice\", \"Bob\"], changes := [\"New Login Screen\"] } { demonstrated := false } := by unfold Spec; decide"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.1.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The Project Team shall schedule updates to the production environment only on Tuesdays between 7pm and 7am.",
+      "text_predicate": "Requirement 2.3.1.1/S1 (Specific Requirements > Reliability > System Downtime):\nThe Project Team shall schedule updates to the production environment only on Tuesdays between 7pm and 7am.",
+      "lean_predicate": "structure Input where\n  dayOfWeek : Nat -- 0 = Sunday, 1 = Monday, ..., 6 = Saturday\n  hour      : Nat -- 00 to 23\n  minute    : Nat -- 00 to 59\n  deriving DecidableEq, Repr\n\nstructure Output where\n  scheduled : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.scheduled = true ↔\n    (i.dayOfWeek = 2 ∧\n     (i.hour = 19 ∨ (i.hour = 18 ∧ i.minute = 59) ∨\n      (7 ≤ i.hour ∧ i.hour < 7) ∨\n      (i.hour = 7 ∧ i.minute = 0)))\n\nexample : Spec.pre { dayOfWeek := 2, hour := 19, minute := 0 } ∧\n          Spec.post { dayOfWeek := 2, hour := 19, minute := 0 }\n                    { scheduled := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { dayOfWeek := 3, hour := 18, minute := 59, } ∧ ¬ Spec.post { dayOfWeek := 3, hour := 18, minute := 59, } { scheduled := true, } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { dayOfWeek := 3, hour := 18, minute := 59, } ∧ ¬ Spec.post { dayOfWeek := 3, hour := 18, minute := 59, } { scheduled := true, } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids scheduling updates on any day other than Tuesday",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ]
+      }
+    },
+    {
+      "id": "2.5.2.4/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system shall send a notification email to a Client Services email distribution list if the user is directed to the xxx error page.",
+      "text_predicate": "Requirement 2.5.2.4/S1 (Specific Requirements > Supportability > Maintainability Standards):\nThe system shall send a notification email to a Client Services email distribution list if the user is directed to the xxx error page.",
+      "lean_predicate": "structure Input where\n  userRedirected : Bool\n  errorPage      : String\n  clientsEmail   : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  notificationSent : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.userRedirected = true ∧ i.errorPage = \"xxx\"\n  post := fun i o => o.notificationSent = true\n\nexample : Spec.pre { userRedirected := true, errorPage := \"xxx\", clientsEmail := \"cs@example.com\" } ∧\n          Spec.post { userRedirected := true, errorPage := \"xxx\", clientsEmail := \"cs@example.com\" }\n                    { notificationSent := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { userRedirected := true, errorPage := \"xxx\", clientsEmail := \"client@example.com\" } ∧ ¬ Spec.post { userRedirected := true, errorPage := \"xxx\", clientsEmail := \"client@example.com\" } { notificationSent := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { userRedirected := true, errorPage := \"xxx\", clientsEmail := \"client@example.com\" } ∧ ¬ Spec.post { userRedirected := true, errorPage := \"xxx\", clientsEmail := \"client@example.com\" } { notificationSent := false } := by\n  unfold Spec; decide",
+          "why": "The system is supposed to send a notification email, but it does not.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 22.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.6.3.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The Development Team shall perform weekly integrations of the [SYSTEM NAME] system and deploy these system updates to the Staging environment.",
+      "text_predicate": "Requirement 2.6.3.1/S1 (Specific Requirements > Design Constraints > Development Process):\nThe Development Team shall perform weekly integrations of the [SYSTEM NAME] system and deploy these system updates to the Staging environment.",
+      "lean_predicate": "structure Input where\n  week : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deployed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.week % 1 = 0\n  post := fun i o => o.deployed = true\n\nexample : Spec.pre { week := 7 } ∧ Spec.post { week := 7 } { deployed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { week := 0 } ∧ ¬ Spec.post { week := 0 } { deployed := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { week := 0 } ∧ ¬ Spec.post { week := 0 } { deployed := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the system should deploy updates to the Staging environment every week, but a buggy system might not deploy anything.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.6.3.4/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The Development Team shall develop and then send out release notes via e-mail to all Project Team after each [SYSTEM NAME] build deployed to the Staging environment.",
+      "text_predicate": "Requirement 2.6.3.4/S1 (Specific Requirements > Design Constraints > Development Process):\nThe Development Team shall develop and then send out release notes via e-mail to all Project Team after each [SYSTEM NAME] build deployed to the Staging environment.\nThis requirement prescribes HOW to build something (a method, algorithm or\ntechnology). Record that in a `-- IMPL:` comment above `def Spec`, and specify\nonly the observable result in `pre`/`post`.",
+      "lean_predicate": "structure Input where\n  buildNotes : String\n  projectTeamEmails : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sentTo : List String\n  deriving DecidableEq, Repr\n\n-- IMPL: Send e-mail with build notes to the project team after each build is deployed to the Staging environment.\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.buildNotes ≠ \"\" ∧ i.projectTeamEmails.Nodup\n  post := fun i o => o.sentTo = i.projectTeamEmails\n\nexample : Spec.pre { buildNotes := \"New features and bug fixes.\", projectTeamEmails := [\"alice@example.com\", \"bob@example.com\"] } ∧\n          Spec.post { buildNotes := \"New features and bug fixes.\", projectTeamEmails := [\"alice@example.com\", \"bob@example.com\"] }\n                    { sentTo := [\"alice@example.com\", \"bob@example.com\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { buildNotes := \"Build 123 notes\", projectTeamEmails := [\"alice@example.com\", \"bob@example.com\"] } ∧ ¬ Spec.post { buildNotes := \"Build 123 notes\", projectTeamEmails := [\"alice@example.com\", \"bob@example.com\"] } { sentTo := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { buildNotes := \"Build 123 notes\", projectTeamEmails := [\"alice@example.com\", \"bob@example.com\"] } ∧ ¬ Spec.post { buildNotes := \"Build 123 notes\", projectTeamEmails := [\"alice@example.com\", \"bob@example.com\"] } { sentTo := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the output should be the emails sent to the project team, not an empty list.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 7,
+    "flag": 3,
+    "fail": 3
+  }
+}

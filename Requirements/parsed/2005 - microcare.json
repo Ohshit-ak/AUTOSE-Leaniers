@@ -1,0 +1,3506 @@
+{
+  "schema_version": "1.0",
+  "source": {
+    "file": "2005 - microcare.xml",
+    "sha256": "e4319634e40533862fa9c326941d5065ac0b046a88a02f48e6e06a2ec01c491c"
+  },
+  "titles": [],
+  "stats": {
+    "requirements": 34,
+    "data_constraints": 0,
+    "use_cases": 0,
+    "dropped": 406
+  },
+  "glossary": [],
+  "requirements": [
+    {
+      "id": "2.1.1/I1",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "2.1.1",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Outline of entire system"
+      ],
+      "text": "The VMU will create the vouchers and sell it to clients through distributors",
+      "signals": [
+        "create"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "2.1.1/I9",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "2.1.1",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Outline of entire system"
+      ],
+      "text": "The filed office will validate the claim form manually and through system,",
+      "signals": [
+        "validate"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "2.1.1/I11",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "2.1.1",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Outline of entire system"
+      ],
+      "text": "The quarantined forms will be sent back to the VSP for verification, if the VSP returns the claim with satisfactory details, the claims will be entered on to the system, in the following month's batch.",
+      "signals": [
+        "sent"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "2.1.1/I12",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "2.1.1",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Outline of entire system"
+      ],
+      "text": "Based on the payment terms agreed by VSP, the field office will generate BiMonth or Monthly financial and medical report and send it to MSIU Admin team to arrange the payments for the VSP.",
+      "signals": [
+        "send"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "2.1.1/I13",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "2.1.1",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Outline of entire system"
+      ],
+      "text": "To understand the satisfaction of client the MSIU Admin team will get client feedback from some of the clients and send those documents to field office to enter those into database.",
+      "signals": [
+        "send"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "1./S2",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "1.",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Voucher Creation / Preparation"
+      ],
+      "text": "The created unique numbers are then printed out in the form of bar-codes, which will complement (or stuck on the voucher) the voucher.",
+      "signals": [
+        "created",
+        "unique"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "1./I7",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "1.",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Voucher Creation / Preparation"
+      ],
+      "text": "Additionally the provision for validity date check for the period of vouchers to be used in the program is provided. This validity date can be amended or altered at the system level ONLY by the authorized user",
+      "signals": [
+        "altered"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "1./I11",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "1.",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Voucher Creation / Preparation"
+      ],
+      "text": "Each voucher slip should contain the bar code of the Voucher with two identifications one for the client and the other for the partner.",
+      "signals": [
+        "contain"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/I1",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Voucher Creation / Preparation"
+      ],
+      "text": "The voucher will be created ONLY by the authorized person.",
+      "signals": [
+        "created"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Design Constraints/I2",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Voucher Creation / Preparation"
+      ],
+      "text": "The will be a provision to create a minimum quantity of vouchers at one time (such minimum numbers will be decided by the management team).",
+      "signals": [
+        "create"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/I3",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Voucher Creation / Preparation"
+      ],
+      "text": "Once created vouchers will not be edited or deleted but there will be a provision to with-hold any voucher number if the admin team decides to do for any reason.",
+      "signals": [
+        "created",
+        "edited",
+        "deleted"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "i/S2",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "i",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Marketing / Sales",
+        "Distributor Master Information"
+      ],
+      "text": "Each distributor will have unique code and detailed descriptions such as name, address, locations and type of business etc. such valid information will help us track information related to sales and distributions.",
+      "signals": [
+        "unique"
+      ],
+      "quantities": [],
+      "has_precondition": false,
+      "ignore_terms": [
+        "etc"
+      ]
+    },
+    {
+      "id": "Design Constraints/S2",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Marketing / Sales",
+        "Distributor Master Information"
+      ],
+      "text": "All the level of details will have a master table in order to update as per the program requirements.",
+      "signals": [
+        "update"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/S5",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Marketing / Sales",
+        "Distributor Master Information"
+      ],
+      "text": "On capture of any duplicate name the system will give a warning message to have the duplicate name or to change the name.",
+      "signals": [
+        "change"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/I9",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Marketing / Sales",
+        "Distributor Master Information"
+      ],
+      "text": "Delete (deleting will be allowed only if no child records are created)",
+      "signals": [
+        "delete",
+        "created"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Design Constraints/S3#2",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Marketing / Sales"
+      ],
+      "text": "On capture of any duplicate name the system will give a warning message to have the duplicate name or to change the name.",
+      "signals": [
+        "change"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "iii/I5",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "iii",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "2.1.2 Voucher Management System Modules",
+        "Marketing / Sales",
+        "Distribution Transactions (Sales from MSIU to Distributor)"
+      ],
+      "text": "According to the number of vouchers required by the distributor, the system should allocate the relevant vouchers with their numbers and batch numbers based on the stock.",
+      "signals": [
+        "number of"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "3./S2",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "3.",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing"
+      ],
+      "text": "In this module you will see that every capture of data will be validated and checked on saving into the database.",
+      "signals": [
+        "validated"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "3./I5",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "3.",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing"
+      ],
+      "text": "The VSP will send the collected claim forms monthly and send it to MSIU field office.",
+      "signals": [
+        "send"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/S3#4",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing",
+        "Voucher Service Provider (VSP) Master Information"
+      ],
+      "text": "The system should generate message with two option \"Continue - Yes/No\" while the user trying to create a new VSP with an existing name, If the user press Yes the system will allow the user to enter the same, if not the system wont allow the new entry to save.",
+      "signals": [
+        "create"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Design Constraints/S15",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing",
+        "Voucher Service Provider (VSP) Master Information"
+      ],
+      "text": "The allowed users only can able to Add, Modify or delete the VSP master information including payment terms.",
+      "signals": [
+        "add",
+        "delete"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Design Constraints/S19",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing",
+        "Voucher Service Provider (VSP) Master Information"
+      ],
+      "text": "Cumulative Total Amount will show in Report footer for the previous payment done.",
+      "signals": [
+        "total"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Contraints/S3",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Contraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing",
+        "VSP Staff Master Information"
+      ],
+      "text": "The system will automatically create Staff Code with Suffix as VSP Code + SC + 3 digit.",
+      "signals": [
+        "create"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "iv/S3",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "iv",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing"
+      ],
+      "text": "If yes, then the user should mark that Claim (Treatment Form) status as Rejected and send back to VSP.",
+      "signals": [
+        "send"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "For Second Follow UP/S1",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "For Second Follow UP",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing"
+      ],
+      "text": "The system will have the provision to enter any number of Syndrome, Clinical Examinations, Diagnosis, Lab Test, Drugs and Other Measures in any treatment level based on MSIU treatment master.",
+      "signals": [
+        "number of"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/S2#6",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing"
+      ],
+      "text": "The following part will explain how the systems will validate every information during claim entry.",
+      "signals": [
+        "validate"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/I17",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing"
+      ],
+      "text": "Claim Status - Status of the claim is depends information available in the Claim, if any false data or any mandatory information is available in Claim, then the claims status will change, if the value of status is not \"Accepted\" then the claim will be stored in quarantine area and can able to precede it further from its status. The system should have a provision to capture the reason suppose if the claim status is \"Rejection or Quarantine\"",
+      "signals": [
+        "change",
+        "stored"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Design Constraints/S9#3",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing"
+      ],
+      "text": "The authorized user can alter / amend the Claim if required.",
+      "signals": [
+        "alter"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Assumptions/I5",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Assumptions",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Claim Entry/Processing"
+      ],
+      "text": "System should calculate Claim Amount only based on treatment matrix",
+      "signals": [
+        "calculate"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Assumptions/I2#2",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Assumptions",
+      "section_path": [
+        "Overall Description",
+        "System Perspective"
+      ],
+      "text": "The user will not alter any information about treatment, which is populating from the system",
+      "signals": [
+        "alter"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/I1#9",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Security and User Privileges"
+      ],
+      "text": "The system admin only can able to create User Groups",
+      "signals": [
+        "create"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Design Constraints/I2#9",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Security and User Privileges"
+      ],
+      "text": "The system should have the provision to create any number of individual user under any user group. Each Individual User should have the following information Group Name (Selecting from User Group) User Name Password Verify Password",
+      "signals": [
+        "create",
+        "number of",
+        "verify"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Design Constraints/I3#9",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Security and User Privileges"
+      ],
+      "text": "The system should save the user information only if the Password and Verify password values are equal",
+      "signals": [
+        "verify"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "Design Constraints/I4#8",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Design Constraints",
+      "section_path": [
+        "Overall Description",
+        "System Perspective",
+        "Security and User Privileges"
+      ],
+      "text": "The system should not allow the user to create a User Group and Individual User with existing names",
+      "signals": [
+        "create"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    }
+  ],
+  "data_dictionary": [],
+  "use_cases": [],
+  "dropped": [
+    {
+      "id": "1.1/I1",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "System Development: The system will be developed on Oracle 9i platform Front end will be VB (visual basic) Reports will be crystal reports 9",
+      "reason": "vague: basic"
+    },
+    {
+      "id": "1.1/I2",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "System design: The system will be user friendly with maximum master table structure with all transaction screens to have drop down selection menus to minimize data entry errors. The main data entry screen on claims entry to have drop drown menu from patient's profile selection to medicine cost to have drop down. Minimize the use of key board for any number entry to have a faster transaction data entry. The system will be easily trainable for the user with minimum computer skill with simple user step by step manual.",
+      "reason": "vague: user friendly, faster, easily, simple"
+    },
+    {
+      "id": "1.1/I3",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "Storage efficiency: The structural design of the database will have sequential links with surrogate keys. The database storage will be highly efficient to manage and avoid empty unused spaced blocked, properly defragmenter on a periodic basis. This efficiency will have a maximum provision to expand this program beyond the pilot period, if the program requirements remain same.",
+      "reason": "vague: efficient, periodic"
+    },
+    {
+      "id": "1.1/I4",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "Security: High intrusion controls will be in place in the system and the database. Access level controls, various organizational level user setting by including granular model setting.",
+      "reason": "vague: various"
+    },
+    {
+      "id": "1.1/I5",
+      "source": "requirement",
+      "section": "1.1",
+      "text": "External Hardware interface: Bar-code - the system will interface with the bar-code reader to interface all transaction details. E.g. voucher number verifications, claim form entry and selection of voucher usage by the clients. Bio-metrics - the system will interface with the thumb-print reader for verifying claims form used by the clients.",
+      "reason": "ui: only about UI elements or actions (bar, the bar), no data or state condition"
+    },
+    {
+      "id": "1.2/S1",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "The purpose of this document is to explain the flow and the requirement of Voucher Management System (VMU) required by Marie Stopes International Uganda (MSIU) during the various meetings held between MSIU and Microcare from 28th of Nov 2005 to 30th of Nov 2005.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "1.2/S2",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "This document is purely based on the Functional Flow Diagram designed by Microcare.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "1.2/S3",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "The document will explain every small entity of the system including various code generations, Bar-coding and Graphical User Interface etc.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "1.2/S4",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "This document will help the system development team to understand the overall and detailed functions of every small entity in VMU and to design the system that will meet every requirement of the VMU program.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "1.2/S5",
+      "source": "requirement",
+      "section": "1.2",
+      "text": "This document will help the testing team to prepare the Test Cases and will help them to test every module in the system and overall testing of the system, so that the testing team will have confidence on the quality of this system.",
+      "reason": "non-normative section: Purpose"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/S1",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "Past experiences with development aid showed, that financing inputs, e.g. facilities and equipment, does not result in the necessary improvement of health outcomes.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/S2",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "Thus as a change of paradigm, the OBA concept finances agreed outputs with predefined quality rather than pre-defined inputs by selling vouchers for STD services at subsidised prices to patients.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/S3",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "These vouchers will be refunded to service providers in the private sector (medical doctors, qualified nurses and midwives), government hospitals, NGOs, and faith-based organisations.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/S4",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "The major advantages of the OBA approach are, that it allows",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/I1",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "To target resources to address selected health problems,",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/I2",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "To target the provision of services to specific parts of the population and",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/I3",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "To stimulate private market initiative and competition.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/S5",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "The approach was successfully applied in the sixties/seventies in South Korea and Taiwan.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "The concept of Output-based Aid (OBA)/S6",
+      "source": "requirement",
+      "section": "The concept of Output-based Aid (OBA)",
+      "text": "In recent years also a programme was run in Nicaragua but the OBA has not been implemented in larger scale programs.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Objective of the OBA Programme in Uganda is to provide/I1",
+      "source": "requirement",
+      "section": "Objective of the OBA Programme in Uganda is to provide",
+      "text": "Quality health care services for STD treatment,",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Objective of the OBA Programme in Uganda is to provide/I2",
+      "source": "requirement",
+      "section": "Objective of the OBA Programme in Uganda is to provide",
+      "text": "For the sexually active population of the Mbarara district,",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Objective of the OBA Programme in Uganda is to provide/I3",
+      "source": "requirement",
+      "section": "Objective of the OBA Programme in Uganda is to provide",
+      "text": "Through a voucher system,",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Objective of the OBA Programme in Uganda is to provide/I4",
+      "source": "requirement",
+      "section": "Objective of the OBA Programme in Uganda is to provide",
+      "text": "By qualified, approved providers,",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Objective of the OBA Programme in Uganda is to provide/I5",
+      "source": "requirement",
+      "section": "Objective of the OBA Programme in Uganda is to provide",
+      "text": "For a pilot phase of 1 year.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Objective of the OBA Programme in Uganda is to provide/S1",
+      "source": "requirement",
+      "section": "Objective of the OBA Programme in Uganda is to provide",
+      "text": "The principles of the voucher, the contents of the health care services, their required quality, the standards to be met by the providers and their infrastructure, as well as the measures for monitoring the quality have been defined in the PDS.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/S1",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The main structures and processes in the STD voucher programme are:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I1",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The programme is prepared, implemented and managed by the Voucher Management Unit (VMU).",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I2",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The VMU establishes a network of approved providers (during the pilot phase private, NGO, FBO providers) throughout Mbarara District.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I3",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The VMU runs a marketing and behavioural change campaign (BCC) to market and inform about the voucher services and how to use them.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I4",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The VMU establishes and runs a distribution system with the purpose to distribute the STD vouchers to the sexually active population for which the above-mentioned providers are in reach.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/S2",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Distribution follows certain rules:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I5",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The vouchers are packed in two with one voucher for the purchaser of the voucher, in the following addressed as \"client\" and one for the partner of the client.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I6",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The voucher may only be bought for personal treatment or for the treatment of the partner. Only one voucher is sold at time. The option of selling more than one voucher to a person at a time introduces too many sources for fraud.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I7",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Distributors keep a distribution list documenting distributor, voucher number, date, place of sale, and name and place of living of the customer.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/S3",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The client may honour the voucher at any approved provider of his choice.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/S4",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "STD treatment according to the National Treatment Algorithms for STD in Uganda (NTA), adapted for this voucher scheme (TA-OBA, treatment algorithms for STD treatment in the OBA scheme), is given to clients for free for the syndromes of",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I8",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Urethral discharge",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I9",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Abnormal vaginal discharge",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I10",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Genital ulcer",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I11",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Inguinal bubo",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I12",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Ophthalmia neonatorum",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I13",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Acute scrotal swelling",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I14",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Pelvic inflammatory disease",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/S5",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "In line with the NTA the voucher includes",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I15",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "First consultation with basic lab testing and treatment",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I16",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "First follow-up visit for all clients. If symptoms persist drug regimen will be switched",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I17",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "If necessary second follow-up visit. If symptoms persist referral to a hospital.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I18",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Provider documents each voucher case in a standardised patient treatment documentation form.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/S6",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "At the end of each month they hand in - respectively the claims processing agency (CPA) collects -",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I19",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The voucher for each patient Copyright",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I20",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The standardised patient treatment documentation form for each patient and",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I21",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "A summary claims form containing a summary of all treated voucher cases to the VMU for reimbursement.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I22",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The data from the forms is entered into a computer database. Data checks and plausibilisations are done.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I23",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Clean claims will be reimbursed via bank transfer.",
+      "reason": "overview section (Project Scope): no quantity or data relation"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I24",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "Conspicuous claims will be investigated and cleared by the VMU.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Basic structures and processes of the STD voucher programme/I25",
+      "source": "requirement",
+      "section": "Basic structures and processes of the STD voucher programme",
+      "text": "The VMU operates a monitoring system including follow-up with patients to monitor proper operation of the voucher scheme.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/S1",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "The voucher management system VMS is designed to atomize the process of Voucher Management Unit (VMU) to minimize the manual process to maximize the quality of the project to understand the progress and timely out come of the project to take necessary steps by the MSIU Admin team to plan for the future and to increase the quality of the STD voucher service.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/S2",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "The system will also control the existence of fraud in claims and will help the service provider to reach their payments in time without delay.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1.3.2/S3",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "The other features and details of system will be explained in below sections in the document.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1.3.2/S4",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "The voucher management system is subdivided into following modules to make the system easy for understanding, developing, testing and to implement.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/I1",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "Voucher Creation / Preparation",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/I2",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "Marketing / Sales",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/I3",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "Claim Entry / Processing",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/I4",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "Voucher Sales Return",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/I5",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "Client Feed back",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/I6",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "Reports (Standard and Customized)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/I7",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "Security and User Privileges",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.3.2/S5",
+      "source": "requirement",
+      "section": "1.3.2",
+      "text": "Each of the above modules are again subdivided into subsystems, those details are explained in below sections in the document",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.4/S1",
+      "source": "requirement",
+      "section": "1.4",
+      "text": "The preparation of SRS is purely based on the following documents",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "1.4/I1",
+      "source": "requirement",
+      "section": "1.4",
+      "text": "Final report on Programme Design Study, Dated 10-Sepetember-2005 Prepared by MSIU",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "1.4/I2",
+      "source": "requirement",
+      "section": "1.4",
+      "text": "Functional Flow of VMUS Prepared by Microcare on 30th November 2005.",
+      "reason": "non-normative section: References"
+    },
+    {
+      "id": "2.1/S1",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "This section of the document is going to explain the functionalities of the system, its subsystems and how it's integrated and working together.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.1/S2",
+      "source": "requirement",
+      "section": "2.1",
+      "text": "During the system study, it was understood that the first pilot period, twenty thousand vouchers will be sold, but the VMU-system has the provision to upgrade to meet the additional market and projects needs.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.1.1/I2",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "The distributor will submit the sales details back to the VMU.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.1.1/I3",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "Each voucher should have two portions with three tear off voucher slips each for Client and Partner.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.1.1/I4",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "The client and/or the partner will choose the service provider and will get treatment",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.1.1/I5",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "First visit is called as Consultation and if the patient is not cured then they can go for first follow up and second follow up,",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.1.1/I6",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "If the patient is not cured then the doctor will refer the patient to some other Hospitals the hospital may be another VSP or any other.",
+      "reason": "vague: may"
+    },
+    {
+      "id": "2.1.1/I7",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "Each visit details (including Diagnosis, Lab Test and Drugs) of the patient is called a claim,",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.1.1/I8",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "The VSP will submit the claim to VMIU field office to enter those into the database,",
+      "reason": "ui: only about UI elements or actions (vmiu field), no data or state condition"
+    },
+    {
+      "id": "2.1.1/I10",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "If any of mandatory information is missed or any false information is existing then the field office will reject the claim back to VSP and the system will keep those claim in a quarantine area",
+      "reason": "ui: only about UI elements or actions (the field), no data or state condition"
+    },
+    {
+      "id": "2.1.1/S1",
+      "source": "requirement",
+      "section": "2.1.1",
+      "text": "As mentioned above the entire system is sub-divided into six modules and again the each module is subdivided into different subsystems.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S1",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Voucher creation - the voucher numbers are system generated and created with unique identification numbers with security protocols in-built.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S3",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Then at every level on the voucher cycle this number is captured, on distribution, retail sales, point of treatment, enclosed along with claim forms, at the claims processing and finally for the payment.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S4",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Such tracking records will be utilized for reports as well.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1./S5",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Each voucher should have the following properties, which will have sub-elements to get the batch numbers, voucher numbers, and the project codes.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1./S6",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Project code - Group batch code - Batch number - Voucher number - Security code.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I1",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Project Code (2 Digit) Example: P001",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I2",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Group Batch (3 Digit) each group batch has a batch of 100 Batches Example: GP0001",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I3",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Batch number (2 Digit) approximately each batch will have 10 vouchers",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1./I4",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Voucher number (10 digit)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I5",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Security Code",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I6",
+      "source": "requirement",
+      "section": "1.",
+      "text": "All codes will be printed out in the form of Bar",
+      "reason": "ui: only about UI elements or actions (bar), no data or state condition"
+    },
+    {
+      "id": "1./I8",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Voucher will also have MRP (maximum retail price)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1./I9",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Voucher should have three tear off portioned slips with a sub-section tear-off for the partner.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1./I10",
+      "source": "requirement",
+      "section": "1.",
+      "text": "If the tear off voucher slips would be sticker then it will not be lost on attaching to the claim forms by the VSP.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1./I12",
+      "source": "requirement",
+      "section": "1.",
+      "text": "The first tear for the first consultation",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I13",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Second one for the first follow-up",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I14",
+      "source": "requirement",
+      "section": "1.",
+      "text": "And the third tear off for the final (second follow-up).",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S1",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "This system has high security feature as far as the user access to the system, including all the modules, sub-modules and even at the screen level.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "There will be a provision to amend the validity date of the voucher.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2./S1",
+      "source": "requirement",
+      "section": "2.",
+      "text": "The marketing and sales is the next step and the next module in the system.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2./S2",
+      "source": "requirement",
+      "section": "2.",
+      "text": "This module will take care of following sub modules.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/S1",
+      "source": "requirement",
+      "section": "i",
+      "text": "The system will capture the master details of every distributor so that the users can get the details of any distributor and sales details at any time.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/S3",
+      "source": "requirement",
+      "section": "i",
+      "text": "Following fields will be captured at this master.",
+      "reason": "ui: only about UI elements or actions (following fields), no data or state condition"
+    },
+    {
+      "id": "i/I1",
+      "source": "requirement",
+      "section": "i",
+      "text": "Distributor Code (3 Digit) Example: DS0001*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/I2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Name of the distributor*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/I3",
+      "source": "requirement",
+      "section": "i",
+      "text": "Type of business (e.g. hospital/pharmacy/NGO)*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/I4",
+      "source": "requirement",
+      "section": "i",
+      "text": "Proprietor Name*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/I5",
+      "source": "requirement",
+      "section": "i",
+      "text": "Designation",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/I6",
+      "source": "requirement",
+      "section": "i",
+      "text": "Address (Street/Road, Sub District, County, Sub County and Village or Town)*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/I7",
+      "source": "requirement",
+      "section": "i",
+      "text": "Contact No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/I8",
+      "source": "requirement",
+      "section": "i",
+      "text": "Email Id",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/I9",
+      "source": "requirement",
+      "section": "i",
+      "text": "Status (active/deactivate)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "i/S4",
+      "source": "requirement",
+      "section": "i",
+      "text": "All fields with * are mandatory!",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S1#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The address field will capture the geographical location of the distributor, such as District, Sub-District, County, Sub-County or Village / Town, road or street.",
+      "reason": "ui: only about UI elements or actions (the address field), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/S3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system will check the duplicated ID for the distributors.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system can allow the duplicate names of the Distributor.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "For better reporting purposes it is better to have a differentiating indicator on the name.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "System will have a provision to print the distributor master details.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S8",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The distributor screen will have a provision to view the Sales History of a particular distributor with following summary details.",
+      "reason": "ui: only about UI elements or actions (the distributor screen), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/S9",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Distributor Name as Report Header and following as the report footer",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I1#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Batch No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I2#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Date of purchase",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I3#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Qty Purchase",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I4#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Qty Sold",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Qty Returned",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Balance Qty (any other details required by the MSIU office)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S10",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "There will be a provision to select a particular distributor to view the details (e.g. sales) by double clicking on the grid.",
+      "reason": "ui: only about UI elements or actions (double clicking on), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/S11",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Print option of above report is based on User Login Permission only.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S12",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "There will be an option for doing the following at every screen.",
+      "reason": "ui: only about UI elements or actions (every screen), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/I7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "New (adding new records)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I8",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Edit (updating available records)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I10",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Active/Deactivate (if the distributor has to be deactivated or terminated)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S13",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "There will also be a provision for the other users to view the details of a distributor with purchase and sales details.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "ii/S1",
+      "source": "requirement",
+      "section": "ii",
+      "text": "The system will capture the details of MSIU Salesman; this would help the MSIU management team to understand the performance of each Team or salesman.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "ii/S2",
+      "source": "requirement",
+      "section": "ii",
+      "text": "During every distribution transaction the user should select the name of the sales man listed from Team Master.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "ii/S3",
+      "source": "requirement",
+      "section": "ii",
+      "text": "The Salesman master should capture following information's.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "ii/I1",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Salesman Code*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I2",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Name of the Salesman*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I3",
+      "source": "requirement",
+      "section": "ii",
+      "text": "DOB & Age*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I4",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Gender*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I5",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Communication Address*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I6",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Contact No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I7",
+      "source": "requirement",
+      "section": "ii",
+      "text": "E-Mail Id",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I8",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Sales-team (which will have a separate master)*.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "ii/S4",
+      "source": "requirement",
+      "section": "ii",
+      "text": "The sales team master is for the future development of this program, if this program is extended to a country-wide network, this master will help understand and tack sales information.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S1#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system will check the duplicated ID for the salesman and team.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S2#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system can allow the duplicate names of the salesman.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S4#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "For better reporting purposes it is better to have a differentiating indicator on the name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/S1",
+      "source": "requirement",
+      "section": "iii",
+      "text": "The system will capture the details of voucher sales between MISU sales team and Distributors.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "iii/S2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "During the distribution the system will capture the following details, to make Distribution process easily.",
+      "reason": "vague: easily"
+    },
+    {
+      "id": "iii/S3",
+      "source": "requirement",
+      "section": "iii",
+      "text": "With the below details the user can get the details of Distributor-wise and Salesman-wise and Batch No wise sales details as reports.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "iii/I1",
+      "source": "requirement",
+      "section": "iii",
+      "text": "Name of the distributor*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "Name of the Sales Man*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I3",
+      "source": "requirement",
+      "section": "iii",
+      "text": "Date of distribution*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I4",
+      "source": "requirement",
+      "section": "iii",
+      "text": "No of vouchers sold*",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I6",
+      "source": "requirement",
+      "section": "iii",
+      "text": "Invoice amount = No of vouchers x Wholesale price",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I7",
+      "source": "requirement",
+      "section": "iii",
+      "text": "Mode of payment is Cash",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S1#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The mandatory information required during a distribution transaction is mentioned below.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I1#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Name of the distributor (Selecting from Distributor Master)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I2#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Name of the Sales Man (Selecting from Sales man master)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I3#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Date of Distribution (Date selection option)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I4#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Required Qty (No of vouchers sold (Allow only Numeric Entry))",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I5#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Invoice Amount = Whole Sale Rate (should taken from settings master based on sale date) * Qty Sold. (Automatic Calculation)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S2#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system will generate an auto-generated number as Distribution Invoice No.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S3#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Suppose the distributor or salesman name is not available in the system, then the system has a provision to navigate quickly to its master screen and enter the new Distributor and Salesman details, without closing the present screen.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S4#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "While entering the No of vouchers required, the system should automatically pick the Batch No's with voucher No's from the available voucher stock and list the details of each voucher with below information's as a grid format.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I6#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Batch No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I7#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Voucher No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I8#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Validity Date",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S5#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The date of distribution will be current (system) date.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S6#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "But the date of sale can be the past dates.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S7#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "There will be a future date sale validation check available.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3./S1",
+      "source": "requirement",
+      "section": "3.",
+      "text": "The program will take maximum care in this form and table, as it become a vital transaction to be captured.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3./S3",
+      "source": "requirement",
+      "section": "3.",
+      "text": "For e.g. the capture of voucher number, clinical information, diagnosis details, drug and investigation details and the costs are going to provide the program a vital report information.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./S4",
+      "source": "requirement",
+      "section": "3.",
+      "text": "The system development team will focus its attention in making this module/table function efficiently.",
+      "reason": "vague: efficiently"
+    },
+    {
+      "id": "3./S5",
+      "source": "requirement",
+      "section": "3.",
+      "text": "For the easy understanding and designing of the system, this module is subdivided into following sub-modules.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./S6",
+      "source": "requirement",
+      "section": "3.",
+      "text": "The division of sub-module is purely based on the sub-level categories of the data information.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./I1",
+      "source": "requirement",
+      "section": "3.",
+      "text": "The service (treatment) will happen at the VSP (Service Provider) clinic or hospital",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3./I2",
+      "source": "requirement",
+      "section": "3.",
+      "text": "The attending doctor will fill the claims form.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3./I3",
+      "source": "requirement",
+      "section": "3.",
+      "text": "On completion of the service the patient will provide the voucher according to the visit type and patient type (client or partner), the voucher will be stuck to the claim form.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3./I4",
+      "source": "requirement",
+      "section": "3.",
+      "text": "The thumb print will also be placed on completion of the service",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "3./I6",
+      "source": "requirement",
+      "section": "3.",
+      "text": "MSIU office will then process the claim.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/S1#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "The VSP master will have the following information:",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I1#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "VSP Code",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I2#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Providers Name",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I3#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Physical Address (Street / Road, District, Sub-District, County, SubCounty, Village/Town)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I4#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Communication Address (Street / Road, District, Sub-District, County, Sub-County, Village/Town)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I5#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Health Sub-District",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I6#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Locality",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I7#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Level Of Facility",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I8#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Type of facility",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I9#2",
+      "source": "requirement",
+      "section": "i",
+      "text": "Registration Body",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I10",
+      "source": "requirement",
+      "section": "i",
+      "text": "Contact Person",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I11",
+      "source": "requirement",
+      "section": "i",
+      "text": "Designation",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I12",
+      "source": "requirement",
+      "section": "i",
+      "text": "Contact No",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I13",
+      "source": "requirement",
+      "section": "i",
+      "text": "E-Mail id",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "i/I14",
+      "source": "requirement",
+      "section": "i",
+      "text": "Status (Active / In-Active)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S1#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Other than Contact No and E-Mail Id all other information are mandatory during the creation of a new Service Provider.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S2#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The VSP code is a digit code with suffix SP, would be automatically generated by the system.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S4#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system will list District, Sub-District, County, Sub-County, Village / Town from the master during VSP creation, if any of them are not available in the system, then the system will have the provision to navigate quickly to its master screen and do enter master details and back to VSP screen.",
+      "reason": "vague: quickly"
+    },
+    {
+      "id": "Design Constraints/S5#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The values of Health Sub - District, Locality, Level Of Facility, Type of facility, Registration Body would be list from their own master and should select the details based on the VSP.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S6#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "If any of the information is not available in existing master of above, then the system will have the provision to navigate quickly to its form to enter the master details and back to VSP Screen.",
+      "reason": "vague: quickly"
+    },
+    {
+      "id": "Design Constraints/S7#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system will populate Active VSP only on other screen during data entry process, but the system will also populate all VSP for report purpose.",
+      "reason": "ui: only about UI elements or actions (on other screen), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/S8#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Activation and In-activation of VSP is purely based on the MSIU Management decision.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S9#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "But if the system is found more than two fraud entries during the claim process of particular VSP, then the system would automatically change the status of that particular VSP as In-activate.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S10#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Activation of that particular VSP is again purely based on MSIU Management decision.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S11#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The VSP Master Information screen should have a provision to enter the payment terms agreed between MSIU and VSP.",
+      "reason": "ui: only about UI elements or actions (information screen), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/S12#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system will capture following master details to fill the payment terms.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I1#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Payment Mode (Cash / Bank)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I2#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Bank Account No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I3#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Bank Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I4#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Payment Type (Selection from list of options Bi-Monthly/Monthly)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S13#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The below details may periodically change depends on the MSIU management decision.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I5#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Valid From (Date selection option)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I6#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Valid up to (Date selection option)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I7#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "First Visit Consultation Fee (Only Numeric Entry, default 0)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I8#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "First follow up visit Consultation Fee (Only Numeric Entry, default 0)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I9#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "First second up visit Consultation Fee (Only Numeric Entry, default 0)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I10#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "First visit Lab Fee (Only Numeric Entry, default 0)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S14",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The above mentioned payment terms will help the MSIU to make the payment detail easy and also help the VSP to get their payment in timeThe system will control the payment process and terms.",
+      "reason": "vague: easy"
+    },
+    {
+      "id": "Design Constraints/S16",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The VSP screen will have the provision to view the Claim Status of selected VSP.",
+      "reason": "ui: only about UI elements or actions (the vsp screen), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/S17",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system will facilitate to show the user following details if necessary.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S18",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "VSP Name (as the report header and below as the details part of report)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I11",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Claim No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I12",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Date",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I13",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Date of System Entry",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I14",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Amount",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I15",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Status",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I16",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Remarks",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/S1#2",
+      "source": "requirement",
+      "section": "ii",
+      "text": "The system will have the facility to capture the details of VSP staff details and the necessary master information while entering the claim into the system.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "ii/I1#2",
+      "source": "requirement",
+      "section": "ii",
+      "text": "VSP Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I2#2",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Staff Code",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I3#2",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Staff Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I4#2",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Staff Type",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "ii/I5#2",
+      "source": "requirement",
+      "section": "ii",
+      "text": "Qualification",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Contraints/S1",
+      "source": "requirement",
+      "section": "Design Contraints",
+      "text": "The system will generate message while creating a new staff with existing name, but the system will allow the user to save that new staff if its required.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Contraints/S2",
+      "source": "requirement",
+      "section": "Design Contraints",
+      "text": "All above information's other than Qualification are mandatory during the creation of new staff under any VSP.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Contraints/S4",
+      "source": "requirement",
+      "section": "Design Contraints",
+      "text": "For example HP0001SC0001 Staff type (should be select from list of staff type listing from Staff Type Master) If any of the staff type is not available in the system, then the system should have the provision to navigate quickly to staff type master to enter the new staff type and then back to Staff Master screen.",
+      "reason": "vague: quickly"
+    },
+    {
+      "id": "iii/S1#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "Depends on the payment terms (Bi-monthly / Monthly) mentioned in the VSP master the VSP should submit the Claim (Treatment form) to the MISU Field office.",
+      "reason": "ui: only about UI elements or actions (the misu field), no data or state condition"
+    },
+    {
+      "id": "iii/S2#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "While submitting the Claim (Treatment Form) to MSIU, the system will have the provision to capture the following details.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "iii/S3#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "These information is vital and shall be used for compared with the processed claims.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "iii/I1#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "VSP Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I2#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "Date of submission",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I3#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "No of Mentioned Forms",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I4#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "No of Available Forms",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I5#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "The above as the master part and below details are the Transaction part",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iii/I6#2",
+      "source": "requirement",
+      "section": "iii",
+      "text": "Treatment Form No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I1#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "During submission entry all above information's are mandatory",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I2#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Date of submission should be current date",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I3#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system lists the VSP Name from VSP Master.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I4#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Mentioned Forms and Available Forms only accept numeric values.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I5#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Available forms may be less than or greater than or equal to Mentioned Forms.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I6#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "In the transaction part no of forms should match with No of Available Forms",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S1#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system should print a receipt document based on the information entered during claim submission.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S2#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The document should have the following information.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I7#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "VSP Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I8#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Date of Submission (with date and time)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I9#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "No of claims mentioned",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I10#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "No of claims Available",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S3#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The above details would print in the report header and below details will print in the detailed part of the report",
+      "reason": "ui: only about UI elements or actions (the report header), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/I11#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Treatment Form No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/S1",
+      "source": "requirement",
+      "section": "iv",
+      "text": "The claim entry is purely based on the Treatment (claims) Form submitted by the VSP.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/S2",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Before the claim entry the user should check the form manually to understand whether any mandatory information is missed in the Claim or not.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "iv/S4",
+      "source": "requirement",
+      "section": "iv",
+      "text": "During the claim entry the system should capture the following information.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "iv/I1",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Treatment Form No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I2",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Claim No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I3",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Submitted Date",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I4",
+      "source": "requirement",
+      "section": "iv",
+      "text": "VSP Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I5",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Voucher No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I6",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Visit Count",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I7",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Patient Type",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I8",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Patient Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I9",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Age",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I10",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Gender",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I11",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Address (Street / Road, District, Sub-District, County, Sub-County, Village / Town)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I12",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Contact No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I13",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Doctor Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I14",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Doctors Note",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I15",
+      "source": "requirement",
+      "section": "iv",
+      "text": "HIV Details if any",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I16",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Patient Status",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I17",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Claim Amount",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/I18",
+      "source": "requirement",
+      "section": "iv",
+      "text": "Claim Status",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "iv/S5",
+      "source": "requirement",
+      "section": "iv",
+      "text": "The above details are the master informationd and below listed information are the transaction details of a Claim.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For Fist time Consultation/I1",
+      "source": "requirement",
+      "section": "For Fist time Consultation",
+      "text": "Syndrome",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For Fist time Consultation/I2",
+      "source": "requirement",
+      "section": "For Fist time Consultation",
+      "text": "Clinical Examination",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For Fist time Consultation/I3",
+      "source": "requirement",
+      "section": "For Fist time Consultation",
+      "text": "Diagnosis",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For Fist time Consultation/I4",
+      "source": "requirement",
+      "section": "For Fist time Consultation",
+      "text": "Lab Test",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For Fist time Consultation/I5",
+      "source": "requirement",
+      "section": "For Fist time Consultation",
+      "text": "Drugs Name - Frequency -No of days - Qty",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For Fist time Consultation/I6",
+      "source": "requirement",
+      "section": "For Fist time Consultation",
+      "text": "Other measure",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For First Follow UP/I1",
+      "source": "requirement",
+      "section": "For First Follow UP",
+      "text": "Diagnosis",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For First Follow UP/I2",
+      "source": "requirement",
+      "section": "For First Follow UP",
+      "text": "Drugs Name - Frequency -No of days - Qty",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For Second Follow UP/I1",
+      "source": "requirement",
+      "section": "For Second Follow UP",
+      "text": "Diagnosis",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "For Second Follow UP/I2",
+      "source": "requirement",
+      "section": "For Second Follow UP",
+      "text": "Drugs Name - Frequency -No of days - Qty",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S1#7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "All above master level information are mandatory other than Contact No during the entry of claim into the system.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I1#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Treatment Form No (List Form No from Claim receipt details which all are not yet entered in claim)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I2#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Claim No (The system will automatically generate the Claim number with Hospital Code as Suffix + 8 digit)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I3#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Submitted Date (This should populate automatically while choosing the Form No)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I4#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "VSP Name (This should populate automatically while choosing the Form No)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I5#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Voucher No (This should be captured from Bar Code reader based on the Voucher Slip Stick on the Claim Form)",
+      "reason": "ui: only about UI elements or actions (from bar), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/I6#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Visit Count (This should be captured from Bar Code reader based on the Voucher Slip Stick on the Claim Form)",
+      "reason": "ui: only about UI elements or actions (from bar), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/I7#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Patient Type (This should be captured from Bar Code reader based on the Voucher Slip Stick on the Claim Form)",
+      "reason": "ui: only about UI elements or actions (from bar), no data or state condition"
+    },
+    {
+      "id": "Design Constraints/I8#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Patient Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I9#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Age",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I10#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Gender (Select from the list of options Male / Female)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I11#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Address (Street / Road, District, Sub-District, County, Sub-County, Village / Town) other than Street / Road all other details would list from the its master records, if any details are not exist in Master record, then the system should have the provision to navigate quickly to its master screen to enter the new details and back to the Claim Entry Screen",
+      "reason": "vague: quickly"
+    },
+    {
+      "id": "Design Constraints/I12#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Contact No Not Mandatory",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I13#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Doctor Name (select from list of doctors populating from VSP Staff Master)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I14#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Doctors Note - Space for the doctor to enter the note about the patient if anything is required",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I15#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "HIV Details if any - The format for HIV capturing details are attached with SRS.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I16#2",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Patient Status - (Select from list of status options populating from Patient Status Master) suppose the status is Referral then the system will have the provision to capture Referred To and Reason for Referral, the reason for Referral should be populated from Referral master.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I18",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Claim Amount - The calculation of claim amount is explained below.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S3#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "If it is a First visit Claim",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I19",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Claim Amount will capture First Visit Consultation Fee (from VSP Payment terms) + Lab test Amount (from VSP Payment terms) + (Qty of drugs * Retails Price (from Drugs Master).",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S4#5",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "If Claim is for first follow up",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I20",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Claim Amount will capture First Follow up Fee (from VSP Payment terms) + (Qty of drugs * Retails Price (from Drugs Master)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S5#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "If Claim is for second follow up",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I21",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Claim Amount will capture Second Follow up Fee (from VSP Payment terms) + (Qty of drugs * Retails Price (from Drugs Master)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S6#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "The system captures the thump impression available in each claim form, and needs to compare it with the same voucher numbers previous visits if available.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S7#4",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "If the thump impression are mismatching for the same patient (Client / Partner) on same voucher the system would automatically make a count on it.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S8#3",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "If the claim from same VSP having more than two times of Thump Impression mismatching, then the system should automatically produce a warning message and the same time the system should In-Activate the VSP.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I1",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Generic Master with following information Code Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I2",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Drugs Master (there will (can) be a standard drug price for all VSP provision) Generic Name Drug Code Drug Name Retail Price",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I3",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Syndrome Master Syndrome Code Syndrome Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I4",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Clinical Examination Master Exam Code Exam Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I5",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Diagnosis Master Diagnosis Code Diagnosis Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I6",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Lab Test Master Test Code Test Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I7",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Other Measure Master Measure Code Measure Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I8",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Patient Status Master Status Code Status Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I9",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Claim Status Master Status Code Status Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I10",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Referral Reason Master Reason Code Reason Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I11",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Claim Quarantine / Rejection Reason Master Reason Code Reason Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I12",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "MSIU Treatment Matrix",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I13",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Syndrome First Visit Clinical Examinations First Visit Diagnosis Lab Test First Visit Drugs First Visit other measures",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I14",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Syndrome First follow up Diagnosis First follow up Drugs",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Details about Masters information required for Claim Processing/I15",
+      "source": "requirement",
+      "section": "Details about Masters information required for Claim Processing",
+      "text": "Syndrome Second follow up Diagnosis Second follow up Drugs",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Assumptions/I1",
+      "source": "requirement",
+      "section": "Assumptions",
+      "text": "The VSP should follow MSI Patter for treatment",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Assumptions/I2",
+      "source": "requirement",
+      "section": "Assumptions",
+      "text": "The user should enter the information exactly into the system from the manual claim form",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Assumptions/I3",
+      "source": "requirement",
+      "section": "Assumptions",
+      "text": "The VSP staff should get the thump impression from the patient and should stick the voucher slip on the claim form",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Assumptions/I4",
+      "source": "requirement",
+      "section": "Assumptions",
+      "text": "System only accept claims only if the mandatory information is complete",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./S1",
+      "source": "requirement",
+      "section": "4.",
+      "text": "Voucher Sales return is feature used when a distributor is planning to return the vouchers back to the MSIU sales team.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./S2",
+      "source": "requirement",
+      "section": "4.",
+      "text": "The system will capture the following information during the sales return transaction.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4./I1",
+      "source": "requirement",
+      "section": "4.",
+      "text": "Distributor Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./I2",
+      "source": "requirement",
+      "section": "4.",
+      "text": "Sales Man Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./I3",
+      "source": "requirement",
+      "section": "4.",
+      "text": "Sales Return Date",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./I4",
+      "source": "requirement",
+      "section": "4.",
+      "text": "Sales Return Amount (No of voucher returned x whole sale rate)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./I5",
+      "source": "requirement",
+      "section": "4.",
+      "text": "Number of vouchers Returned",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./S3",
+      "source": "requirement",
+      "section": "4.",
+      "text": "The above details are the master part and following are captured as transaction part",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./I6",
+      "source": "requirement",
+      "section": "4.",
+      "text": "Batch No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4./I7",
+      "source": "requirement",
+      "section": "4.",
+      "text": "Voucher No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S1#8",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "All above information are mandatory during the sales return",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I1#7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Distributor Name - will list from Distributor Master",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I2#7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Sales Man Name - will list from Sales Man Master",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I3#7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Sales Return Date - System date is default and it should be less than or equal to system date",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S2#7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "While entering return vouchers details the system will check weather the returned voucher was sold to this particular Distributor or not.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/S3#7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "If not the system won't accept those vouchers as return.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./S1",
+      "source": "requirement",
+      "section": "5.",
+      "text": "MSIU team collects the client feed back from the clients who got treatment through the voucher system.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./S2",
+      "source": "requirement",
+      "section": "5.",
+      "text": "The Client Feed back form should capture the following details",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "5./I1",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Voucher No",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I2",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Client Details",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I3",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Details of syndromes treated",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I4",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Lab Test",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I5",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Drugs Details",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I6",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Success of Treatment",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I7",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Referral To Treatment",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I8",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Satisfaction of Treatment (Not at all / Moderate / Good / Completely)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I9",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Satisfaction of counseling - Enter by the user",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I10",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Satisfaction of ensuring privacy - Enter by the user",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "5./I11",
+      "source": "requirement",
+      "section": "5.",
+      "text": "Partner Treated",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S1#9",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Based on the Voucher No the system will populate the following details",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I1#8",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Client Details (Address as per Claim Form will populate automatically)",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "Design Constraints/I2#8",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Details of syndromes treated (Automatically populate from the system based on Voucher No)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I3#8",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Lab Test Details (Automatically populate from the system based on Voucher No)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I4#7",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Drugs Details (Automatically populate from the system based on Voucher No)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I5#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Success of Treatment (Automatically populate from the system based on Voucher No)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I6#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Referral To Treatment (Automatically populate from the system based on Voucher No)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/I7#6",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Partner Treated (Treatment (Automatically populate from the system based on Voucher No)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Assumptions/I1#2",
+      "source": "requirement",
+      "section": "Assumptions",
+      "text": "The user should enter correct Voucher No",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "6./I1",
+      "source": "requirement",
+      "section": "6.",
+      "text": "As per the MSIU Project Document named \"Programme Design Study\" the following reports are required",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I2",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Monthly after claim collection on clean claims to be paid without reservation",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I3",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Monthly after claim collection on claims, where payment shall be withheld until clarification",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "6./I4",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Report on claims per provider",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I5",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Report, summarising all providers",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I6",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Quarterly summary reports per provider and summarising all providers",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I7",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Frequencies of syndromes treated, additional information on patient population (sex, age)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I8",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Frequencies of primary clients and notified partners",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I9",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Number of correctly documented cases, cases with incorrect documentation, cases treated according to algorithms, cases with justified treatment alterations and treatment errors",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I10",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Summary report comparing the different providers regarding syndromes treated, documentation quality and treatment behaviour",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./I11",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Quarterly and half yearly reports giving the time trends of the abovementioned indicators for each provider and all providers combined",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./S1",
+      "source": "requirement",
+      "section": "6.",
+      "text": "The system has the provision to provide various analytical, medical, financial and statistical reports.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "6./S2",
+      "source": "requirement",
+      "section": "6.",
+      "text": "Such reports can be designed later.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "7./S1",
+      "source": "requirement",
+      "section": "7.",
+      "text": "The security setting of the entire system is based on User Group.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./S2",
+      "source": "requirement",
+      "section": "7.",
+      "text": "The roles available in the system are allocated to user group.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./S3",
+      "source": "requirement",
+      "section": "7.",
+      "text": "The user group creation would capture the following Information",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./I1",
+      "source": "requirement",
+      "section": "7.",
+      "text": "Group Code",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./I2",
+      "source": "requirement",
+      "section": "7.",
+      "text": "Group Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./S4",
+      "source": "requirement",
+      "section": "7.",
+      "text": "The above is the masters part information and below are the transaction part information.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./I3",
+      "source": "requirement",
+      "section": "7.",
+      "text": "Screen Name",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./I4",
+      "source": "requirement",
+      "section": "7.",
+      "text": "New - Allowed / Not Allowed",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./I5",
+      "source": "requirement",
+      "section": "7.",
+      "text": "Edit - Allowed / Not Allowed",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./I6",
+      "source": "requirement",
+      "section": "7.",
+      "text": "Delete - Allowed / Not Allowed",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./I7",
+      "source": "requirement",
+      "section": "7.",
+      "text": "View - Allowed / Not Allowed",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "7./I8",
+      "source": "requirement",
+      "section": "7.",
+      "text": "Print - Allowed / Not Allowed",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S1#10",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "Allow above information are mandatory while creating a new User Group.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Design Constraints/S2#8",
+      "source": "requirement",
+      "section": "Design Constraints",
+      "text": "All the above are mandatory entry",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    }
+  ]
+}

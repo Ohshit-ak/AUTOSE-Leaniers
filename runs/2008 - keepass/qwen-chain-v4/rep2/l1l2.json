@@ -1,0 +1,616 @@
+[
+  {
+    "id": "3.1.3/R1",
+    "kind": "requirement",
+    "requirement_text": "REQ-1: KeePass must be downloaded and installed",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ installed := x.downloaded, versionInstalled := x.version }"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "InstallCheckContract",
+        "InstallConfirmationContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.installed = true ↔ i.downloaded`; `o.installed = true → o.versionInstalled = i.version`. Whatever `Spec.post` says about the input must pass through `Mid`: `InstallCheckContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `InstallConfirmationContract.post` relates `Output` to `Mid`. A condition that is only in `InstallConfirmationContract.pre` is not guaranteed by the chain.",
+      "error_class": "po2",
+      "stages": [
+        "static",
+        "static",
+        "check",
+        "check",
+        "check",
+        "returned"
+      ],
+      "code": "structure Mid where\n  versionInstalled : String\n  deriving DecidableEq, Repr\n\ndef InstallCheckContract : Contract Input Mid where\n  pre  := fun i => i.version ≠ \"\" ∧ i.downloaded\n  post := fun i m => m.versionInstalled = i.version ∧ m.versionInstalled = \"\" ↔ i.downloaded = false\n\ndef InstallConfirmationContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.installed = true ↔ m.versionInstalled ≠ \"\") ∧\n                     (o.installed = false → o.versionInstalled = \"\")"
+    },
+    "l2": [],
+    "seconds": 40.4
+  },
+  {
+    "id": "3.3.1/S1",
+    "kind": "requirement",
+    "requirement_text": "When a database is opened, the user can access his passwords, organize them into new groups and subgroups, delete and add entries and so much more.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `∀ e ∈ o.entries, e.group ≠ \"\" ∧ e.subgroups.Nodup`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { entries := x.entries }"
+      }
+    ],
+    "seconds": 38.0
+  },
+  {
+    "id": "3.3.1/S2",
+    "kind": "requirement",
+    "requirement_text": "But when it is time for the database to close or during his working on the database, he can save the changes made.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ saved := x.saving, changes := x.changes }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { saved := x.saving, changes := x.changes }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.1
+  },
+  {
+    "id": "3.6.1/S2",
+    "kind": "requirement",
+    "requirement_text": "The user can create a new group or subgroups into an existing group.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ name := x.name, parent := x.parent }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { name := x.name, parent := x.parent }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.2
+  },
+  {
+    "id": "3.6.1/S3",
+    "kind": "requirement",
+    "requirement_text": "When creating a group/subgroup the user must select a name and then he can add entries into it.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ name := x.name, entries := x.entries }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { name := x.name, entries := x.entries }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.3
+  },
+  {
+    "id": "3.9.1/S3",
+    "kind": "requirement",
+    "requirement_text": "After that a menu of options to choose from appears and the user can select to search for: title, user name, password, URL, notes, group name.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 1,
+      "contracts": [
+        "ComputeFoundContract",
+        "ShowResultsContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 5,
+        "of": 6,
+        "first_result_depends_on_input": true
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "ok"
+      ],
+      "code": "structure Mid where\n  found : List String\n  deriving DecidableEq, Repr\n\ndef ComputeFoundContract : Contract Input Mid where\n  pre  := fun _ => True\n  post := fun i m => \n    (∀ r ∈ m.found, \n      (i.title.isSome → r = \"title\") ∧\n      (i.username.isSome → r = \"username\") ∧\n      (i.password.isSome → r = \"password\") ∧\n      (i.url.isSome → r = \"url\") ∧\n      (i.notes.isSome → r = \"notes\") ∧\n      (i.groupName.isSome → r = \"group name\"))\n\ndef ShowResultsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => \n    (∀ r ∈ o.results, r ∈ m.found) ∧\n    o.results.length ≤ 6 ∧\n    (o.message = \"No results were found.\" ↔ o.results = [])\n\ntheorem po1 : Contract.Compatible ComputeFoundContract ShowResultsContract := by\n  discharge_po1 [ComputeFoundContract, ShowResultsContract, Spec]\n\ntheorem po2 : Contract.Refines (ComputeFoundContract.seq ShowResultsContract) Spec := by\n  discharge_po2 [ComputeFoundContract, ShowResultsContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "ComputeFoundContract",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:72:56: error: unexpected token '}'; expected term\n",
+        "error_class": "syntax",
+        "stages": [
+          "syntax",
+          "syntax",
+          "names",
+          "syntax",
+          "syntax",
+          "returned"
+        ],
+        "code": "def ComputeFoundContractImpl (x : Input) : Mid :=\n  { found := \n    let results := \n      if x.title.isSome then [\"title\"] else []\n    ++ if x.username.isSome then [\"username\"] else []\n    ++ if x.password.isSome then [\"password\"] else []\n    ++ if x.url.isSome then [\"url\"] else []\n    ++ if x.notes.isSome then [\"notes\"] else []\n    ++ if x.groupName.isSome then [\"group name\"] else []\n  }"
+      },
+      {
+        "contract": "ShowResultsContract",
+        "success": true,
+        "attempts": 3,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "check",
+          "static",
+          "ok"
+        ],
+        "code": "def ShowResultsContractImpl (x : Mid) : Output :=\n  { results := x.found.take 6, message := if x.found.length = 0 then \"No results were found.\" else \"\" }\n\ntheorem ShowResultsContractImpl_ok : ShowResultsContract.Satisfies ShowResultsContractImpl := by\n  discharge_po3 [ShowResultsContract, ShowResultsContractImpl]"
+      }
+    ],
+    "seconds": 61.2
+  },
+  {
+    "id": "3.10.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The user can add a new entry on the database by clicking add entry on the main menu.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ added := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { added := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "3.10.1/S6",
+    "kind": "requirement",
+    "requirement_text": "In fact an entry can be added with no fields at all.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { accepted := decide (x.description = none) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.7
+  },
+  {
+    "id": "3.10.3/R11",
+    "kind": "requirement",
+    "requirement_text": "An entry must belong to a group to be created",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ id := x.groupId, name := x.name, groupId := x.groupId }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:40:12: error(lean.invalidField): Invalid field `id`: The environment does not contain `Input.id`, so it is not possible to project the field `id` from an expression\n  x\nof type `Input`\n",
+        "error_class": "unknown-field",
+        "stages": [
+          "names",
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { id := x.id, name := x.name, groupId := x.groupId }"
+      }
+    ],
+    "seconds": 12.6
+  },
+  {
+    "id": "3.11.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The user can modify the context of an entry he already has added.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { entries := x.entries.map (fun e => if e.index = x.index then { e with context := x.newContext } else e) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.9
+  },
+  {
+    "id": "3.11.1/S2",
+    "kind": "requirement",
+    "requirement_text": "This can be done by selecting view/edit entry.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { description := \"This can be done by selecting view/edit entry.\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.1
+  },
+  {
+    "id": "3.11.3/R15",
+    "kind": "requirement",
+    "requirement_text": "ìWhen the password field is changed the repeat password field must be Changed and be identical with password field",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ password := x.repeatPassword, repeatPassword := x.repeatPassword }"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "ValidatePasswordContract",
+        "FinalizeOutputContract"
+      ],
+      "strength": {
+        "first_does_work": false,
+        "second_does_work": false,
+        "second_uses_first": false,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 1,
+        "of": 5
+      },
+      "error": "static: `ValidatePasswordContract` is an identity: its `post` only copies `Input` fields, so `FinalizeOutputContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ValidatePasswordContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.; `FinalizeOutputContract` is an identity: its `post` only copies `Mid` fields to `Output`, so `ValidatePasswordContract` does all the work of `Spec`. Leave part of the work to `FinalizeOutputContract`: `ValidatePasswordContract` states an intermediate result in `Mid`, and `FinalizeOutputContract` states `o` in terms of it.",
+      "error_class": "identity",
+      "stages": [
+        "static",
+        "static",
+        "static",
+        "static",
+        "static",
+        "returned"
+      ],
+      "code": "structure Mid where\n  repeatPassword : String\n  deriving DecidableEq, Repr\n\ndef ValidatePasswordContract : Contract Input Mid where\n  pre  := fun i => True\n  post := fun i m => m.repeatPassword = i.repeatPassword\n\ndef FinalizeOutputContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.repeatPassword = m.repeatPassword ∧ o.password = m.repeatPassword"
+    },
+    "l2": [],
+    "seconds": 13.6
+  },
+  {
+    "id": "3.13.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The user can delete an existing entry by selecting it and then by clicking delete entry.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { entries := x.entries.filter (fun e => e.id ≠ x.selected.getD 0),\n    deleted := decide (x.selected.isSome ∧ x.entries.any (fun e => e.id = x.selected.getD 0)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.2
+  },
+  {
+    "id": "3.14.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The user can select between a number of translations that are available at KeePass website.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ selected := x.selected, available := x.translations }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { selected := x.selected, available := x.translations }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.1
+  },
+  {
+    "id": "3.21.1/S2",
+    "kind": "requirement",
+    "requirement_text": "They can be added to user's database by using TAN wizard and can contain all letters and numbers.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ tans := x.tans }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { tans := x.tans }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.3
+  }
+]

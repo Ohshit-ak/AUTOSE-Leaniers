@@ -1,0 +1,1484 @@
+[
+  {
+    "id": "2.6.3/I6",
+    "kind": "requirement",
+    "requirement_text": "maintenance of operations tables (such as filter lists) which can become part of an observation's permanent record",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `∀ op ∈ o.ops, op.filter.Nodup`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "types",
+          "types",
+          "types",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { ops := x.ops }"
+      }
+    ],
+    "seconds": 18.2
+  },
+  {
+    "id": "2.6.3/S17",
+    "kind": "requirement",
+    "requirement_text": "However it must be recognized that:",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 1,
+      "contracts": [
+        "ComputeAcceptanceContract",
+        "ComputeFeeContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 5,
+        "of": 6,
+        "first_result_depends_on_input": true
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "ok"
+      ],
+      "code": "structure Mid where\n  accepted : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeAcceptanceContract : Contract Input Mid where\n  pre  := fun i => 0 < i.limit\n  post := fun i m => m.accepted = true ↔ i.amount ≤ i.limit\n\ndef ComputeFeeContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.accepted = m.accepted ∧ (o.fee = 0 ↔ m.accepted = false)\n\ntheorem po1 : Contract.Compatible ComputeAcceptanceContract ComputeFeeContract := by\n  discharge_po1 [ComputeAcceptanceContract, ComputeFeeContract, Spec]\n\ntheorem po2 : Contract.Refines (ComputeAcceptanceContract.seq ComputeFeeContract) Spec := by\n  discharge_po2 [ComputeAcceptanceContract, ComputeFeeContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "ComputeAcceptanceContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def ComputeAcceptanceContractImpl (x : Input) : Mid :=\n  { accepted := decide (x.amount ≤ x.limit) }\n\ntheorem ComputeAcceptanceContractImpl_ok : ComputeAcceptanceContract.Satisfies ComputeAcceptanceContractImpl := by\n  discharge_po3 [ComputeAcceptanceContract, ComputeAcceptanceContractImpl]"
+      },
+      {
+        "contract": "ComputeFeeContract",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `ComputeFeeContract.pre`, `ComputeFeeContractImpl` does not establish these parts of `ComputeFeeContract.post`: `o.fee = 0 ↔ m.accepted = false`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def ComputeFeeContractImpl (x : Mid) : Output :=\n  { accepted := x.accepted, fee := if x.accepted then 0 else 0 }"
+      }
+    ],
+    "seconds": 36.1
+  },
+  {
+    "id": "2.7.2/S5",
+    "kind": "requirement",
+    "requirement_text": "The system design, if it does not include a scheduler, should specifically allow for its future implementation.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ processed := [] }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { processed := if x.hasScheduler then\n                  x.queue\n                else\n                  []\n  }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.6
+  },
+  {
+    "id": "2.9.2.1/I6",
+    "kind": "requirement",
+    "requirement_text": "System-wide data capacity. The data capacity of the system is limited by transfer methods and technology, as well as archiving capacity on site. The system data capacity is capable of retaining 7 days of data produced by the largest instrument, the last 3 days of which must be available interactively from hard disk or similar medium.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { retainedData := 7 * x.largestInstrumentData,\n    interactiveData := 3 * x.largestInstrumentData }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.0
+  },
+  {
+    "id": "2.9.3/I1",
+    "kind": "requirement",
+    "requirement_text": "The system must allow for fast transmission of rough images every 0.5 sec. This may be assisted through the use of data-loss compression techniques (e.g. JPEG, MPEG, etc).",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ elapsedMicros := 0 }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 500000 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.9
+  },
+  {
+    "id": "2.10/S4",
+    "kind": "requirement",
+    "requirement_text": "Critical resources (those that can support only a restricted number of simultaneous uses) are assigned solely through this allocation system.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ assigned := x.isCritical, concurrentUsers := x.concurrentUsers }"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "ComputeAssignedContract",
+        "AssignUsersContract"
+      ],
+      "strength": {
+        "first_does_work": false,
+        "second_does_work": true,
+        "second_uses_first": false,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 2,
+        "of": 5
+      },
+      "error": "static: `ComputeAssignedContract` is an identity: its `post` only copies `Input` fields, so `AssignUsersContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ComputeAssignedContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.",
+      "error_class": "identity",
+      "stages": [
+        "static",
+        "static",
+        "static",
+        "static",
+        "static",
+        "returned"
+      ],
+      "code": "structure Mid where\n  assigned : Bool\n  concurrentUsers : Nat\n  deriving DecidableEq, Repr\n\ndef ComputeAssignedContract : Contract Input Mid where\n  pre  := fun i => 0 < i.concurrentUsers\n  post := fun i m => m.assigned = i.isCritical ∧ m.concurrentUsers = i.concurrentUsers\n\ndef AssignUsersContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.assigned = true ↔ m.assigned) ∧\n                     (o.assigned = false → o.concurrentUsers = m.concurrentUsers)"
+    },
+    "l2": [],
+    "seconds": 25.7
+  },
+  {
+    "id": "2.10/I7",
+    "kind": "requirement",
+    "requirement_text": "The control software should know what subsystems are installed and their status at all times.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ subsystems := x.subsystems }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { subsystems := x.subsystems }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.7
+  },
+  {
+    "id": "2.12/S1",
+    "kind": "requirement",
+    "requirement_text": "The telescope and instrument software shall contain built-in test (BIT) facilities to verify Gemini 8m Telescopes system and Gemini 8m Telescopes software performances.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { testPassed := (x.telescopeId = 1234567890) ∧ (x.telescopeId = 1234567890 → (x.telescopeId = 1234567890 ∧ x.telescopeId = 1234567890)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.0
+  },
+  {
+    "id": "2.13.2/S3",
+    "kind": "requirement",
+    "requirement_text": "In the case of IOC failure, no transfer of control to another IOC will be possible, due to the local connections and interfaces to the control electronics.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ controlPossible := false }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { controlPossible := false }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.1
+  },
+  {
+    "id": "2.14.3/I4",
+    "kind": "requirement",
+    "requirement_text": "Gemini software developers should maintain accurate change logs showing software modifications as they are applied to the system software.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ changes := x.changes }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { changes := x.changes }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "2.14.3/I7",
+    "kind": "requirement",
+    "requirement_text": "All Gemini subsystem packages should include as part of the software both a simulator module for inclusion in the virtual telescope (see Design constraints, below), and user interface modules for the user interface environments that the subsystem will be operating in. The interfaces required of these user interface modules are described in Section 3.3 on page 3-6.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ simulatorModule := x.simulatorModule, userInterfaceModules := x.userInterfaceModules }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { simulatorModule := x.simulatorModule, userInterfaceModules := x.userInterfaceModules }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.6
+  },
+  {
+    "id": "2.14.4/I3",
+    "kind": "requirement",
+    "requirement_text": ".Gemini subsystem should be as self-contained and autonomous as possible, thereby decreasing the functional width of the interface to the rest of the Gemini system.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ result := x.data }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { result := x.data }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.0
+  },
+  {
+    "id": "3.1.2.1/S1",
+    "kind": "requirement",
+    "requirement_text": "Detector data must be acquired and stored in the most effective way technology will allow; effectiveness should be evaluated in terms of cost, space requirements, longevity, and speed.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { data := \"detector data\", cost := x.technology.cost, space := x.technology.space, longevity := x.technology.longevity, speed := x.technology.speed }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 8.0
+  },
+  {
+    "id": "3.2.3/S12",
+    "kind": "requirement",
+    "requirement_text": "In practice the operation and facilities foreseen so far for the Gemini 8m Telescopes will limit this number to a maximum in the order of three active nodes, but the Gemini 8m Telescopes computers and software shall be capable of coping with the load of 10 active nodes, should the case arise",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ handling := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { handling := decide (x.activeNodes ≤ 10) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.3
+  },
+  {
+    "id": "3.2.5/S6",
+    "kind": "requirement",
+    "requirement_text": "Operations staff have privileges to change the environment, meaning selecting a suitable combination of instrumentsThe operational software should know which subsystems are installed and operational at any given time.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ selected := x.subsystems }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.selected.Nodup ↔ o.selected.length = i.subsystems.length`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "static",
+          "names",
+          "names",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { selected := x.subsystems.filter (fun s => x.subsystems.count s = 1) }"
+      }
+    ],
+    "seconds": 15.8
+  },
+  {
+    "id": "3.3.1/S2",
+    "kind": "requirement",
+    "requirement_text": "Given the large number of instruments, there can be many different stations which are active at the same time.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ activeStations := x.activeStations }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { activeStations := x.activeStations }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.3
+  },
+  {
+    "id": "3.3.1/S6",
+    "kind": "requirement",
+    "requirement_text": "Given the requirement to be able to access the Gemini 8m Telescopes from several points, the user interface should rather be seen as a package to be callable from a large number of stations, depending on where a user is.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ accessible := false, telescope := x.station }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 4,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { accessible := x.station = \"Station A\" ∨ x.station = \"Station B\" ∨ x.station = \"Station C\", telescope := if x.station = \"Station A\" ∨ x.station = \"Station B\" ∨ x.station = \"Station C\" then \"Gemini 8m\" else \"\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 24.3
+  },
+  {
+    "id": "3.3.2/S7",
+    "kind": "requirement",
+    "requirement_text": "Microprocessor software in particular tends to contain hardware specific software, though one should try to keep it as hardware independent as possible, isolating different software layers.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ hardwareIndependent := x.hardwareSpecific }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { hardwareIndependent := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.1
+  },
+  {
+    "id": "3.3.3.3/S2",
+    "kind": "requirement",
+    "requirement_text": "A relevant example of such a package is a general database management system (DBMS), where operational information such as schedules, logs, problem reports and maintenance information related to various pieces of equipment should be kept.Being in itself a distributed telescope system and having a large number of instruments, the Gemini 8m Telescopes system has internal communication needs",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { processed := decide (x.schedules.length + x.logs.length + x.problemReports.length + x.maintenanceInfo.length > 0) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.2
+  },
+  {
+    "id": "3.3.4.1/I1",
+    "kind": "requirement",
+    "requirement_text": "Local coordination and synchronization needs within a subsystem (for example, coordination of active support system for primary mirror, bi-directional traffic of commands/replies). This layer could be considered as internal to a given subsystem or instrument, but as more than one subsystem might need it, one should aim for a unique solution at the hardware and software level.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ reply := x.command, status := false }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.status = true ↔ (i.command = \"sync\" ∧ o.reply = \"OK\") ∨\n                     (i.command = \"coord\" ∧ o.reply = \"ACK\") ∨\n                     (i.command = \"sync\" ∧ o.reply = \"ERROR\" ∧ o.status = false) ∨\n                     (i.command = \"coord\" ∧ o.reply = \"ERROR\" ∧ o.status = false)`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "names",
+          "names",
+          "check",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { reply := if x.command = \"sync\" then \"OK\" else \"ACK\",\n    status := if x.command = \"sync\" then true else false }"
+      }
+    ],
+    "seconds": 18.5
+  },
+  {
+    "id": "3.3.4.1/I3",
+    "kind": "requirement",
+    "requirement_text": "Exchange of control information, in the form of commands and status information. (Bi-directional traffic) (see also Section 3.1.1 on page 3- 1). •Collection and transfer (for archiving or remote access) of raw astronomical",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ commandAck := x.command, statusAck := x.status }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { commandAck := x.command, statusAck := x.status }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.0
+  },
+  {
+    "id": "3.4.1/S8",
+    "kind": "requirement",
+    "requirement_text": "This should greatly simplify the coordination problem posed by the large number of simultaneous users (as already described in the Capacity requirements, Section 3.2.2).",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `i.userCount ≥ 100 → o.userCount ≥ 101`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { userCount := x.userCount }"
+      }
+    ],
+    "seconds": 23.1
+  },
+  {
+    "id": "3.4.2/S7",
+    "kind": "requirement",
+    "requirement_text": "In any case, remote operation must include remote monitoring from the Gemini 8m Telescopes base facilities, together with access tools for diagnostic and test use.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ remoteMonitoring := x.remoteMonitoring, accessTools := x.accessTools }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { remoteMonitoring := x.remoteMonitoring, accessTools := x.accessTools }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.7
+  },
+  {
+    "id": "3.4.3/I6",
+    "kind": "requirement",
+    "requirement_text": "The number of main packages of software must be kept to a minimum to facilitate maintenance, but compatibly with the need to have the right degree of modularity.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ mainPackages := x.mainPackages }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { mainPackages := x.mainPackages }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.2
+  },
+  {
+    "id": "3.4.3/I12",
+    "kind": "requirement",
+    "requirement_text": "On-line version control must be implemented. That is, the version control system must be available to recover/restore versions at all times.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ versions := x.versions }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { versions := x.versions }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.2
+  },
+  {
+    "id": "3.4.3/S4",
+    "kind": "requirement",
+    "requirement_text": "Changing system constants, such as arcseconds/bit for an encoder, shall not require recompiling but will be updated as part of system startup, and, for some constants, will be modifiable during operation.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ constants := x.constants }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { constants := x.constants }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "3.5.4.1/I1",
+    "kind": "requirement",
+    "requirement_text": "Monitor level Each subsystem should have a background task running whenever that subsystem is operational, performing such tasks as checking power supply levels, temperatures, performance, correct responses to commands. The OCS is to be notified of any detected problems.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { subsystemOperational := x.subsystemOperational,\n    powerSupplyLevel := x.powerSupplyLevel,\n    temperature := x.temperature,\n    performance := x.performance,\n    commandResponse := x.commandResponse,\n    problemDetected := decide (x.powerSupplyLevel ≤ 50 ∨ x.temperature ≥ 80 ∨ x.performance ≤ 50 ∨ ¬x.commandResponse) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 10.4
+  },
+  {
+    "id": "3.5.6.2/S3",
+    "kind": "requirement",
+    "requirement_text": "Subsystems must be able to detect such danger and report it appropriately.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ dangerDetected := x.dangerDetected, reportSent := x.dangerDetected, reportReceived := x.dangerDetected }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { dangerDetected := x.dangerDetected, reportSent := true, reportReceived := decide (x.dangerDetected = true) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.0
+  },
+  {
+    "id": "3.5.6.2/I2",
+    "kind": "requirement",
+    "requirement_text": "soft limit switches - the software will detect unsafe areas and halt; the software will allow movement off of soft limits",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { halted := decide (x.position = x.softLimit - 1), moved := decide (x.position < x.softLimit - 1) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.2
+  },
+  {
+    "id": "3.5.6.2/I5",
+    "kind": "requirement",
+    "requirement_text": "hard limit switches - these switches will remove power from actuator when beyond soft limits; the software/electrical systems will allow movement off of hard limits",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.actuatorPower = false ↔ i.actuatorPosition > i.hardLimit`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { actuatorPower := decide (x.actuatorPosition > x.hardLimit),\n    actuatorMoving := decide (x.actuatorPosition ≤ x.hardLimit) }"
+      }
+    ],
+    "seconds": 25.4
+  },
+  {
+    "id": "4.2.4.1/I4",
+    "kind": "requirement",
+    "requirement_text": "Performance. Overall performance of the Gemini telescope is defined as the percentage of viewable time during which exposures have been taken (i.e. sum of all exposure times over available time for exposures). To improve this performance, all possible concurrencies in system operation should be used. Best use of concurrency occurs when using the Sequencer.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { performance := (x.exposureTimes.sum / x.availableTime) * 100 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "4.2.4.1/I6",
+    "kind": "requirement",
+    "requirement_text": "Logging System logging information should include all important events, properly timestamped and indexed. The goal is to be able to recreate the steps in a observation from the system logs.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.logs = i.logs`; `o.logs.all (fun le => le.event ≠ \"\")`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "names",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { logs := x.logs.filter (fun le => 0 < le.timestamp) |>\n             List.map (fun le => { timestamp := le.timestamp, event := le.event }) }"
+      }
+    ],
+    "seconds": 31.8
+  },
+  {
+    "id": "4.2.4.2/I3",
+    "kind": "requirement",
+    "requirement_text": "Recovery In addition to start-up procedures, there must be well-defined recovery procedures for any subsystem that has become inoperative. Command retries must be included in the system for most common timeouts or noresponse conditions. These retries should occur automatically in the command handling to avoid unnecessary error conditions.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ retries := x.retries, timeout := x.timeout, succeeded := false }"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "FirstContract",
+        "SecondContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "static: `SecondContract` uses `i.retries`, but `i` is not one of its variables (`SecondContract : Contract Mid Output` only sees `Mid` and `Output`). Add `retries : Nat` to `structure Mid`, copy it in the `post` of `FirstContract` and write `m.retries`.; `SecondContract` uses `i.timeout`, but `i` is not one of its variables (`SecondContract : Contract Mid Output` only sees `Mid` and `Output`). Add `timeout : Nat` to `structure Mid`, copy it in the `post` of `FirstContract` and write `m.timeout`.",
+      "error_class": "visibility",
+      "stages": [
+        "static",
+        "static",
+        "static",
+        "static",
+        "static",
+        "returned"
+      ],
+      "code": "structure Mid where\n  retries : Nat\n  timeout : Nat\n  deriving DecidableEq, Repr\n\ndef FirstContract : Contract Input Mid where\n  pre  := fun i => 0 < i.retries ∧ 0 < i.timeout\n  post := fun i m => (m.retries = i.retries - 1 ∧ m.timeout = i.timeout) ∨\n                     (m.retries = i.retries ∧ m.timeout = i.timeout - 1)\n\ndef SecondContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.succeeded = true ↔ m.retries = i.retries - 1 ∧ m.timeout = i.timeout) ∨\n                     (o.succeeded = true ↔ m.retries = i.retries ∧ m.timeout = i.timeout - 1) ∧\n                     (o.succeeded = false → m.retries = i.retries ∧ m.timeout = i.timeout)"
+    },
+    "l2": [],
+    "seconds": 28.3
+  },
+  {
+    "id": "4.2.4.2/I4",
+    "kind": "requirement",
+    "requirement_text": "Performance The performance of error-mode recovery is specific to the subsystem and is defined in the Functional specification for that subsystem. Normally, there is no recovery possible from a fatal error except to shut-down and then restart the subsystem. However, in the case of an instrument failure, it may be possible to continue operation by rescheduling to use observations that do not require that particular instrument For serious errors, it may be possible to continue operation with degraded performance. For example, failure of automatic tracking may require manual tracking; other errors may result in operation with a different instrument Under normal conditions, the number of warnings should be small. The system should monitor the rate of warning messages since an increase might indicate that some tuning or maintenance is appropriate. Ideally, such conditions should be noted by the subsystems before reaching the OCS level. Failure conditions should not cascade. That is, failure of one subsystem should not affect other, working, subsystems, including communication links.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "ComputeSubsystemContract",
+        "ProcessOutputContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": false,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 3,
+        "of": 5
+      },
+      "error": "static: `ComputeSubsystemContract` reads `m.warnings`, but `structure Mid` has no field `warnings` (its fields: subsystemFailed). Declare it or use an existing field.; `ComputeSubsystemContract` reads `m.rate`, but `structure Mid` has no field `rate` (its fields: subsystemFailed). Declare it or use an existing field.; `ProcessOutputContract` reads `m.warnings`, but `Mid` has no field `warnings` (it is a field of `Input`, which `ProcessOutputContract` cannot see). Add `warnings : List String` to `structure Mid` and `m.warnings = i.warnings` to the `post` of `ComputeSubsystemContract`.; `ProcessOutputContract` reads `m.rate`, but `Mid` has no field `rate` (it is a field of `Input`, which `ProcessOutputContract` cannot see). Add `rate : Nat` to `structure Mid` and `m.rate = i.rate` to the `post` of `ComputeSubsystemContract`.; `ProcessOutputContract` is an identity: its `post` only copies `Mid` fields to `Output`, so `ComputeSubsystemContract` does all the work of `Spec`. Leave part of the work to `ProcessOutputContract`: `ComputeSubsystemContract` states an intermediate result in `Mid`, and `ProcessOutputContract` states `o` in terms of it.",
+      "error_class": "visibility",
+      "stages": [
+        "static",
+        "static",
+        "static",
+        "static",
+        "static",
+        "returned"
+      ],
+      "code": "structure Mid where\n  subsystemFailed : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeSubsystemContract : Contract Input Mid where\n  pre  := fun i => i.rate ≤ 100\n  post := fun i m => \n    (m.subsystemFailed = false ↔ (i.warnings = [] ∧ i.rate ≤ 100)) ∧\n    (m.subsystemFailed = true → m.warnings = i.warnings ∧ m.rate = i.rate)\n\ndef ProcessOutputContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => \n    (o.subsystemFailed = m.subsystemFailed) ∧\n    (o.warnings = m.warnings) ∧\n    (o.rate = m.rate)"
+    },
+    "l2": [],
+    "seconds": 24.7
+  },
+  {
+    "id": "4.3.1.2.1/I1",
+    "kind": "requirement",
+    "requirement_text": "Database The heart of an IOC is a memory resident database together with various memory resident structures describing the contents of the database. EPICS supports a large and extensible set of record types, e.g. ai (Analog Input), ao (Analog Output), etc. Each record type has a fixed set of fields. Some fields are common to all record types and others are specific to particular record types. Every record has a record name and every field has a field name. The first field of every database record holds the record name, which must be unique across all IOCs attached to the same TCP/IP subnet. A number of data structures are provided so that the database can be accessed efficiently. Most software components, because they access the database via database access routines, do not need to be aware of these structures.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.records = i.records ↔ i.uniqueName`; `¬i.uniqueName → o.records.length < i.records.length`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "static",
+          "check",
+          "static",
+          "check",
+          "static",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { records := x.records }"
+      }
+    ],
+    "seconds": 15.6
+  },
+  {
+    "id": "4.3.1.2.2/S5",
+    "kind": "requirement",
+    "requirement_text": "A client can communicate with an arbitrary number of servers.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.communications.length = i.clients.length * i.servers.length`; `∀ c ∈ i.clients, ∀ s ∈ i.servers, (c, s) ∈ o.communications`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "types",
+          "names",
+          "types",
+          "types",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { clients := x.clients, servers := x.servers, communications := List.map (fun (c, s) => (c, s)) x.communications }"
+      }
+    ],
+    "seconds": 17.3
+  },
+  {
+    "id": "4.3.3/I3",
+    "kind": "requirement",
+    "requirement_text": "Applications work would then include any of: IOC Database IOC or OPI SNC programs Files associated with OPI Channel Access Tools",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { workIncluded := decide (x.applicationType = \"IOC Database\" ∨\n                            x.applicationType = \"IOC\" ∨\n                            x.applicationType = \"OPI SNC\" ∨\n                            x.applicationType = \"Files associated with OPI\" ∨\n                            x.applicationType = \"Channel Access Tools\") }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.3
+  }
+]

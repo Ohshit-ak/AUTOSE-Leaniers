@@ -1,0 +1,1851 @@
+{
+  "source": {
+    "file": "2005 - phin.xml",
+    "sha256": "07abd96d0517faa805efa30d0be736345215cf94d8196f0ba4f3337698f52703"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v10.1",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "1b2599c",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 43,
+    "compiles": 37,
+    "rejects_bad_example": 28,
+    "checked": 34,
+    "failed": 9,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "1/S5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The application should also allow for new objects to be defined and created during the course of an investigation.",
+      "text_predicate": "Requirement 1/S5 (Introduction):\nThe application should also allow for new objects to be defined and created during the course of an investigation.",
+      "lean_predicate": "structure Object where\n  id    : Nat\n  name  : String\n  data  : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  objects : List Object\n  deriving DecidableEq, Repr\n\nstructure Output where\n  objects : List Object\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.objects.length = i.objects.length + 1 ∧\n                     ∃ obj ∈ o.objects, obj.id = o.objects.length - 1 ∧\n                     obj.name ≠ \"\" ∧ obj.data ≠ \"\"\n\nexample : Spec.pre { objects := [] } ∧\n          Spec.post { objects := [] }\n                     { objects := [{ id := 0, name := \"New Object\", data := \"Some Data\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { objects := [] } ∧ ¬ Spec.post { objects := [] } { objects := [{ id := 0, name := \"New Object\", data := \"Some Data\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { objects := [] } ∧ ¬ Spec.post { objects := [] } { objects := [{ id := 0, name := \"New Object\", data := \"Some Data\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids the creation of new objects during the course of an investigation.",
+          "outcome": "accepted"
+        }
+      ],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 64.4,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { objects := [] } { objects := [{ id := 0, name := \"New Object\", data := \"Some Data\" }] }` holds, but the requirement forbids this output for this input (The requirement forbids the creation of new objects during the course of an investigation.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [
+            "removed a record field written twice with the same value"
+          ],
+          "witness": "none found"
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { objects := [] } ∧ ¬ Spec.post { objects := [] } { objects := [{ id := 0, name := \"New Object\", data := \"Some Data\" }] } := by unfold Spec; decide"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2/I5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "2.5 System Integration and Data Exchange: OM information must be exchangeable, based on established standards, between systems involved in the investigation, identification, confirmation, and reporting of a health event.",
+      "text_predicate": "Requirement 2/I5 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS):\n2.5 System Integration and Data Exchange: OM information must be exchangeable, based on established standards, between systems involved in the investigation, identification, confirmation, and reporting of a health event.",
+      "lean_predicate": "structure Input where\n  omData : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  exchanged : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.omData ≠ \"\"\n  post := fun i o => o.exchanged = true ↔\n    (i.omData.length ≤ 1024 ∧ i.omData.toList.all Char.isAlphanum = true)\n\nexample : Spec.pre { omData := \"OM1234567890\" } ∧\n          Spec.post { omData := \"OM1234567890\" }\n                    { exchanged := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { omData := \"validOMData\" } ∧ ¬ Spec.post { omData := \"validOMData\" } { exchanged := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { omData := \"validOMData\" } ∧ ¬ Spec.post { omData := \"validOMData\" } { exchanged := false } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure that OM information is exchangeable based on established standards.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2/I8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "2.8 System Security and Availability: Security of OM data includes the protection of data from corruption and access by unauthorized individuals, as well as the protection of the actual systems supporting OM from sabotage or other failure. A plan must be established for continuing activities when systems supporting OM are unavailable.",
+      "text_predicate": "Requirement 2/I8 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS):\n2.8 System Security and Availability: Security of OM data includes the protection of data from corruption and access by unauthorized individuals, as well as the protection of the actual systems supporting OM from sabotage or other failure. A plan must be established for continuing activities when systems supporting OM are unavailable.",
+      "lean_predicate": "structure Input where\n  data : String\n  systemStatus : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  dataProtected : Bool\n  systemAvailable : Bool\n  contingencyPlan : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.data ≠ \"\" ∧ i.systemStatus ≠ \"\"\n  post := fun i o => o.dataProtected = true ∧\n                     o.systemAvailable = true ∧\n                     o.contingencyPlan = true\n\nexample : Spec.pre { data := \"OM data\", systemStatus := \"active\" } ∧\n          Spec.post { data := \"OM data\", systemStatus := \"active\" }\n                    { dataProtected := true, systemAvailable := true, contingencyPlan := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { data := \"someData\", systemStatus := \"available\" } ∧ ¬ Spec.post { data := \"someData\", systemStatus := \"available\" } { dataProtected := false, systemAvailable := false, contingencyPlan := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { data := \"someData\", systemStatus := \"available\" } ∧ ¬ Spec.post { data := \"someData\", systemStatus := \"available\" } { dataProtected := false, systemAvailable := false, contingencyPlan := false } := by\n  unfold Spec; decide",
+          "why": "The output does not protect the data and the system, nor have a contingency plan",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems designed to support OM must offer configuration flexibility so that new data fields, entities, entity types and relationship types may be added to capture information unique to each particular health event.",
+      "text_predicate": "Requirement 2.1.1/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM ARCHITECTURE):\nSystems designed to support OM must offer configuration flexibility so that new data fields, entities, entity types and relationship types may be added to capture information unique to each particular health event.\nIgnore these non-formal words: may.",
+      "lean_predicate": "structure Input where\n  dataFields : List String\n  entities   : List String\n  entityTypes: List String\n  relationshipTypes : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  dataFields : List String\n  entities   : List String\n  entityTypes: List String\n  relationshipTypes : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.dataFields = i.dataFields ∧\n                     o.entities = i.entities ∧\n                     o.entityTypes = i.entityTypes ∧\n                     o.relationshipTypes = i.relationshipTypes\n\nexample : Spec.pre { dataFields := [\"symptoms\", \"location\"], entities := [\"patient\", \"hospital\"],\n                     entityTypes := [\"person\", \"facility\"], relationshipTypes := [\"treats\"] } ∧\n          Spec.post { dataFields := [\"symptoms\", \"location\"], entities := [\"patient\", \"hospital\"],\n                      entityTypes := [\"person\", \"facility\"], relationshipTypes := [\"treats\"] }\n                    { dataFields := [\"symptoms\", \"location\"], entities := [\"patient\", \"hospital\"],\n                      entityTypes := [\"person\", \"facility\"], relationshipTypes := [\"treats\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { dataFields := [\"field1\"], entities := [\"entity1\"], entityTypes := [\"type1\"], relationshipTypes := [\"type2\"] } ∧ ¬ Spec.post { dataFields := [\"field1\"], entities := [\"entity1\"], entityTypes := [\"type1\"], relationshipTypes := [\"type2\"] } { dataFields := [\"field1\", \"newField\"], entities := [\"entity1\", \"newEntity\"], entityTypes := [\"type1\", \"newType\"], relationshipTypes := [\"type2\", \"newRelType\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { dataFields := [\"field1\"], entities := [\"entity1\"], entityTypes := [\"type1\"], relationshipTypes := [\"type2\"] } ∧ ¬ Spec.post { dataFields := [\"field1\"], entities := [\"entity1\"], entityTypes := [\"type1\"], relationshipTypes := [\"type2\"] } { dataFields := [\"field1\", \"newField\"], entities := [\"entity1\", \"newEntity\"], entityTypes := [\"type1\", \"newType\"], relationshipTypes := [\"type2\", \"newRelType\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that new data fields, entities, entity types, and relationship types must be able to be added. The output should not match the input if new fields are added.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 12.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.1.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must have the capability to capture data about locations involved in an OM investigation, including: name (if applicable), type (e.g., floor, building, room, store), street address, city, state, zip code, country, GPS coordinates, and other specific details (e.g., a specific building on a campus, a business branch location, a local chapter's meeting hall)",
+      "text_predicate": "Requirement 2.2.1.3/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Entity Data):\nSystems supporting OM must have the capability to capture data about locations involved in an OM investigation, including: name (if applicable), type (e.g., floor, building, room, store), street address, city, state, zip code, country, GPS coordinates, and other specific details (e.g., a specific building on a campus, a business branch location, a local chapter's meeting hall)",
+      "lean_predicate": "structure Location where\n  name        : Option String\n  locationType: String\n  street      : Option String\n  city        : Option String\n  state       : Option String\n  zipCode     : Option String\n  country     : Option String\n  gpsCoords   : Option String\n  otherDetails: Option String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  locations : List Location\n  deriving DecidableEq, Repr\n\nstructure Output where\n  locations : List Location\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.locations.Nodup\n  post := fun i o => o.locations = i.locations ∧\n                     ∀ l ∈ o.locations, l.name.isSome ∨ l.locationType ≠ \"\" ∨\n                     l.street.isSome ∨ l.city.isSome ∨ l.state.isSome ∨\n                     l.zipCode.isSome ∨ l.country.isSome ∨ l.gpsCoords.isSome ∨\n                     l.otherDetails.isSome\n\nexample : Spec.pre { locations := [{ name := none, locationType := \"floor\", street := some \"123 Main St\",\n                                      city := some \"Anytown\", state := some \"CA\", zipCode := some \"90210\",\n                                      country := some \"USA\", gpsCoords := some \"34.052237,-118.243685\",\n                                      otherDetails := some \"Specific building on a campus\" }] } ∧\n          Spec.post { locations := [{ name := none, locationType := \"floor\", street := some \"123 Main St\",\n                                      city := some \"Anytown\", state := some \"CA\", zipCode := some \"90210\",\n                                      country := some \"USA\", gpsCoords := some \"34.052237,-118.243685\",\n                                      otherDetails := some \"Specific building on a campus\" }] }\n                    { locations := [{ name := none, locationType := \"floor\", street := some \"123 Main St\",\n                                      city := some \"Anytown\", state := some \"CA\", zipCode := some \"90210\",\n                                      country := some \"USA\", gpsCoords := some \"34.052237,-118.243685\",\n                                      otherDetails := some \"Specific building on a campus\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { locations := [{ locationType := \"building\", street := \"123 Main St\", city := \"Anytown\", state := \"CA\", zipCode := \"12345\", country := \"USA\", gpsCoords := \"40.7128,-74.0060\" }] } ∧ ¬ Spec.post { locations := [{ locationType := \"building\", street := \"123 Main St\", city := \"Anytown\", state := \"CA\", zipCode := \"12345\", country := \"USA\", gpsCoords := \"40.7128,-74.0060\" }] } { locations := [{ locationType := \"building\", street := \"123 Main St\", city := \"Anytown\", state := \"CA\", zipCode := \"12345\", country := \"USA\", gpsCoords := \"40.7128,-74.0060\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { locations := [{ locationType := \"building\", street := \"123 Main St\", city := \"Anytown\", state := \"CA\", zipCode := \"12345\", country := \"USA\", gpsCoords := \"40.7128,-74.0060\" }] } ∧ ¬ Spec.post { locations := [{ locationType := \"building\", street := \"123 Main St\", city := \"Anytown\", state := \"CA\", zipCode := \"12345\", country := \"USA\", gpsCoords := \"40.7128,-74.0060\" }] } { locations := [{ locationType := \"building\", street := \"123 Main St\", city := \"Anytown\", state := \"CA\", zipCode := \"12345\", country := \"USA\", gpsCoords := \"40.7128,-74.0060\" }] } := by\n  unfold Spec; decide",
+          "why": "The output does not provide a name for the location, which is required by the specification.",
+          "outcome": "not usable: Fields missing: `name`, `otherDetails`\n\nHint: Add missing fields:\n  ,̲\n  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲n̲a̲m̲e̲ ̲:̲=̲ ̲_̲,̲ ̲o̲t̲h̲e̲r̲D̲e̲t̲a̲i̲l̲s̲ ̲:̲=̲ ̲_̲"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 22.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.2.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When a health event is investigated, it must be assigned an event identifier (i.e., Event ID) that is unique within the jurisdiction.",
+      "text_predicate": "Requirement 2.2.2.1/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Health Event Data):\nWhen a health event is investigated, it must be assigned an event identifier (i.e., Event ID) that is unique within the jurisdiction.",
+      "lean_predicate": "structure Input where\n  eventIdentifier : String\n  jurisdiction    : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  eventIdentifier : String\n  jurisdiction    : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.eventIdentifier ≠ \"\"\n  post := fun i o => o.eventIdentifier = i.eventIdentifier ∧\n                     (i.jurisdiction = o.jurisdiction →\n                      o.eventIdentifier ≠ i.eventIdentifier)\n\nexample : Spec.pre { eventIdentifier := \"E123\", jurisdiction := \"NY\" } ∧ Spec.post { eventIdentifier := \"E123\", jurisdiction := \"NY\" } { eventIdentifier := \"E123\", jurisdiction := \"\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { eventIdentifier := \"12345\", jurisdiction := \"ExampleJurisdiction\" } ∧ ¬ Spec.post { eventIdentifier := \"12345\", jurisdiction := \"ExampleJurisdiction\" } { eventIdentifier := \"12345\", jurisdiction := \"ExampleJurisdiction\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { eventIdentifier := \"12345\", jurisdiction := \"ExampleJurisdiction\" } ∧ ¬ Spec.post { eventIdentifier := \"12345\", jurisdiction := \"ExampleJurisdiction\" } { eventIdentifier := \"12345\", jurisdiction := \"ExampleJurisdiction\" } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure that the event identifier is unique within the jurisdiction",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 21.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.2.4/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should have the ability to capture changes to the case definition that occur as the health event evolves.",
+      "text_predicate": "Requirement 2.2.2.4/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Health Event Data):\nSystems supporting OM should have the ability to capture changes to the case definition that occur as the health event evolves.",
+      "lean_predicate": "structure CaseDefinition where\n  criteria : String\n  deriving DecidableEq, Repr\n\nstructure HealthEvent where\n  caseDefinitions : List CaseDefinition\n  deriving DecidableEq, Repr\n\nstructure Input where\n  caseDefinitions : List CaseDefinition\n  deriving DecidableEq, Repr\n\nstructure Output where\n  caseDefinitions : List CaseDefinition\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.caseDefinitions.Nodup\n  post := fun i o => o.caseDefinitions = i.caseDefinitions ∧\n                     o.caseDefinitions.Nodup\n\nexample : Spec.pre { caseDefinitions := [{ criteria := \"Symptom A\" },\n                                          { criteria := \"Symptom B\" }] } ∧\n          Spec.post { caseDefinitions := [{ criteria := \"Symptom A\" },\n                                          { criteria := \"Symptom B\" }] }\n                    { caseDefinitions := [{ criteria := \"Symptom A\" },\n                                          { criteria := \"Symptom B\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { caseDefinitions := [CaseDefinition.criteria \"criteria1\", CaseDefinition.criteria \"criteria2\"] } ∧ ¬ Spec.post { caseDefinitions := [CaseDefinition.criteria \"criteria1\", CaseDefinition.criteria \"criteria2\"] } { caseDefinitions := [CaseDefinition.criteria \"criteria1\", CaseDefinition.criteria \"modifiedCriteria\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { caseDefinitions := [CaseDefinition.criteria \"criteria1\", CaseDefinition.criteria \"criteria2\"] } ∧ ¬ Spec.post { caseDefinitions := [CaseDefinition.criteria \"criteria1\", CaseDefinition.criteria \"criteria2\"] } { caseDefinitions := [CaseDefinition.criteria \"criteria1\", CaseDefinition.criteria \"modifiedCriteria\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids changes to the case definition, but the output shows a modified list.",
+          "outcome": "not usable: Application type mismatch: The argument\n  \"criteria1\"\nhas type\n  String\nbut is expected to have type\n  CaseDefinition\nin the application\n  CaseDefinition.criteria \"criteria1\""
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 12.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.3.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Travel history data should include information such as the method of transportation (e.g. bus, plane, boat, car), flight number, departure and arrival dates and times, and the origination and destination locations (city, state, and country).",
+      "text_predicate": "Requirement 2.2.3.1/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Travel History and Conveyance Data):\nTravel history data should include information such as the method of transportation (e.g. bus, plane, boat, car), flight number, departure and arrival dates and times, and the origination and destination locations (city, state, and country).",
+      "lean_predicate": "structure Transport where\n  method   : String\n  flightNo : String\n  departureDate : String\n  departureTime : String\n  arrivalDate : String\n  arrivalTime : String\n  origination : String\n  destination : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  transports : List Transport\n  deriving DecidableEq, Repr\n\nstructure Output where\n  transports : List Transport\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.transports.Nodup\n  post := fun i o => o.transports = i.transports ∧\n                     ∀ t ∈ o.transports, t.method ≠ \"\" ∧\n                     t.flightNo.toList.all (·.isAlphanum) = true ∧\n                     t.departureDate.toList.all (·.isAlphanum) = true ∧\n                     t.departureTime.toList.all (·.isAlphanum) = true ∧\n                     t.arrivalDate.toList.all (·.isAlphanum) = true ∧\n                     t.arrivalTime.toList.all (·.isAlphanum) = true ∧\n                     t.origination.toList.all (·.isAlphanum) = true ∧\n                     t.destination.toList.all (·.isAlphanum) = true\n\nexample : Spec.pre { transports := [] } ∧ Spec.post { transports := [] } { transports := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { transports := [{ method := \"\", flightNo := \"ABC123\", departureDate := \"2023-10-01\", departureTime := \"10:00\", arrivalDate := \"2023-10-02\", arrivalTime := \"12:00\", origination := \"New York\", destination := \"Los Angeles\" }] } ∧ ¬ Spec.post { transports := [{ method := \"\", flightNo := \"ABC123\", departureDate := \"2023-10-01\", departureTime := \"10:00\", arrivalDate := \"2023-10-02\", arrivalTime := \"12:00\", origination := \"New York\", destination := \"Los Angeles\" }] } { transports := [{ method := \"\", flightNo := \"ABC123\", departureDate := \"2023-10-01\", departureTime := \"10:00\", arrivalDate := \"2023-10-02\", arrivalTime := \"12:00\", origination := \"New York\", destination := \"Los Angeles\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { transports := [{ method := \"\", flightNo := \"ABC123\", departureDate := \"2023-10-01\", departureTime := \"10:00\", arrivalDate := \"2023-10-02\", arrivalTime := \"12:00\", origination := \"New York\", destination := \"Los Angeles\" }] } ∧ ¬ Spec.post { transports := [{ method := \"\", flightNo := \"ABC123\", departureDate := \"2023-10-01\", departureTime := \"10:00\", arrivalDate := \"2023-10-02\", arrivalTime := \"12:00\", origination := \"New York\", destination := \"Los Angeles\" }] } { transports := [{ method := \"\", flightNo := \"ABC123\", departureDate := \"2023-10-01\", departureTime := \"10:00\", arrivalDate := \"2023-10-02\", arrivalTime := \"12:00\", origination := \"New York\", destination := \"Los Angeles\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow empty method fields, but the output does.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 46.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "2.2.3.2/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Travel history data to be collected for an animal or object should include shipping invoices, animal shelter delivery and adoption receipts, and delivery schedules (including delivery vehicle and driver information).",
+      "text_predicate": "Requirement 2.2.3.2/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Travel History and Conveyance Data):\nTravel history data to be collected for an animal or object should include shipping invoices, animal shelter delivery and adoption receipts, and delivery schedules (including delivery vehicle and driver information).",
+      "lean_predicate": "structure Input where\n  animalID : String\n  invoices  : List String\n  deliveries : List Delivery\n  adoptions : List String\n  deriving DecidableEq, Repr\n\nstructure Delivery where\n  vehicleID : String\n  driverName : String\n  schedule  : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  animalID : String\n  invoices  : List String\n  deliveries : List Delivery\n  adoptions : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.animalID ≠ \"\"\n  post := fun i o => o.animalID = i.animalID ∧\n                     o.invoices = i.invoices ∧\n                     o.deliveries = i.deliveries ∧\n                     o.adoptions = i.adoptions\n\nexample : Spec.pre { animalID := \"A123\", invoices := [\"INV1\", \"INV2\"], \n                     deliveries := [{ vehicleID := \"V1\", driverName := \"John\", schedule := \"2023-10-01\" }],\n                     adoptions := [\"ADO1\"] } ∧\n          Spec.post { animalID := \"A123\", invoices := [\"INV1\", \"INV2\"], \n                      deliveries := [{ vehicleID := \"V1\", driverName := \"John\", schedule := \"2023-10-01\" }],\n                      adoptions := [\"ADO1\"] }\n                    { animalID := \"A123\", invoices := [\"INV1\", \"INV2\"], \n                      deliveries := [{ vehicleID := \"V1\", driverName := \"John\", schedule := \"2023-10-01\" }],\n                      adoptions := [\"ADO1\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 58.9,
+      "error": "<generated>:9:11: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  Decidable (a✝¹ = b✝¹)\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:9:24: error: typeclass instance problem is stuck\n  Repr (List ?m.13)\n\nNote: Lean will not try to resolve this typeclass instance problem because the type argument to `Repr` contains metavariables. This argument must be fully determined before Lean will try to resolve the typeclass.\n\nHint: Adding type annotations and supplying implicit arguments to functions can give Lean more information for typeclass resolution. For example, if you have a variable `x` that you intend to be a `Nat`, but Lean reports it as having an unresolved type like `?m`, replacing `x` with `(x : Nat)` can get typeclass resolution un-stuck.\n<generated>:24:20: error: Application type mismatch: The argument\n  Input\nhas type\n  Type 1\nof sort `Type 2` but is expected to have type\n  Type\nof sort `Type 1` in the application\n  Contract Input\n<generated>:31:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.4.2a/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Case data about the entity should include: a case identifier (i.e., Case ID) that is unique within the jurisdiction being reported, the suspected agent, case diagnosis, health status (e.g., no symptoms, acute illness), case status (e.g., confirmed, probable, suspect), investigation dates, clinical history, symptom onset date and time, epidemiological links to other cases, and priority (e.g., high, medium, low).",
+      "text_predicate": "Requirement 2.2.4.2a/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Case Investigation and Exposure Contact Data):\nCase data about the entity should include: a case identifier (i.e., Case ID) that is unique within the jurisdiction being reported, the suspected agent, case diagnosis, health status (e.g., no symptoms, acute illness), case status (e.g., confirmed, probable, suspect), investigation dates, clinical history, symptom onset date and time, epidemiological links to other cases, and priority (e.g., high, medium, low).",
+      "lean_predicate": "structure Input where\n  caseId         : String\n  jurisdiction   : String\n  suspectedAgent : String\n  diagnosis      : String\n  healthStatus   : String\n  caseStatus     : String\n  investigationDates : List String\n  clinicalHistory : String\n  symptomOnset   : String\n  epidemiologicalLinks : List String\n  priority        : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  caseId         : String\n  jurisdiction   : String\n  suspectedAgent : String\n  diagnosis      : String\n  healthStatus   : String\n  caseStatus     : String\n  investigationDates : List String\n  clinicalHistory : String\n  symptomOnset   : String\n  epidemiologicalLinks : List String\n  priority        : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => \n    i.caseId ≠ \"\" ∧\n    i.suspectedAgent ≠ \"\" ∧\n    i.diagnosis ≠ \"\" ∧\n    i.healthStatus ≠ \"\" ∧\n    i.caseStatus ≠ \"\" ∧\n    i.investigationDates.Nodup ∧\n    i.symptomOnset ≠ \"\" ∧\n    i.epidemiologicalLinks.Nodup ∧\n    i.priority ≠ \"\"\n  post := fun i o => \n    o.caseId = i.caseId ∧\n    o.jurisdiction = i.jurisdiction ∧\n    o.suspectedAgent = i.suspectedAgent ∧\n    o.diagnosis = i.diagnosis ∧\n    o.healthStatus = i.healthStatus ∧\n    o.caseStatus = i.caseStatus ∧\n    o.investigationDates = i.investigationDates ∧\n    o.clinicalHistory = i.clinicalHistory ∧\n    o.symptomOnset = i.symptomOnset ∧\n    o.epidemiologicalLinks = i.epidemiologicalLinks ∧\n    o.priority = i.priority\n\nexample : Spec.pre { caseId := \"123\", jurisdiction := \"NY\", suspectedAgent := \"Virus X\", \n                     diagnosis := \"Influenza\", healthStatus := \"Acute illness\", \n                     caseStatus := \"Confirmed\", investigationDates := [\"2023-01-01\"], \n                     clinicalHistory := \"History of recent travel\", \n                     symptomOnset := \"2023-01-01T12:00\", \n                     epidemiologicalLinks := [\"Case 456\"], \n                     priority := \"High\" } ∧\n          Spec.post { caseId := \"123\", jurisdiction := \"NY\", suspectedAgent := \"Virus X\", \n                      diagnosis := \"Influenza\", healthStatus := \"Acute illness\", \n                      caseStatus := \"Confirmed\", investigationDates := [\"2023-01-01\"], \n                      clinicalHistory := \"History of recent travel\", \n                      symptomOnset := \"2023-01-01T12:00\", \n                      epidemiologicalLinks := [\"Case 456\"], \n                      priority := \"High\" }\n                    { caseId := \"123\", jurisdiction := \"NY\", suspectedAgent := \"Virus X\", \n                      diagnosis := \"Influenza\", healthStatus := \"Acute illness\", \n                      caseStatus := \"Confirmed\", investigationDates := [\"2023-01-01\"], \n                      clinicalHistory := \"History of recent travel\", \n                      symptomOnset := \"2023-01-01T12:00\", \n                      epidemiologicalLinks := [\"Case 456\"], \n                      priority := \"High\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 115.6,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { caseId := \"12345\", jurisdiction := \"Test Jurisdiction\", suspectedAgent := \"AgentX\", diagnosis := \"DiagnosisY\", healthStatus := \"No Symptoms\", caseStatus := \"Confirmed\", investigationDates := [\"2023-01-01\", \"2023-01-02\"], clinicalHistory := \"No history\", symptomOnset := \"2023-01-01 10:00\", epidemiologicalLinks := [\"Case67890\"], priority := \"High\" } { caseId := \"12345\", jurisdiction := \"Test Jurisdiction\", suspectedAgent := \"AgentX\", diagnosis := \"DiagnosisY\", healthStatus := \"No Symptoms\", caseStatus := \"Confirmed\", investigationDates := [\"2023-01-01\", \"2023-01-02\"], clinicalHistory := \"No history\", symptomOnset := \"2023-01-01 10:00\", epidemiologicalLinks := [\"Case67890\"], priority := \"High\" }` holds, but the requirement forbids this output for this input (The requirement does not allow the case identifier to be the same within the jurisdiction, but the output does not check for uniqueness.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "compiles, but the generation loop's own checks failed: L0.5: your spec accepts a forbidden behaviour: `Spec.post { caseId := \"12345\", jurisdiction := \"Test Jurisdiction\", suspectedAgent := \"AgentX\", diagnosis := \"DiagnosisY\", healthStatus := \"No Symptoms\", caseStatus := \"Confirmed\", investigationDates := [\"2023-01-01\", \"2023-01-02\"], clinicalHistory := "
+        ]
+      }
+    },
+    {
+      "id": "2.2.4.2b/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "There must be a means to update the case diagnosis either manually or automatically if the case definition changes during an event.",
+      "text_predicate": "Requirement 2.2.4.2b/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Case Investigation and Exposure Contact Data):\nThere must be a means to update the case diagnosis either manually or automatically if the case definition changes during an event.",
+      "lean_predicate": "structure Case where\n  diagnosis : String\n  eventId   : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  diagnosis  : String\n  newDiagnosis : String\n  eventId    : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  diagnosis  : String\n  eventId    : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.eventId > 0\n  post := fun i o => o.diagnosis = i.newDiagnosis ∧ o.eventId = i.eventId\n\nexample : Spec.pre { diagnosis := \"flu\", newDiagnosis := \"pneumonia\", eventId := 1 } ∧\n          Spec.post { diagnosis := \"flu\", newDiagnosis := \"pneumonia\", eventId := 1 }\n                    { diagnosis := \"pneumonia\", eventId := 1 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { diagnosis := \"flu\", newDiagnosis := \"influenza\", eventId := 123 } ∧ ¬ Spec.post { diagnosis := \"flu\", newDiagnosis := \"influenza\", eventId := 123 } { diagnosis := \"flu\", eventId := 123 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { diagnosis := \"flu\", newDiagnosis := \"influenza\", eventId := 123 } ∧ ¬ Spec.post { diagnosis := \"flu\", newDiagnosis := \"influenza\", eventId := 123 } { diagnosis := \"flu\", eventId := 123 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the diagnosis must be updated either manually or automatically if the case definition changes. A buggy system might not update the diagnosis at all, even though the case definition has changed.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 27.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.4.3a/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Exposure investigation data to be captured must include information related to exposure levels, type of exposure (e.g., intimate, social, household, common conveyance), place of exposure, length of time the entity was exposed, frequency of exposure, and the entity's proximity to the source of exposure.",
+      "text_predicate": "Requirement 2.2.4.3a/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Case Investigation and Exposure Contact Data):\nExposure investigation data to be captured must include information related to exposure levels, type of exposure (e.g., intimate, social, household, common conveyance), place of exposure, length of time the entity was exposed, frequency of exposure, and the entity's proximity to the source of exposure.",
+      "lean_predicate": "structure Exposure where\n  level        : String\n  type         : String\n  place        : String\n  time         : Nat\n  frequency    : Nat\n  proximity    : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  exposures : List Exposure\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid      : Bool\n  exposures  : List Exposure\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.exposures.Nodup\n  post := fun i o => o.valid = true ↔\n    o.exposures.length = i.exposures.length ∧\n    ∀ e ∈ i.exposures, o.exposures.contains e ∧\n    e.level ≠ \"\" ∧\n    e.type ∈ [\"intimate\", \"social\", \"household\", \"common conveyance\"] ∧\n    e.place ≠ \"\" ∧\n    0 < e.time ∧\n    0 < e.frequency ∧\n    0 < e.proximity\n\nexample : Spec.pre { exposures := [{ level := \"high\", type := \"intimate\", place := \"home\", time := 5, frequency := 1, proximity := 1 }] } ∧\n          Spec.post { exposures := [{ level := \"high\", type := \"intimate\", place := \"home\", time := 5, frequency := 1, proximity := 1 }] }\n                    { valid := true, exposures := [{ level := \"high\", type := \"intimate\", place := \"home\", time := 5, frequency := 1, proximity := 1 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { exposures := [{ level := \"\", type := \"intimate\", place := \"\", time := 0, frequency := 0, proximity := 0 }] } ∧ ¬ Spec.post { exposures := [{ level := \"\", type := \"intimate\", place := \"\", time := 0, frequency := 0, proximity := 0 }] } { valid := true, exposures := [{ level := \"\", type := \"intimate\", place := \"\", time := 0, frequency := 0, proximity := 0 }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { exposures := [{ level := \"\", type := \"intimate\", place := \"\", time := 0, frequency := 0, proximity := 0 }] } ∧ ¬ Spec.post { exposures := [{ level := \"\", type := \"intimate\", place := \"\", time := 0, frequency := 0, proximity := 0 }] } { valid := true, exposures := [{ level := \"\", type := \"intimate\", place := \"\", time := 0, frequency := 0, proximity := 0 }] } := by\n  unfold Spec; decide",
+          "why": "The output does not require the `level`, `type`, `place`, `time`, `frequency`, and `proximity` fields to be non-empty strings.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Specimens/samples collected for laboratory testing must be assigned an identifier (i.e., Specimen ID) that is unique within the jurisdiction.",
+      "text_predicate": "Requirement 2.2.6.1/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nSpecimens/samples collected for laboratory testing must be assigned an identifier (i.e., Specimen ID) that is unique within the jurisdiction.",
+      "lean_predicate": "structure Specimen where\n  id : String\n  -- other fields like collectionDate, testType, etc. can be added as needed\n  deriving DecidableEq, Repr\n\nstructure Input where\n  specimens : List Specimen\n  jurisdictionSize : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  specimens : List Specimen\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.specimens.all (fun s => s.id ≠ \"\")\n  post := fun i o => o.specimens.Nodup ∧\n                     (o.specimens.all (fun s => s.id.Nodup ∧\n                                               o.specimens.count (fun s' => s'.id = s.id) = 1)) ∧\n                     o.specimens.length = i.specimens.length\n\nexample : Spec.pre { specimens := [{ id := \"S123\" }, { id := \"S456\" }], jurisdictionSize := 100 } ∧\n          Spec.post { specimens := [{ id := \"S123\" }, { id := \"S456\" }] }\n                    { specimens := [{ id := \"S123\" }, { id := \"S456\" }] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 46.6,
+      "error": "<generated>:21:53: error(lean.invalidField): Invalid field `Nodup`: The environment does not contain `String.Nodup`, so it is not possible to project the field `Nodup` from an expression\n  s.id\nof type `String`\n<generated>:22:47: error: Application type mismatch: The argument\n  o.specimens\nhas type\n  List Specimen\nbut is expected to have type\n  List (?m.14 → Prop)\nin the application\n  List.count (fun s' => ?m.16 = s.id) o.specimens\n<generated>:22:47: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  BEq (?m.14 → Prop)\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:22:76: error(lean.invalidField): Invalid field notation: Type of\n  s'\nis not known; cannot resolve field `id`\n\nHint: Consider replacing the field projection with a call to one of the following:\n  • `id`\n  • `Specimen.id`\n  • `Function.LeftInverse.id`\n  • `Function.RightInverse.id`\n  • `Std.Internal.LawfulMonadLiftBindFunction.id`\n<generated>:18:33: error: stuck at solving universe constraint\n  ?u.2957+1 =?= max 1 ?u.2964\nwhile trying to unify\n  ?m.14 → Prop : Sort (max 1 ?u.2964)\nwith\n  ?m.14 → Prop : Sort (max 1 ?u.2964)\n<generated>:26:20: error: Fields missing: `jurisdictionSize`\n\nHint: Add missing fields:\n  \n  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲j̲u̲r̲i̲s̲d̲i̲c̲t̲i̲o̲n̲S̲i̲z̲e̲ ̲:̲=̲ ̲_̲\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.2/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The subject of a specimen/sample collected for laboratory testing must be linked to the specimen/sample by an identifier (i.e., Subject ID) that is unique within the jurisdiction.",
+      "text_predicate": "Requirement 2.2.6.2/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nThe subject of a specimen/sample collected for laboratory testing must be linked to the specimen/sample by an identifier (i.e., Subject ID) that is unique within the jurisdiction.",
+      "lean_predicate": "structure Specimen where\n  subjectId : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  specimens : List Specimen\n  subjectId : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  specimens : List Specimen\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.subjectId ≠ \"\"\n  post := fun i o => o.specimens.length = i.specimens.length ∧\n                     (∀ s ∈ o.specimens, s.subjectId = i.subjectId) ∧\n                     o.specimens.Nodup\n\nexample : Spec.pre { specimens := [{ subjectId := \"12345\" }],\n                     subjectId := \"12345\" } ∧\n          Spec.post { specimens := [{ subjectId := \"12345\" }],\n                      subjectId := \"12345\" }\n                    { specimens := [{ subjectId := \"12345\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { specimens := [{ subjectId := \"123\" }, { subjectId := \"123\" }], subjectId := \"456\" } ∧ ¬ Spec.post { specimens := [{ subjectId := \"123\" }, { subjectId := \"123\" }], subjectId := \"456\" } { specimens := [{ subjectId := \"123\" }, { subjectId := \"123\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { specimens := [{ subjectId := \"123\" }, { subjectId := \"123\" }], subjectId := \"456\" } ∧ ¬ Spec.post { specimens := [{ subjectId := \"123\" }, { subjectId := \"123\" }], subjectId := \"456\" } { specimens := [{ subjectId := \"123\" }, { subjectId := \"123\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the Subject ID must be unique within the jurisdiction, but the output does not enforce this uniqueness.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must be able to store data about the specimens/samples that are collected for laboratory testing.",
+      "text_predicate": "Requirement 2.2.6.3/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nSystems supporting OM must be able to store data about the specimens/samples that are collected for laboratory testing.",
+      "lean_predicate": "structure Specimen where\n  id          : Nat\n  patientName : String\n  collectionTime : Nat\n  sampleType  : String\n  status      : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  specimens : List Specimen\n  deriving DecidableEq, Repr\n\nstructure Output where\n  specimens : List Specimen\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.specimens.Nodup\n  post := fun i o => o.specimens = i.specimens ∧\n                     ∀ s ∈ o.specimens, s.patientName ≠ \"\" ∧\n                     s.collectionTime ≥ 0 ∧\n                     s.sampleType ≠ \"\" ∧\n                     s.status ∈ [\"pending\", \"processed\", \"invalid\"]\n\nexample : Spec.pre { specimens := [{ id := 1, patientName := \"Alice\", collectionTime := 15, sampleType := \"blood\", status := \"pending\" },\n                                    { id := 2, patientName := \"Bob\", collectionTime := 20, sampleType := \"urine\", status := \"processed\" }] } ∧\n          Spec.post { specimens := [{ id := 1, patientName := \"Alice\", collectionTime := 15, sampleType := \"blood\", status := \"pending\" },\n                                    { id := 2, patientName := \"Bob\", collectionTime := 20, sampleType := \"urine\", status := \"processed\" }] }\n                    { specimens := [{ id := 1, patientName := \"Alice\", collectionTime := 15, sampleType := \"blood\", status := \"pending\" },\n                                    { id := 2, patientName := \"Bob\", collectionTime := 20, sampleType := \"urine\", status := \"processed\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { specimens := [{ id := 1, patientName := \"John Doe\", collectionTime := 1577836800, sampleType := \"Blood\", status := \"pending\" }] } ∧ ¬ Spec.post { specimens := [{ id := 1, patientName := \"John Doe\", collectionTime := 1577836800, sampleType := \"Blood\", status := \"pending\" }] } { specimens := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { specimens := [{ id := 1, patientName := \"John Doe\", collectionTime := 1577836800, sampleType := \"Blood\", status := \"pending\" }] } ∧ ¬ Spec.post { specimens := [{ id := 1, patientName := \"John Doe\", collectionTime := 1577836800, sampleType := \"Blood\", status := \"pending\" }] } { specimens := [] } := by\n  unfold Spec; decide",
+          "why": "The output does not store data about the specimens, violating the requirement",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 46.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.3.a/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Clinical specimen data should include information about the specimen source/site from which the specimen was taken, symptom date of onset, and whether the sample is acute or convalescent.",
+      "text_predicate": "Requirement 2.2.6.3.a/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nClinical specimen data should include information about the specimen source/site from which the specimen was taken, symptom date of onset, and whether the sample is acute or convalescent.",
+      "lean_predicate": "structure Specimen where\n  source  : String\n  symptomDate : Nat\n  acuteConvalescent : Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  specimen : Specimen\n  deriving DecidableEq, Repr\n\nstructure Output where\n  source  : String\n  symptomDate : Nat\n  acuteConvalescent : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.source = i.specimen.source ∧\n                     o.symptomDate = i.specimen.symptomDate ∧\n                     o.acuteConvalescent = i.specimen.acuteConvalescent\n\nexample : Spec.pre { specimen := { source := \"nose\", symptomDate := 5, acuteConvalescent := true } } ∧\n          Spec.post { specimen := { source := \"nose\", symptomDate := 5, acuteConvalescent := true } }\n                    { source := \"nose\", symptomDate := 5, acuteConvalescent := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { specimen := { source := \"throat\", symptomDate := 20230101, acuteConvalescent := true } } ∧ ¬ Spec.post { specimen := { source := \"throat\", symptomDate := 20230101, acuteConvalescent := true } } { source := \"throat\", symptomDate := 20230101 } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { specimen := { source := \"throat\", symptomDate := 20230101, acuteConvalescent := true } } ∧ ¬ Spec.post { specimen := { source := \"throat\", symptomDate := 20230101, acuteConvalescent := true } } { source := \"throat\", symptomDate := 20230101 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that clinical specimen data should include information about whether the sample is acute or convalescent, but the output does not include this information.",
+          "outcome": "not usable: Fields missing: `acuteConvalescent`\n\nHint: Add missing fields:\n  ,̲\n  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲a̲c̲u̲t̲e̲C̲o̲n̲v̲a̲l̲e̲s̲c̲e̲n̲t̲ ̲:̲=̲ ̲_̲"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.3.b/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Environmental sample data should include information about the collection method, location (geocoded if possible) from which the sample was taken, source (e.g., rain or well for water, radiation release, asbestos, chair or desk in a specified location), nature of the sample (e.g., soil, water, air), quality control data, collection begin and end date and time for air samples, and original volume and volume of concentrate tested for water samples.",
+      "text_predicate": "Requirement 2.2.6.3.b/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nEnvironmental sample data should include information about the collection method, location (geocoded if possible) from which the sample was taken, source (e.g., rain or well for water, radiation release, asbestos, chair or desk in a specified location), nature of the sample (e.g., soil, water, air), quality control data, collection begin and end date and time for air samples, and original volume and volume of concentrate tested for water samples.",
+      "lean_predicate": "structure CollectionMethod where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Location where\n  geoCode : Option String\n  deriving DecidableEq, Repr\n\nstructure Source where\n  type : String\n  deriving DecidableEq, Repr\n\nstructure Sample where\n  collectionMethod : CollectionMethod\n  location         : Location\n  source           : Source\n  nature           : String\n  qualityControl   : String\n  collectionBegin  : String\n  collectionEnd    : Option String\n  originalVolume   : Nat\n  volumeConcentrate: Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  collectionMethod : CollectionMethod\n  location         : Location\n  source           : Source\n  nature           : String\n  qualityControl   : String\n  collectionBegin  : String\n  collectionEnd    : Option String\n  originalVolume   : Nat\n  volumeConcentrate: Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  collectionMethod : CollectionMethod\n  location         : Location\n  source           : Source\n  nature           : String\n  qualityControl   : String\n  collectionBegin  : String\n  collectionEnd    : Option String\n  originalVolume   : Nat\n  volumeConcentrate: Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => i.collectionMethod = o.collectionMethod ∧\n                     i.location = o.location ∧\n                     i.source = o.source ∧\n                     i.nature = o.nature ∧\n                     i.qualityControl = o.qualityControl ∧\n                     i.collectionBegin = o.collectionBegin ∧\n                     i.collectionEnd = o.collectionEnd ∧\n                     i.originalVolume = o.originalVolume ∧\n                     i.volumeConcentrate = o.volumeConcentrate\n\nexample : Spec.pre { collectionMethod := { name := \"swab\" },\n                     location := { geoCode := some \"1234567890\" },\n                     source := { type := \"rain\" },\n                     nature := \"water\",\n                     qualityControl := \"pass\",\n                     collectionBegin := \"2023-10-01 10:00\",\n                     collectionEnd := none,\n                     originalVolume := 1000,\n                     volumeConcentrate := 100 } ∧\n          Spec.post { collectionMethod := { name := \"swab\" },\n                      location := { geoCode := some \"1234567890\" },\n                      source := { type := \"rain\" },\n                      nature := \"water\",\n                      qualityControl := \"pass\",\n                      collectionBegin := \"2023-10-01 10:00\",\n                      collectionEnd := none,\n                      originalVolume := 1000,\n                      volumeConcentrate := 100 }\n                    { collectionMethod := { name := \"swab\" },\n                      location := { geoCode := some \"1234567890\" },\n                      source := { type := \"rain\" },\n                      nature := \"water\",\n                      qualityControl := \"pass\",\n                      collectionBegin := \"2023-10-01 10:00\",\n                      collectionEnd := none,\n                      originalVolume := 1000,\n                      volumeConcentrate := 100 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { collectionMethod := { name := \"Swab\" }, location := { geoCode := none }, source := { type := \"Air\" }, nature := \"Dust\", qualityControl := \"Pass\", collectionBegin := \"2023-10-01T08:00:00\", collectionEnd := none, originalVolume := 100, volumeConcentrate := 50 } ∧ ¬ Spec.post { collectionMethod := { name := \"Swab\" }, location := { geoCode := none }, source := { type := \"Air\" }, nature := \"Dust\", qualityControl := \"Pass\", collectionBegin := \"2023-10-01T08:00:00\", collectionEnd := none, originalVolume := 100, volumeConcentrate := 50 } { collectionMethod := { name := \"Swab\" }, location := { geoCode := none }, source := { type := \"Air\" }, nature := \"Dust\", qualityControl := \"Pass\", collectionBegin := \"2023-10-01T08:00:00\", collectionEnd := some \"2023-10-01T09:00:00\", originalVolume := 100, volumeConcentrate := 50 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { collectionMethod := { name := \"Swab\" }, location := { geoCode := none }, source := { type := \"Air\" }, nature := \"Dust\", qualityControl := \"Pass\", collectionBegin := \"2023-10-01T08:00:00\", collectionEnd := none, originalVolume := 100, volumeConcentrate := 50 } ∧ ¬ Spec.post { collectionMethod := { name := \"Swab\" }, location := { geoCode := none }, source := { type := \"Air\" }, nature := \"Dust\", qualityControl := \"Pass\", collectionBegin := \"2023-10-01T08:00:00\", collectionEnd := none, originalVolume := 100, volumeConcentrate := 50 } { collectionMethod := { name := \"Swab\" }, location := { geoCode := none }, source := { type := \"Air\" }, nature := \"Dust\", qualityControl := \"Pass\", collectionBegin := \"2023-10-01T08:00:00\", collectionEnd := some \"2023-10-01T09:00:00\", originalVolume := 100, volumeConcentrate := 50 } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow the `collectionEnd` field to be present in the output if it is `None` in the input.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 55.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ]
+      }
+    },
+    {
+      "id": "2.2.6.3.c/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Food sample data should include information about the lot number, batch number, manufacturer name, shipping invoice, temperature, sample type (e.g., dairy - milk, red meat, spice), and product storage condition.",
+      "text_predicate": "Requirement 2.2.6.3.c/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nFood sample data should include information about the lot number, batch number, manufacturer name, shipping invoice, temperature, sample type (e.g., dairy - milk, red meat, spice), and product storage condition.",
+      "lean_predicate": "structure Input where\n  lotNumber      : String\n  batchNumber    : String\n  manufacturer   : String\n  shippingInvoice: String\n  temperature    : Nat\n  sampleType     : String\n  storageCondition: String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  lotNumber      : String\n  batchNumber    : String\n  manufacturer   : String\n  shippingInvoice: String\n  temperature    : Nat\n  sampleType     : String\n  storageCondition: String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.lotNumber ≠ \"\" ∧ i.batchNumber ≠ \"\" ∧\n                 i.manufacturer ≠ \"\" ∧ i.shippingInvoice ≠ \"\" ∧\n                 100 ≥ i.temperature ∧\n                 (i.sampleType = \"dairy - milk\" ∨\n                  i.sampleType = \"red meat\" ∨\n                  i.sampleType = \"spice\")\n  post := fun i o => o.lotNumber = i.lotNumber ∧\n                     o.batchNumber = i.batchNumber ∧\n                     o.manufacturer = i.manufacturer ∧\n                     o.shippingInvoice = i.shippingInvoice ∧\n                     o.temperature = i.temperature ∧\n                     o.sampleType = i.sampleType ∧\n                     o.storageCondition = i.storageCondition\n\nexample : Spec.pre { lotNumber := \"L123\", batchNumber := \"B456\", manufacturer := \"ABC Inc.\",\n                     shippingInvoice := \"SI789\", temperature := 5, sampleType := \"dairy - milk\",\n                     storageCondition := \"refrigerated\" } ∧\n          Spec.post { lotNumber := \"L123\", batchNumber := \"B456\", manufacturer := \"ABC Inc.\",\n                      shippingInvoice := \"SI789\", temperature := 5, sampleType := \"dairy - milk\",\n                      storageCondition := \"refrigerated\" }\n                    { lotNumber := \"L123\", batchNumber := \"B456\", manufacturer := \"ABC Inc.\",\n                      shippingInvoice := \"SI789\", temperature := 5, sampleType := \"dairy - milk\",\n                      storageCondition := \"refrigerated\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { lotNumber := \"12345\", batchNumber := \"A1B2C3\", manufacturer := \"Test Co.\", shippingInvoice := \"INV12345\", temperature := 50, sampleType := \"unknown\", storageCondition := \"cold\" } ∧ ¬ Spec.post { lotNumber := \"12345\", batchNumber := \"A1B2C3\", manufacturer := \"Test Co.\", shippingInvoice := \"INV12345\", temperature := 50, sampleType := \"unknown\", storageCondition := \"cold\" } { lotNumber := \"12345\", batchNumber := \"A1B2C3\", manufacturer := \"Test Co.\", shippingInvoice := \"INV12345\", temperature := 50, sampleType := \"unknown\", storageCondition := \"cold\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { lotNumber := \"12345\", batchNumber := \"A1B2C3\", manufacturer := \"Test Co.\", shippingInvoice := \"INV12345\", temperature := 50, sampleType := \"unknown\", storageCondition := \"cold\" } ∧ ¬ Spec.post { lotNumber := \"12345\", batchNumber := \"A1B2C3\", manufacturer := \"Test Co.\", shippingInvoice := \"INV12345\", temperature := 50, sampleType := \"unknown\", storageCondition := \"cold\" } { lotNumber := \"12345\", batchNumber := \"A1B2C3\", manufacturer := \"Test Co.\", shippingInvoice := \"INV12345\", temperature := 50, sampleType := \"unknown\", storageCondition := \"cold\" } := by\n  unfold Spec; decide",
+          "why": "The output does not include the required sample type, which the requirement forbids.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 35.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.6/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must be able to create a laboratory test request for a specimen/sample or group of specimens/samples.",
+      "text_predicate": "Requirement 2.2.6.6/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nSystems supporting OM must be able to create a laboratory test request for a specimen/sample or group of specimens/samples.",
+      "lean_predicate": "structure Specimen where\n  id          : Nat\n  patientName : String\n  testType    : String\n  status      : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  specimens : List Specimen\n  testType  : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  requestCreated : Bool\n  testRequests   : List Specimen\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.specimens.Nodup ∧ i.testType ≠ \"\"\n  post := fun i o => o.requestCreated = true ↔\n    ∃ s ∈ i.specimens, s.testType = i.testType ∧\n    (o.testRequests = [s] ∧ s.status = \"requested\" ∨\n     o.testRequests = i.specimens.map (fun s => { s with status := \"requested\" }) ∧\n     o.testRequests.length = i.specimens.length)\n\nexample : Spec.pre { specimens := [{ id := 1, patientName := \"Alice\", testType := \"flu\", status := \"collected\" }],\n                     testType := \"flu\" } ∧\n          Spec.post { specimens := [{ id := 1, patientName := \"Alice\", testType := \"flu\", status := \"collected\" }],\n                      testType := \"flu\" }\n                    { requestCreated := true, testRequests := [{ id := 1, patientName := \"Alice\", testType := \"flu\", status := \"requested\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { specimens := [{ id := 1, patientName := \"John Doe\", testType := \"Test1\", status := \"collected\" }], testType := \"Test1\" } ∧ ¬ Spec.post { specimens := [{ id := 1, patientName := \"John Doe\", testType := \"Test1\", status := \"collected\" }], testType := \"Test1\" } { requestCreated := true, testRequests := [{ id := 2, patientName := \"Jane Doe\", testType := \"Test1\", status := \"requested\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { specimens := [{ id := 1, patientName := \"John Doe\", testType := \"Test1\", status := \"collected\" }], testType := \"Test1\" } ∧ ¬ Spec.post { specimens := [{ id := 1, patientName := \"John Doe\", testType := \"Test1\", status := \"collected\" }], testType := \"Test1\" } { requestCreated := true, testRequests := [{ id := 2, patientName := \"Jane Doe\", testType := \"Test1\", status := \"requested\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow the test requests to have a length different from the input specimens when the test type matches.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.7/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Information about batch shipments of specimens/samples that are transferred to test laboratories or other facilities must be collected, including the shipper (e.g., UPS, FedEx), shipment tracking number, and the sending organization's contact information.",
+      "text_predicate": "Requirement 2.2.6.7/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nInformation about batch shipments of specimens/samples that are transferred to test laboratories or other facilities must be collected, including the shipper (e.g., UPS, FedEx), shipment tracking number, and the sending organization's contact information.",
+      "lean_predicate": "structure Shipment where\n  shipper   : String\n  tracking  : String\n  contact   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  shipments : List Shipment\n  deriving DecidableEq, Repr\n\nstructure Output where\n  shipments : List Shipment\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.shipments.Nodup\n  post := fun i o => o.shipments = i.shipments ∧\n                     ∀ s ∈ o.shipments, s.shipper ≠ \"\" ∧ s.tracking ≠ \"\" ∧ s.contact ≠ \"\"\n\nexample : Spec.pre { shipments := [{ shipper := \"UPS\", tracking := \"1Z2345678901234567\",\n                                      contact := \"John Doe\" },\n                                    { shipper := \"FedEx\", tracking := \"1Z9876543210987654\",\n                                      contact := \"Jane Smith\" }] } ∧\n          Spec.post { shipments := [{ shipper := \"UPS\", tracking := \"1Z2345678901234567\",\n                                      contact := \"John Doe\" },\n                                    { shipper := \"FedEx\", tracking := \"1Z9876543210987654\",\n                                      contact := \"Jane Smith\" }] }\n                    { shipments := [{ shipper := \"UPS\", tracking := \"1Z2345678901234567\",\n                                      contact := \"John Doe\" },\n                                    { shipper := \"FedEx\", tracking := \"1Z9876543210987654\",\n                                      contact := \"Jane Smith\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { shipments := [{ shipper := \"\", tracking := \"1234567890\", contact := \"contact@example.com\" }] } ∧ ¬ Spec.post { shipments := [{ shipper := \"\", tracking := \"1234567890\", contact := \"contact@example.com\" }] } { shipments := [{ shipper := \"\", tracking := \"1234567890\", contact := \"contact@example.com\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { shipments := [{ shipper := \"\", tracking := \"1234567890\", contact := \"contact@example.com\" }] } ∧ ¬ Spec.post { shipments := [{ shipper := \"\", tracking := \"1234567890\", contact := \"contact@example.com\" }] } { shipments := [{ shipper := \"\", tracking := \"1234567890\", contact := \"contact@example.com\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement mandates that the shipper, tracking number, and contact information must not be empty strings.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.9/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must be able to store laboratory result(s) and link the result(s) to the original laboratory test request.",
+      "text_predicate": "Requirement 2.2.6.9/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nSystems supporting OM must be able to store laboratory result(s) and link the result(s) to the original laboratory test request.",
+      "lean_predicate": "structure TestRequest where\n  specimenId : Nat\n  testType   : String\n  deriving DecidableEq, Repr\n\nstructure LaboratoryResult where\n  specimenId : Nat\n  testType   : String\n  result     : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  testRequests : List TestRequest\n  results      : List LaboratoryResult\n  deriving DecidableEq, Repr\n\nstructure Output where\n  testRequests : List TestRequest\n  results      : List LaboratoryResult\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.testRequests.Nodup && i.results.Nodup\n  post := fun i o => o.testRequests = i.testRequests ∧\n                     o.results = i.results ∧\n                     ∀ r ∈ o.results, ∃ t ∈ o.testRequests, t.specimenId = r.specimenId ∧ t.testType = r.testType\n\nexample : Spec.pre { testRequests := [{ specimenId := 1, testType := \"Virus\" }],\n                     results := [{ specimenId := 1, testType := \"Virus\", result := \"Positive\" }] } ∧\n          Spec.post { testRequests := [{ specimenId := 1, testType := \"Virus\" }],\n                      results := [{ specimenId := 1, testType := \"Virus\", result := \"Positive\" }] }\n                    { testRequests := [{ specimenId := 1, testType := \"Virus\" }],\n                      results := [{ specimenId := 1, testType := \"Virus\", result := \"Positive\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { testRequests := [{ specimenId := 1, testType := \"TestA\" }], results := [{ specimenId := 2, testType := \"TestB\", result := \"Positive\" }] } ∧ ¬ Spec.post { testRequests := [{ specimenId := 1, testType := \"TestA\" }], results := [{ specimenId := 2, testType := \"TestB\", result := \"Positive\" }] } { testRequests := [{ specimenId := 1, testType := \"TestA\" }], results := [{ specimenId := 2, testType := \"TestB\", result := \"Positive\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { testRequests := [{ specimenId := 1, testType := \"TestA\" }], results := [{ specimenId := 2, testType := \"TestB\", result := \"Positive\" }] } ∧ ¬ Spec.post { testRequests := [{ specimenId := 1, testType := \"TestA\" }], results := [{ specimenId := 2, testType := \"TestB\", result := \"Positive\" }] } { testRequests := [{ specimenId := 1, testType := \"TestA\" }], results := [{ specimenId := 2, testType := \"TestB\", result := \"Positive\" }] } := by\n  unfold Spec; decide",
+          "why": "The output does not link the result to the original test request, violating the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.6.10/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must store data about laboratory results.",
+      "text_predicate": "Requirement 2.2.6.10/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Specimen/Sample Collection and Laboratory Response Data):\nSystems supporting OM must store data about laboratory results.",
+      "lean_predicate": "structure Specimen where\n  id          : Nat\n  patientName : String\n  testResult  : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  specimens : List Specimen\n  deriving DecidableEq, Repr\n\nstructure Output where\n  specimens : List Specimen\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.specimens.Nodup\n  post := fun i o => o.specimens = i.specimens ∧\n                     ∀ s ∈ o.specimens, s.testResult ≠ \"\"\n\nexample : Spec.pre { specimens := [{ id := 1, patientName := \"Alice\", testResult := \"Positive\" },\n                                    { id := 2, patientName := \"Bob\", testResult := \"Negative\" }] } ∧\n          Spec.post { specimens := [{ id := 1, patientName := \"Alice\", testResult := \"Positive\" },\n                                     { id := 2, patientName := \"Bob\", testResult := \"Negative\" }] }\n                    { specimens := [{ id := 1, patientName := \"Alice\", testResult := \"Positive\" },\n                                    { id := 2, patientName := \"Bob\", testResult := \"Negative\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { specimens := [{ id := 1, patientName := \"John Doe\", testResult := \"Positive\" }] } ∧ ¬ Spec.post { specimens := [{ id := 1, patientName := \"John Doe\", testResult := \"Positive\" }] } { specimens := [{ id := 1, patientName := \"John Doe\", testResult := \"\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { specimens := [{ id := 1, patientName := \"John Doe\", testResult := \"Positive\" }] } ∧ ¬ Spec.post { specimens := [{ id := 1, patientName := \"John Doe\", testResult := \"Positive\" }] } { specimens := [{ id := 1, patientName := \"John Doe\", testResult := \"\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that systems must store data about laboratory results, which means the testResult field must not be empty.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.9.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should capture information such as the date and time of an activity, activity type, who initiated the activity, and contact information to generate activity logs for management purposes.",
+      "text_predicate": "Requirement 2.2.9.1/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Activity Logging Data):\nSystems supporting OM should capture information such as the date and time of an activity, activity type, who initiated the activity, and contact information to generate activity logs for management purposes.",
+      "lean_predicate": "structure Input where\n  date       : String\n  time       : String\n  activity   : String\n  initiator  : String\n  contact    : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  logged     : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.date ≠ \"\" ∧ i.time ≠ \"\" ∧ i.activity ≠ \"\" ∧ i.initiator ≠ \"\" ∧ i.contact ≠ \"\"\n  post := fun i o => o.logged = true ↔\n    (i.date = i.date ∧ i.time = i.time ∧ i.activity = i.activity ∧\n     i.initiator = i.initiator ∧ i.contact = i.contact)\n\nexample : Spec.pre { date := \"2023-10-01\", time := \"14:30\", activity := \"Update Database\",\n                     initiator := \"John Doe\", contact := \"johndoe@example.com\" } ∧\n          Spec.post { date := \"2023-10-01\", time := \"14:30\", activity := \"Update Database\",\n                      initiator := \"John Doe\", contact := \"johndoe@example.com\" }\n                    { logged := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { date := \"2023-10-04\", time := \"14:30\", activity := \"Meeting\", initiator := \"John Doe\", contact := \"jdoe@example.com\" } ∧ ¬ Spec.post { date := \"2023-10-04\", time := \"14:30\", activity := \"Meeting\", initiator := \"John Doe\", contact := \"jdoe@example.com\" } { logged := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { date := \"2023-10-04\", time := \"14:30\", activity := \"Meeting\", initiator := \"John Doe\", contact := \"jdoe@example.com\" } ∧ ¬ Spec.post { date := \"2023-10-04\", time := \"14:30\", activity := \"Meeting\", initiator := \"John Doe\", contact := \"jdoe@example.com\" } { logged := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that systems should capture information to generate activity logs, but the output does not log the activity.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.2.9.2/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Activity logs, which are tools for investigators to track their actions during a case, should be supported.",
+      "text_predicate": "Requirement 2.2.9.2/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > DATA REQUIREMENTS > Activity Logging Data):\nActivity logs, which are tools for investigators to track their actions during a case, should be supported.",
+      "lean_predicate": "structure Activity where\n  investigator : String\n  action      : String\n  timestamp   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  activities : List Activity\n  deriving DecidableEq, Repr\n\nstructure Output where\n  activities : List Activity\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.activities.Nodup\n  post := fun i o => o.activities = i.activities\n\nexample : Spec.pre { activities := [{ investigator := \"Alice\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00\" },\n                                      { investigator := \"Bob\", action := \"closed case\", timestamp := \"2023-10-02T15:00:00\" }] } ∧\n          Spec.post { activities := [{ investigator := \"Alice\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00\" },\n                                      { investigator := \"Bob\", action := \"closed case\", timestamp := \"2023-10-02T15:00:00\" }] }\n                    { activities := [{ investigator := \"Alice\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00\" },\n                                      { investigator := \"Bob\", action := \"closed case\", timestamp := \"2023-10-02T15:00:00\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { activities := [ { investigator := \"JohnDoe\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00Z\" } ] } ∧ ¬ Spec.post { activities := [ { investigator := \"JohnDoe\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00Z\" } ] } { activities := [ { investigator := \"JohnDoe\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00Z\" }, { investigator := \"JohnDoe\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00Z\" } ] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { activities := [ { investigator := \"JohnDoe\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00Z\" } ] } ∧ ¬ Spec.post { activities := [ { investigator := \"JohnDoe\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00Z\" } ] } { activities := [ { investigator := \"JohnDoe\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00Z\" }, { investigator := \"JohnDoe\", action := \"opened case\", timestamp := \"2023-10-01T12:00:00Z\" } ] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that activity logs should support tools for investigators to track their actions. A buggy system might duplicate activities, which the requirement forbids.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 15.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.1.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Electronic questionnaires must be developed and validated.",
+      "text_predicate": "Requirement 2.3.1.1/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM FUNCTIONS AND BEHAVIORS > Case Investigation):\nElectronic questionnaires must be developed and validated.",
+      "lean_predicate": "structure Questionnaire where\n  title   : String\n  fields  : List String\n  answers : List String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  questions : List Questionnaire\n  deriving DecidableEq, Repr\n\nstructure Output where\n  validatedQuestions : List Questionnaire\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.questions.length > 0\n  post := fun i o =>\n    o.validatedQuestions.length = i.questions.length ∧\n    ∀ q ∈ i.questions, q ∈ o.validatedQuestions ∧\n    (q.fields.length > 0 ∧ q.answers.length = q.fields.length)\n\nexample : Spec.pre { questions := [{ title := \"Symptoms\", fields := [\"fever\", \"cough\"], answers := [\"yes\", \"no\"] },\n                                    { title := \"Travel History\", fields := [\"country\"], answers := [\"none\"] }] } ∧\n          Spec.post { questions := [{ title := \"Symptoms\", fields := [\"fever\", \"cough\"], answers := [\"yes\", \"no\"] },\n                                     { title := \"Travel History\", fields := [\"country\"], answers := [\"none\"] }] }\n                    { validatedQuestions := [{ title := \"Symptoms\", fields := [\"fever\", \"cough\"], answers := [\"yes\", \"no\"] },\n                                              { title := \"Travel History\", fields := [\"country\"], answers := [\"none\"] }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { questions := [ { title := \"Q1\", fields := [\"f1\"], answers := [\"a1\"] } ] } ∧ ¬ Spec.post { questions := [ { title := \"Q1\", fields := [\"f1\"], answers := [\"a1\"] } ] } { validatedQuestions := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { questions := [ { title := \"Q1\", fields := [\"f1\"], answers := [\"a1\"] } ] } ∧ ¬ Spec.post { questions := [ { title := \"Q1\", fields := [\"f1\"], answers := [\"a1\"] } ] } { validatedQuestions := [] } := by\n  unfold Spec; decide",
+          "why": "The output does not contain any validated questions, violating the requirement that electronic questionnaires must be developed and validated.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 64.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "weakened",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.1.5/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should provide a manual or automatic means of updating the status of case records as the case definition changes.",
+      "text_predicate": "Requirement 2.3.1.5/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM FUNCTIONS AND BEHAVIORS > Case Investigation):\nSystems supporting OM should provide a manual or automatic means of updating the status of case records as the case definition changes.",
+      "lean_predicate": "structure CaseRecord where\n  status : String\n  notes  : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  records : List CaseRecord\n  newStatus : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  updatedRecords : List CaseRecord\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.records.Nodup\n  post := fun i o => o.updatedRecords = i.records.map (fun cr => { cr with status := i.newStatus }) ∧\n                     o.updatedRecords.length = i.records.length\n\nexample : Spec.pre { records := [{ status := \"active\", notes := \"initial\" }],\n                     newStatus := \"closed\" } ∧\n          Spec.post { records := [{ status := \"active\", notes := \"initial\" }],\n                      newStatus := \"closed\" }\n                    { updatedRecords := [{ status := \"closed\", notes := \"initial\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { records := [CaseRecord.mk \"open\" \"initial note\"], newStatus := \"closed\" } ∧ ¬ Spec.post { records := [CaseRecord.mk \"open\" \"initial note\"], newStatus := \"closed\" } { updatedRecords := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { records := [CaseRecord.mk \"open\" \"initial note\"], newStatus := \"closed\" } ∧ ¬ Spec.post { records := [CaseRecord.mk \"open\" \"initial note\"], newStatus := \"closed\" } { updatedRecords := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the status of case records should be updated as the case definition changes. A buggy system might not update any records, thus returning an empty list.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.1.6/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should track the changes made to the status of case records as a result of changes in the case definition.",
+      "text_predicate": "Requirement 2.3.1.6/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM FUNCTIONS AND BEHAVIORS > Case Investigation):\nSystems supporting OM should track the changes made to the status of case records as a result of changes in the case definition.",
+      "lean_predicate": "structure CaseRecord where\n  status : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  statusHistory : List CaseRecord\n  deriving DecidableEq, Repr\n\nstructure Output where\n  statusHistory : List CaseRecord\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.statusHistory.Nodup\n  post := fun i o => o.statusHistory = i.statusHistory ∧\n                     (o.statusHistory.length = i.statusHistory.length ∧\n                      ∀ j ∈ o.statusHistory, j.status = i.statusHistory.last.j.status)\n\nexample : Spec.pre { statusHistory := [{ status := \"open\" }, { status := \"closed\" }] } ∧\n          Spec.post { statusHistory := [{ status := \"open\" }, { status := \"closed\" }] }\n                    { statusHistory := [{ status := \"open\" }, { status := \"closed\" }] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 33.9,
+      "error": "<generated>:20:72: error(lean.invalidField): Invalid field `last`: The environment does not contain `List.last`, so it is not possible to project the field `last` from an expression\n  i.statusHistory\nof type `List CaseRecord`\n<generated>:22:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.2.5.a/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the specimen/sample was created from another specimen/sample (e.g., aliquots, and new specimen types created from a source sample), laboratory results for the child specimens/samples must be linked to the corresponding parent specimen/sample.",
+      "text_predicate": "Requirement 2.3.2.5.a/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM FUNCTIONS AND BEHAVIORS > Linking):\nIf the specimen/sample was created from another specimen/sample (e.g., aliquots, and new specimen types created from a source sample), laboratory results for the child specimens/samples must be linked to the corresponding parent specimen/sample.",
+      "lean_predicate": "structure Specimen where\n  id          : Nat\n  parent      : Option Nat\n  sampleType  : String\n  laboratoryResults : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  specimens : List Specimen\n  deriving DecidableEq, Repr\n\nstructure Output where\n  specimens : List Specimen\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.specimens.Nodup\n  post := fun i o =>\n    o.specimens.Nodup ∧\n    ∀ s ∈ o.specimens, ∃ p ∈ i.specimens, s.parent = p.id ∧\n    (s.sampleType != \"original\" ↔ p.sampleType = \"original\") ∧\n    s.laboratoryResults = p.laboratoryResults\n\nexample : Spec.pre { specimens := [{ id := 1, parent := some 2, sampleType := \"aliquot\", laboratoryResults := \"Result1\" }, { id := 2, parent := none, sampleType := \"original\", laboratoryResults := \"Result2\" }] } ∧ Spec.post { specimens := [{ id := 1, parent := some 2, sampleType := \"aliquot\", laboratoryResults := \"Result1\" }, { id := 2, parent := none, sampleType := \"original\", laboratoryResults := \"Result2\" }] } { specimens := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { specimens := [{ id := 1, parent := none, sampleType := \"original\", laboratoryResults := \"result1\" }, { id := 2, parent := some 1, sampleType := \"aliquot\", laboratoryResults := \"result2\" }] } ∧ ¬ Spec.post { specimens := [{ id := 1, parent := none, sampleType := \"original\", laboratoryResults := \"result1\" }, { id := 2, parent := some 1, sampleType := \"aliquot\", laboratoryResults := \"result2\" }] } { specimens := [{ id := 1, parent := none, sampleType := \"original\", laboratoryResults := \"result1\" }, { id := 2, parent := some 1, sampleType := \"aliquot\", laboratoryResults := \"result3\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { specimens := [{ id := 1, parent := none, sampleType := \"original\", laboratoryResults := \"result1\" }, { id := 2, parent := some 1, sampleType := \"aliquot\", laboratoryResults := \"result2\" }] } ∧ ¬ Spec.post { specimens := [{ id := 1, parent := none, sampleType := \"original\", laboratoryResults := \"result1\" }, { id := 2, parent := some 1, sampleType := \"aliquot\", laboratoryResults := \"result2\" }] } { specimens := [{ id := 1, parent := none, sampleType := \"original\", laboratoryResults := \"result1\" }, { id := 2, parent := some 1, sampleType := \"aliquot\", laboratoryResults := \"result3\" }] } := by\n  unfold Spec; decide",
+          "why": "The output does not link the child specimen's laboratory results to the parent specimen's results",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 43.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "weakened",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "2.3.3.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should be able to create new contacts from existing case records, and should also identify the contact type.",
+      "text_predicate": "Requirement 2.3.3.3/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM FUNCTIONS AND BEHAVIORS > Contact Exposure Tracing):\nSystems supporting OM should be able to create new contacts from existing case records, and should also identify the contact type.",
+      "lean_predicate": "structure Contact where\n  name       : String\n  contactType: String\n  deriving DecidableEq, Repr\n\nstructure CaseRecord where\n  name       : String\n  contactType: String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  caseRecords : List CaseRecord\n  deriving DecidableEq, Repr\n\nstructure Output where\n  contacts   : List Contact\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.caseRecords.Nodup\n  post := fun i o => \n    (∀ c ∈ i.caseRecords, ∃ contact ∈ o.contacts, contact.name = c.name ∧ contact.contactType = c.contactType) ∧\n    o.contacts.Nodup\n\nexample : Spec.pre { caseRecords := [{ name := \"Alice\", contactType := \"Family\" },\n                                      { name := \"Bob\", contactType := \"Work\" }] } ∧\n          Spec.post { caseRecords := [{ name := \"Alice\", contactType := \"Family\" },\n                                       { name := \"Bob\", contactType := \"Work\" }] }\n                    { contacts := [{ name := \"Alice\", contactType := \"Family\" },\n                                   { name := \"Bob\", contactType := \"Work\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { caseRecords := [{ name := \"Alice\", contactType := \"Family\" }] } ∧ ¬ Spec.post { caseRecords := [{ name := \"Alice\", contactType := \"Family\" }] } { contacts := [{ name := \"Bob\", contactType := \"\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { caseRecords := [{ name := \"Alice\", contactType := \"Family\" }] } ∧ ¬ Spec.post { caseRecords := [{ name := \"Alice\", contactType := \"Family\" }] } { contacts := [{ name := \"Bob\", contactType := \"\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids creating new contacts from existing case records without identifying the contact type.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.4.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should allow for analytical searches based upon multiple criteria.",
+      "text_predicate": "Requirement 2.4.1/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > ANALYSIS, VISUALIZATION, AND REPORT GENERATION):\nSystems supporting OM should allow for analytical searches based upon multiple criteria.",
+      "lean_predicate": "structure Input where\n  criteria : List String\n  data     : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.criteria ≠ [] ∧ i.data ≠ []\n  post := fun i o =>\n    (∀ r ∈ o.results, r ∈ i.data ∧ i.criteria.all (fun c => c ∈ r)) ∧\n    (o.message = \"No results were found.\" ↔ o.results = [])\n\nexample : Spec.pre { criteria := [\"infectious\", \"disease\"], data := [\"infectious disease A\", \"infectious disease B\", \"non-infectious condition\"] } ∧\n          Spec.post { criteria := [\"infectious\", \"disease\"], data := [\"infectious disease A\", \"infectious disease B\", \"non-infectious condition\"] }\n                    { results := [\"infectious disease A\", \"infectious disease B\"], message := \"\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 46.4,
+      "error": "<generated>:17:60: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  Membership String String\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:20:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.4.2/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should have the ability to produce charts, maps, and graphs that illustrate OM data, such as epi-curves and the effect of vaccination or prophylaxis on the number of new cases (demonstrating the effectiveness in containing the health event) or maps that illustrate the number of cases by zip code.",
+      "text_predicate": "Requirement 2.4.2/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > ANALYSIS, VISUALIZATION, AND REPORT GENERATION):\nSystems supporting OM should have the ability to produce charts, maps, and graphs that illustrate OM data, such as epi-curves and the effect of vaccination or prophylaxis on the number of new cases (demonstrating the effectiveness in containing the health event) or maps that illustrate the number of cases by zip code.",
+      "lean_predicate": "structure Input where\n  casesByZipCode : List (String × Nat)\n  vaccinations : List (String × Nat)\n  deriving DecidableEq, Repr\n\nstructure Output where\n  epiCurve : List (Nat × Nat)\n  mapCases : List (String × Nat)\n  mapVaccinations : List (String × Nat)\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.casesByZipCode.Nodup && i.vaccinations.Nodup\n  post := fun i o => \n    (∀ (day cases) ∈ o.epiCurve, 0 ≤ day ∧ 0 ≤ cases) ∧\n    (∀ (zip cases) ∈ o.mapCases, 0 ≤ cases) ∧\n    (∀ (zip vacc) ∈ o.mapVaccinations, 0 ≤ vacc) ∧\n    (o.epiCurve.length = i.casesByZipCode.length) ∧\n    (o.mapCases.length = i.casesByZipCode.length) ∧\n    (o.mapVaccinations.length = i.vaccinations.length) ∧\n    (o.epiCurve = List.zipWith (fun day cases => (day, cases)) (List.range o.epiCurve.length) (List.map (fun (zip cases) => cases) i.casesByZipCode)) ∧\n    (o.mapCases = List.map (fun (zip cases) => (zip, cases)) i.casesByZipCode) ∧\n    (o.mapVaccinations = List.map (fun (zip vacc) => (zip, vacc)) i.vaccinations)\n\nexample : Spec.pre { casesByZipCode := [(\"12345\", 10), (\"67890\", 20)], vaccinations := [(\"12345\", 5)] } ∧\n          Spec.post { casesByZipCode := [(\"12345\", 10), (\"67890\", 20)], vaccinations := [(\"12345\", 5)] }\n                    { epiCurve := [(0, 10), (1, 20)], mapCases := [(\"12345\", 10), (\"67890\", 20)], mapVaccinations := [(\"12345\", 5)] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 68.7,
+      "error": "<generated>:18:18: error: unexpected token '∈'; expected ','\n<generated>:28:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.4.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should generate electronic data dictionaries for dynamic data (or other user-defined data descriptions to assist with effective data exchange), line lists, activity logs, aggregate data, and call-back lists to assist the emergency response group and investigators in responding to and containing a health event.",
+      "text_predicate": "Requirement 2.4.3/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > ANALYSIS, VISUALIZATION, AND REPORT GENERATION):\nSystems supporting OM should generate electronic data dictionaries for dynamic data (or other user-defined data descriptions to assist with effective data exchange), line lists, activity logs, aggregate data, and call-back lists to assist the emergency response group and investigators in responding to and containing a health event.",
+      "lean_predicate": "structure Input where\n  dynamicData : List String\n  lineLists    : List String\n  activityLogs : List String\n  aggregateData : List String\n  callbackLists : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  dataDictionary : List String\n  lineList       : List String\n  activityLog    : List String\n  aggregateData  : List String\n  callbackList   : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.dynamicData.Nodup ∧ i.lineLists.Nodup ∧ i.activityLogs.Nodup ∧\n                 i.aggregateData.Nodup ∧ i.callbackLists.Nodup\n  post := fun i o => o.dataDictionary = i.dynamicData ∧\n                     o.lineList = i.lineLists ∧\n                     o.activityLog = i.activityLogs ∧\n                     o.aggregateData = i.aggregateData ∧\n                     o.callbackList = i.callbackLists\n\nexample : Spec.pre { dynamicData := [\"data1\", \"data2\"], lineLists := [\"list1\", \"list2\"],\n                     activityLogs := [\"log1\", \"log2\"], aggregateData := [\"agg1\", \"agg2\"],\n                     callbackLists := [\"cb1\", \"cb2\"] } ∧\n          Spec.post { dynamicData := [\"data1\", \"data2\"], lineLists := [\"list1\", \"list2\"],\n                      activityLogs := [\"log1\", \"log2\"], aggregateData := [\"agg1\", \"agg2\"],\n                      callbackLists := [\"cb1\", \"cb2\"] }\n                    { dataDictionary := [\"data1\", \"data2\"], lineList := [\"list1\", \"list2\"],\n                      activityLog := [\"log1\", \"log2\"], aggregateData := [\"agg1\", \"agg2\"],\n                      callbackList := [\"cb1\", \"cb2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { dynamicData := [\"data1\", \"data2\"], lineLists := [\"list1\", \"list2\"], activityLogs := [\"log1\", \"log2\"], aggregateData := [\"agg1\", \"agg2\"], callbackLists := [\"cb1\", \"cb2\"] } ∧ ¬ Spec.post { dynamicData := [\"data1\", \"data2\"], lineLists := [\"list1\", \"list2\"], activityLogs := [\"log1\", \"log2\"], aggregateData := [\"agg1\", \"agg2\"], callbackLists := [\"cb1\", \"cb2\"] } { dataDictionary := [], lineList := [], activityLog := [], aggregateData := [], callbackList := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { dynamicData := [\"data1\", \"data2\"], lineLists := [\"list1\", \"list2\"], activityLogs := [\"log1\", \"log2\"], aggregateData := [\"agg1\", \"agg2\"], callbackLists := [\"cb1\", \"cb2\"] } ∧ ¬ Spec.post { dynamicData := [\"data1\", \"data2\"], lineLists := [\"list1\", \"list2\"], activityLogs := [\"log1\", \"log2\"], aggregateData := [\"agg1\", \"agg2\"], callbackLists := [\"cb1\", \"cb2\"] } { dataDictionary := [], lineList := [], activityLog := [], aggregateData := [], callbackList := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the system should generate electronic data dictionaries, line lists, activity logs, aggregate data, and call-back lists. A buggy system might return an empty list for all these fields.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 23.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.4.4/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Reports generated by systems supporting OM should clearly indicate the number of cases, the number of contacts per case, the number of cases with no known epi-link at the time of diagnosis, the laboratory results, and the number of vaccinations and/or treatments administered.",
+      "text_predicate": "Requirement 2.4.4/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > ANALYSIS, VISUALIZATION, AND REPORT GENERATION):\nReports generated by systems supporting OM should clearly indicate the number of cases, the number of contacts per case, the number of cases with no known epi-link at the time of diagnosis, the laboratory results, and the number of vaccinations and/or treatments administered.\nIgnore these non-formal words: clearly.",
+      "lean_predicate": "structure Case where\n  id        : Nat\n  contacts  : Nat\n  epiLinks  : Nat\n  labResults : String\n  vaccinations : Nat\n  treatments : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cases : List Case\n  deriving DecidableEq, Repr\n\nstructure Output where\n  reports : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.cases.Nodup\n  post := fun i o => o.reports.length = i.cases.length ∧\n                     ∀ c ∈ i.cases, o.reports.contains s!\"Case {c.id}:\n- Number of contacts: {c.contacts}\n- Number of cases with no known epi-link at the time of diagnosis: {c.epiLinks}\n- Laboratory results: {c.labResults}\n- Number of vaccinations: {c.vaccinations}\n- Number of treatments: {c.treatments}\"\n\nexample : Spec.pre { cases := [{ id := 1, contacts := 2, epiLinks := 0, labResults := \"positive\", vaccinations := 1, treatments := 0 },\n                                { id := 2, contacts := 0, epiLinks := 0, labResults := \"negative\", vaccinations := 0, treatments := 1 }] } ∧\n          Spec.post { cases := [{ id := 1, contacts := 2, epiLinks := 0, labResults := \"positive\", vaccinations := 1, treatments := 0 },\n                                 { id := 2, contacts := 0, epiLinks := 0, labResults := \"negative\", vaccinations := 0, treatments := 1 }] }\n                    { reports := [\"Case 1:\n- Number of contacts: 2\n- Number of cases with no known epi-link at the time of diagnosis: 0\n- Laboratory results: positive\n- Number of vaccinations: 1\n- Number of treatments: 0\", \"Case 2:\n- Number of contacts: 0\n- Number of cases with no known epi-link at the time of diagnosis: 0\n- Laboratory results: negative\n- Number of vaccinations: 0\n- Number of treatments: 1\"] } := by\n  set_option maxRecDepth 1000 in\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { cases := [Case.id 1 contacts 2 epiLinks 0 labResults \"positive\" vaccinations 0 treatments 0] } ∧ ¬ Spec.post { cases := [Case.id 1 contacts 2 epiLinks 0 labResults \"positive\" vaccinations 0 treatments 0] } { reports := [\"Case 1: No information provided\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { cases := [Case.id 1 contacts 2 epiLinks 0 labResults \"positive\" vaccinations 0 treatments 0] } ∧ ¬ Spec.post { cases := [Case.id 1 contacts 2 epiLinks 0 labResults \"positive\" vaccinations 0 treatments 0] } { reports := [\"Case 1: No information provided\"] } := by\n  unfold Spec; decide",
+          "why": "The output does not provide the required information for each case.",
+          "outcome": "not usable: failed to synthesize instance of type class\n  OfNat Case 1\nnumerals are polymorphic in Lean, but the numeral `1` cannot be used in a context where the expected type is\n  Case\ndue to the absence of the instance above\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command."
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 80.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.4.11/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Health event data should be aggregated into a centralized data store (i.e., data warehouse) designed specifically to support analysis of events over time.",
+      "text_predicate": "Requirement 2.4.11/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > ANALYSIS, VISUALIZATION, AND REPORT GENERATION):\nHealth event data should be aggregated into a centralized data store (i.e., data warehouse) designed specifically to support analysis of events over time.",
+      "lean_predicate": "structure Input where\n  events : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  aggregated : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.events.Nodup\n  post := fun i o => o.aggregated.length = i.events.length ∧\n                     o.aggregated.Nodup ∧\n                     ∀ e ∈ i.events, o.aggregated.contains e\n\nexample : Spec.pre { events := [\"event1\", \"event2\", \"event3\"] } ∧\n          Spec.post { events := [\"event1\", \"event2\", \"event3\"] }\n                    { aggregated := [\"event1\", \"event2\", \"event3\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { events := [\"event1\", \"event2\", \"event3\"] } ∧ ¬ Spec.post { events := [\"event1\", \"event2\", \"event3\"] } { aggregated := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { events := [\"event1\", \"event2\", \"event3\"] } ∧ ¬ Spec.post { events := [\"event1\", \"event2\", \"event3\"] } { aggregated := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that health event data should be aggregated into a centralized data store, but the output does not aggregate the data, violating this rule.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "SYSTEM INTEGRATION AND DATA EXCHANGE Systems integration requirements specific to systems supporting OM are included in the section below and describe the types of data that OM should be able to send and receive.",
+      "text_predicate": "Requirement 2.5/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nSYSTEM INTEGRATION AND DATA EXCHANGE Systems integration requirements specific to systems supporting OM are included in the section below and describe the types of data that OM should be able to send and receive.",
+      "lean_predicate": "structure Input where\n  outbreakData : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  receivedData : String\n  status       : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.outbreakData ≠ \"\"\n  post := fun i o => (o.status = \"Data received successfully\" ↔\n    o.receivedData = i.outbreakData) ∧\n    (o.status = \"Data not received\" → o.receivedData = \"\")\n\nexample : Spec.pre { outbreakData := \"Outbreak details\" } ∧\n          Spec.post { outbreakData := \"Outbreak details\" }\n                    { receivedData := \"Outbreak details\", status := \"Data received successfully\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { outbreakData := \"testData\" } ∧ ¬ Spec.post { outbreakData := \"testData\" } { receivedData := \"wrongData\", status := \"Data received successfully\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { outbreakData := \"testData\" } ∧ ¬ Spec.post { outbreakData := \"testData\" } { receivedData := \"wrongData\", status := \"Data received successfully\" } := by\n  unfold Spec; decide",
+          "why": "The output should either have \"Data received successfully\" with the correct data or \"Data not received\" with an empty string, but this output fails both conditions.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Contact information for key response partner organizations should be stored in a local instance of a public health directory for associating to a health event, as described in section 2.2.2 Health event Data of this document.",
+      "text_predicate": "Requirement 2.5.1/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nContact information for key response partner organizations should be stored in a local instance of a public health directory for associating to a health event, as described in section 2.2.2 Health event Data of this document.",
+      "lean_predicate": "structure ContactInfo where\n  organization : String\n  phone        : String\n  email        : String\n  address      : String\n  deriving DecidableEq, Repr\n\nstructure HealthEvent where\n  id          : Nat\n  description : String\n  contacts    : List ContactInfo\n  deriving DecidableEq, Repr\n\nstructure Input where\n  events : List HealthEvent\n  deriving DecidableEq, Repr\n\nstructure Output where\n  events : List HealthEvent\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.events.Nodup\n  post := fun i o => o.events = i.events ∧\n                     (∀ e ∈ o.events, e.contacts.Nodup ∧\n                      ∀ c ∈ e.contacts, c.organization ≠ \"\" ∧ c.phone ≠ \"\" ∧ c.email ≠ \"\" ∧ c.address ≠ \"\")\n\nexample : Spec.pre { events := [{ id := 1, description := \"Event 1\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }] },\n                                 { id := 2, description := \"Event 2\", contacts := [{ organization := \"Org2\", phone := \"0987654321\", email := \"org2@example.com\", address := \"456 Elm St\" }] }] } ∧\n          Spec.post { events := [{ id := 1, description := \"Event 1\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }] },\n                                  { id := 2, description := \"Event 2\", contacts := [{ organization := \"Org2\", phone := \"0987654321\", email := \"org2@example.com\", address := \"456 Elm St\" }] }] }\n                    { events := [{ id := 1, description := \"Event 1\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }] },\n                                 { id := 2, description := \"Event 2\", contacts := [{ organization := \"Org2\", phone := \"0987654321\", email := \"org2@example.com\", address := \"456 Elm St\" }] }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { events := [{ id := 1, description := \"Test Event\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }] }] } ∧ ¬ Spec.post { events := [{ id := 1, description := \"Test Event\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }] }] } { events := [{ id := 1, description := \"Test Event\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }, { organization := \"Org2\", phone := \"0987654321\", email := \"org2@example.com\", address := \"456 Elm St\" }] }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { events := [{ id := 1, description := \"Test Event\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }] }] } ∧ ¬ Spec.post { events := [{ id := 1, description := \"Test Event\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }] }] } { events := [{ id := 1, description := \"Test Event\", contacts := [{ organization := \"Org1\", phone := \"1234567890\", email := \"org1@example.com\", address := \"123 Main St\" }, { organization := \"Org2\", phone := \"0987654321\", email := \"org2@example.com\", address := \"456 Elm St\" }] }] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that contact information for key response partner organizations should be stored in a local instance of a public health directory. A buggy system might return contact information from an external directory, violating this requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 21.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must be able to create and send messages for laboratory test requests.",
+      "text_predicate": "Requirement 2.5.3/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nSystems supporting OM must be able to create and send messages for laboratory test requests.",
+      "lean_predicate": "structure TestRequest where\n  patientID : Nat\n  testCode  : String\n  priority  : Nat\n  deriving DecidableEq, Repr\n\nstructure Message where\n  patientID : Nat\n  testCode  : String\n  priority  : Nat\n  sent      : Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  patientID : Nat\n  testCode  : String\n  priority  : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sent      : Bool\n  patientID : Nat\n  testCode  : String\n  priority  : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.patientID ≠ 0 ∧ i.testCode ≠ \"\" ∧ 1 ≤ i.priority\n  post := fun i o => o.sent = true ∧\n                     o.patientID = i.patientID ∧\n                     o.testCode = i.testCode ∧\n                     o.priority = i.priority\n\nexample : Spec.pre { patientID := 123, testCode := \"A1\", priority := 1 } ∧\n          Spec.post { patientID := 123, testCode := \"A1\", priority := 1 }\n                    { sent := true, patientID := 123, testCode := \"A1\", priority := 1 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { patientID := 123, testCode := \"ABC123\", priority := 1 } ∧ ¬ Spec.post { patientID := 123, testCode := \"ABC123\", priority := 1 } { sent := false, patientID := 123, testCode := \"ABC123\", priority := 1 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { patientID := 123, testCode := \"ABC123\", priority := 1 } ∧ ¬ Spec.post { patientID := 123, testCode := \"ABC123\", priority := 1 } { sent := false, patientID := 123, testCode := \"ABC123\", priority := 1 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that systems must be able to create and send messages for laboratory test requests, meaning the sent field must be true.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 12.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5.4/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should be able to receive, parse and process messages for laboratory test request responses, in accordance with PHIN Laboratory Test Order Response Message Implementation Guide, available at www.cdc.gov/phin.",
+      "text_predicate": "Requirement 2.5.4/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nSystems supporting OM should be able to receive, parse and process messages for laboratory test request responses, in accordance with PHIN Laboratory Test Order Response Message Implementation Guide, available at www.cdc.gov/phin.",
+      "lean_predicate": "structure Input where\n  message : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  parsed   : Option String\n  response : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.message ≠ \"\"\n  post := fun i o => (o.parsed = some \"test-response\" ↔\n    i.message.toList.all (fun c => c.isAlphanum || c == ' ')) ∧\n                     (o.parsed = some \"test-response\" → o.response = true)\n\nexample : Spec.pre { message := \"test-response\" } ∧ Spec.post { message := \"test-response\" } { parsed := none, response := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 29.7,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` mentions `o.response` but still holds when `o.response` is `false` instead of `true` for the example input. The requirement says: \"Systems supporting OM should be able to receive, parse and process messages for laboratory test request responses, in accordance with PHIN Laboratory Test Order Response Message Implementation Guide, available at www.cdc.gov/phin.\" Add a condition on `o.response` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5.5/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must be able to receive, parse and process messages for laboratory results.",
+      "text_predicate": "Requirement 2.5.5/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nSystems supporting OM must be able to receive, parse and process messages for laboratory results.",
+      "lean_predicate": "structure LaboratoryResult where\n  patientID : Nat\n  testCode  : String\n  result    : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  message : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  parsed  : List LaboratoryResult\n  success : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.message ≠ \"\"\n  post := fun i o => (o.success = true ↔\n    i.message.toList.all (fun c => c.isDigit || c == ' ' || c == '-') ∧\n    i.message.splitOn ' ' = List.mkArray (o.parsed.length + 1) (fun _ => \"\")\n    .map (fun s => { patientID := s.toList.takeWhile (fun c => c.isDigit).length,\n                     testCode := s.splitOn '-',\n                     result := s.dropWhile (fun c => c.isDigit) })\n    .filter (fun lr => lr.testCode.length > 0 ∧ lr.result ≠ \"\"))\n    ∧ o.parsed.length > 0\n\nexample : Spec.pre { message := \"1234-TEST1-POS 5678-TEST2-NEG\" } ∧\n          Spec.post { message := \"1234-TEST1-POS 5678-TEST2-NEG\" }\n                    { parsed := [{ patientID := 1234, testCode := [\"TEST1\"], result := \"POS\" },\n                                 { patientID := 5678, testCode := [\"TEST2\"], result := \"NEG\" }],\n                      success := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 54.6,
+      "error": "<generated>:23:22: error: Application type mismatch: The argument\n  ' '\nhas type\n  Char\nbut is expected to have type\n  optParam String \" \"\nin the application\n  i.message.splitOn ' '\n<generated>:23:28: error(lean.unknownIdentifier): Unknown constant `List.mkArray`\n<generated>:32:66: error: Type mismatch\n  [\"TEST1\"]\nhas type\n  List String\nbut is expected to have type\n  String\n<generated>:33:66: error: Type mismatch\n  [\"TEST2\"]\nhas type\n  List String\nbut is expected to have type\n  String\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5.7/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must be able to exchange messages for confirmed, probable and suspect cases, and the other case classifications that are noted in the PHIN message implementation guide, with systems supporting surveillance, early event detection (EED), and other preparedness areas.",
+      "text_predicate": "Requirement 2.5.7/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nSystems supporting OM must be able to exchange messages for confirmed, probable and suspect cases, and the other case classifications that are noted in the PHIN message implementation guide, with systems supporting surveillance, early event detection (EED), and other preparedness areas.",
+      "lean_predicate": "structure Case where\n  classification : String\n  details        : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cases : List Case\n  deriving DecidableEq, Repr\n\nstructure Output where\n  cases : List Case\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.cases.length > 0\n  post := fun i o => o.cases.length = i.cases.length ∧\n                     ∀ c ∈ i.cases, c ∈ o.cases ∧\n                     (c.classification = \"confirmed\" ∨\n                      c.classification = \"probable\" ∨\n                      c.classification = \"suspect\" ∨\n                      c.classification = \"other\" ∨\n                      c.classification = \"unclassified\")\n\nexample : Spec.pre { cases := [{ classification := \"confirmed\", details := \"details1\" },\n                               { classification := \"probable\", details := \"details2\" },\n                               { classification := \"suspect\", details := \"details3\" },\n                               { classification := \"other\", details := \"details4\" },\n                               { classification := \"unclassified\", details := \"details5\" }] } ∧\n          Spec.post { cases := [{ classification := \"confirmed\", details := \"details1\" },\n                                 { classification := \"probable\", details := \"details2\" },\n                                 { classification := \"suspect\", details := \"details3\" },\n                                 { classification := \"other\", details := \"details4\" },\n                                 { classification := \"unclassified\", details := \"details5\" }] }\n                    { cases := [{ classification := \"confirmed\", details := \"details1\" },\n                                { classification := \"probable\", details := \"details2\" },\n                                { classification := \"suspect\", details := \"details3\" },\n                                { classification := \"other\", details := \"details4\" },\n                                { classification := \"unclassified\", details := \"details5\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { cases := [Case.classification \"unclassified\" details \"details\"] } ∧ ¬ Spec.post { cases := [Case.classification \"unclassified\" details \"details\"] } { cases := [Case.classification \"invalid\" details \"details\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { cases := [Case.classification \"unclassified\" details \"details\"] } ∧ ¬ Spec.post { cases := [Case.classification \"unclassified\" details \"details\"] } { cases := [Case.classification \"invalid\" details \"details\"] } := by\n  unfold Spec; decide",
+          "why": "The output includes a case with an invalid classification, which is not allowed by the requirement.",
+          "outcome": "not usable: Application type mismatch: The argument\n  \"unclassified\"\nhas type\n  String\nbut is expected to have type\n  Case\nin the application\n  Case.classification \"unclassified\""
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 17.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5.9/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must be able to receive, parse and process messages for countermeasures that have been administered.",
+      "text_predicate": "Requirement 2.5.9/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nSystems supporting OM must be able to receive, parse and process messages for countermeasures that have been administered.",
+      "lean_predicate": "structure Countermeasure where\n  id       : Nat\n  patient  : String\n  dose     : Nat\n  adminDate: String\n  deriving DecidableEq, Repr\n\nstructure Message where\n  countermeasures : List Countermeasure\n  deriving DecidableEq, Repr\n\nstructure Input where\n  countermeasures : List Countermeasure\n  deriving DecidableEq, Repr\n\nstructure Output where\n  processed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.countermeasures.Nodup\n  post := fun i o => o.processed = true ↔\n    i.countermeasures.all (fun cm => \n      ∃ cm' ∈ i.countermeasures, cm.id = cm'.id ∧\n      cm.patient = cm'.patient ∧\n      cm.dose = cm'.dose ∧\n      cm.adminDate = cm'.adminDate)\n\nexample : Spec.pre { countermeasures := [{ id := 1, patient := \"P1\", dose := 100, adminDate := \"2023-01-01\" }] } ∧\n          Spec.post { countermeasures := [{ id := 1, patient := \"P1\", dose := 100, adminDate := \"2023-01-01\" }] }\n                    { processed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { countermeasures := [{ id := 1, patient := \"John Doe\", dose := 200, adminDate := \"2023-10-01\" }] } ∧ ¬ Spec.post { countermeasures := [{ id := 1, patient := \"John Doe\", dose := 200, adminDate := \"2023-10-01\" }] } { processed := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { countermeasures := [{ id := 1, patient := \"John Doe\", dose := 200, adminDate := \"2023-10-01\" }] } ∧ ¬ Spec.post { countermeasures := [{ id := 1, patient := \"John Doe\", dose := 200, adminDate := \"2023-10-01\" }] } { processed := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that systems must be able to process messages for countermeasures that have been administered. A buggy system might incorrectly mark such a message as not processed.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 12.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5.10/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM must be able to create and send messages for countermeasure administration requests.",
+      "text_predicate": "Requirement 2.5.10/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nSystems supporting OM must be able to create and send messages for countermeasure administration requests.",
+      "lean_predicate": "structure Input where\n  countermeasure : String\n  dose           : Nat\n  patientID      : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sent : Bool\n  messageID : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.countermeasure ≠ \"\" ∧ 0 < i.dose ∧ i.patientID ≠ \"\"\n  post := fun i o => o.sent = true ↔\n    (o.messageID ≠ \"\" ∧\n     o.messageID.length ≤ 100 ∧\n     o.messageID.toList.all (fun c => c.isAlphanum) = true)\n\nexample : Spec.pre { countermeasure := \"vaccine\", dose := 2, patientID := \"P12345\" } ∧\n          Spec.post { countermeasure := \"vaccine\", dose := 2, patientID := \"P12345\" }\n                    { sent := true, messageID := \"MSG12345\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { countermeasure := \"Vaxx\", dose := 2, patientID := \"1234567890\" } ∧ ¬ Spec.post { countermeasure := \"Vaxx\", dose := 2, patientID := \"1234567890\" } { sent := false, messageID := \"abc123\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { countermeasure := \"Vaxx\", dose := 2, patientID := \"1234567890\" } ∧ ¬ Spec.post { countermeasure := \"Vaxx\", dose := 2, patientID := \"1234567890\" } { sent := false, messageID := \"abc123\" } := by\n  unfold Spec; decide",
+          "why": "The output does not indicate that the message was sent, violating the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.5.12/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Systems supporting OM should be able to provide the aggregate data necessary for health event monitoring to systems that support response tracking, such as the number of suspect cases, number of persons under isolation or quarantine, and the number of patients receiving countermeasures.",
+      "text_predicate": "Requirement 2.5.12/S1 (OUTBREAK MANAGEMENT FUNCTIONAL REQUIREMENTS > SYSTEM INTEGRATION AND DATA EXCHANGE):\nSystems supporting OM should be able to provide the aggregate data necessary for health event monitoring to systems that support response tracking, such as the number of suspect cases, number of persons under isolation or quarantine, and the number of patients receiving countermeasures.",
+      "lean_predicate": "structure SuspectCase where\n  id : Nat\n  location : String\n  status : String\n  deriving DecidableEq, Repr\n\nstructure IsolationQuarantine where\n  id : Nat\n  location : String\n  status : String\n  deriving DecidableEq, Repr\n\nstructure Countermeasure where\n  id : Nat\n  patient : Nat\n  type : String\n  status : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  suspectCases : List SuspectCase\n  isolationQuarantines : List IsolationQuarantine\n  countermeasures : List Countermeasure\n  deriving DecidableEq, Repr\n\nstructure Output where\n  suspectCasesCount : Nat\n  isolationQuarantinesCount : Nat\n  countermeasuresCount : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.suspectCases.Nodup ∧ i.isolationQuarantines.Nodup ∧ i.countermeasures.Nodup\n  post := fun i o => (o.suspectCasesCount = i.suspectCases.length ↔ i.suspectCases.length > 0) ∧\n                     (o.isolationQuarantinesCount = i.isolationQuarantines.length ↔ i.isolationQuarantines.length > 0) ∧\n                     (o.countermeasuresCount = i.countermeasures.length ↔ i.countermeasures.length > 0)\n\nexample : Spec.pre { suspectCases := [{ id := 1, location := \"A\", status := \"suspect\" }], isolationQuarantines := [{ id := 2, location := \"B\", status := \"quarantine\" }], countermeasures := [{ id := 3, patient := 1, type := \"vaccine\", status := \"administered\" }] } ∧ Spec.post { suspectCases := [{ id := 1, location := \"A\", status := \"suspect\" }], isolationQuarantines := [{ id := 2, location := \"B\", status := \"quarantine\" }], countermeasures := [{ id := 3, patient := 1, type := \"vaccine\", status := \"administered\" }] } { suspectCasesCount := 1, isolationQuarantinesCount := 1, countermeasuresCount := 1 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { suspectCases := [{ id := 1, location := \"A\", status := \"Active\" }], isolationQuarantines := [], countermeasures := [] } ∧ ¬ Spec.post { suspectCases := [{ id := 1, location := \"A\", status := \"Active\" }], isolationQuarantines := [], countermeasures := [] } { suspectCasesCount := 0, isolationQuarantinesCount := 0, countermeasuresCount := 0 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { suspectCases := [{ id := 1, location := \"A\", status := \"Active\" }], isolationQuarantines := [], countermeasures := [] } ∧ ¬ Spec.post { suspectCases := [{ id := 1, location := \"A\", status := \"Active\" }], isolationQuarantines := [], countermeasures := [] } { suspectCasesCount := 0, isolationQuarantinesCount := 0, countermeasuresCount := 0 } := by\n  unfold Spec; decide",
+          "why": "The requirement mandates that the output should provide the count of suspect cases, isolation/quarantine, and countermeasures. A buggy system might return zero counts even if there are records.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 49.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 31,
+    "flag": 4,
+    "fail": 8
+  }
+}

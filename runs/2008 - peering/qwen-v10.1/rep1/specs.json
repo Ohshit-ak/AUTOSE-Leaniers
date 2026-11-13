@@ -1,0 +1,69 @@
+{
+  "source": {
+    "file": "2008 - peering.xml",
+    "sha256": "c9eaf14536e9f68fcce363482956445177b3690b0ff9573d6d158162494488d6"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v10.1",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "1b2599c",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 1,
+    "compiles": 1,
+    "rejects_bad_example": 0,
+    "checked": 1,
+    "failed": 0,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "4.2/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Messages can then be sent bi-directionally between the server and network elements.",
+      "text_predicate": "Requirement 4.2/S4 (External Interface Requirements > Communications Interfaces):\nMessages can then be sent bi-directionally between the server and network elements.",
+      "lean_predicate": "structure Message where\n  content : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  serverMessages : List Message\n  networkElementMessages : List Message\n  deriving DecidableEq, Repr\n\nstructure Output where\n  serverMessages : List Message\n  networkElementMessages : List Message\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.serverMessages.Nodup ∧ i.networkElementMessages.Nodup\n  post := fun i o => o.serverMessages = i.serverMessages ∧\n                     o.networkElementMessages = i.networkElementMessages\n\nexample : Spec.pre { serverMessages := [{ content := \"hello\" }],\n                     networkElementMessages := [{ content := \"world\" }] } ∧\n          Spec.post { serverMessages := [{ content := \"hello\" }],\n                      networkElementMessages := [{ content := \"world\" }] }\n                    { serverMessages := [{ content := \"hello\" }],\n                      networkElementMessages := [{ content := \"world\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { serverMessages := [], networkElementMessages := [Message.content \"Hello\"] } ∧ ¬ Spec.post { serverMessages := [], networkElementMessages := [Message.content \"Hello\"] } { serverMessages := [], networkElementMessages := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { serverMessages := [], networkElementMessages := [Message.content \"Hello\"] } ∧ ¬ Spec.post { serverMessages := [], networkElementMessages := [Message.content \"Hello\"] } { serverMessages := [], networkElementMessages := [] } := by\n  unfold Spec; decide",
+          "why": "The output violates the bi-directional communication requirement by not updating the messages from the network element.",
+          "outcome": "not usable: Application type mismatch: The argument\n  \"Hello\"\nhas type\n  String\nbut is expected to have type\n  Message\nin the application\n  Message.content \"Hello\""
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 1,
+    "flag": 0,
+    "fail": 0
+  }
+}

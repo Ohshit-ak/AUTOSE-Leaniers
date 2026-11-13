@@ -1,0 +1,1603 @@
+{
+  "schema_version": "1.0",
+  "source": {
+    "file": "1999 - dii.xml",
+    "sha256": "c7ccb237b1566db0e97d5db515c1d07979c33c91091e60dc533d7152d38a1310"
+  },
+  "titles": [],
+  "stats": {
+    "requirements": 8,
+    "data_constraints": 0,
+    "use_cases": 0,
+    "dropped": 205
+  },
+  "glossary": [],
+  "requirements": [
+    {
+      "id": "4.1/I1",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "4.1",
+      "section_path": [
+        "REQUIREMENTS",
+        "REQUIRED STATES AND MODES"
+      ],
+      "text": "Environmental Mode: This is the real-time operations that must react to varying degrees of readiness to full scale wartime operations such as crisis planning with the use of heterogeneous data types and sources, transfer capabilities, data management services.",
+      "signals": [
+        "transfer"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "4.1/I3",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "4.1",
+      "section_path": [
+        "REQUIREMENTS",
+        "REQUIRED STATES AND MODES"
+      ],
+      "text": "In the fixed (static) mode of operation (base or data processing megacenter), the data management services shall have the capability of being tuned by on-site personnel to adjust for varying workloads and sizes of associated databases. These workloads and databases are expected to change more frequently and to a greater extent than for processing associated with deployed units",
+      "signals": [
+        "change"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "4.1/I6",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "4.1",
+      "section_path": [
+        "REQUIREMENTS",
+        "REQUIRED STATES AND MODES"
+      ],
+      "text": "End User Mode: Portion of XS services shall be used by various classes of users: data consumers, data and database managers, network information infrastructure resource managers. Some of these uses of the data management services will entail unique requirements that shall be fulfilled within the capability of XS services.",
+      "signals": [
+        "unique"
+      ],
+      "quantities": [],
+      "has_precondition": false,
+      "ignore_terms": [
+        "various"
+      ]
+    },
+    {
+      "id": "1/I6",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "1",
+      "section_path": [
+        "REQUIREMENTS",
+        "XML SERVICES CAPABILITY REQUIREMENTS",
+        "Register Terms and Structures (e.g., tags, DTDs, DCDs)"
+      ],
+      "text": "Consume xml & schema documents Parsers (dom, sax) Check conformance Well-formed Validate Create validation constraints shall enable a meaningful sharing of XML-based schemas and related information. Extract semantically-valid views from an XML document (e.g., XSL) Disassemble hierarchical view to relational representation Render",
+      "signals": [
+        "validate",
+        "create"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "4.14.2/S2",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "4.14.2",
+      "section_path": [
+        "REQUIREMENTS",
+        "PRECEDENCE AND CRITICALITY OF REQUIREMENTS",
+        "QUALIFICATION PROVISIONS"
+      ],
+      "text": "The Qualification Methods applied to the software shall include test, demonstration, analysis, and inspection (T, D, A, I).",
+      "signals": [
+        "include"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "4.14.7/I4",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "4.14.7",
+      "section_path": [
+        "REQUIREMENTS",
+        "PRECEDENCE AND CRITICALITY OF REQUIREMENTS",
+        "APPENDIX A"
+      ],
+      "text": "COE Chief Engineer's Role. The COE Chief Engineer will approve a single Point of Contact (POC) for a COI to manage the tags within that COI. The COE Chief Engineer will reserve ultimate authority to mediate any unresolved disputes within all COIs.",
+      "signals": [
+        "approve",
+        "reserve"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "4.14.7/I5",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "4.14.7",
+      "section_path": [
+        "REQUIREMENTS",
+        "PRECEDENCE AND CRITICALITY OF REQUIREMENTS",
+        "APPENDIX A"
+      ],
+      "text": "The COE Data Engineering Team's Role. Tags and semantics will be analyzed to identify opportunities to consolidate tags towards a single or a minimal number of representations. A \"market forces\" model can also guide COE Data Engineering in identifying the weak candidates from the strong.8",
+      "signals": [
+        "number of"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "Include descriptive definitions AND synonyms for the Information Resource Definition./S1",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "Include descriptive definitions AND synonyms for the Information Resource Definition.",
+      "section_path": [
+        "REQUIREMENTS",
+        "PRECEDENCE AND CRITICALITY OF REQUIREMENTS",
+        "APPENDIX A"
+      ],
+      "text": "Initially, the Registry will not have keyword, thesaurus, or ontology support but it will have a substring search for a number of fields, including definition.",
+      "signals": [
+        "search",
+        "number of"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    }
+  ],
+  "data_dictionary": [],
+  "use_cases": [],
+  "dropped": [
+    {
+      "id": "1./S1",
+      "source": "requirement",
+      "section": "1.",
+      "text": "This Software Requirements Specification (SRS) establishes the functional, performance, and verification requirements for the XML Services (XS) functional area of the Defense Information Infrastructure (DII) Common Operating Environment (COE).",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S2",
+      "source": "requirement",
+      "section": "1.",
+      "text": "The XS functional area includes Registration of terms (tags and structures), Design of XML schemas, Generation and Consumption of XML documents.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2./S1",
+      "source": "requirement",
+      "section": "2.",
+      "text": "XML Services provide infrastructure services for mission and support applications using XML technology.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2./S2",
+      "source": "requirement",
+      "section": "2.",
+      "text": "These services isolate vendor-unique implementations of data access and provide applications a means of avoiding dependencies on physical access models.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2./S3",
+      "source": "requirement",
+      "section": "2.",
+      "text": "These services also provide data management functions for access to distributed (local and remote) database management systems as one of the solutions for interoperablity.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./S1",
+      "source": "requirement",
+      "section": "3.",
+      "text": "This document outlines the software capabilities required for the XS components for the DII COE.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./S2",
+      "source": "requirement",
+      "section": "3.",
+      "text": "Section 2 lists the documents that are applicable to this specification.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./S3",
+      "source": "requirement",
+      "section": "3.",
+      "text": "Section 3 provides a list of functional capabilities.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./S4",
+      "source": "requirement",
+      "section": "3.",
+      "text": "Section 4 identifies the qualification requirements.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./S5",
+      "source": "requirement",
+      "section": "3.",
+      "text": "Section 5 outlines the requirements and verification traceability matrix.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "3./S6",
+      "source": "requirement",
+      "section": "3.",
+      "text": "Section 6 contains the applicable notes associated with the XS component.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/S1",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "Defense Information Infrastructure (DII), Shared Data Environment (SHADE), CAPSTONE DOCUMENT Version 1.0, 11 July 1996",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I1",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "ACCS-A1-100-006 System Specification for ATCCS, 22 March 1995",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I2",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "ATCCS-A1-302-001A Army Tactical Command and Control System Common ATCCS Support Software (CASS) Systems/Segment Specification",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I3",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "CDRL A142 AWIS Software Requirements Specification (ASRD), July 1992",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I4",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "CDRL ML03 AWIS Systems Management Manual (SMM), 31 Oct. 1994",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I5",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "AWIS Support Software Design Document, December 1994",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I6",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "D18664A Standard Theater Army Command and Control System (STACCS) System Design Document Version 1.1/As Built, 1 Oct. 93",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I7",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "AAN-SDA001A Standard Theater Army Command and Control System (STACCS) System Specification, Version 1.1/As Built, 1 Oct. 93",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I8",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "Standard Theater Army Command and Control System (STACCS) System Software Programmers Manual, Draft.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I9",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "Global Command and Control System (GCCS) Integration Standard, Version 1.0, October 1994.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I10",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "Global Command and Control System (GCCS) Common Operating Environment Baseline, DISA, 28 November1994.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I11",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "User Interface Specifications for Global Command and Control System (GCCS), Version 1.0, October 1994.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "SPECIFICATIONS:/I12",
+      "source": "requirement",
+      "section": "SPECIFICATIONS:",
+      "text": "Draft Architectural Design Document for the Global Command and Control System (GCCS) Common Operating Environment (COE), Version 3, 24 July, 1994.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "STANDARDS:/I1",
+      "source": "requirement",
+      "section": "STANDARDS:",
+      "text": "MIL-STD-498 Military Standard - Software Development and Documentation,",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "STANDARDS:/I2",
+      "source": "requirement",
+      "section": "STANDARDS:",
+      "text": "DOD, Dec. 1994",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "STANDARDS:/I3",
+      "source": "requirement",
+      "section": "STANDARDS:",
+      "text": "FIPS PUB 127-2 Database Language SQL - Federal Information Processing Standards Publication 127-2, 2 June, 1993.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "STANDARDS:/I4",
+      "source": "requirement",
+      "section": "STANDARDS:",
+      "text": "MIL-STD-6040 Military Standard -",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "STANDARDS:/I5",
+      "source": "requirement",
+      "section": "STANDARDS:",
+      "text": "ISO/IEC 9070 Formal Public Identifier",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2./S1#2",
+      "source": "requirement",
+      "section": "2.",
+      "text": "Petrucci, Steve, \"Cross-Platform Power Tools, Application Developers for the Macintosh, Windows, and Windows NT\", Random House Electronic Publishing, 1993.Donald Lewine,\"POSIX Programmer's Guide\", O'Reilly & Associates, Inc. 1991.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2./S2#2",
+      "source": "requirement",
+      "section": "2.",
+      "text": "W3C Working Draft \"Namespaces in XML\"",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.1/I2",
+      "source": "requirement",
+      "section": "4.1",
+      "text": "COE Compliance. XML Services shall be segmented. COE sponsors shall adhere to compliance level requirements described in the I&RTS.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.1/I4",
+      "source": "requirement",
+      "section": "4.1",
+      "text": "In a changing (dynamic) environment, such as with deployed units, the workload and database sizes may be more predetermined (given a more precise mission) and require access to fewer data management administrative capabilities than needed in a fixed environment. The XS shall have the ability to redefine or reset names of connect descriptors to database server instances. Connect descriptors are fully qualified object names and include address (protocol/host/port) and instance name.",
+      "reason": "vague: may"
+    },
+    {
+      "id": "4.1/I5",
+      "source": "requirement",
+      "section": "4.1",
+      "text": "In a degraded communications environment, there is a need, for example, to be able to reset session time-out values if the data management services are being accessed by users affected by the communications degradation. At a minimum, the session time-out values shall be user definable and be able to be reset prior to initialization of a user session. The goal is to provide the option of dynamically changing session time values based on current communications performance identified by capabilities of the network management or DBMS.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.1/I7",
+      "source": "requirement",
+      "section": "4.1",
+      "text": "Maintenance Mode: This mode includes modification and/or addition of application data segments, user permission, privileges, and restructuring storage and memory areas. In addition, maintenance also shall pertain to shutdown, open not-mounted and online/off-line implementations, modifications, upgrade, or other related actions. The data management services shall support managing various types of data, database architectures and platforms that includes hardware and software at the specified sites.",
+      "reason": "vague: various"
+    },
+    {
+      "id": "4.1/I8",
+      "source": "requirement",
+      "section": "4.1",
+      "text": "Training Mode. In support of training activities, the data management services shall provide for the same processing as would be encountered in a production environment. However, access to the database may be via a training application access to the DBMS rather than from the production mission application.",
+      "reason": "vague: may"
+    },
+    {
+      "id": "4.2/S1",
+      "source": "requirement",
+      "section": "4.2",
+      "text": "The XS shall deliver inter-related components as shown in figure 3.2-1",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1/I1",
+      "source": "requirement",
+      "section": "1",
+      "text": "Producer services A producer is an agent that contributes metadata for inclusion into an XML Registry for the purposes of ensuring maximum semantic understanding of a term as it appears in an XML document. To contribute metadata to a registry, the producer must be able to receive XML registry forms, submit metadata and the related information resource artifacts, and notify. Produce and display submittal forms as part of the Information Resource Submittal Package from the web containing the following Information Resource artifacts: XML Tag Specification, XML Spec (i.e. DTD, DCD etc.), Sample of XML document of the tag to be submitted. The Package is to be compressed and emailed or sent ftp to an addressee. Download Information Resource Submittal Package from the web containing forms, instructions, and tools for submission to XML Registry. Submit prescribed metadata related to information resource type, information resource association, status code, data types specified and other related information specified in Appendix A within a combination of forms. These forms are part of the Information Resource Submittal Package containing the following Information Resource artifacts: XML Tag Specification, XML Spec (i.e. DTD, DCD etc.), Sample of XML document of the tag to be submitted. The Package is to be compressed and emailed or sent ftp to an addressee. Submit metadata by an on-line interactive process Submit metadata by a off-line and interactive batch process Parse submitted XML Registry specification forms Populate XML Registry database Modify of specified terms & definitions of metadata and status of Information Resources. Associate Information Resources specified in Appendix A. Annotate rejected? Assemble registered information resources to form new components. Assemble new DTDs from current Produce DTD as an instantiation (others are database schema, message definition) for modeling environment. Notify change in Information Resources or authorized producer of tag. Provide a capability to post planned changes to a registry Approve and reject submissions Forward request to different registry",
+      "reason": "vague: etc"
+    },
+    {
+      "id": "1/I2",
+      "source": "requirement",
+      "section": "1",
+      "text": "Consumer services. A consumer examines a registry to select a tag structure for reuse in one or more applications that will exchange data according to a pre-defined agreement. Discovery View the XML Tags with the following relationships: Ancestor/ Descendant relationship: Provide the capability to view a Tag's origin Uses/Used by relationship: Provide the capability to view a complex Container Tag's parent/child relationship Data type information: Provide the capability to view a tag's data type and related information. Versioning relationship: Provide the capability to view an Information resource's versions Reference Sets: Provide the capability to view text related to the domai values or the related reference set Amplifying information: Provide the capability to view other information resources such as ERwin models, DTDs, documents, etc., which describe or otherwise provide amplifying information. View the XML Tags via a tree/hierarchy structure or tabular format. View the XML Tags by giving the user multiple search options to find a specific Tag. View the XML tags by giving the user the search option to find all tags of a given subscriber/author. Each Information Resource will have its own web page to allow the user to view all pertinent information, according to its information resource type. View the Information Resource Submittal Package containing the following Information Resource artifacts: XML Tag Specification, XML Spec (i.e. DTD, DCD etc.), Sample of XML document of the tag to be submitted. Display an XML Tag Specification form to the author of a given information resource. This XML Tag Spec will be used for inputting the requesting information for a specific Information Resource. Provide capabilities to download the XML Tags or other selected Information Resources. Catalog entities and attributes within servers to enable browsing, searching, retrieving of data related to XML sources. Process ANSI standard SQL as specified in FIPS PUB 127-2 Establish rules to ensure maximum semantic understanding of a term as it appears in an XML document Links to DTDs, DCDs, Namespace Provide a capability to subscribe for notification of changes to Communities of Interest (COE) or Information Resources.",
+      "reason": "platform/technology choice: sql"
+    },
+    {
+      "id": "1/I3",
+      "source": "requirement",
+      "section": "1",
+      "text": "Manager services create and manage usernames, superusers Establish acceptable naming convention not to be in conflict with the DOD data standards convention and establish a relationship to other naming conventions. Create a naming structure within the COE architecture to express the context and relationship of the naming convention to other naming conventions specified in the I&RTS. Define a set of metadata tags, information attributed to metadata tags (meta-metadata) and other related terms for the maintenance and control of XML tags. Review/approve submission Monitor changes to data models recorded in Registry pass request off to ... (per explicit federation agreements)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1/I4",
+      "source": "requirement",
+      "section": "1",
+      "text": "Design the schema for an XML document Structure services Record structure Check against standard (e.g., style guide wizard for tags) Validate Use and reference existing tags and associated semantic structures Content services Use & reference existing tags & associated semantic structures (extracted from Registry) create new tags & associated semantic structures interchange w/other design tools & environments Record semantic structure in JTA-compliant formalism Generate standard views Version metadata objects",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1/I5",
+      "source": "requirement",
+      "section": "1",
+      "text": "Generate xml & schema documents Generate a document that includes (by ref or by value) a schema Develop scheme to permit dynamic cross-referencing and indexing of XML objects. Generate language (natural language) and charset values Check conformance Well-formed Validate Extract views of data Disassemble document to materialize different query results into different tree structure Render Interrogate document Transmit sufficient metadata to construct alternate, semantically-valid views (e.g., XSL) Express version",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.4/S1",
+      "source": "requirement",
+      "section": "4.4",
+      "text": "The Registry shall provide standard APIs as specified in Appendix B.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.5/S1",
+      "source": "requirement",
+      "section": "4.5",
+      "text": "The XS function shall provide standard APIs as specified in Appendix C.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.6.1/S1",
+      "source": "requirement",
+      "section": "4.6.1",
+      "text": "The XS shall internally interface (transparent to the operator) with the existing data elements of the DBIF, DAC, and COTS RDBMS products.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.7.1/S1",
+      "source": "requirement",
+      "section": "4.7.1",
+      "text": "The Registry software shall be portable and required to execute on COE-compliant platforms.",
+      "reason": "vague: portable"
+    },
+    {
+      "id": "4.8/S1",
+      "source": "requirement",
+      "section": "4.8",
+      "text": "Not applicable.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.8/S2",
+      "source": "requirement",
+      "section": "4.8",
+      "text": "Personnel requirements shall be determined by the developers of the system in which the XS module is embedded",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.9/S1",
+      "source": "requirement",
+      "section": "4.9",
+      "text": "Not applicable.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.9/S2",
+      "source": "requirement",
+      "section": "4.9",
+      "text": "Training requirements shall be determined by the developers of the system in which the XS module is embedded.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.10/S1",
+      "source": "requirement",
+      "section": "4.10",
+      "text": "The XS developer is responsible for software maintenance, software support, and software updates.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.10/S2",
+      "source": "requirement",
+      "section": "4.10",
+      "text": "The DISA Configuration Manager (CM) is responsible for distribution of the XS product to system developers.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.12/S1",
+      "source": "requirement",
+      "section": "4.12",
+      "text": "The XS software shall be delivered in accordance with DII COE guidelines.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.14/S1",
+      "source": "requirement",
+      "section": "4.14",
+      "text": "The following table depicts the mapping of the requirements in Section 3 to their corresponding precedence and criticality code and to other related requirements within the XS SRS.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14/S2",
+      "source": "requirement",
+      "section": "4.14",
+      "text": "The precedence and criticality codes are the following:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14/I1",
+      "source": "requirement",
+      "section": "4.14",
+      "text": "1 for Essential (E)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14/I2",
+      "source": "requirement",
+      "section": "4.14",
+      "text": "2 for Desirable (D)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14/I3",
+      "source": "requirement",
+      "section": "4.14",
+      "text": "3 for Optional (O).",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.2/S1",
+      "source": "requirement",
+      "section": "4.14.2",
+      "text": "COE Software will be qualified through formal validation tests of the SRS level requirements.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.14.2/I1",
+      "source": "requirement",
+      "section": "4.14.2",
+      "text": "TEST. A qualification method that is carried out by operation of the item/component/I/F (or some part of the computer S/W configuration item, etc.) and that relies on the collection and subsequent examination of data.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.2/I2",
+      "source": "requirement",
+      "section": "4.14.2",
+      "text": "DEMONSTRATIONS A qualification method that is carried out by operation of the item/component/I/F (or some part of the computer S/W configuration item, etc.), and that relies on observable functional operation not requiring the use of elaborate instrumentation or special test equipment.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.2/I3",
+      "source": "requirement",
+      "section": "4.14.2",
+      "text": "ANALYSIS A qualification method that is carried out by the processing of accumulated data. An example of accumulated data is the compilation of data obtained from other qualification methods. Examples of the processing of accumulated data are interpretations or extrapolations made from the data.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.2/I4",
+      "source": "requirement",
+      "section": "4.14.2",
+      "text": "INSPECTION A qualification method that is carried out by visual examination, physical manipulation, or measurement to verify that the requirements have been satisfied",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.4/S1",
+      "source": "requirement",
+      "section": "4.14.4",
+      "text": "Provided under separate document.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I1",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "ACCS Army Command and Control Systems",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I2",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "GCCS-AAGCCS Army Global Command and Control System- Army",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I3",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "ANSI American National Standards Institute",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I4",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "API Application Programming Interface",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I5",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "ASCII American Standard Code Information Interchange",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I6",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "ASCII RTF American Standard Code Information Interchange Rich Text Format",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I7",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "ASRD AWIS Software Requirements Specification Document",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I8",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "ATCCS Army Tactical Command and Control Systems",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I9",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "AWIS Army WWMCCS Information System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I10",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "CASS Common ACCS Support Software",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I11",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "CLI Client Library Interface",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I12",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "CM Configuration Manager",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I13",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "COE Common Operating Environment",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I14",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "COTS Commercial Off-The-Shelf",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I15",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "X-DA Data Access",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I16",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DAC Discretionary Access Control",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I17",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "XS Data Access Service",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I18",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DBIF Database Interface",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I19",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DBMS Database Management System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I20",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DBs Databases",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I21",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DATATWG Data Access Services Technical Working Group",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I22",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DCE Distributing Computing Environment",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I23",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DDL Data Definition Language",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I24",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DDS Data Distribution System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I25",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DES Data Encryption Standard",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I26",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DID Data Item Description",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I27",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DII Defense Information Infrastructure",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I28",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DISA Defense Information Systems Agency",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I29",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DML Data Manipulation Language",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I30",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DoD Department of Defense",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I31",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "DTG Date-Time-Group",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I32",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "FIPS PUB Federal Information Processing Standards Publication",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I33",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "FMWG File Management Working Group",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I34",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "GCCS Global Command and Control Systems",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I35",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "GOTS Government Off-The-Shelf",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I36",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "GUI Graphical User Interface",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I37",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "HP Hewlett-Packard",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I38",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "IAW in accordance with",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I39",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "ID Identification",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I40",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "I/F Interface",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I41",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "IF Intell Fusion",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I42",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "I/O Input/Output",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I43",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "JMCIS Joint Maritime Command Information System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I44",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "JOBES Joint Operation Planning and Execution System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I45",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "MAC Mandatory Access Control",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I46",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "Mbs Megabytes",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I47",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "MCG&I Mapping, Charting, Geodesy and Imagery",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I48",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "MIL-STD Military Standard",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I49",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "MSB Most Significant Bit",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I50",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "OS Operating System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I51",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "PM Project Manager",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I52",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "POSIX Portable Operating System Interface for Computing Environments",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I53",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "RAID Redundant Array of Inexpensive Disks",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I54",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "RDA Remote Database Access",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I55",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "RDBMS Relational Database Management System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I56",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "RISC Reduced Instruction Set Computer",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I57",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "RTF Rich Text Format",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I58",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "SECTWG Security Services Technical Working Group",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I59",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "SMM Systems Management Manual",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I60",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "SQL Structured Query Language",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I61",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "SRI Standing Request for Information",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I62",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "SRS Software Requirements Specification",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I63",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "SSDD Support Software Design Document",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I64",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "STACCS Standard Theater Army Command And Control System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I65",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "S/W Software",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I66",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "TBD To Be Determined",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.1/I67",
+      "source": "requirement",
+      "section": "4.14.6.1",
+      "text": "WWMCCS World-Wide Military Command and Control System",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.6.2/I1",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Automatically: Indicates processing initiated during execution of other processes, but dependent on information and/or parameters to be generated or supplied to these other processes. The information / parameters may be data dependent, or application dependent, or dependent on a manual process/human intervention. It will include controls qualifying the processing involved.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I2",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Business Rule: A narrative description of policies, procedures, or principles within an organization. Business rules can be divided in to four categories: definitions, facts, constraints, and derivations.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I3",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Definitions are business rules that define entities and attributes.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I4",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Facts are either links (relationships) between entities or associations between an entity and attributes",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I5",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Constraints are conditions about the data that must always be true. They are the integrity rules that protect the data in the eventual database.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I6",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Derivations are business rules that materialize a new piece of information (often attribute values) from other pieces of information. For example, a mathematical derivation might specify that you can obtain a person's age by subtracting his or her birth date from the current date.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I7",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Commit/Rollback: An individual transaction is processed (commit) or discarded (rollback) by the proponent maintainer of the data items involved.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I8",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Discretionary Access Controls (DAC): A means of restricting access to objects based on the identity of subjects or groups to which they belong. The controls are discretionary in the sense that a subject with a certain access permission is capable of passing that permission on to any other subject.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I9",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Dynamically Generated Processing: Indicates processing initiated during execution of other processes, but dependent upon information and/or parameters to be generated or supplied to these other processes. The information/parameters may be data dependent, or application dependent, or dependent on a manual process/human intervention. It will include controls qualifying the processing involved.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I10",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Location Transparency: occurs when the physical location of data is transparent to the applications and users of the database system. For example, a view that joins table data from several databases provides location transparency because the user of the view does not need to know where the data originates from.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I11",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Mandatory Access Control (MAC): Imediates access to an object based on the clearance level of the subject (user) and the sensitivity label of the object. (These controls are always enforced above any discretionary control implemented by users).",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I12",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Mirrored Databases: Replication and maintenance of a database on a transaction basis for the purpose of rapid error or failure recovery as supported by the resident COTS RDBMS own system utilities and operating system.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I13",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Object: A passive entity that contains or receives information. Access to an object potentially implies access to the information it contains. Examples of objects are records, blocks, pages, segments, files, directories, directory trees, and programs, as well as bits, bytes, words, fields, processors, video displays, keyboards, clocks, printers, and network nodes.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I14",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Proponent Scheme: Describes the sites at which databases are replicated and also who owns and has update authority with respect to the data at each site. It refers to proponency at the source and record level.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I15",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Redundant Array of Inexpensive Disks (RAID): A RAID system appears as one very large, reliable disk to the CPU. The main reason for using RAID storage is its reliability. RAID has the same advantages as shadowing and striping at a lower cost. There are several types/levels of RAID implementations, including: RAID 0 (known as disk striping), RAID 1 (known as disk shadowing), RAID 3 (in which data is distributed in small increments across all data disks and adds a parity value to a separate disk for recovery if any disk fails, RAID 4 (in which data is distributed in large chunks across all data disks and also has a single parity disk. RAID 4 intended to overcome performance penalties of RAID 3 for small transfers. RAID 5 (in which parity over RAID 3 or RAID 4 implementations), and RAID 6 ( in which two parity disks in addition to data disks are used in an attempt to further improve performance). In a RAID 5 implementation, the data is stored as are check sums and other information about the contents of each disk in the array. If one disk is lost, the others can use the check sums and other stored information to recreate the lost data. Storage system vendors may provide additional enhancements to RAID level implementations to improve performance and reliability.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I16",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Remote Data Access (RDA): is an ISO (9579) application layer interoperability standard (protocol and formats) to support access by an application to a (remote) DBMSs over an OSI network. The goal of RDA is to allow interoperability between applications (clients) and databases (servers) of different manufacturers so that an application is able to read and update data in remote databases via well defined standards. RDA defines a set of client and server standards and a mapping of SQL commands to these services. RDA also defines an interface to ISO (transaction processing) two phase commit TP services in the case where updates to multiple remote databases need to be coordinated. RDA does not yet define interoperability between server databases (i.e. it is not yet a standard for distributed database management).",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I17",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Replication Scheme: Information that precisely identifies DBs, or partitions of DBs, to be copied and/or distributed, replication schedules, and master/remote sites that are to receive the copies.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I18",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Spatial DBMS: Geographic information system that organizes and maintains spatial data (i.e. data with graphical attributes) in terms of type, scale, location(s), extent, topology and geometry. Supports queries of spatial data where the selection criteria are defined by spatial attributes.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I19",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "SRI: A Standing Request For Information (SRI) is a capability in which CASS monitors for the occurrence of conditions established by an application program, and notifies the calling or establishing application program when the conditions are satisfied. An SRI may be one of three types: timer-based, data-based, or message-based.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I20",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Subject: An active entity, generally in the form of a person, process, or device that causes information to flow among objects or changes the system state. Technically, a process/domain pair.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.6.2/I21",
+      "source": "requirement",
+      "section": "4.14.6.2",
+      "text": "Transaction Journalling: Individual messages or database transactions are stored in a journal file, which may be a linear log file or a circular file.",
+      "reason": "non-normative section: GLOSSARY OF TERMS"
+    },
+    {
+      "id": "4.14.7/S1",
+      "source": "requirement",
+      "section": "4.14.7",
+      "text": "The metadata and procedures are described for the current Information Resource Submittal Package .",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7/I1",
+      "source": "requirement",
+      "section": "4.14.7",
+      "text": "Metadata and Related Information An XML tag may be described as any object and is easily created by anyone using a text editor. Although XML is a relatively new technology, many developers are already using XML in operational COE systems and have already created tags and specifications, many of which may be inconsistent with tags used in other systems. So far, the burgeoning sets of XML tags have created redundancy and irrelevancy, and they lack validity.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7/I2",
+      "source": "requirement",
+      "section": "4.14.7",
+      "text": "XML Registry. To ensure interoperability, this registry provides a baseline set of tags developed through coordination and approval among the Community. The Registry allows a user to browse, search, and retrieve data that satisfy your requirements. The Registry has a substring search capability so that the user may easily find information resources that meet the criteria. The user may specify whether to search for the term within the name of the information resource or the definition or both.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7/I3",
+      "source": "requirement",
+      "section": "4.14.7",
+      "text": "Developer's Role. Developers are urged to review the baseline tags, adopt them where possible, and subscribe to future notifications about the tags. If, after reviewing the tags in the Registry, you cannot reuse an existing specification (a.k.a. Document Type Definition (DTD)) or existing tags, you may submit your proposed tag to a Community of Interest (COI) and provide amplifying information for all to understand the semantics for its proper use.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7/I6",
+      "source": "requirement",
+      "section": "4.14.7",
+      "text": "The Community of Interest's POC's Role. (The information in the following section is current as of 17 May, 1999. Please consult the Registry for the most authoritative list of information resources types.) The POC responsibilities will include the transitioning of information resources from one status to another. Table 1 lists the valid types of information resources. The status levels are developmental, candidate, approved, rejected, and retired.",
+      "reason": "vague: may"
+    },
+    {
+      "id": "Procedures/S1",
+      "source": "requirement",
+      "section": "Procedures",
+      "text": "For Developers may submit and use information resources within the Registry constitutes guidance in the generation and use of XML as an authoritative source for approved XML data and metadata components.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Procedures/I1",
+      "source": "requirement",
+      "section": "Procedures",
+      "text": "Review Tags in Registry and decide what additions/modifications to submit (if any)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Procedures/I2",
+      "source": "requirement",
+      "section": "Procedures",
+      "text": "Fill out one XML submission document to package multiple Tags",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Procedures/I3",
+      "source": "requirement",
+      "section": "Procedures",
+      "text": "Specify relationships among Tags, provide valid values, and add to submission package",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Procedures/I4",
+      "source": "requirement",
+      "section": "Procedures",
+      "text": "Include amplifying info associated with specific Tag(s)",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Procedures/S2",
+      "source": "requirement",
+      "section": "Procedures",
+      "text": "Zip and attach submission package to e-mail message to: ____________________",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Rules and Convensions./S1",
+      "source": "requirement",
+      "section": "Rules and Convensions.",
+      "text": "Establishing a new Information Resource.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Rules and Convensions./S2",
+      "source": "requirement",
+      "section": "Rules and Convensions.",
+      "text": "Follow these conventions for creating new information resources for the Registry",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S1#2",
+      "source": "requirement",
+      "section": "1.",
+      "text": "If the term is well recognized outside its container term, designate it as an element.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S2#2",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Example: CTRY_CD, CTRY_NM, CTRY_ABBRD_NM, CTRY_OFF_NM, CTRY_SCP_NT_TX, and CTRY_PSTL_NM are all characteristics (ER-attributes) for the entity CTRY.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S3",
+      "source": "requirement",
+      "section": "1.",
+      "text": "In the relational world, they are columns within the table ctry, attributes of the entity ctry in er-modeling, and member attributes in object modeling.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S4",
+      "source": "requirement",
+      "section": "1.",
+      "text": "It would be expected that a submitter would identify them as attributes rather than elements.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S5",
+      "source": "requirement",
+      "section": "1.",
+      "text": "But if they were identified as attributes of the element ctry, then the additional baggage (other attributes) must be carried, or submitted as separate elements.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "1./S6",
+      "source": "requirement",
+      "section": "1.",
+      "text": "We wish to limit the proliferation of tags, so we strongly urge folks to use XML_Attributes sparingly.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Include descriptive definitions AND synonyms for the Information Resource Definition./S2",
+      "source": "requirement",
+      "section": "Include descriptive definitions AND synonyms for the Information Resource Definition.",
+      "text": "Therefore, we urge submitters to include enough expressive terms so that COE developers would easily find the term they might consider \"natural\" in the definition and find the desirable tag for expressing that concept.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "Include descriptive definitions AND synonyms for the Information Resource Definition./S3",
+      "source": "requirement",
+      "section": "Include descriptive definitions AND synonyms for the Information Resource Definition.",
+      "text": "Example: If the registered tag is ORG_ID, the description that includes references",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7.3.1./S1",
+      "source": "requirement",
+      "section": "4.14.7.3.1.",
+      "text": "The Internal Interfaces for the XS SRS are defined as interfaces to COE components.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7.3.1./S2",
+      "source": "requirement",
+      "section": "4.14.7.3.1.",
+      "text": "Detailed information (as specified in paragraph 3.4 of the Data Item Description DI-IPSC-81433) defining these interfaces will be specified during the design phase of the COE XS architecture.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "4.14.7.3.1./S3",
+      "source": "requirement",
+      "section": "4.14.7.3.1.",
+      "text": "At this time such detailed information is unavailable.The COE components identified to-date are listed below.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7.3.1.1./S1",
+      "source": "requirement",
+      "section": "4.14.7.3.1.1.",
+      "text": "It incorporates other interfaces to:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7.3.1.1./I1",
+      "source": "requirement",
+      "section": "4.14.7.3.1.1.",
+      "text": "Network Administration",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7.3.1.1./I2",
+      "source": "requirement",
+      "section": "4.14.7.3.1.1.",
+      "text": "System Administration",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "4.14.7.3.1.1./I3",
+      "source": "requirement",
+      "section": "4.14.7.3.1.1.",
+      "text": "Security Administration",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1./S1",
+      "source": "requirement",
+      "section": "1.1.",
+      "text": "It incorporates other interfaces to:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1./I1",
+      "source": "requirement",
+      "section": "1.1.",
+      "text": "Communications",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1./I2",
+      "source": "requirement",
+      "section": "1.1.",
+      "text": "Network Services",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1.1./S1",
+      "source": "requirement",
+      "section": "1.1.1.",
+      "text": "It incorporates other interfaces to:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1.1./I1",
+      "source": "requirement",
+      "section": "1.1.1.",
+      "text": "Distributed Computing Services",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1.1./I2",
+      "source": "requirement",
+      "section": "1.1.1.",
+      "text": "Data Interchange Services",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1./S1#2",
+      "source": "requirement",
+      "section": "1.1.",
+      "text": "It incorporates other interfaces to:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1./I1#2",
+      "source": "requirement",
+      "section": "1.1.",
+      "text": "Executive Manager",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1.1./I2#2",
+      "source": "requirement",
+      "section": "1.1.",
+      "text": "Multi-Media Support",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S1#3",
+      "source": "requirement",
+      "section": "1.",
+      "text": "It incorporates other interfaces to:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I1",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Office Automation",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I2",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Message Processing",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I3",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Correlation",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I4",
+      "source": "requirement",
+      "section": "1.",
+      "text": "MCG &I",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I5",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Alerts",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I6",
+      "source": "requirement",
+      "section": "1.",
+      "text": "On-line Help",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./S1#4",
+      "source": "requirement",
+      "section": "1.",
+      "text": "It incorporates other interfaces to:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "1./I1#2",
+      "source": "requirement",
+      "section": "1.",
+      "text": "Developer's Toolkit",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.1./S1",
+      "source": "requirement",
+      "section": "2.1.",
+      "text": "The Interfaces to Commercial Products for the XS SRS are identified below.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.1./S2",
+      "source": "requirement",
+      "section": "2.1.",
+      "text": "Detailed information (as specified in paragraph 3.3 of the Data Item Description DI-IPSC-81433) defining these interfaces will be specified during the design phase of the COE XS architecture.",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.1./S3",
+      "source": "requirement",
+      "section": "2.1.",
+      "text": "At this time such detailed information is unavailable.",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.1./S4",
+      "source": "requirement",
+      "section": "2.1.",
+      "text": "The three commercial products or environments identified for the COE are the following Relational Database engines:",
+      "reason": "no normative modal (shall/must/will/should/can)"
+    },
+    {
+      "id": "2.1./I1",
+      "source": "requirement",
+      "section": "2.1.",
+      "text": "Sybase",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.1./I2",
+      "source": "requirement",
+      "section": "2.1.",
+      "text": "Oracle",
+      "reason": "no state change, data relation or quantity to formalise"
+    },
+    {
+      "id": "2.1./I3",
+      "source": "requirement",
+      "section": "2.1.",
+      "text": "Informix.",
+      "reason": "no state change, data relation or quantity to formalise"
+    }
+  ]
+}

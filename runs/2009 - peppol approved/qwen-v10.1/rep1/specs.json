@@ -1,0 +1,2555 @@
+{
+  "source": {
+    "file": "2009 - peppol approved.xml",
+    "sha256": "b35b48d6af36accea3150ac16814f54d370818aff17cbf69e4b318607182c20d"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v10.1",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "1b2599c",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 59,
+    "compiles": 53,
+    "rejects_bad_example": 39,
+    "checked": 48,
+    "failed": 11,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "0/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "This preface provides a short overview about the comments received from the EC and other sources and how these comments and remarks will be taken into consideration in future/ongoing work.",
+      "text_predicate": "Requirement 0/S1 (Preface):\nThis preface provides a short overview about the comments received from the EC and other sources and how these comments and remarks will be taken into consideration in future/ongoing work.",
+      "lean_predicate": "structure Input where\n  commentsReceived : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  remarksConsidered : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.commentsReceived ≠ []\n  post := fun i o => o.remarksConsidered = i.commentsReceived\n\nexample : Spec.pre { commentsReceived := [\"EC comment 1\", \"EC comment 2\"] } ∧\n          Spec.post { commentsReceived := [\"EC comment 1\", \"EC comment 2\"] }\n                    { remarksConsidered := [\"EC comment 1\", \"EC comment 2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { commentsReceived := [\"Comment 1\", \"Comment 2\"] } ∧ ¬ Spec.post { commentsReceived := [\"Comment 1\", \"Comment 2\"] } { remarksConsidered := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { commentsReceived := [\"Comment 1\", \"Comment 2\"] } ∧ ¬ Spec.post { commentsReceived := [\"Comment 1\", \"Comment 2\"] } { remarksConsidered := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the preface should provide a short overview about the comments received and how they will be considered. An empty list of considered remarks does not fulfill this requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 37.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "weakened",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "0/S5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The following description responds to these comments and criticism by arguing how and where revisions and updates of the work presented in this deliverable will be implemented in subsequent results of WP 2.",
+      "text_predicate": "Requirement 0/S5 (Preface):\nThe following description responds to these comments and criticism by arguing how and where revisions and updates of the work presented in this deliverable will be implemented in subsequent results of WP 2.\nThis requirement prescribes HOW to build something (a method, algorithm or\ntechnology). Record that in a `-- IMPL:` comment above `def Spec`, and specify\nonly the observable result in `pre`/`post`.",
+      "lean_predicate": "structure Input where\n  revisions : List String\n  updates   : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  implemented : Bool\n  deriving DecidableEq, Repr\n\n-- IMPL: The revisions and updates will be implemented in subsequent results of WP 2 by checking if the revisions and updates are present in the input.\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => true\n  post := fun i o => o.implemented = true ↔\n    (i.revisions.Nodup ∧ i.updates.Nodup) ∧\n    (i.revisions.length + i.updates.length > 0)\n\nexample : Spec.pre { revisions := [\"rev1\", \"rev2\"], updates := [\"up1\"] } ∧\n          Spec.post { revisions := [\"rev1\", \"rev2\"], updates := [\"up1\"] }\n                    { implemented := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { revisions := [\"v1\"], updates := [\"u1\"] } ∧ ¬ Spec.post { revisions := [\"v1\"], updates := [\"u1\"] } { implemented := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { revisions := [\"v1\"], updates := [\"u1\"] } ∧ ¬ Spec.post { revisions := [\"v1\"], updates := [\"u1\"] } { implemented := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that `implemented` should be true if both `revisions` and `updates` are non-empty and unique, but a buggy system might return `false` even if the conditions are met.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "0/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "First of all, D2.1 will be updated and improved in the following respects:",
+      "text_predicate": "Requirement 0/S6 (Preface):\nFirst of all, D2.1 will be updated and improved in the following respects:",
+      "lean_predicate": "structure UserProfile where\n  name    : String\n  email   : String\n  age     : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  profile : UserProfile\n  newName : String\n  newEmail: String\n  newAge  : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  updatedProfile : UserProfile\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.newName ≠ \"\" ∧ i.newEmail ≠ \"\" ∧ 0 < i.newAge\n  post := fun i o => o.updatedProfile = { name := i.newName,\n                                           email := i.newEmail,\n                                           age := i.newAge }\n\nexample : Spec.pre { profile := { name := \"Alice\", email := \"alice@example.com\", age := 30 },\n                     newName := \"Alicia\", newEmail := \"alicia@example.com\", newAge := 31 } ∧\n          Spec.post { profile := { name := \"Alice\", email := \"alice@example.com\", age := 30 },\n                      newName := \"Alicia\", newEmail := \"alicia@example.com\", newAge := 31 }\n                    { updatedProfile := { name := \"Alicia\", email := \"alicia@example.com\", age := 31 } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { profile := { name := \"John Doe\", email := \"john@example.com\", age := 0 }, newName := \"Jane Doe\", newEmail := \"jane@example.com\", newAge := 0 } ∧ ¬ Spec.post { profile := { name := \"John Doe\", email := \"john@example.com\", age := 0 }, newName := \"Jane Doe\", newEmail := \"jane@example.com\", newAge := 0 } { updatedProfile := { name := \"Jane Doe\", email := \"jane@example.com\", age := 0 } } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { profile := { name := \"John Doe\", email := \"john@example.com\", age := 0 }, newName := \"Jane Doe\", newEmail := \"jane@example.com\", newAge := 0 } ∧ ¬ Spec.post { profile := { name := \"John Doe\", email := \"john@example.com\", age := 0 }, newName := \"Jane Doe\", newEmail := \"jane@example.com\", newAge := 0 } { updatedProfile := { name := \"Jane Doe\", email := \"jane@example.com\", age := 0 } } := by\n  unfold Spec; decide",
+          "why": "The age should be greater than 0, but it is not.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 54.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "0/I2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The goals of chapter 3 will be described in more detail. The term \"framework\" thereby seems to be misleading and will be replaced by a more suitable expression. The general descriptions and structure of chapter 3 will be maintained. Responding to criticism from the review, strong interconnections will be added to the subsequent deliverable D2.2, which will give a more detailed description of the organisational, semantic, technical and legal specifications of the VCD concept. In D2.2., the requirements stated in D 2.1 will be reconsidered and transformed into a tabular collection of functional and non-functional requirements grouped for different components of the overall VCD concept (see subsequent contents of D 2.2)",
+      "text_predicate": "Requirement 0/I2 (Preface):\nThe goals of chapter 3 will be described in more detail. The term \"framework\" thereby seems to be misleading and will be replaced by a more suitable expression. The general descriptions and structure of chapter 3 will be maintained. Responding to criticism from the review, strong interconnections will be added to the subsequent deliverable D2.2, which will give a more detailed description of the organisational, semantic, technical and legal specifications of the VCD concept. In D2.2., the requirements stated in D 2.1 will be reconsidered and transformed into a tabular collection of functional and non-functional requirements grouped for different components of the overall VCD concept (see subsequent contents of D 2.2)",
+      "lean_predicate": "structure Input where\n  framework : String\n  description : String\n  requirements : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  framework : String\n  description : String\n  requirements : List String\n  functionalRequirements : List String\n  nonFunctionalRequirements : List String\n  components : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.framework ≠ \"\" ∧ i.description ≠ \"\"\n  post := fun i o => \n    o.framework = i.framework ∧\n    o.description = i.description ∧\n    o.requirements = i.requirements ∧\n    o.functionalRequirements = [] ∧\n    o.nonFunctionalRequirements = [] ∧\n    o.components = []\n\nexample : Spec.pre { framework := \"VCD\", description := \"Organisational, semantic, technical, and legal specifications\", requirements := [\"req1\", \"req2\"] } ∧\n          Spec.post { framework := \"VCD\", description := \"Organisational, semantic, technical, and legal specifications\", requirements := [\"req1\", \"req2\"] }\n                    { framework := \"VCD\", description := \"Organisational, semantic, technical, and legal specifications\", requirements := [\"req1\", \"req2\"], functionalRequirements := [], nonFunctionalRequirements := [], components := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { framework := \"VCD Framework\", description := \"Organisational and technical specifications\", requirements := [\"req1\", \"req2\"] } ∧ ¬ Spec.post { framework := \"VCD Framework\", description := \"Organisational and technical specifications\", requirements := [\"req1\", \"req2\"] } { framework := \"VCD Framework\", description := \"Organisational and technical specifications\", requirements := [\"req1\", \"req2\"], functionalRequirements := [\"fun1\"], nonFunctionalRequirements := [\"nf1\"], components := [\"comp1\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { framework := \"VCD Framework\", description := \"Organisational and technical specifications\", requirements := [\"req1\", \"req2\"] } ∧ ¬ Spec.post { framework := \"VCD Framework\", description := \"Organisational and technical specifications\", requirements := [\"req1\", \"req2\"] } { framework := \"VCD Framework\", description := \"Organisational and technical specifications\", requirements := [\"req1\", \"req2\"], functionalRequirements := [\"fun1\"], nonFunctionalRequirements := [\"nf1\"], components := [\"comp1\"] } := by\n  unfold Spec; decide",
+          "why": "The output should not have any functional, non-functional requirements, or components as the input does not provide them.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 21.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "0/I6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The VCD services which will compile VCD packages in five pilot member states (after the PEPPOL enlargement procedure, three new pilots have been added to WP 2): These VCD services will implement a number of services to query and collect evidences from different issuing bodies and to pack the individual evidences into a full VCD package thereby also extracting certain metadata and context specific data which will facilitate machine-readability and quick evaluation of a VCD package.",
+      "text_predicate": "Requirement 0/I6 (Preface):\nThe VCD services which will compile VCD packages in five pilot member states (after the PEPPOL enlargement procedure, three new pilots have been added to WP 2): These VCD services will implement a number of services to query and collect evidences from different issuing bodies and to pack the individual evidences into a full VCD package thereby also extracting certain metadata and context specific data which will facilitate machine-readability and quick evaluation of a VCD package.\nIgnore these non-formal words: quick.",
+      "lean_predicate": "structure Input where\n  pilotStates : List String\n  issuingBodies : List String\n  evidences : List String\n  metadata : List String\n  contextData : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vcdPackages : List String\n  metadataExtracted : Bool\n  contextDataExtracted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.pilotStates.Nodup ∧ i.issuingBodies.Nodup ∧\n                  i.evidences.Nodup ∧ i.metadata.Nodup ∧ i.contextData.Nodup\n  post := fun i o => o.vcdPackages.length = i.pilotStates.length ∧\n                     o.metadataExtracted = true ∧\n                     o.contextDataExtracted = true ∧\n                     ∀ p ∈ o.vcdPackages, ∃ e ∈ i.evidences, ∃ m ∈ i.metadata, ∃ c ∈ i.contextData,\n                     p = e ++ m ++ c\n\nexample : Spec.pre { pilotStates := [\"state1\", \"state2\"], issuingBodies := [\"body1\", \"body2\"],\n                     evidences := [\"ev1\", \"ev2\"], metadata := [\"m1\", \"m2\"], contextData := [\"c1\", \"c2\"] } ∧\n          Spec.post { pilotStates := [\"state1\", \"state2\"], issuingBodies := [\"body1\", \"body2\"],\n                      evidences := [\"ev1\", \"ev2\"], metadata := [\"m1\", \"m2\"], contextData := [\"c1\", \"c2\"] }\n                    { vcdPackages := [\"ev1m1c1\", \"ev2m2c2\"], metadataExtracted := true, contextDataExtracted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { pilotStates := [\"State1\"], issuingBodies := [\"Body1\"], evidences := [\"Evidence1\"], metadata := [\"Metadata1\"], contextData := [\"ContextData1\"] } ∧ ¬ Spec.post { pilotStates := [\"State1\"], issuingBodies := [\"Body1\"], evidences := [\"Evidence1\"], metadata := [\"Metadata1\"], contextData := [\"ContextData1\"] } { vcdPackages := [\"Evidence1\"], metadataExtracted := false, contextDataExtracted := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { pilotStates := [\"State1\"], issuingBodies := [\"Body1\"], evidences := [\"Evidence1\"], metadata := [\"Metadata1\"], contextData := [\"ContextData1\"] } ∧ ¬ Spec.post { pilotStates := [\"State1\"], issuingBodies := [\"Body1\"], evidences := [\"Evidence1\"], metadata := [\"Metadata1\"], contextData := [\"ContextData1\"] } { vcdPackages := [\"Evidence1\"], metadataExtracted := false, contextDataExtracted := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that metadata and context data must be extracted, but the output does not extract any metadata or context data.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 35.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "0/S17",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In reference to this, D2.2 will comprise a short overview of the updated state of practice and the relation to current more detailed results of WP2.",
+      "text_predicate": "Requirement 0/S17 (Preface):\nIn reference to this, D2.2 will comprise a short overview of the updated state of practice and the relation to current more detailed results of WP2.",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  overview : String\n  relation : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.overview ≠ \"\" ∧ o.relation ≠ \"\"\n\nexample : Spec.pre {} ∧ Spec.post {} { overview := \"Short overview of the updated state of practice.\", relation := \"Relation to current more detailed results of WP2.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { overview := \"\", relation := \"\" } ∧ ¬ Spec.post { overview := \"\", relation := \"\" } { overview := \"\", relation := \"\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { overview := \"\", relation := \"\" } ∧ ¬ Spec.post { overview := \"\", relation := \"\" } { overview := \"\", relation := \"\" } := by\n  unfold Spec; decide",
+          "why": "The output does not provide an overview and relation as required",
+          "outcome": "not usable: `overview` is not a field of structure `Input`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "1.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "A VCD will facilitate electronic Tendering by providing cross-border data and document solution that contains the necessary attestations and certificates typically required in eTendering.",
+      "text_predicate": "Requirement 1.1/S1 (Introduction: Motivation for a Virtual Company Dossier > Need for a Virtual Company Dossier):\nA VCD will facilitate electronic Tendering by providing cross-border data and document solution that contains the necessary attestations and certificates typically required in eTendering.",
+      "lean_predicate": "structure Input where\n  companyDossier : List String\n  attestations   : List String\n  certificates   : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vcd : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.companyDossier.Nodup ∧ i.attestations.Nodup ∧ i.certificates.Nodup\n  post := fun i o => o.vcd.length = i.companyDossier.length + i.attestations.length + i.certificates.length ∧\n                     ∀ c ∈ i.companyDossier, o.vcd.contains c ∧\n                     ∀ a ∈ i.attestations, o.vcd.contains a ∧\n                     ∀ l ∈ i.certificates, o.vcd.contains l\n\nexample : Spec.pre { companyDossier := [\"Name\", \"Address\"], attestations := [\"Att1\"], certificates := [\"Cert1\"] } ∧\n          Spec.post { companyDossier := [\"Name\", \"Address\"], attestations := [\"Att1\"], certificates := [\"Cert1\"] }\n                    { vcd := [\"Name\", \"Address\", \"Att1\", \"Cert1\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { companyDossier := [\"doc1\", \"doc2\"], attestations := [\"att1\", \"att2\"], certificates := [\"cert1\", \"cert2\"] } ∧ ¬ Spec.post { companyDossier := [\"doc1\", \"doc2\"], attestations := [\"att1\", \"att2\"], certificates := [\"cert1\", \"cert2\"] } { vcd := [\"doc1\", \"att1\", \"cert1\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { companyDossier := [\"doc1\", \"doc2\"], attestations := [\"att1\", \"att2\"], certificates := [\"cert1\", \"cert2\"] } ∧ ¬ Spec.post { companyDossier := [\"doc1\", \"doc2\"], attestations := [\"att1\", \"att2\"], certificates := [\"cert1\", \"cert2\"] } { vcd := [\"doc1\", \"att1\", \"cert1\"] } := by\n  unfold Spec; decide",
+          "why": "The output does not contain all elements from companyDossier, attestations, and certificates",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 42.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "1.1/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When a contracting authority publishes a contract notice, it shall include the selection, qualification and nonexclusion criteria.",
+      "text_predicate": "Requirement 1.1/S4 (Introduction: Motivation for a Virtual Company Dossier > Need for a Virtual Company Dossier):\nWhen a contracting authority publishes a contract notice, it shall include the selection, qualification and nonexclusion criteria.",
+      "lean_predicate": "structure Input where\n  criteria : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  notice : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.criteria ≠ []\n  post := fun i o => o.notice.containsAll i.criteria\n\nexample : Spec.pre { criteria := [\"qualification\", \"selection\", \"nonexclusion\"] } ∧\n          Spec.post { criteria := [\"qualification\", \"selection\", \"nonexclusion\"] }\n                     { notice := \"This contract notice includes the selection, qualification and nonexclusion criteria.\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 20.5,
+      "error": "<generated>:14:30: error(lean.invalidField): Invalid field `containsAll`: The environment does not contain `String.containsAll`, so it is not possible to project the field `containsAll` from an expression\n  o.notice\nof type `String`\n<generated>:16:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "1.1/I2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "2. In order to create the VCD, an implemented IT system will have to collect certificates and attestations from existing registries. It also enables the economic operator to add self-declarations or other documents of formal qualification.",
+      "text_predicate": "Requirement 1.1/I2 (Introduction: Motivation for a Virtual Company Dossier > Need for a Virtual Company Dossier):\n2. In order to create the VCD, an implemented IT system will have to collect certificates and attestations from existing registries. It also enables the economic operator to add self-declarations or other documents of formal qualification.",
+      "lean_predicate": "structure Certificate where\n  name    : String\n  issuer  : String\n  document: String\n  deriving DecidableEq, Repr\n\nstructure SelfDeclaration where\n  name        : String\n  document    : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  certificates : List Certificate\n  selfDeclarations : List SelfDeclaration\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vcd : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.certificates.Nodup ∧ i.selfDeclarations.Nodup\n  post := fun i o => (o.vcd.length = i.certificates.length + i.selfDeclarations.length) ∧\n                     (∀ c ∈ i.certificates, o.vcd.contains c.document) ∧\n                     (∀ sd ∈ i.selfDeclarations, o.vcd.contains sd.document)\n\nexample : Spec.pre { certificates := [{ name := \"Cert1\", issuer := \"Issuer1\", document := \"Doc1\" }],\n                     selfDeclarations := [{ name := \"SD1\", document := \"Doc2\" }] } ∧\n          Spec.post { certificates := [{ name := \"Cert1\", issuer := \"Issuer1\", document := \"Doc1\" }],\n                      selfDeclarations := [{ name := \"SD1\", document := \"Doc2\" }] }\n                    { vcd := [\"Doc1\", \"Doc2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { certificates := [{ name := \"Cert1\", issuer := \"Issuer1\", document := \"Doc1\" }, { name := \"Cert2\", issuer := \"Issuer2\", document := \"Doc2\" }], selfDeclarations := [{ name := \"SD1\", document := \"SD1Doc\" }, { name := \"SD2\", document := \"SD2Doc\" }] } ∧ ¬ Spec.post { certificates := [{ name := \"Cert1\", issuer := \"Issuer1\", document := \"Doc1\" }, { name := \"Cert2\", issuer := \"Issuer2\", document := \"Doc2\" }], selfDeclarations := [{ name := \"SD1\", document := \"SD1Doc\" }, { name := \"SD2\", document := \"SD2Doc\" }] } { vcd := [\"Doc1\", \"Doc2\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { certificates := [{ name := \"Cert1\", issuer := \"Issuer1\", document := \"Doc1\" }, { name := \"Cert2\", issuer := \"Issuer2\", document := \"Doc2\" }], selfDeclarations := [{ name := \"SD1\", document := \"SD1Doc\" }, { name := \"SD2\", document := \"SD2Doc\" }] } ∧ ¬ Spec.post { certificates := [{ name := \"Cert1\", issuer := \"Issuer1\", document := \"Doc1\" }, { name := \"Cert2\", issuer := \"Issuer2\", document := \"Doc2\" }], selfDeclarations := [{ name := \"SD1\", document := \"SD1Doc\" }, { name := \"SD2\", document := \"SD2Doc\" }] } { vcd := [\"Doc1\", \"Doc2\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids the output to contain fewer documents than the sum of certificates and self-declarations",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 30.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "1.1/I8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Article 46 - suitability to pursue a professional activity: e.g. certificate of registration from thecommercial register",
+      "text_predicate": "Requirement 1.1/I8 (Introduction: Motivation for a Virtual Company Dossier > Need for a Virtual Company Dossier):\nArticle 46 - suitability to pursue a professional activity: e.g. certificate of registration from thecommercial register",
+      "lean_predicate": "structure Input where\n  registrationCertificate : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  suitable : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.registrationCertificate ≠ \"\"\n  post := fun i o => o.suitable = true ↔\n    (i.registrationCertificate.toList.all Char.isAlphanum = true)\n\nexample : Spec.pre { registrationCertificate := \"1234567890\" } ∧\n          Spec.post { registrationCertificate := \"1234567890\" }\n                    { suitable := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 33.6,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { registrationCertificate := \"123456\" } { suitable := true }` holds, but the requirement forbids this output for this input (The requirement states that the output should be `suitable = true` if and only if the registration certificate is alphanumeric. An empty or non-alphanumeric certificate should result in `suitable = false`, but a buggy system might return `suitable = true`.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "weakened",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "compiles, but the generation loop's own checks failed: L0.5: your spec accepts a forbidden behaviour: `Spec.post { registrationCertificate := \"123456\" } { suitable := true }` holds, but the requirement forbids this output for this input (The requirement states that the output should be `suitable = true` if and only if the registration certificate is alp"
+        ]
+      }
+    },
+    {
+      "id": "1.2/S8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "An Economic Operator can use means such as the TED system, existing tendering platforms or official national gazettes to search for contract notices (2) and to retrieve the relevant information about active tenders (3).",
+      "text_predicate": "Requirement 1.2/S8 (Introduction: Motivation for a Virtual Company Dossier > 1.2 Status quo of evidencing selection and exclusion criteria in generic tendering procedure):\nAn Economic Operator can use means such as the TED system, existing tendering platforms or official national gazettes to search for contract notices (2) and to retrieve the relevant information about active tenders (3).",
+      "lean_predicate": "structure ContractNotice where\n  title   : String\n  details : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  query          : String\n  sources        : List String\n  activeTenders  : List ContractNotice\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results        : List ContractNotice\n  message        : String\n  deriving DecidableEq, Repr\n\n-- an item may be returned: it matches the query and is an active tender\ndef Wanted (i : Input) (cn : ContractNotice) : Bool :=\n  cn.title.contains i.query || cn.details.contains i.query && cn ∈ i.activeTenders\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\" ∧ i.sources.Nodup\n  post := fun i o =>\n    (∀ cn ∈ o.results, cn ∈ i.activeTenders ∧ Wanted i cn = true) ∧\n    (o.results.length < 100 → ∀ cn ∈ i.activeTenders, Wanted i cn = true → cn ∈ o.results) ∧\n    o.results.length ≤ 100 ∧\n    List.Pairwise (fun a b => a.title ≤ b.title) o.results ∧\n    (o.message = \"No results were found.\" ↔ o.results = [])\n\nexample : Spec.pre { query := \"construction\", sources := [\"TED\", \"platform1\", \"gazette2\"], activeTenders := [] } ∧ Spec.post { query := \"construction\", sources := [\"TED\", \"platform1\", \"gazette2\"], activeTenders := [] } { results := [], message := \"No results were found.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { query := \"construction\", sources := [\"TED\"], activeTenders := [{ title := \"Construction Project\", details := \"Details about construction\" }, { title := \"IT Services\", details := \"Details about IT services\" }] } ∧ ¬ Spec.post { query := \"construction\", sources := [\"TED\"], activeTenders := [{ title := \"Construction Project\", details := \"Details about construction\" }, { title := \"IT Services\", details := \"Details about IT services\" }] } { results := [{ title := \"IT Services\", details := \"Details about IT services\" }, { title := \"Construction Project\", details := \"Details about construction\" }], message := \"Results found.\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { query := \"construction\", sources := [\"TED\"], activeTenders := [{ title := \"Construction Project\", details := \"Details about construction\" }, { title := \"IT Services\", details := \"Details about IT services\" }] } ∧ ¬ Spec.post { query := \"construction\", sources := [\"TED\"], activeTenders := [{ title := \"Construction Project\", details := \"Details about construction\" }, { title := \"IT Services\", details := \"Details about IT services\" }] } { results := [{ title := \"IT Services\", details := \"Details about IT services\" }, { title := \"Construction Project\", details := \"Details about construction\" }], message := \"Results found.\" } := by\n  unfold Spec; decide",
+          "why": "The output does not filter the results based on the query, which is forbidden by the requirement.",
+          "outcome": "not usable: Tactic `decide` failed for proposition\n  ¬{ pre := fun i => i.query ≠ \"\" ∧ i.sources.Nodup,\n          post := fun i o =>\n            (∀ (cn : ContractNotice), cn ∈ o.results → cn ∈ i.activeTenders ∧ Wanted i cn = true) ∧\n              (o.results.length < 100 →\n                  ∀ (cn : ContractNotice), cn ∈ i.activeTenders → Wanted i cn = true → cn ∈ o.results) ∧\n                o.results.length ≤ 100 ∧\n                  List.Pairwise (fun a b => a.title ≤ b.title) o.results ∧\n                    (o.message = \"No results were found.\" ↔ o.results = []) }.post\n      { query := \"construction\", sources := [\"TED\"],\n        activeTenders :=\n          [{ title := \"Construction Project\", details := \"Details about construction\" },\n            { title := \"IT Services\", details := \"Details about IT services\" }] }\n      {\n        results :=\n          [{ title := \"IT Services\", details := \"Details about IT services\" },\n            { title := \"Construction Project\", details := \"Details about construction\" }],\n        message := \"Results found.\" }\nbecause its `Decidable` instance\n  instDecidableNot\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `decEq`, `decidable_of_decidable_of_iff`, `instDecidableAnd`, `instDecidableEqBitVec`, `instDecidableEqBool`, `instDecidableEqContractNotice`, `instDecidableEqFin`, `instDecidableEqList`, `instDecidableEqNat`, `instDecidableEqString`, `instDecidableEqUInt8`, `instDecidableNot`, `instDecidableOr`, `BitVec.decEq`, `Bool.decEq`, `Classical.propDecidable`, `List.decidableBAll`, `List.hasDecEq`, `List.instDecidableMemOfLawfulBEq`, `Nat.decEq`, `Nat.decLe`, `Nat.decLt`, `String.decEq`, `UInt8.decEq`, and `instDecidableEqContractNotice.decEq`, reduction got stuck at the `Decidable` instance\n  match\n    Wanted\n      { query := \"construction\", sources := [\"TED\"],\n        activeTenders :=\n          [{ title := \"Construction Project\", details := \"Details about construction\" },\n            { title := \"IT Services\", details := \"Details about IT services\" }] }\n      { title := \"IT Services\", details := \"Details about IT services\" },\n    true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 34.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "1.2/S34",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Currently a new version of the Austrian Federal Procurement Act is elaborated which will probably change the necessity for the Economic Operator to just give a declaration on oath concerning the Economic Operator's suitability.",
+      "text_predicate": "Requirement 1.2/S34 (Introduction: Motivation for a Virtual Company Dossier > 1.2 Status quo of evidencing selection and exclusion criteria in generic tendering procedure):\nCurrently a new version of the Austrian Federal Procurement Act is elaborated which will probably change the necessity for the Economic Operator to just give a declaration on oath concerning the Economic Operator's suitability.",
+      "lean_predicate": "structure Input where\n  declarationOath : Bool\n  evidenceProvided : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  suitabilityDeclared : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.declarationOath\n  post := fun i o => (o.suitabilityDeclared = true ↔ i.evidenceProvided) ∧\n                     (o.suitabilityDeclared = false ↔ ¬i.declarationOath)\n\nexample : Spec.pre { declarationOath := true, evidenceProvided := true } ∧ Spec.post { declarationOath := true, evidenceProvided := true } { suitabilityDeclared := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { declarationOath := true, evidenceProvided := false } ∧ ¬ Spec.post { declarationOath := true, evidenceProvided := false } { suitabilityDeclared := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { declarationOath := true, evidenceProvided := false } ∧ ¬ Spec.post { declarationOath := true, evidenceProvided := false } { suitabilityDeclared := true } := by\n  unfold Spec; decide",
+          "why": "The output should not declare suitability if no evidence is provided, but a buggy system might.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 18.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.1/I1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Structural VCD package data: Data that describes the VCD-Package as a whole, e.g. VCD Unique Identifier, VCD issuing time, VCD service provider etc.",
+      "text_predicate": "Requirement 2.3.1/I1 (Vision and Scope of the VCD > VCD simple package (Stage 2) > Vision Statement):\nStructural VCD package data: Data that describes the VCD-Package as a whole, e.g. VCD Unique Identifier, VCD issuing time, VCD service provider etc.\nIgnore these non-formal words: etc.",
+      "lean_predicate": "structure Input where\n  vcdUniqueIdentifier : String\n  vcdIssuingTime      : Nat\n  vcdServiceProvider  : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vcdUniqueIdentifier : String\n  vcdIssuingTime      : Nat\n  vcdServiceProvider  : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.vcdUniqueIdentifier ≠ \"\" ∧ i.vcdIssuingTime > 0 ∧ i.vcdServiceProvider ≠ \"\"\n  post := fun i o => o.vcdUniqueIdentifier = i.vcdUniqueIdentifier ∧\n                     o.vcdIssuingTime = i.vcdIssuingTime ∧\n                     o.vcdServiceProvider = i.vcdServiceProvider\n\nexample : Spec.pre { vcdUniqueIdentifier := \"VCD123\", vcdIssuingTime := 1623456789, vcdServiceProvider := \"ServiceX\" } ∧\n          Spec.post { vcdUniqueIdentifier := \"VCD123\", vcdIssuingTime := 1623456789, vcdServiceProvider := \"ServiceX\" }\n                    { vcdUniqueIdentifier := \"VCD123\", vcdIssuingTime := 1623456789, vcdServiceProvider := \"ServiceX\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { vcdUniqueIdentifier := \"12345\", vcdIssuingTime := 1625256000, vcdServiceProvider := \"ServiceX\" } ∧ ¬ Spec.post { vcdUniqueIdentifier := \"12345\", vcdIssuingTime := 1625256000, vcdServiceProvider := \"ServiceX\" } { vcdUniqueIdentifier := \"54321\", vcdIssuingTime := 1625256000, vcdServiceProvider := \"ServiceX\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vcdUniqueIdentifier := \"12345\", vcdIssuingTime := 1625256000, vcdServiceProvider := \"ServiceX\" } ∧ ¬ Spec.post { vcdUniqueIdentifier := \"12345\", vcdIssuingTime := 1625256000, vcdServiceProvider := \"ServiceX\" } { vcdUniqueIdentifier := \"54321\", vcdIssuingTime := 1625256000, vcdServiceProvider := \"ServiceX\" } := by\n  unfold Spec; decide",
+          "why": "The output does not match the input, which is forbidden by the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 12.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.2.1/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Sensitive economic operator data must initially be provided by an economic operator (e.g. company registration number, VAT number, social insurance number of the company etc.) in order to create an account and to start any VCD packaging service.",
+      "text_predicate": "Requirement 2.3.2.1/S3 (Vision and Scope of the VCD > VCD simple package (Stage 2) > Use Case description of VCD simple package (Stage 2) > Identity and access management):\nSensitive economic operator data must initially be provided by an economic operator (e.g. company registration number, VAT number, social insurance number of the company etc.) in order to create an account and to start any VCD packaging service.\nIgnore these non-formal words: etc.",
+      "lean_predicate": "structure Input where\n  companyRegistrationNumber : String\n  vatNumber                 : String\n  socialInsuranceNumber     : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  accountCreated : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.companyRegistrationNumber ≠ \"\" ∧\n                  i.vatNumber ≠ \"\" ∧\n                  i.socialInsuranceNumber ≠ \"\"\n  post := fun i o => o.accountCreated = true ↔\n    (i.companyRegistrationNumber ≠ \"\" ∧\n     i.vatNumber ≠ \"\" ∧\n     i.socialInsuranceNumber ≠ \"\")\n\nexample : Spec.pre { companyRegistrationNumber := \"123456789\", vatNumber := \"DE123456789\", socialInsuranceNumber := \"SI123456789\" } ∧\n          Spec.post { companyRegistrationNumber := \"123456789\", vatNumber := \"DE123456789\", socialInsuranceNumber := \"SI123456789\" }\n                    { accountCreated := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { companyRegistrationNumber := \"1234567890\", vatNumber := \"DE123456789\", socialInsuranceNumber := \"INS123456789\" } ∧ ¬ Spec.post { companyRegistrationNumber := \"1234567890\", vatNumber := \"DE123456789\", socialInsuranceNumber := \"INS123456789\" } { accountCreated := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { companyRegistrationNumber := \"1234567890\", vatNumber := \"DE123456789\", socialInsuranceNumber := \"INS123456789\" } ∧ ¬ Spec.post { companyRegistrationNumber := \"1234567890\", vatNumber := \"DE123456789\", socialInsuranceNumber := \"INS123456789\" } { accountCreated := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that sensitive economic operator data must be provided to create an account. Providing the data but not creating an account violates this requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.2.4/S7",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Economic operator data is data that can initially be provided by an economic operator (e.g. company registration number, VAT number, social insurance number of the company etc.) to start the VCD packaging service.",
+      "text_predicate": "Requirement 2.3.2.4/S7 (Vision and Scope of the VCD > VCD simple package (Stage 2) > Use Case description of VCD simple package (Stage 2) > CD viewing system):\nEconomic operator data is data that can initially be provided by an economic operator (e.g. company registration number, VAT number, social insurance number of the company etc.) to start the VCD packaging service.\nIgnore these non-formal words: etc.",
+      "lean_predicate": "structure Input where\n  companyRegNum : Option String\n  vatNum        : Option String\n  socialInsNum  : Option String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  accepted     : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.companyRegNum.isSome ∨ i.vatNum.isSome ∨ i.socialInsNum.isSome\n  post := fun i o => o.accepted = true ↔ (i.companyRegNum.isSome ∨ i.vatNum.isSome ∨ i.socialInsNum.isSome)\n\nexample : Spec.pre { companyRegNum := some \"123456789\", vatNum := none, socialInsNum := none } ∧\n          Spec.post { companyRegNum := some \"123456789\", vatNum := none, socialInsNum := none }\n                    { accepted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { companyRegNum := none, vatNum := none, socialInsNum := none } ∧ ¬ Spec.post { companyRegNum := none, vatNum := none, socialInsNum := none } { accepted := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { companyRegNum := none, vatNum := none, socialInsNum := none } ∧ ¬ Spec.post { companyRegNum := none, vatNum := none, socialInsNum := none } { accepted := true } := by\n  unfold Spec; decide",
+          "why": "The output should not be accepted as the input does not provide any of the required economic operator data.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.3.3.3/I19",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "A VCD will carry a unique identifier and information about security and quality enhancing policies used by the certified VCD Service Provider when compiling the file.",
+      "text_predicate": "Requirement 2.3.3.3/I19 (Vision and Scope of the VCD > VCD simple package (Stage 2) > Major Features, Requirements and Quality Attributes > VCD transportation system):\nA VCD will carry a unique identifier and information about security and quality enhancing policies used by the certified VCD Service Provider when compiling the file.",
+      "lean_predicate": "structure Input where\n  uniqueId      : String\n  securityInfo  : String\n  qualityPolicies : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  uniqueId      : String\n  securityInfo  : String\n  qualityPolicies : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.uniqueId ≠ \"\" ∧ i.securityInfo ≠ \"\" ∧ i.qualityPolicies ≠ \"\"\n  post := fun i o => o.uniqueId = i.uniqueId ∧\n                     o.securityInfo = i.securityInfo ∧\n                     o.qualityPolicies = i.qualityPolicies\n\nexample : Spec.pre { uniqueId := \"VCD123\", securityInfo := \"Secure\", qualityPolicies := \"QualityEnhancements\" } ∧\n          Spec.post { uniqueId := \"VCD123\", securityInfo := \"Secure\", qualityPolicies := \"QualityEnhancements\" }\n                    { uniqueId := \"VCD123\", securityInfo := \"Secure\", qualityPolicies := \"QualityEnhancements\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { uniqueId := \"12345\", securityInfo := \"Secure\", qualityPolicies := \"Enhance\" } ∧ ¬ Spec.post { uniqueId := \"12345\", securityInfo := \"Secure\", qualityPolicies := \"Enhance\" } { } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { uniqueId := \"12345\", securityInfo := \"Secure\", qualityPolicies := \"Enhance\" } ∧ ¬ Spec.post { uniqueId := \"12345\", securityInfo := \"Secure\", qualityPolicies := \"Enhance\" } { } := by\n  unfold Spec; decide",
+          "why": "The requirement states that a VCD must carry a unique identifier and information about security and quality enhancing policies. An output without any of these fields violates this requirement.",
+          "outcome": "not usable: overloaded, errors \n  failed to synthesize instance of type class\n    EmptyCollection Output\n  \n  Hint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n  \n  Fields missing: `uniqueId`, `securityInfo`, `qualityPolicies`\n  \n  Hint: Add missing fields:\n     ̲u̲n̲i̲q̲u̲e̲I̲d̲ ̲:̲=̲ ̲_̲\n    ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲s̲e̲c̲u̲r̲i̲t̲y̲I̲n̲f̲o̲ ̲:̲=̲ ̲_̲\n    ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲q̲u̲a̲l̲i̲t̲y̲P̲o̲l̲i̲c̲i̲e̲s̲ ̲:̲=̲ ̲_̲ ̲"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.1.2.1/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Requirement A list of recognized public authorities that are able to issue certain attestations in a particular Member State MUST be established.",
+      "text_predicate": "Requirement 3.1.2.1/S2 (Legal, organisational and semantic framework and requirements > Organisational Framework > Organisational requirements > List of recognized public attestation bodies):\nRequirement A list of recognized public authorities that are able to issue certain attestations in a particular Member State MUST be established.",
+      "lean_predicate": "structure RecognizedAuthority where\n  name : String\n  issuingCountry : String\n  attestationType : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  authorities : List RecognizedAuthority\n  deriving DecidableEq, Repr\n\nstructure Output where\n  recognizedList : List RecognizedAuthority\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.authorities.Nodup\n  post := fun i o => o.recognizedList = i.authorities ∧\n                     (∀ a ∈ o.recognizedList, a.attestationType ≠ \"\" ∧ a.issuingCountry ≠ \"\")\n\nexample : Spec.pre { authorities := [{ name := \"Body A\", issuingCountry := \"Country X\", attestationType := \"Type 1\" },\n                                      { name := \"Body B\", issuingCountry := \"Country Y\", attestationType := \"Type 2\" }] } ∧\n          Spec.post { authorities := [{ name := \"Body A\", issuingCountry := \"Country X\", attestationType := \"Type 1\" },\n                                       { name := \"Body B\", issuingCountry := \"Country Y\", attestationType := \"Type 2\" }] }\n                    { recognizedList := [{ name := \"Body A\", issuingCountry := \"Country X\", attestationType := \"Type 1\" },\n                                         { name := \"Body B\", issuingCountry := \"Country Y\", attestationType := \"Type 2\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { authorities := [{ name := \"Example Authority\", issuingCountry := \"MemberState\", attestationType := \"TypeA\" }] } ∧ ¬ Spec.post { authorities := [{ name := \"Example Authority\", issuingCountry := \"MemberState\", attestationType := \"TypeA\" }] } { recognizedList := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { authorities := [{ name := \"Example Authority\", issuingCountry := \"MemberState\", attestationType := \"TypeA\" }] } ∧ ¬ Spec.post { authorities := [{ name := \"Example Authority\", issuingCountry := \"MemberState\", attestationType := \"TypeA\" }] } { recognizedList := [] } := by\n  unfold Spec; decide",
+          "why": "The output does not provide a list of recognized authorities, violating the requirement that a list must be established.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 12.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.1.2.2/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Requirement A list of recognized private entities that are able to issue certain attestations in a particular Member State SHOULD be established.",
+      "text_predicate": "Requirement 3.1.2.2/S2 (Legal, organisational and semantic framework and requirements > Organisational Framework > Organisational requirements > List of recognized private attestation bodies):\nRequirement A list of recognized private entities that are able to issue certain attestations in a particular Member State SHOULD be established.",
+      "lean_predicate": "structure RecognizedEntity where\n  name : String\n  memberState : String\n  attestationType : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entities : List RecognizedEntity\n  memberState : String\n  attestationType : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  recognizedEntities : List RecognizedEntity\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.memberState ≠ \"\" ∧ i.attestationType ≠ \"\"\n  post := fun i o => o.recognizedEntities.length > 0 ∧\n                     ∀ e ∈ o.recognizedEntities, e.memberState = i.memberState ∧\n                     e.attestationType = i.attestationType\n\nexample : Spec.pre { entities := [{ name := \"Entity A\", memberState := \"Germany\", attestationType := \"Type X\" }],\n                     memberState := \"Germany\", attestationType := \"Type X\" } ∧\n          Spec.post { entities := [{ name := \"Entity A\", memberState := \"Germany\", attestationType := \"Type X\" }],\n                      memberState := \"Germany\", attestationType := \"Type X\" }\n                    { recognizedEntities := [{ name := \"Entity A\", memberState := \"Germany\", attestationType := \"Type X\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { entities := [], memberState := \"Germany\", attestationType := \"Privacy\" } ∧ ¬ Spec.post { entities := [], memberState := \"Germany\", attestationType := \"Privacy\" } { recognizedEntities := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { entities := [], memberState := \"Germany\", attestationType := \"Privacy\" } ∧ ¬ Spec.post { entities := [], memberState := \"Germany\", attestationType := \"Privacy\" } { recognizedEntities := [] } := by\n  unfold Spec; decide",
+          "why": "The output does not provide any recognized entities, violating the requirement that a list of recognized entities SHOULD be established.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.1.2.8/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If an economic operator decides to participate in a particular Call for Tender he can directly retrieve the relevant criteria and evidences by using the information published in the Call for Tender.",
+      "text_predicate": "Requirement 3.1.2.8/S3 (Legal, organisational and semantic framework and requirements > Organisational Framework > Organisational requirements > Specification of subset of evidences and related criteria by the contracting authority):\nIf an economic operator decides to participate in a particular Call for Tender he can directly retrieve the relevant criteria and evidences by using the information published in the Call for Tender.",
+      "lean_predicate": "structure Input where\n  criteria : List String\n  evidences : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  relevantCriteria : List String\n  relevantEvidences : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.criteria ≠ [] ∧ i.evidences ≠ []\n  post := fun i o => o.relevantCriteria = i.criteria ∧\n                     o.relevantEvidences = i.evidences\n\nexample : Spec.pre { criteria := [\"Criterion A\", \"Criterion B\"], evidences := [\"Evidence 1\", \"Evidence 2\"] } ∧\n          Spec.post { criteria := [\"Criterion A\", \"Criterion B\"], evidences := [\"Evidence 1\", \"Evidence 2\"] }\n                    { relevantCriteria := [\"Criterion A\", \"Criterion B\"], relevantEvidences := [\"Evidence 1\", \"Evidence 2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { criteria := [\"c1\", \"c2\"], evidences := [\"e1\", \"e2\"] } ∧ ¬ Spec.post { criteria := [\"c1\", \"c2\"], evidences := [\"e1\", \"e2\"] } { relevantCriteria := [], relevantEvidences := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { criteria := [\"c1\", \"c2\"], evidences := [\"e1\", \"e2\"] } ∧ ¬ Spec.post { criteria := [\"c1\", \"c2\"], evidences := [\"e1\", \"e2\"] } { relevantCriteria := [], relevantEvidences := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the economic operator can directly retrieve the relevant criteria and evidences, not that the criteria and evidences are empty.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.1.2.9/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Description If an economic operator decides to participate in a particular Call for Tender he can directly retrieve information about relevant evidences and related criteria by using the information published in the Call for Tender.",
+      "text_predicate": "Requirement 3.1.2.9/S1 (Legal, organisational and semantic framework and requirements > Organisational Framework > Organisational requirements > Provision of subset of evidences and criteria by the Economic Operator):\nDescription If an economic operator decides to participate in a particular Call for Tender he can directly retrieve information about relevant evidences and related criteria by using the information published in the Call for Tender.",
+      "lean_predicate": "structure Input where\n  evidences : List String\n  criteria  : List String\n  relevant  : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  evidences : List String\n  criteria  : List String\n  deriving DecidableEq, Repr\n\n-- An evidence or criterion is relevant if it is in the relevant field of the input\ndef IsRelevant (e : String) (relevant : List String) : Bool :=\n  relevant.contains e\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.relevant ≠ []\n  post := fun i o => (o.evidences = i.evidences ∧ o.criteria = i.criteria) ↔\n                     (i.relevant.all (fun e => IsRelevant e i.evidences) ∧\n                      i.relevant.all (fun e => IsRelevant e i.criteria))\n\nexample : Spec.pre { evidences := [\"e1\", \"e2\"], criteria := [\"c1\", \"c2\"], relevant := [\"e1\", \"c1\"] } ∧\n          Spec.post { evidences := [\"e1\", \"e2\"], criteria := [\"c1\", \"c2\"], relevant := [\"e1\", \"c1\"] }\n                    { evidences := [\"e1\"], criteria := [\"c1\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 46.3,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` mentions `o.evidences` but still holds when `o.evidences` is `[]` instead of `[\"e1\"]` for the example input. The requirement says: \"Description If an economic operator decides to participate in a particular Call for Tender he can directly retrieve information about relevant evidences and related criteria by using the information published in the Call for Tender.\" Add a condition on `o.evidences` that this requirement fixes. `post` mentions `o.criteria` but still holds when `o.criteria` is `[]` instead of `[\"c1\"]` for the example input. The requirement says: \"Description If an economic operator decides to participate in a particular Call for Tender he can directly retrieve information about relevant evidences and related criteria by using the information published in the Call for Tender.\" Add a condition on `o.criteria` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.1.2.12/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Requirement An economic operator MUST be able to act as an issuing body for candidate statements or other evidence that cannot be directly or electronically retrieved by the VCD system.",
+      "text_predicate": "Requirement 3.1.2.12/S4 (Legal, organisational and semantic framework and requirements > Organisational Framework > Organisational requirements > Economic Operators that act as Issuing Bodies):\nRequirement An economic operator MUST be able to act as an issuing body for candidate statements or other evidence that cannot be directly or electronically retrieved by the VCD system.",
+      "lean_predicate": "structure Input where\n  economicOperatorId : Nat\n  candidateStatements : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  issuedStatements : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.economicOperatorId ≠ 0\n  post := fun i o => o.issuedStatements = i.candidateStatements\n\nexample : Spec.pre { economicOperatorId := 1, candidateStatements := [\"Statement1\", \"Statement2\"] } ∧\n          Spec.post { economicOperatorId := 1, candidateStatements := [\"Statement1\", \"Statement2\"] }\n                    { issuedStatements := [\"Statement1\", \"Statement2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { economicOperatorId := 1, candidateStatements := [\"Statement 1\", \"Statement 2\"] } ∧ ¬ Spec.post { economicOperatorId := 1, candidateStatements := [\"Statement 1\", \"Statement 2\"] } { issuedStatements := [\"Statement 1\", \"Statement 2\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { economicOperatorId := 1, candidateStatements := [\"Statement 1\", \"Statement 2\"] } ∧ ¬ Spec.post { economicOperatorId := 1, candidateStatements := [\"Statement 1\", \"Statement 2\"] } { issuedStatements := [\"Statement 1\", \"Statement 2\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that an economic operator MUST be able to act as an issuing body for candidate statements or other evidence that cannot be directly or electronically retrieved by the VCD system. A buggy system would still return the candidate statements even if they can be directly retrieved, which is not allowed.",
+          "outcome": "accepted"
+        }
+      ],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 33.8,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { economicOperatorId := 1, candidateStatements := [\"Statement 1\", \"Statement 2\"] } { issuedStatements := [\"Statement 1\", \"Statement 2\"] }` holds, but the requirement forbids this output for this input (The requirement states that an economic operator MUST be able to act as an issuing body for candidate statements or other evidence that cannot be directly or electronically retrieved by the VCD system. A buggy system would still return the candidate statements even if they can be directly retrieved, which is not allowed.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { economicOperatorId := 1, candidateStatements := [\"Statement 1\", \"Statement 2\"] } ∧ ¬ Spec.post { economicOperatorId := 1, candidateStatements := [\"Statement 1\", \"Statement 2\"] } { issuedStatements := [\"Statement 1\", \"Statement 2\"] } := by unfold Spec; decide"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.2/I5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "One component sends data unscheduled to another one (Push)",
+      "text_predicate": "Requirement 3.2.2/I5 (Legal, organisational and semantic framework and requirements > Semantic framework > Patterns for Data Representation and Utilisation):\nOne component sends data unscheduled to another one (Push)",
+      "lean_predicate": "structure Input where\n  data : String\n  isScheduled : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  received : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.received ↔ i.isScheduled = false\n\nexample : Spec.pre { data := \"unscheduledData\", isScheduled := false } ∧ Spec.post { data := \"unscheduledData\", isScheduled := false } { received := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { data := \"testData\", isScheduled := true } ∧ ¬ Spec.post { data := \"testData\", isScheduled := true } { received := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { data := \"testData\", isScheduled := true } ∧ ¬ Spec.post { data := \"testData\", isScheduled := true } { received := true } := by\n  unfold Spec; decide",
+          "why": "The output should not indicate that the data was received if it was scheduled",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 16.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.2/I6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "One component receives data unscheduled (Pull)",
+      "text_predicate": "Requirement 3.2.2/I6 (Legal, organisational and semantic framework and requirements > Semantic framework > Patterns for Data Representation and Utilisation):\nOne component receives data unscheduled (Pull)",
+      "lean_predicate": "structure Input where\n  data : String\n  isScheduled : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  processed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => (o.processed = true ↔ i.isScheduled = false)\n\nexample : Spec.pre { data := \"some data\", isScheduled := false } ∧\n          Spec.post { data := \"some data\", isScheduled := false } { processed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { data := \"some data\", isScheduled := true } ∧ ¬ Spec.post { data := \"some data\", isScheduled := true } { processed := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { data := \"some data\", isScheduled := true } ∧ ¬ Spec.post { data := \"some data\", isScheduled := true } { processed := true } := by\n  unfold Spec; decide",
+          "why": "The output should not have `processed` set to `true` if the input is scheduled",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 14.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.3.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "A selection of such documents will be included in any VCD; they will be produced by national units according to national legislation.",
+      "text_predicate": "Requirement 3.2.3.1/S1 (Legal, organisational and semantic framework and requirements > Semantic framework > Relevant standards, methodologies and initiatives for the VCD package > Records Management):\nA selection of such documents will be included in any VCD; they will be produced by national units according to national legislation.",
+      "lean_predicate": "structure Input where\n  documents : List String\n  nationalLegislation : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vcd : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.documents.Nodup ∧ i.nationalLegislation ≠ \"\"\n  post := fun i o => o.vcd.Nodup ∧\n                     (∀ d ∈ o.vcd, d ∈ i.documents) ∧\n                     (∀ d ∈ o.vcd, i.nationalLegislation = d)\n\nexample : Spec.pre { documents := [\"doc1\", \"doc2\"], nationalLegislation := \"leg1\" } ∧ Spec.post { documents := [\"doc1\", \"doc2\"], nationalLegislation := \"leg1\" } { vcd := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { documents := [\"doc1\", \"doc2\"], nationalLegislation := \"LegislationX\" } ∧ ¬ Spec.post { documents := [\"doc1\", \"doc2\"], nationalLegislation := \"LegislationX\" } { vcd := [\"doc1\", \"doc3\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { documents := [\"doc1\", \"doc2\"], nationalLegislation := \"LegislationX\" } ∧ ¬ Spec.post { documents := [\"doc1\", \"doc2\"], nationalLegislation := \"LegislationX\" } { vcd := [\"doc1\", \"doc3\"] } := by\n  unfold Spec; decide",
+          "why": "The output includes documents not produced by national units",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 11.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.3.2/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Tagged records, information and data can be processed by independent systems and applications only if the constraining tags or metadata are recognized by the different processing parties.",
+      "text_predicate": "Requirement 3.2.3.2/S1 (Legal, organisational and semantic framework and requirements > Semantic framework > Relevant standards, methodologies and initiatives for the VCD package > Metadata standards):\nTagged records, information and data can be processed by independent systems and applications only if the constraining tags or metadata are recognized by the different processing parties.",
+      "lean_predicate": "structure Input where\n  tags : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  recognized : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.tags ≠ []\n  post := fun i o => o.recognized = true ↔\n    ∃ tag ∈ i.tags, tag = \"constraining\" -- assuming \"constraining\" is a specific tag\n\nexample : Spec.pre { tags := [\"constraining\", \"other\"] } ∧\n          Spec.post { tags := [\"constraining\", \"other\"] }\n                    { recognized := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { tags := [\"constraining\", \"other\"] } ∧ ¬ Spec.post { tags := [\"constraining\", \"other\"] } { recognized := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { tags := [\"constraining\", \"other\"] } ∧ ¬ Spec.post { tags := [\"constraining\", \"other\"] } { recognized := false } := by\n  unfold Spec; decide",
+          "why": "The output does not indicate that the constraining tag is recognized, even though the input contains the required tag.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 17.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.4.4/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Description A VCD package will show its full potential only when all requested evidences (all that are necessary to prove all the requested criteria) are contained within it.",
+      "text_predicate": "Requirement 3.2.4.4/S1 (Legal, organisational and semantic framework and requirements > Semantic framework > Semantic Requirements > Method for ensuring \"Level of completeness\"):\nDescription A VCD package will show its full potential only when all requested evidences (all that are necessary to prove all the requested criteria) are contained within it.",
+      "lean_predicate": "structure Evidence where\n  name   : String\n  content : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  criteria : List String\n  evidences : List Evidence\n  deriving DecidableEq, Repr\n\nstructure Output where\n  complete : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.criteria ≠ []\n  post := fun i o => o.complete = true ↔\n    (∀ c ∈ i.criteria, ∃ e ∈ i.evidences, e.content.contains c)\n\nexample : Spec.pre { criteria := [\"criterion1\", \"criterion2\"], evidences := [] } ∧ Spec.post { criteria := [\"criterion1\", \"criterion2\"], evidences := [] } { complete := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { criteria := [\"c1\", \"c2\"], evidences := [evidence1, evidence2] } ∧ ¬ Spec.post { criteria := [\"c1\", \"c2\"], evidences := [evidence1, evidence2] } { complete := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { criteria := [\"c1\", \"c2\"], evidences := [evidence1, evidence2] } ∧ ¬ Spec.post { criteria := [\"c1\", \"c2\"], evidences := [evidence1, evidence2] } { complete := true } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure that all criteria are met by the evidences",
+          "outcome": "not usable: Expected type must not contain free variables\n  { pre := fun i => i.criteria ≠ [],\n        post := fun i o =>\n          o.complete = true ↔ ∀ (c : String), c ∈ i.criteria → ∃ e, e ∈ i.evidences ∧ e.content.contains c = true }.pre\n    { criteria := [\"c1\", \"c2\"], evidences := [evidence1, evidence2] }\n\nHint: Use the `+revert` option to automatically clean up and revert free variables"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 16.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.4.7/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Description Any VCD package that is created by a VCD system should be an artefact that can be interpreted without using specific technology.",
+      "text_predicate": "Requirement 3.2.4.7/S1 (Legal, organisational and semantic framework and requirements > Semantic framework > Semantic Requirements > Visualization of the VCD package):\nDescription Any VCD package that is created by a VCD system should be an artefact that can be interpreted without using specific technology.",
+      "lean_predicate": "structure VCDPackage where\n  content : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  vcdPackage : VCDPackage\n  deriving DecidableEq, Repr\n\nstructure Output where\n  interpretable : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.interpretable = true\n\nexample : Spec.pre { vcdPackage := { content := \"example content\" } } ∧\n          Spec.post { vcdPackage := { content := \"example content\" } }\n                    { interpretable := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { vcdPackage := { content := \"example content\" } } ∧ ¬ Spec.post { vcdPackage := { content := \"example content\" } } { interpretable := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vcdPackage := { content := \"example content\" } } ∧ ¬ Spec.post { vcdPackage := { content := \"example content\" } } { interpretable := false } := by\n  unfold Spec; decide",
+          "why": "The output should indicate that the VCD package is interpretable, but a buggy system might return false.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.4.9/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Validation values (e.g. certified \"Yes/No\" statements) should only be applied to networks where sufficient context specific data is available in order to approve this value.",
+      "text_predicate": "Requirement 3.2.4.9/S3 (Legal, organisational and semantic framework and requirements > Semantic framework > Semantic Requirements > Principle for including attestations in stage 3 and 4):\nValidation values (e.g. certified \"Yes/No\" statements) should only be applied to networks where sufficient context specific data is available in order to approve this value.",
+      "lean_predicate": "structure Network where\n  id        : Nat\n  data      : String\n  certified : Option Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  networks : List Network\n  deriving DecidableEq, Repr\n\nstructure Output where\n  networks : List Network\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.networks.Nodup\n  post := fun i o =>\n    ∀ n ∈ o.networks, n.certified = some true ↔\n      (n.data ≠ \"\" ∧ n.data.toList.all (fun c => c.isAlphanum || c == ' '))\n\nexample : Spec.pre { networks := [{ id := 1, data := \"context1\", certified := some true }, { id := 2, data := \"context2\", certified := some false }] } ∧ Spec.post { networks := [{ id := 1, data := \"context1\", certified := some true }, { id := 2, data := \"context2\", certified := some false }] } { networks := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { networks := [{ id := 1, data := \"\", certified := none }] } ∧ ¬ Spec.post { networks := [{ id := 1, data := \"\", certified := none }] } { networks := [{ id := 1, data := \"\", certified := some true }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { networks := [{ id := 1, data := \"\", certified := none }] } ∧ ¬ Spec.post { networks := [{ id := 1, data := \"\", certified := none }] } { networks := [{ id := 1, data := \"\", certified := some true }] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that validation values should only be applied to networks where sufficient context-specific data is available. The output below violates this by certifying a network without sufficient data.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 31.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "3.2.4.9/S9",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Requirement If attestations are described sufficiently in multiple lingual versions they SHOULD be included first to stages 3 and 4.",
+      "text_predicate": "Requirement 3.2.4.9/S9 (Legal, organisational and semantic framework and requirements > Semantic framework > Semantic Requirements > Principle for including attestations in stage 3 and 4):\nRequirement If attestations are described sufficiently in multiple lingual versions they SHOULD be included first to stages 3 and 4.",
+      "lean_predicate": "structure Input where\n  attestations : List String\n  language     : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  included : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.attestations.length > 0\n  post := fun i o => o.included = true ↔\n    (i.language = \"en\" ∧ i.attestations.length > 1) ∨\n    (i.language ≠ \"en\" ∧ i.attestations.length > 0)\n\nexample : Spec.pre { attestations := [\"att1\", \"att2\"], language := \"en\" } ∧\n          Spec.post { attestations := [\"att1\", \"att2\"], language := \"en\" }\n                    { included := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { attestations := [\"attestation1\", \"attestation2\"], language := \"en\" } ∧ ¬ Spec.post { attestations := [\"attestation1\", \"attestation2\"], language := \"en\" } { included := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { attestations := [\"attestation1\", \"attestation2\"], language := \"en\" } ∧ ¬ Spec.post { attestations := [\"attestation1\", \"attestation2\"], language := \"en\" } { included := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that if attestations are described sufficiently in multiple lingual versions, they SHOULD be included first to stages 3 and 4. A wrong output would be if the attestations are in multiple versions but are not included.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.4.9/S11",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Instead such an attestation can be included into VCD stages 3 and 4 if it is sufficiently described through context specific data in multilingual versions (e.g.",
+      "text_predicate": "Requirement 3.2.4.9/S11 (Legal, organisational and semantic framework and requirements > Semantic framework > Semantic Requirements > Principle for including attestations in stage 3 and 4):\nInstead such an attestation can be included into VCD stages 3 and 4 if it is sufficiently described through context specific data in multilingual versions (e.g.",
+      "lean_predicate": "structure Input where\n  attestation : String\n  contextData : List String\n  languages   : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  included : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.attestation ≠ \"\" ∧ i.contextData.Nodup ∧ i.languages.Nodup\n  post := fun i o => (o.included = true ↔\n    (i.contextData.length > 0 ∧\n     i.languages.length > 0 ∧\n     i.contextData.all (fun cd => i.attestation.toList.all (fun c => cd.contains c)) = true))\n\nexample : Spec.pre { attestation := \"This is an attestation\", contextData := [], languages := [\"en\", \"fr\"] } ∧ Spec.post { attestation := \"This is an attestation\", contextData := [], languages := [\"en\", \"fr\"] } { included := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { attestation := \"example\", contextData := [\"ex\", \"am\"], languages := [\"en\"] } ∧ ¬ Spec.post { attestation := \"example\", contextData := [\"ex\", \"am\"], languages := [\"en\"] } { included := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { attestation := \"example\", contextData := [\"ex\", \"am\"], languages := [\"en\"] } ∧ ¬ Spec.post { attestation := \"example\", contextData := [\"ex\", \"am\"], languages := [\"en\"] } { included := true } := by\n  unfold Spec; decide",
+          "why": "The attestation is not sufficiently described through context-specific data in multilingual versions.",
+          "outcome": "not usable: Tactic `decide` failed for proposition\n  ¬{ pre := fun i => i.attestation ≠ \"\" ∧ i.contextData.Nodup ∧ i.languages.Nodup,\n          post := fun i o =>\n            o.included = true ↔\n              i.contextData.length > 0 ∧\n                i.languages.length > 0 ∧\n                  (i.contextData.all fun cd => i.attestation.toList.all fun c => cd.contains c) = true }.post\n      { attestation := \"example\", contextData := [\"ex\", \"am\"], languages := [\"en\"] } { included := true }\nbecause its `Decidable` instance\n  instDecidableNot\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `decEq`, `instDecidableAnd`, `instDecidableEqBitVec`, `instDecidableEqBool`, `instDecidableEqFin`, `instDecidableEqNat`, `instDecidableEqUInt8`, `instDecidableIff`, `instDecidableNot`, `instDecidableOr`, `BitVec.decEq`, `Bool.decEq`, `Classical.propDecidable`, `Nat.decEq`, `Nat.decLe`, `Nat.decLt`, `UInt32.decLe`, and `UInt8.decEq`, reduction got stuck at the `Decidable` instance\n  match\n    { attestation := \"example\", contextData := [\"ex\", \"am\"], languages := [\"en\"] }.contextData.all fun cd =>\n      { attestation := \"example\", contextData := [\"ex\", \"am\"], languages := [\"en\"] }.attestation.toList.all fun c =>\n        cd.contains c,\n    true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 48.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.2.4.10/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "As it is quite complex to establish a common and unique classification scheme cross-border and cross-sector, business document instances should be carry metadata about classification schemes they use.\"",
+      "text_predicate": "Requirement 3.2.4.10/S4 (Legal, organisational and semantic framework and requirements > Semantic framework > Semantic Requirements > Classification schemes awareness):\nAs it is quite complex to establish a common and unique classification scheme cross-border and cross-sector, business document instances should be carry metadata about classification schemes they use.\"",
+      "lean_predicate": "structure ClassificationScheme where\n  id : String\n  description : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  documentMetadata : List String\n  classificationSchemes : List ClassificationScheme\n  deriving DecidableEq, Repr\n\nstructure Output where\n  documentMetadata : List String\n  classificationSchemes : List ClassificationScheme\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.documentMetadata ≠ []\n  post := fun i o =>\n    o.documentMetadata = i.documentMetadata ∧\n    o.classificationSchemes = i.classificationSchemes ∧\n    (∀ s ∈ o.classificationSchemes, s.id ∈ i.documentMetadata)\n\nexample : Spec.pre { documentMetadata := [\"scheme1\", \"scheme2\"], classificationSchemes := [{ id := \"scheme1\", description := \"Description 1\" }, { id := \"scheme2\", description := \"Description 2\" }] } ∧\n          Spec.post { documentMetadata := [\"scheme1\", \"scheme2\"], classificationSchemes := [{ id := \"scheme1\", description := \"Description 1\" }, { id := \"scheme2\", description := \"Description 2\" }] }\n                    { documentMetadata := [\"scheme1\", \"scheme2\"], classificationSchemes := [{ id := \"scheme1\", description := \"Description 1\" }, { id := \"scheme2\", description := \"Description 2\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { documentMetadata := [\"doc1\", \"doc2\"], classificationSchemes := [{ id := \"scheme1\", description := \"desc1\" }, { id := \"scheme2\", description := \"desc2\" }] } ∧ ¬ Spec.post { documentMetadata := [\"doc1\", \"doc2\"], classificationSchemes := [{ id := \"scheme1\", description := \"desc1\" }, { id := \"scheme2\", description := \"desc2\" }] } { documentMetadata := [\"doc1\", \"doc2\"], classificationSchemes := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { documentMetadata := [\"doc1\", \"doc2\"], classificationSchemes := [{ id := \"scheme1\", description := \"desc1\" }, { id := \"scheme2\", description := \"desc2\" }] } ∧ ¬ Spec.post { documentMetadata := [\"doc1\", \"doc2\"], classificationSchemes := [{ id := \"scheme1\", description := \"desc1\" }, { id := \"scheme2\", description := \"desc2\" }] } { documentMetadata := [\"doc1\", \"doc2\"], classificationSchemes := [] } := by\n  unfold Spec; decide",
+          "why": "The output does not include any classification schemes, which violates the requirement that business document instances should carry metadata about the classification schemes they use.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 33.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.3.2.2/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "It has to be defined whether a VCD package can have its own validity or if its validity is only based on the contained information.",
+      "text_predicate": "Requirement 3.3.2.2/S2 (Legal, organisational and semantic framework and requirements > Legal framework > Legal Requirements > Minimum period of validity of VCD package):\nIt has to be defined whether a VCD package can have its own validity or if its validity is only based on the contained information.",
+      "lean_predicate": "structure Input where\n  vcd_package_validity : Nat\n  contained_information_validity : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  validity : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => (o.validity = i.vcd_package_validity ↔\n    i.vcd_package_validity = 0 ∨ i.vcd_package_validity = i.contained_information_validity) ∧\n                     (o.validity = 0 ∨ o.validity = i.contained_information_validity)\n\nexample : Spec.pre { vcd_package_validity := 0, contained_information_validity := 30 } ∧ Spec.post { vcd_package_validity := 0, contained_information_validity := 30 } { validity := 0 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { vcd_package_validity := 5, contained_information_validity := 10 } ∧ ¬ Spec.post { vcd_package_validity := 5, contained_information_validity := 10 } { validity := 15 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vcd_package_validity := 5, contained_information_validity := 10 } ∧ ¬ Spec.post { vcd_package_validity := 5, contained_information_validity := 10 } { validity := 15 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the validity of the VCD package must either be based on its own validity or the contained information. A buggy system might return a validity period that is neither of these, which is not allowed.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 15.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ]
+      }
+    },
+    {
+      "id": "3.3.2.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Description The use of context-specific formats that include multi-lingual versions of attestations should ensure that an automated transformation from one language version into another language version delivers results that have from the viewpoint of official translations, a similar legal status.",
+      "text_predicate": "Requirement 3.3.2.3/S1 (Legal, organisational and semantic framework and requirements > Legal framework > Legal Requirements > Equivalence between automated transformation and official translation of attestations):\nDescription The use of context-specific formats that include multi-lingual versions of attestations should ensure that an automated transformation from one language version into another language version delivers results that have from the viewpoint of official translations, a similar legal status.",
+      "lean_predicate": "structure Input where\n  attestation : String\n  sourceLang  : String\n  targetLang  : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  transformed : String\n  legalStatus  : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.sourceLang ≠ \"\" ∧ i.targetLang ≠ \"\"\n  post := fun i o => o.legalStatus ↔\n    (i.sourceLang = \"en\" ∧ i.targetLang = \"fr\" → o.transformed.toList.all Char.isAlphanum = true) ∧\n    (i.sourceLang = \"fr\" ∧ i.targetLang = \"en\" → o.transformed.toList.all Char.isAlphanum = true) ∧\n    (i.sourceLang = \"en\" ∧ i.targetLang = \"es\" → o.transformed.toList.all Char.isAlphanum = true) ∧\n    (i.sourceLang = \"es\" ∧ i.targetLang = \"en\" → o.transformed.toList.all Char.isAlphanum = true)\n\nexample : Spec.pre { attestation := \"Sample attestation\", sourceLang := \"en\", targetLang := \"fr\" } ∧ Spec.post { attestation := \"Sample attestation\", sourceLang := \"en\", targetLang := \"fr\" } { transformed := \"Sample attestation\", legalStatus := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { attestation := \"Sample attestation\", sourceLang := \"en\", targetLang := \"fr\" } ∧ ¬ Spec.post { attestation := \"Sample attestation\", sourceLang := \"en\", targetLang := \"fr\" } { transformed := \"Sample attestation\", legalStatus := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { attestation := \"Sample attestation\", sourceLang := \"en\", targetLang := \"fr\" } ∧ ¬ Spec.post { attestation := \"Sample attestation\", sourceLang := \"en\", targetLang := \"fr\" } { transformed := \"Sample attestation\", legalStatus := true } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure that the transformed text has a similar legal status as an official translation.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 27.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.3.2.4/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement.",
+      "text_predicate": "Requirement 3.3.2.4/S2 (Legal, organisational and semantic framework and requirements > Legal framework > Legal Requirements > Legal effect of subset criteria and evidences specified by the contracting autho):\nThe Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement.",
+      "lean_predicate": "structure Input where\n  criteria : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  callForTender : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.criteria.length > 0\n  post := fun i o => o.callForTender.contains \"The Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement.\" ∧\n                     (∀ c ∈ i.criteria, o.callForTender.contains c)\n\nexample : Spec.pre { criteria := [\"Criterion A\", \"Criterion B\"] } ∧\n          Spec.post { criteria := [\"Criterion A\", \"Criterion B\"] }\n                     { callForTender := \"The Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement. Criterion A. Criterion B.\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 28.6,
+      "error": "<generated>:20:15: error: Tactic `decide` failed for proposition\n  { pre := fun i => i.criteria.length > 0,\n          post := fun i o =>\n            o.callForTender.contains\n                  \"The Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement.\" =\n                true ∧\n              ∀ (c : String), c ∈ i.criteria → o.callForTender.contains c = true }.pre\n      { criteria := [\"Criterion A\", \"Criterion B\"] } ∧\n    { pre := fun i => i.criteria.length > 0,\n          post := fun i o =>\n            o.callForTender.contains\n                  \"The Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement.\" =\n                true ∧\n              ∀ (c : String), c ∈ i.criteria → o.callForTender.contains c = true }.post\n      { criteria := [\"Criterion A\", \"Criterion B\"] }\n      {\n        callForTender :=\n          \"The Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement. Criterion A. Criterion B.\" }\nbecause its `Decidable` instance\n  instDecidableAnd\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `instDecidableAnd`, `instDecidableEqBool`, `Bool.decEq`, `Classical.propDecidable`, `Nat.decLe`, and `Nat.decLt`, reduction got stuck at the `Decidable` instance\n  match\n    {\n            callForTender :=\n              \"The Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement. Criterion A. Criterion B.\" }.callForTender.contains\n      \"The Call for Tender should contain the definition of specific criteria on qualitative selection and exclusion that are relevant to this particular procurement.\",\n    true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.3.2.4/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If an economic operator decides to participate in a particular procurement procedure he can directly retrieve the relevant criteria by using the information published in the contract notice.",
+      "text_predicate": "Requirement 3.3.2.4/S3 (Legal, organisational and semantic framework and requirements > Legal framework > Legal Requirements > Legal effect of subset criteria and evidences specified by the contracting autho):\nIf an economic operator decides to participate in a particular procurement procedure he can directly retrieve the relevant criteria by using the information published in the contract notice.",
+      "lean_predicate": "structure Input where\n  criteria : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  relevant : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.criteria ≠ []\n  post := fun i o => o.relevant = i.criteria\n\nexample : Spec.pre { criteria := [\"technical\", \"financial\"] } ∧\n          Spec.post { criteria := [\"technical\", \"financial\"] }\n                    { relevant := [\"technical\", \"financial\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { criteria := [\"criteria1\", \"criteria2\"] } ∧ ¬ Spec.post { criteria := [\"criteria1\", \"criteria2\"] } { relevant := [\"criteria1\", \"criteria3\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { criteria := [\"criteria1\", \"criteria2\"] } ∧ ¬ Spec.post { criteria := [\"criteria1\", \"criteria2\"] } { relevant := [\"criteria1\", \"criteria3\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the economic operator can directly retrieve the relevant criteria, so the output should match the input criteria exactly.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.3.2.9/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Requirement Special legal regulations for evidences MUST be considered (e.g. for extract from the register of conviction).",
+      "text_predicate": "Requirement 3.3.2.9/S3 (Legal, organisational and semantic framework and requirements > Legal framework > Legal Requirements > Legal requirements regarding the collection of evidences):\nRequirement Special legal regulations for evidences MUST be considered (e.g. for extract from the register of conviction).",
+      "lean_predicate": "structure Input where\n  evidence : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    i.evidence = \"extract from the register of conviction\" ∨\n    i.evidence = \"other special legal regulation\"\n\nexample : Spec.pre { evidence := \"extract from the register of conviction\" } ∧\n          Spec.post { evidence := \"extract from the register of conviction\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { evidence := \"extract from the register of conviction\" } ∧ ¬ Spec.post { evidence := \"extract from the register of conviction\" } { valid := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 29.7,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { evidence := \"extract from the register of conviction\" } { valid := true }` holds, but the requirement forbids this output for this input (The output does not consider the special legal regulation \"extract from the register of conviction\"). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { evidence := \"extract from the register of conviction\" } ∧ ¬ Spec.post { evidence := \"extract from the register of conviction\" } { valid := true } := by unfold Spec; decide"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.3.2.12/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Requirement A trust model and trust system MUST be defined from a legal point of view for every process which includes the roles and responsibilities of the entities involved.",
+      "text_predicate": "Requirement 3.3.2.12/S6 (Legal, organisational and semantic framework and requirements > Legal framework > Legal Requirements > Trust model between the entities involved):\nRequirement A trust model and trust system MUST be defined from a legal point of view for every process which includes the roles and responsibilities of the entities involved.",
+      "lean_predicate": "structure Input where\n  rolesResponsibilities : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  trustModel : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.rolesResponsibilities ≠ \"\"\n  post := fun i o => o.trustModel = i.rolesResponsibilities\n\nexample : Spec.pre { rolesResponsibilities := \"Entity A is responsible for data processing, Entity B for data storage.\" } ∧\n          Spec.post { rolesResponsibilities := \"Entity A is responsible for data processing, Entity B for data storage.\" }\n                    { trustModel := \"Entity A is responsible for data processing, Entity B for data storage.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { rolesResponsibilities := \"Defined roles and responsibilities\" } ∧ ¬ Spec.post { rolesResponsibilities := \"Defined roles and responsibilities\" } { trustModel := \"Unlawfully defined trust model\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { rolesResponsibilities := \"Defined roles and responsibilities\" } ∧ ¬ Spec.post { rolesResponsibilities := \"Defined roles and responsibilities\" } { trustModel := \"Unlawfully defined trust model\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that a trust model MUST be defined from a legal point of view, which implies that the trust model should be based on legal, organisational, and semantic frameworks. A buggy system might return a trust model that is not legally defined.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.4.2.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Description Work package 2 will use the PEPPOL infrastructure for discovering addressing information which is typically stored in a registry.",
+      "text_predicate": "Requirement 3.4.2.3/S1 (Legal, organisational and semantic framework and requirements > Technical Framework (Infrastructure specific) > Technical Requirements > Allocation of identifiers):\nDescription Work package 2 will use the PEPPOL infrastructure for discovering addressing information which is typically stored in a registry.\nThis requirement prescribes HOW to build something (a method, algorithm or\ntechnology). Record that in a `-- IMPL:` comment above `def Spec`, and specify\nonly the observable result in `pre`/`post`.",
+      "lean_predicate": "structure Input where\n  identifier : String\n  registry   : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  found     : Bool\n  address   : Option String\n  deriving DecidableEq, Repr\n\n-- IMPL: Linear search in the registry\ndef Spec : Contract Input Output where\n  pre  := fun i => i.identifier ≠ \"\"\n  post := fun i o => o.found ↔ ∃ a ∈ i.registry, a = i.identifier ∧\n                     (o.found = true → o.address = some a)\n\nexample : Spec.pre { identifier := \"ID123\", registry := [\"ID123\", \"ID456\"] } ∧\n          Spec.post { identifier := \"ID123\", registry := [\"ID123\", \"ID456\"] }\n                    { found := true, address := some \"ID123\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { identifier := \"abc123\", registry := [\"def456\", \"ghi789\"] } ∧ ¬ Spec.post { identifier := \"abc123\", registry := [\"def456\", \"ghi789\"] } { found := true, address := none } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { identifier := \"abc123\", registry := [\"def456\", \"ghi789\"] } ∧ ¬ Spec.post { identifier := \"abc123\", registry := [\"def456\", \"ghi789\"] } { found := true, address := none } := by\n  unfold Spec; decide",
+          "why": "The output should indicate that the identifier was not found in the registry, but a buggy system might return found = true and address = none.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.4.2.4/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In the public procurement business process, as in other electronic business processes, electronic identity is a key element for two main purposes: Avoiding unauthorized use of individuals identity Assuring to administrations that individuals are the persons they claim to be and have the mandate they claim to have\" (Bausa O. and Boujraf A. 2009) Requirement Every party participating MUST be uniquely identifiable",
+      "text_predicate": "Requirement 3.4.2.4/S3 (Legal, organisational and semantic framework and requirements > Technical Framework (Infrastructure specific) > Technical Requirements > Identity):\nIn the public procurement business process, as in other electronic business processes, electronic identity is a key element for two main purposes: Avoiding unauthorized use of individuals identity Assuring to administrations that individuals are the persons they claim to be and have the mandate they claim to have\" (Bausa O. and Boujraf A. 2009) Requirement Every party participating MUST be uniquely identifiable",
+      "lean_predicate": "structure Input where\n  partyId : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  partyId : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.partyId ≠ \"\"\n  post := fun i o => (o.partyId = i.partyId ↔ o.partyId ≠ \"uniqueID123\")\n\nexample : Spec.pre { partyId := \"12345\" } ∧ Spec.post { partyId := \"12345\" } { partyId := \"12345\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { partyId := \"uniqueID123\" } ∧ ¬ Spec.post { partyId := \"uniqueID123\" } { partyId := \"notUniqueID\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { partyId := \"uniqueID123\" } ∧ ¬ Spec.post { partyId := \"uniqueID123\" } { partyId := \"notUniqueID\" } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure that every party participating is uniquely identifiable",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 34.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.4.2.6/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "(Bausa O. and Boujraf A. 2009) Requirement In stage 4 it MUST be possible to discover the verified electronic address for an identified party.",
+      "text_predicate": "Requirement 3.4.2.6/S3 (Legal, organisational and semantic framework and requirements > Technical Framework (Infrastructure specific) > Technical Requirements > Discovery):\n(Bausa O. and Boujraf A. 2009) Requirement In stage 4 it MUST be possible to discover the verified electronic address for an identified party.",
+      "lean_predicate": "structure Input where\n  partyId : String\n  verifiedAddresses : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  verifiedAddress : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.partyId ≠ \"\" ∧ i.verifiedAddresses.Nodup\n  post := fun i o => o.verifiedAddress ∈ i.verifiedAddresses ∧\n                     (o.verifiedAddress = i.verifiedAddresses.head ↔ i.verifiedAddresses.length = 1)\n\nexample : Spec.pre { partyId := \"12345\", verifiedAddresses := [\"addr1@example.com\", \"addr2@example.com\"] } ∧\n          Spec.post { partyId := \"12345\", verifiedAddresses := [\"addr1@example.com\", \"addr2@example.com\"] }\n                    { verifiedAddress := \"addr1@example.com\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 34.9,
+      "error": "<generated>:16:42: error: Type mismatch\n  i.verifiedAddresses.head\nhas type\n  i.verifiedAddresses ≠ [] → String\nbut is expected to have type\n  String\n<generated>:18:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.4.2.8/S8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Requirement The PEPPOL infrastructure SHOULD have the capability to submit a bid which contains a VCD.",
+      "text_predicate": "Requirement 3.4.2.8/S8 (Legal, organisational and semantic framework and requirements > Technical Framework (Infrastructure specific) > Technical Requirements > Use of PEPPOL infrastructure to submit a VCD (next to a bid)):\nRequirement The PEPPOL infrastructure SHOULD have the capability to submit a bid which contains a VCD.",
+      "lean_predicate": "structure Input where\n  bid : String\n  vcd : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  submitted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.submitted = true ↔\n    (i.vcd ≠ \"\" ∧ i.bid ≠ \"\")\n\nexample : Spec.pre { bid := \"BID123\", vcd := \"VCD456\" } ∧\n          Spec.post { bid := \"BID123\", vcd := \"VCD456\" }\n                    { submitted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { bid := \"testBid\", vcd := \"testVCD\" } ∧ ¬ Spec.post { bid := \"testBid\", vcd := \"testVCD\" } { submitted := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { bid := \"testBid\", vcd := \"testVCD\" } ∧ ¬ Spec.post { bid := \"testBid\", vcd := \"testVCD\" } { submitted := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the PEPPOL infrastructure SHOULD have the capability to submit a bid which contains a VCD. It does not mandate that every bid with a VCD must be submitted, hence a bid with a VCD could still fail to be submitted.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3.4.2.9/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Specifically, contracting authorities must provide a way to receive electronic tenders and ensure those electronic tenders are not accessed until the prescribed time for opening them.",
+      "text_predicate": "Requirement 3.4.2.9/S2 (Legal, organisational and semantic framework and requirements > Technical Framework (Infrastructure specific) > Technical Requirements > Confidentiality):\nSpecifically, contracting authorities must provide a way to receive electronic tenders and ensure those electronic tenders are not accessed until the prescribed time for opening them.",
+      "lean_predicate": "structure Input where\n  tenders : List String\n  openingTime : Nat\n  currentTimestamp : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  tenders : List String\n  accepted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.currentTimestamp < i.openingTime\n  post := fun i o => (o.accepted = true ↔\n    i.currentTimestamp < i.openingTime ∧\n    ∀ t ∈ i.tenders, o.tenders.contains t) ∧\n    (o.accepted = false → o.tenders = [])\n\nexample : Spec.pre { tenders := [\"t1\", \"t2\"], openingTime := 100, currentTimestamp := 50 } ∧\n          Spec.post { tenders := [\"t1\", \"t2\"], openingTime := 100, currentTimestamp := 50 }\n                    { accepted := true, tenders := [\"t1\", \"t2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 44.4,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { tenders := [\"tender1\", \"tender2\"], openingTime := 100, currentTimestamp := 50 } { tenders := [\"tender1\", \"tender2\"], accepted := true }` holds, but the requirement forbids this output for this input (The requirement forbids accessing tenders before the opening time, but the output accepts the tenders early.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "compiles, but the generation loop's own checks failed: L0.5: your spec accepts a forbidden behaviour: `Spec.post { tenders := [\"tender1\", \"tender2\"], openingTime := 100, currentTimestamp := 50 } { tenders := [\"tender1\", \"tender2\"], accepted := true }` holds, but the requirement forbids this output for this input (The requirement forbids accessing tender"
+        ]
+      }
+    },
+    {
+      "id": "4.1.2/S8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Even if a country hasn't defined a pilot implementation for a VCD it can receive and interpret a VCD according to the information provided by the pre-VCD mapping tool.",
+      "text_predicate": "Requirement 4.1.2/S8 (High-level concepts for pilot implementations > Pre-VCD mapping tool > Certificates issued on the eligibility of tenderers and official lists of economic operators):\nEven if a country hasn't defined a pilot implementation for a VCD it can receive and interpret a VCD according to the information provided by the pre-VCD mapping tool.",
+      "lean_predicate": "structure Input where\n  vcdInfo : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid   : Bool\n  country : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => (o.valid = true ↔\n    (i.vcdInfo ≠ \"\" ∧\n     (o.country = \"CountryA\" ∨ o.country = \"CountryB\" ∨ o.country = \"CountryC\")))\n\nexample : Spec.pre { vcdInfo := \"VCD data\" } ∧\n          Spec.post { vcdInfo := \"VCD data\" }\n                    { valid := true, country := \"CountryA\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { vcdInfo := \"VCD123\" } ∧ ¬ Spec.post { vcdInfo := \"VCD123\" } { valid := true, country := \"CountryX\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vcdInfo := \"VCD123\" } ∧ ¬ Spec.post { vcdInfo := \"VCD123\" } { valid := true, country := \"CountryX\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that even if a country hasn't defined a pilot implementation, it can still receive and interpret a VCD. However, the output should not indicate that the country is one of the specified countries (CountryA, CountryB, or CountryC) if it hasn't defined a pilot implementation.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ]
+      }
+    },
+    {
+      "id": "4.2/S9",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "With a total of eight pilot implementations plus the European Service Provider implementation of the pre-VCD mapping tool, the WP 2 will reach a wide geographical spread as well as a profound proof of the overall VCD concept.",
+      "text_predicate": "Requirement 4.2/S9 (High-level concepts for pilot implementations):\nWith a total of eight pilot implementations plus the European Service Provider implementation of the pre-VCD mapping tool, the WP 2 will reach a wide geographical spread as well as a profound proof of the overall VCD concept.",
+      "lean_predicate": "structure Input where\n  pilotImplementations : List String\n  europeanServiceProvider : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  geographicalSpread : Bool\n  proofOfConcept : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.pilotImplementations.length = 8 ∧ i.europeanServiceProvider\n  post := fun i o => (o.geographicalSpread = true ↔\n    i.pilotImplementations.contains \"EU\" ∨\n    i.pilotImplementations.contains \"US\" ∨\n    i.pilotImplementations.contains \"ASIA\" ∨\n    i.pilotImplementations.contains \"AFRICA\" ∨\n    i.pilotImplementations.contains \"AUSTRALIA\" ∨\n    i.pilotImplementations.contains \"LATAM\" ∨\n    i.pilotImplementations.contains \"MIDDLE_EAST\" ∨\n    i.pilotImplementations.contains \"OTHER_REGION\") ∧\n    (o.proofOfConcept = true ↔\n    i.pilotImplementations.length ≥ 1)\n\nexample : Spec.pre { pilotImplementations := [\"EU\", \"US\", \"ASIA\", \"AFRICA\", \"AUSTRALIA\", \"LATAM\", \"MIDDLE_EAST\", \"OTHER_REGION\"], europeanServiceProvider := true } ∧\n          Spec.post { pilotImplementations := [\"EU\", \"US\", \"ASIA\", \"AFRICA\", \"AUSTRALIA\", \"LATAM\", \"MIDDLE_EAST\", \"OTHER_REGION\"], europeanServiceProvider := true }\n                    { geographicalSpread := true, proofOfConcept := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { pilotImplementations := [\"EU\", \"US\", \"ASIA\", \"AFRICA\", \"AUSTRALIA\", \"LATAM\", \"MIDDLE_EAST\", \"OTHER_REGION\"], europeanServiceProvider := true } ∧ ¬ Spec.post { pilotImplementations := [\"EU\", \"US\", \"ASIA\", \"AFRICA\", \"AUSTRALIA\", \"LATAM\", \"MIDDLE_EAST\", \"OTHER_REGION\"], europeanServiceProvider := true } { geographicalSpread := false, proofOfConcept := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { pilotImplementations := [\"EU\", \"US\", \"ASIA\", \"AFRICA\", \"AUSTRALIA\", \"LATAM\", \"MIDDLE_EAST\", \"OTHER_REGION\"], europeanServiceProvider := true } ∧ ¬ Spec.post { pilotImplementations := [\"EU\", \"US\", \"ASIA\", \"AFRICA\", \"AUSTRALIA\", \"LATAM\", \"MIDDLE_EAST\", \"OTHER_REGION\"], europeanServiceProvider := true } { geographicalSpread := false, proofOfConcept := true } := by\n  unfold Spec; decide",
+          "why": "The output does not show a geographical spread even though the pilot implementations include \"EU\", \"US\", and \"ASIA\".",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.2/S10",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Since the VCD implementation also touches national demands for existing infrastructures to access and retrieve evidences from issuing bodies (see the lower part of Country A in Figure 21), such infrastructures and required identity and access management for accessing local issuing bodies are considered as parts of national infrastructures where PEPPOL will embark on.",
+      "text_predicate": "Requirement 4.2/S10 (High-level concepts for pilot implementations):\nSince the VCD implementation also touches national demands for existing infrastructures to access and retrieve evidences from issuing bodies (see the lower part of Country A in Figure 21), such infrastructures and required identity and access management for accessing local issuing bodies are considered as parts of national infrastructures where PEPPOL will embark on.",
+      "lean_predicate": "structure Input where\n  evidences : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  retrieved : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.evidences.Nodup\n  post := fun i o => o.retrieved = true ↔\n    ∃ e ∈ i.evidences, e ≠ \"\"\n\nexample : Spec.pre { evidences := [\"e1\", \"e2\"] } ∧\n          Spec.post { evidences := [\"e1\", \"e2\"] }\n                    { retrieved := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { evidences := [\"evidence1\", \"evidence2\"] } ∧ ¬ Spec.post { evidences := [\"evidence1\", \"evidence2\"] } { retrieved := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { evidences := [\"evidence1\", \"evidence2\"] } ∧ ¬ Spec.post { evidences := [\"evidence1\", \"evidence2\"] } { retrieved := false } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids returning `retrieved = false` for a non-empty list of evidences.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.1/I2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "flexibility to meet the dynamics of the organisational and legal changes and",
+      "text_predicate": "Requirement 4.3.1/I2 (High-level concepts for pilot implementations > Austrian implementation and piloting proposal > Implementation approach):\nflexibility to meet the dynamics of the organisational and legal changes and",
+      "lean_predicate": "structure Config where\n  settings : List String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  settings : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  updatedSettings : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.settings.Nodup\n  post := fun i o => o.updatedSettings = i.settings ++ (i.settings.filter (fun s => ¬ o.updatedSettings.contains s))\n\nexample : Spec.pre { settings := [] } ∧ Spec.post { settings := [] } { updatedSettings := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { settings := [\"A\", \"B\", \"C\"] } ∧ ¬ Spec.post { settings := [\"A\", \"B\", \"C\"] } { updatedSettings := [\"A\", \"B\", \"C\", \"D\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { settings := [\"A\", \"B\", \"C\"] } ∧ ¬ Spec.post { settings := [\"A\", \"B\", \"C\"] } { updatedSettings := [\"A\", \"B\", \"C\", \"D\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids updating settings that are already in the updatedSettings list.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 15.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.1/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Based on the information retrieved, the Austrian VCD implementation will deliver a VCD package containing all the evidences that are necessary to prove the selection and qualification criteria requested by any contracting authority regardless of its nationality (i.e. in the case of the scenario example provided in Figure 22: all evidences and declarations to be provided by TSE1, TSE2 and TSE3 to fulfil the requests of the Norwegian contracting authority).",
+      "text_predicate": "Requirement 4.3.1/S6 (High-level concepts for pilot implementations > Austrian implementation and piloting proposal > Implementation approach):\nBased on the information retrieved, the Austrian VCD implementation will deliver a VCD package containing all the evidences that are necessary to prove the selection and qualification criteria requested by any contracting authority regardless of its nationality (i.e. in the case of the scenario example provided in Figure 22: all evidences and declarations to be provided by TSE1, TSE2 and TSE3 to fulfil the requests of the Norwegian contracting authority).",
+      "lean_predicate": "structure Input where\n  evidences : List String\n  declarations : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vcdPackage : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.evidences.Nodup ∧ i.declarations.Nodup\n  post := fun i o => o.vcdPackage = i.evidences ++ i.declarations\n\nexample : Spec.pre { evidences := [\"e1\", \"e2\"], declarations := [\"d1\", \"d2\"] } ∧\n          Spec.post { evidences := [\"e1\", \"e2\"], declarations := [\"d1\", \"d2\"] }\n                    { vcdPackage := [\"e1\", \"e2\", \"d1\", \"d2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { evidences := [\"evidence1\", \"evidence2\"], declarations := [\"declaration1\", \"declaration2\"] } ∧ ¬ Spec.post { evidences := [\"evidence1\", \"evidence2\"], declarations := [\"declaration1\", \"declaration2\"] } { vcdPackage := [\"evidence1\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { evidences := [\"evidence1\", \"evidence2\"], declarations := [\"declaration1\", \"declaration2\"] } ∧ ¬ Spec.post { evidences := [\"evidence1\", \"evidence2\"], declarations := [\"declaration1\", \"declaration2\"] } { vcdPackage := [\"evidence1\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the VCD package must contain all necessary evidences and declarations, regardless of the contracting authority's nationality. A buggy system might return a VCD package that is missing some evidences or declarations.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.1/S8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "This way, the Austrian VCD implementation will ensure full pan-European interoperability and will lead to a dynamic situation regarding the legal rule set and its flexibility to adapt to legal and organisational changes.",
+      "text_predicate": "Requirement 4.3.1/S8 (High-level concepts for pilot implementations > Austrian implementation and piloting proposal > Implementation approach):\nThis way, the Austrian VCD implementation will ensure full pan-European interoperability and will lead to a dynamic situation regarding the legal rule set and its flexibility to adapt to legal and organisational changes.",
+      "lean_predicate": "structure Input where\n  legalRules : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  legalRules : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.legalRules.Nodup\n  post := fun i o => o.legalRules = i.legalRules ∧\n                     (∃ r ∈ o.legalRules, r.length > 10) ∧\n                     (∀ r ∈ o.legalRules, r.length ≤ 100) ∧\n                     (o.legalRules.length > i.legalRules.length →\n                      ∃ r ∈ i.legalRules, r.length > 50) ∧\n                     (o.legalRules.length ≤ i.legalRules.length →\n                      ∀ r ∈ i.legalRules, r.length ≤ 50)\n\nexample : Spec.pre { legalRules := [\"rule1\", \"rule2\", \"rule3\"] } ∧\n          Spec.post { legalRules := [\"rule1\", \"rule2\", \"rule3\", \"newRule\"] }\n                    { legalRules := [\"rule1\", \"rule2\", \"rule3\", \"newRule\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 46.1,
+      "error": "<generated>:25:15: error: Tactic `decide` proved that the proposition\n  { pre := fun i => i.legalRules.Nodup,\n          post := fun i o =>\n            o.legalRules = i.legalRules ∧\n              (∃ r, r ∈ o.legalRules ∧ r.length > 10) ∧\n                (∀ (r : String), r ∈ o.legalRules → r.length ≤ 100) ∧\n                  (o.legalRules.length > i.legalRules.length → ∃ r, r ∈ i.legalRules ∧ r.length > 50) ∧\n                    (o.legalRules.length ≤ i.legalRules.length → ∀ (r : String), r ∈ i.legalRules → r.length ≤ 50) }.pre\n      { legalRules := [\"rule1\", \"rule2\", \"rule3\"] } ∧\n    { pre := fun i => i.legalRules.Nodup,\n          post := fun i o =>\n            o.legalRules = i.legalRules ∧\n              (∃ r, r ∈ o.legalRules ∧ r.length > 10) ∧\n                (∀ (r : String), r ∈ o.legalRules → r.length ≤ 100) ∧\n                  (o.legalRules.length > i.legalRules.length → ∃ r, r ∈ i.legalRules ∧ r.length > 50) ∧\n                    (o.legalRules.length ≤ i.legalRules.length →\n                      ∀ (r : String), r ∈ i.legalRules → r.length ≤ 50) }.post\n      { legalRules := [\"rule1\", \"rule2\", \"rule3\", \"newRule\"] } { legalRules := [\"rule1\", \"rule2\", \"rule3\", \"newRule\"] }\nis false\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.1/S11",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Changes in the rule set will directly result in changes in the orchestration logic without any coding tasks and are executed immediately.",
+      "text_predicate": "Requirement 4.3.1/S11 (High-level concepts for pilot implementations > Austrian implementation and piloting proposal > Implementation approach):\nChanges in the rule set will directly result in changes in the orchestration logic without any coding tasks and are executed immediately.",
+      "lean_predicate": "structure RuleSetChange where\n  newRules : List String\n  deriving DecidableEq, Repr\n\nstructure OrchestrationLogic where\n  logic : List String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  currentRules : List String\n  newRules     : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  updatedLogic : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.currentRules.Nodup\n  post := fun i o => o.updatedLogic = i.currentRules ++ i.newRules\n\nexample : Spec.pre { currentRules := [\"rule1\", \"rule2\"], newRules := [\"rule3\"] } ∧\n          Spec.post { currentRules := [\"rule1\", \"rule2\"], newRules := [\"rule3\"] }\n                    { updatedLogic := [\"rule1\", \"rule2\", \"rule3\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { currentRules := [\"rule1\", \"rule2\"], newRules := [\"rule3\"] } ∧ ¬ Spec.post { currentRules := [\"rule1\", \"rule2\"], newRules := [\"rule3\"] } { updatedLogic := [\"rule1\", \"rule2\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { currentRules := [\"rule1\", \"rule2\"], newRules := [\"rule3\"] } ∧ ¬ Spec.post { currentRules := [\"rule1\", \"rule2\"], newRules := [\"rule3\"] } { updatedLogic := [\"rule1\", \"rule2\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that changes in the rule set will directly result in changes in the orchestration logic without any coding tasks and are executed immediately. The output should reflect the immediate update of the orchestration logic, but a buggy system might not update it immediately.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 16.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.3.1/S1#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The piloting phase of the Austrian VCD implementation will include several selected stakeholders, which take up key positions in the Austrian procurement landscape.",
+      "text_predicate": "Requirement 4.3.1/S1#2 (High-level concepts for pilot implementations > Austrian implementation and piloting proposal > Piloting approach):\nThe piloting phase of the Austrian VCD implementation will include several selected stakeholders, which take up key positions in the Austrian procurement landscape.",
+      "lean_predicate": "structure Input where\n  stakeholders : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  stakeholders : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.stakeholders.Nodup\n  post := fun i o => o.stakeholders = i.stakeholders\n\nexample : Spec.pre { stakeholders := [\"Procurement Agency\", \"Supplier A\", \"Supplier B\"] } ∧\n          Spec.post { stakeholders := [\"Procurement Agency\", \"Supplier A\", \"Supplier B\"] }\n                    { stakeholders := [\"Procurement Agency\", \"Supplier A\", \"Supplier B\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { stakeholders := [\"Stakeholder A\", \"Stakeholder B\"] } ∧ ¬ Spec.post { stakeholders := [\"Stakeholder A\", \"Stakeholder B\"] } { stakeholders := [\"Stakeholder A\", \"Stakeholder C\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { stakeholders := [\"Stakeholder A\", \"Stakeholder B\"] } ∧ ¬ Spec.post { stakeholders := [\"Stakeholder A\", \"Stakeholder B\"] } { stakeholders := [\"Stakeholder A\", \"Stakeholder C\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the stakeholders must take up key positions in the Austrian procurement landscape, but the output does not enforce this.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.4.1/S5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The conformance to PEPPOL's WP2 interoperability standards will be approached by following the project agreed roadmap that includes the design and management of a dynamic knowledge base, known as the pre-VCD mapping tool and by implementing VCD services that conform to a multi-stage approach.",
+      "text_predicate": "Requirement 4.4.1/S5 (High-level concepts for pilot implementations > Italian implementation and piloting proposal > Implementation approach):\nThe conformance to PEPPOL's WP2 interoperability standards will be approached by following the project agreed roadmap that includes the design and management of a dynamic knowledge base, known as the pre-VCD mapping tool and by implementing VCD services that conform to a multi-stage approach.",
+      "lean_predicate": "structure Input where\n  roadmap : String\n  preVCDMappingTool : String\n  vcdServices : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  conformance : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.roadmap ≠ \"\" ∧ i.preVCDMappingTool ≠ \"\" ∧ i.vcdServices.Nodup\n  post := fun i o => o.conformance = true ↔\n    (i.roadmap.contains \"dynamic knowledge base\" ∧\n     i.roadmap.contains \"pre-VCD mapping tool\" ∧\n     i.vcdServices.all (fun s => s.contains \"conform to a multi-stage approach\"))\n\nexample : Spec.pre { roadmap := \"Project roadmap includes dynamic knowledge base and pre-VCD mapping tool.\", \n                     preVCDMappingTool := \"Developing pre-VCD mapping tool.\", \n                     vcdServices := [\"VCD service 1\", \"VCD service 2\"] } ∧\n          Spec.post { roadmap := \"Project roadmap includes dynamic knowledge base and pre-VCD mapping tool.\", \n                      preVCDMappingTool := \"Developing pre-VCD mapping tool.\", \n                      vcdServices := [\"VCD service 1\", \"VCD service 2\"] }\n                    { conformance := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 51.2,
+      "error": "<generated>:28:15: error: Tactic `decide` failed for proposition\n  { pre := fun i => i.roadmap ≠ \"\" ∧ i.preVCDMappingTool ≠ \"\" ∧ i.vcdServices.Nodup,\n          post := fun i o =>\n            o.conformance = true ↔\n              i.roadmap.contains \"dynamic knowledge base\" = true ∧\n                i.roadmap.contains \"pre-VCD mapping tool\" = true ∧\n                  (i.vcdServices.all fun s => s.contains \"conform to a multi-stage approach\") = true }.pre\n      { roadmap := \"Project roadmap includes dynamic knowledge base and pre-VCD mapping tool.\",\n        preVCDMappingTool := \"Developing pre-VCD mapping tool.\", vcdServices := [\"VCD service 1\", \"VCD service 2\"] } ∧\n    { pre := fun i => i.roadmap ≠ \"\" ∧ i.preVCDMappingTool ≠ \"\" ∧ i.vcdServices.Nodup,\n          post := fun i o =>\n            o.conformance = true ↔\n              i.roadmap.contains \"dynamic knowledge base\" = true ∧\n                i.roadmap.contains \"pre-VCD mapping tool\" = true ∧\n                  (i.vcdServices.all fun s => s.contains \"conform to a multi-stage approach\") = true }.post\n      { roadmap := \"Project roadmap includes dynamic knowledge base and pre-VCD mapping tool.\",\n        preVCDMappingTool := \"Developing pre-VCD mapping tool.\", vcdServices := [\"VCD service 1\", \"VCD service 2\"] }\n      { conformance := true }\nbecause its `Decidable` instance\n  instDecidableAnd\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `decEq`, `instDecidableAnd`, `instDecidableEqBitVec`, `instDecidableEqBool`, `instDecidableEqFin`, `instDecidableEqList`, `instDecidableEqNat`, `instDecidableEqString`, `instDecidableEqUInt8`, `instDecidableIff`, `instDecidableNot`, `instDecidableOr`, `BitVec.decEq`, `Bool.decEq`, `Classical.propDecidable`, `List.decidableBAll`, `List.hasDecEq`, `List.instDecidablePairwise`, `List.nodupDecidable`, `Nat.decEq`, `Nat.decLe`, `Nat.decLt`, `String.decEq`, and `UInt8.decEq`, reduction got stuck at the `Decidable` instance\n  match\n    { roadmap := \"Project roadmap includes dynamic knowledge base and pre-VCD mapping tool.\",\n            preVCDMappingTool := \"Developing pre-VCD mapping tool.\",\n            vcdServices := [\"VCD service 1\", \"VCD service 2\"] }.roadmap.contains\n      \"dynamic knowledge base\",\n    true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.4.2/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The piloting phase of the Italian VCD service will include the technical actions identified by the implementation plan and some interfacing events to reach selected stakeholders and define through their input the driving conditions for the VCD setup.",
+      "text_predicate": "Requirement 4.4.2/S1 (High-level concepts for pilot implementations > Italian implementation and piloting proposal > Piloting approach):\nThe piloting phase of the Italian VCD service will include the technical actions identified by the implementation plan and some interfacing events to reach selected stakeholders and define through their input the driving conditions for the VCD setup.",
+      "lean_predicate": "structure Input where\n  actions : List String\n  stakeholders : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  drivingConditions : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.actions.Nodup ∧ i.stakeholders.Nodup\n  post := fun i o => \n    (∀ a ∈ i.actions, ∃ c ∈ o.drivingConditions, c = a) ∧\n    (∀ s ∈ i.stakeholders, ∃ c ∈ o.drivingConditions, c = s) ∧\n    o.drivingConditions.Nodup\n\nexample : Spec.pre { actions := [\"Action1\", \"Action2\"], stakeholders := [\"StakeholderA\", \"StakeholderB\"] } ∧\n          Spec.post { actions := [\"Action1\", \"Action2\"], stakeholders := [\"StakeholderA\", \"StakeholderB\"] }\n                    { drivingConditions := [\"Action1\", \"Action2\", \"StakeholderA\", \"StakeholderB\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { actions := [\"action1\", \"action2\"], stakeholders := [\"stakeholder1\", \"stakeholder2\"] } ∧ ¬ Spec.post { actions := [\"action1\", \"action2\"], stakeholders := [\"stakeholder1\", \"stakeholder2\"] } { drivingConditions := [\"condition1\", \"condition2\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { actions := [\"action1\", \"action2\"], stakeholders := [\"stakeholder1\", \"stakeholder2\"] } ∧ ¬ Spec.post { actions := [\"action1\", \"action2\"], stakeholders := [\"stakeholder1\", \"stakeholder2\"] } { drivingConditions := [\"condition1\", \"condition2\"] } := by\n  unfold Spec; decide",
+          "why": "The output does not include any of the actions or stakeholders from the input",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "4.4.2/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The VCD service provider for the piloting phase will be the Italian Business Registers System.",
+      "text_predicate": "Requirement 4.4.2/S3 (High-level concepts for pilot implementations > Italian implementation and piloting proposal > Piloting approach):\nThe VCD service provider for the piloting phase will be the Italian Business Registers System.",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ _ => True\n\nexample : Spec.pre {} ∧ Spec.post {} {} := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { field := \"Not an Italian Business Registers System output\", … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { field := \"Not an Italian Business Registers System output\", … } := by\n  unfold Spec; decide",
+          "why": "The requirement specifies that the VCD service provider for the piloting phase will be the Italian Business Registers System. A wrong output would be if the system returned an Italian Business Registers System output for an input that does not pertain to it.",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (example not in `Spec.post {…} {…}` form)"
+        ]
+      }
+    },
+    {
+      "id": "5.1/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The requirements and contents contained in chapters 2, 3 and 4 can be aggregated according to the following aspects: Level of support: The different levels of support address the maturity of the service and the maturity of the VCD package, where the former correspond to the functionalities (e.g. compilation support vs. recompilation support) provided and the latter corresponds to the semantic richness of the provided information (e.g. information support vs. decision support).",
+      "text_predicate": "Requirement 5.1/S2 (Synthesis: Major interoperability requirements, SWOT and next steps > Major requirements for VCD interoperability):\nThe requirements and contents contained in chapters 2, 3 and 4 can be aggregated according to the following aspects: Level of support: The different levels of support address the maturity of the service and the maturity of the VCD package, where the former correspond to the functionalities (e.g. compilation support vs. recompilation support) provided and the latter corresponds to the semantic richness of the provided information (e.g. information support vs. decision support).",
+      "lean_predicate": "structure Input where\n  chapters : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  levelsOfSupport : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.chapters.length ≥ 3\n  post := fun i o => \n    (∀ ch ∈ i.chapters, ch ∈ o.levelsOfSupport) ∧\n    o.levelsOfSupport.length = 3 ∧\n    o.levelsOfSupport.contains \"Level of support\" ∧\n    o.levelsOfSupport.contains \"Maturity of the service\" ∧\n    o.levelsOfSupport.contains \"Maturity of the VCD package\"\n\nexample : Spec.pre { chapters := [\"Level of support\", \"Maturity of the service\", \"Maturity of the VCD package\"] } ∧\n          Spec.post { chapters := [\"Level of support\", \"Maturity of the service\", \"Maturity of the VCD package\"] }\n                    { levelsOfSupport := [\"Level of support\", \"Maturity of the service\", \"Maturity of the VCD package\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { chapters := [\"chapter2\", \"chapter3\", \"chapter4\"] } ∧ ¬ Spec.post { chapters := [\"chapter2\", \"chapter3\", \"chapter4\"] } { levelsOfSupport := [\"Level of support\", \"Maturity of the service\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { chapters := [\"chapter2\", \"chapter3\", \"chapter4\"] } ∧ ¬ Spec.post { chapters := [\"chapter2\", \"chapter3\", \"chapter4\"] } { levelsOfSupport := [\"Level of support\", \"Maturity of the service\"] } := by\n  unfold Spec; decide",
+          "why": "The output does not contain the required levels of support as specified",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.1/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Level of completeness: A VCD Package will show its full potential when all the requested attestations (all that are necessary to prove all requested criteria) are contained in it.",
+      "text_predicate": "Requirement 5.1/S3 (Synthesis: Major interoperability requirements, SWOT and next steps > Major requirements for VCD interoperability):\nLevel of completeness: A VCD Package will show its full potential when all the requested attestations (all that are necessary to prove all requested criteria) are contained in it.",
+      "lean_predicate": "structure Input where\n  attestations : List String\n  requestedCriteria : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  allCriteriaMet : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.attestations ≠ [] ∧ i.requestedCriteria ≠ []\n  post := fun i o => o.allCriteriaMet = true ↔\n    (∀ c ∈ i.requestedCriteria, ∃ a ∈ i.attestations, a = c)\n\nexample : Spec.pre { attestations := [\"att1\", \"att2\"], requestedCriteria := [\"c1\", \"c2\"] } ∧ Spec.post { attestations := [\"att1\", \"att2\"], requestedCriteria := [\"c1\", \"c2\"] } { allCriteriaMet := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { attestations := [\"criteria1\", \"criteria2\"], requestedCriteria := [\"criteria1\", \"criteria3\"] } ∧ ¬ Spec.post { attestations := [\"criteria1\", \"criteria2\"], requestedCriteria := [\"criteria1\", \"criteria3\"] } { allCriteriaMet := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { attestations := [\"criteria1\", \"criteria2\"], requestedCriteria := [\"criteria1\", \"criteria3\"] } ∧ ¬ Spec.post { attestations := [\"criteria1\", \"criteria2\"], requestedCriteria := [\"criteria1\", \"criteria3\"] } { allCriteriaMet := true } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure that all requested criteria are met, even though all attestations are present.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 11.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.1/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The VCD should encompass this change.",
+      "text_predicate": "Requirement 5.1/S6 (Synthesis: Major interoperability requirements, SWOT and next steps > Major requirements for VCD interoperability):\nThe VCD should encompass this change.",
+      "lean_predicate": "structure Change where\n  value : Nat\n  deriving DecidableEq, Repr\n\nstructure VCD where\n  changes : List Change\n  deriving DecidableEq, Repr\n\nstructure Input where\n  change : Change\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vcd : VCD\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.vcd.changes.contains i.change\n\nexample : Spec.pre { change := { value := 5 } } ∧\n          Spec.post { change := { value := 5 } }\n                    { vcd := { changes := [{ value := 5 }] } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { change := { value := 42 } } ∧ ¬ Spec.post { change := { value := 42 } } { vcd := { changes := [] } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { change := { value := 42 } } ∧ ¬ Spec.post { change := { value := 42 } } { vcd := { changes := [] } } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the VCD should encompass the change, meaning the change must be present in the VCD's changes list.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "5.2.1/S19",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Structural data of evidence will provide guidance for foreign contracting authorities to understand the evidences contained within a VCD and they can trust that general information since it is provided by national VCD service providers that take the role of trusted parties.",
+      "text_predicate": "Requirement 5.2.1/S19 (Synthesis: Major interoperability requirements, SWOT and next steps > VCD concept and its Strengths, Weaknesses, Opportunities and Threats > Strength of the VCD concepts):\nStructural data of evidence will provide guidance for foreign contracting authorities to understand the evidences contained within a VCD and they can trust that general information since it is provided by national VCD service providers that take the role of trusted parties.",
+      "lean_predicate": "structure Input where\n  vcdId : Nat\n  evidence : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  trusted : Bool\n  guidance : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.vcdId ≠ 0\n  post := fun i o => o.trusted = true ∧\n                     (o.guidance = \"The structural data of evidence will provide guidance for foreign contracting authorities to understand the evidences contained within a VCD and they can trust that general information since it is provided by national VCD service providers that take the role of trusted parties.\" ↔\n                      i.e.evidence.Nodup ∧\n                      i.e.evidence.all (fun e => e ≠ \"\"))\n\nexample : Spec.pre { vcdId := 1, evidence := [\"evidence1\", \"evidence2\"] } ∧\n          Spec.post { vcdId := 1, evidence := [\"evidence1\", \"evidence2\"] }\n                    { trusted := true, guidance := \"The structural data of evidence will provide guidance for foreign contracting authorities to understand the evidences contained within a VCD and they can trust that general information since it is provided by national VCD service providers that take the role of trusted parties.\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 47.0,
+      "error": "<generated>:18:24: error(lean.invalidField): Invalid field `e`: The environment does not contain `Input.e`, so it is not possible to project the field `e` from an expression\n  i\nof type `Input`\n<generated>:19:24: error(lean.invalidField): Invalid field `e`: The environment does not contain `Input.e`, so it is not possible to project the field `e` from an expression\n  i\nof type `Input`\n<generated>:21:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.2.2/S18",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The VCD will be dependent on a number of services that rely on manual and semi-automated input.",
+      "text_predicate": "Requirement 5.2.2/S18 (Synthesis: Major interoperability requirements, SWOT and next steps > VCD concept and its Strengths, Weaknesses, Opportunities and Threats > Weaknesses of a VCD):\nThe VCD will be dependent on a number of services that rely on manual and semi-automated input.",
+      "lean_predicate": "structure Input where\n  manualInput : Nat\n  semiAutomatedInput : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  dependentServices : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.manualInput + i.semiAutomatedInput\n  post := fun i o => o.dependentServices = i.manualInput + i.semiAutomatedInput\n\nexample : Spec.pre { manualInput := 2, semiAutomatedInput := 3 } ∧\n          Spec.post { manualInput := 2, semiAutomatedInput := 3 }\n                    { dependentServices := 5 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { manualInput := 1, semiAutomatedInput := 2 } ∧ ¬ Spec.post { manualInput := 1, semiAutomatedInput := 2 } { dependentServices := 0 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { manualInput := 1, semiAutomatedInput := 2 } ∧ ¬ Spec.post { manualInput := 1, semiAutomatedInput := 2 } { dependentServices := 0 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the VCD will be dependent on services that rely on manual and semi-automated input. It does not allow the dependent services to be zero if there is any manual or semi-automated input.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 21.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "5.3/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The spreadsheet will be used in the project in order to maintain, adapt and perform change management to the requirements over the project lifetime.",
+      "text_predicate": "Requirement 5.3/S6 (Synthesis: Major interoperability requirements, SWOT and next steps > Next steps in specification):\nThe spreadsheet will be used in the project in order to maintain, adapt and perform change management to the requirements over the project lifetime.",
+      "lean_predicate": "structure Requirement where\n  id      : Nat\n  text    : String\n  status  : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  requirements : List Requirement\n  deriving DecidableEq, Repr\n\nstructure Output where\n  updatedRequirements : List Requirement\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.requirements.Nodup\n  post := fun i o => o.updatedRequirements = i.requirements ∧\n                     o.updatedRequirements.length = i.requirements.length ∧\n                     (∀ r ∈ o.updatedRequirements, r.id = r.id)\n\nexample : Spec.pre { requirements := [{ id := 1, text := \"Requirement 1\", status := \"Open\" },\n                                        { id := 2, text := \"Requirement 2\", status := \"Closed\" }] } ∧\n          Spec.post { requirements := [{ id := 1, text := \"Requirement 1\", status := \"Open\" },\n                                        { id := 2, text := \"Requirement 2\", status := \"Closed\" }] }\n                    { updatedRequirements := [{ id := 1, text := \"Requirement 1\", status := \"Open\" },\n                                              { id := 2, text := \"Requirement 2\", status := \"Closed\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { requirements := [ Requirement.id 1.text \"Requirement 1\".status \"Open\", Requirement.id 2.text \"Requirement 2\".status \"Open\" ] } ∧ ¬ Spec.post { requirements := [ Requirement.id 1.text \"Requirement 1\".status \"Open\", Requirement.id 2.text \"Requirement 2\".status \"Open\" ] } { updatedRequirements := [ Requirement.id 1.text \"Requirement 1\".status \"Closed\", Requirement.id 2.text \"Requirement 2\"status \"Open\" ] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { requirements := [ Requirement.id 1.text \"Requirement 1\".status \"Open\", Requirement.id 2.text \"Requirement 2\".status \"Open\" ] } ∧ ¬ Spec.post { requirements := [ Requirement.id 1.text \"Requirement 1\".status \"Open\", Requirement.id 2.text \"Requirement 2\".status \"Open\" ] } { updatedRequirements := [ Requirement.id 1.text \"Requirement 1\".status \"Closed\", Requirement.id 2.text \"Requirement 2\"status \"Open\" ] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids any change in the `updatedRequirements` list.",
+          "outcome": "not usable: unexpected identifier after decimal point; consider parenthesizing the number"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 16.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 42,
+    "flag": 8,
+    "fail": 9
+  }
+}

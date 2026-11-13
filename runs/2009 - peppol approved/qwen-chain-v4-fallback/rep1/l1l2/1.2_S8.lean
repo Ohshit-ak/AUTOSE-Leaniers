@@ -1,0 +1,54 @@
+import ContractForge
+open ContractForge
+
+-- 1.2/S8: An Economic Operator can use means such as the TED system, existing tendering platforms or official national gazettes to search for contract notices (2) and to retrieve the relevant information about active tenders (3).
+
+-- L0 spec
+
+structure ContractNotice where
+  title   : String
+  details : String
+  deriving DecidableEq, Repr
+
+structure Input where
+  query          : String
+  sources        : List String
+  activeTenders  : List ContractNotice
+  deriving DecidableEq, Repr
+
+structure Output where
+  results        : List ContractNotice
+  message        : String
+  deriving DecidableEq, Repr
+
+-- an item may be returned: it matches the query and is an active tender
+def Wanted (i : Input) (cn : ContractNotice) : Bool :=
+  cn.title.contains i.query || cn.details.contains i.query && cn ∈ i.activeTenders
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.query ≠ "" ∧ i.sources.Nodup
+  post := fun i o =>
+    (∀ cn ∈ o.results, cn ∈ i.activeTenders ∧ Wanted i cn = true) ∧
+    (o.results.length < 100 → ∀ cn ∈ i.activeTenders, Wanted i cn = true → cn ∈ o.results) ∧
+    o.results.length ≤ 100 ∧
+    List.Pairwise (fun a b => a.title ≤ b.title) o.results ∧
+    (o.message = "No results were found." ↔ o.results = [])
+
+example : Spec.pre { query := "construction", sources := ["TED", "platform1", "gazette2"], activeTenders := [] } ∧ Spec.post { query := "construction", sources := ["TED", "platform1", "gazette2"], activeTenders := [] } { results := [], message := "No results were found." } := by
+  unfold Spec; decide
+
+-- L1 architecture (mode=single-fallback, success=True)
+
+-- not split (the two-component split failed): the one component is `Spec` itself
+theorem po2 : Contract.Refines Spec Spec :=
+  ⟨fun _ h => h, fun _ _ _ h => h⟩
+
+-- L2 Spec (success=False)
+
+def SpecImpl (x : Input) : Output :=
+  { results := x.activeTenders.filter (Wanted x),
+    message := if (x.activeTenders.filter (Wanted x)).length < 100 then
+      "No results were found."
+    else
+      "Results exceed the limit."
+  }

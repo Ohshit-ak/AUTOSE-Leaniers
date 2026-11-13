@@ -1,0 +1,1509 @@
+{
+  "source": {
+    "file": "2005 - microcare.xml",
+    "sha256": "e4319634e40533862fa9c326941d5065ac0b046a88a02f48e6e06a2ec01c491c"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v10.1",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "1b2599c",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 34,
+    "compiles": 27,
+    "rejects_bad_example": 17,
+    "checked": 24,
+    "failed": 10,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "2.1.1/I1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The VMU will create the vouchers and sell it to clients through distributors",
+      "text_predicate": "Requirement 2.1.1/I1 (Overall Description > System Perspective > Outline of entire system):\nThe VMU will create the vouchers and sell it to clients through distributors",
+      "lean_predicate": "structure Input where\n  vouchersCreated : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vouchersSold : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.vouchersCreated > 0\n  post := fun i o => o.vouchersSold = i.vouchersCreated\n\nexample : Spec.pre { vouchersCreated := 10 } ∧\n          Spec.post { vouchersCreated := 10 } { vouchersSold := 10 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { vouchersCreated := 100 } ∧ ¬ Spec.post { vouchersCreated := 100 } { vouchersSold := 150 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vouchersCreated := 100 } ∧ ¬ Spec.post { vouchersCreated := 100 } { vouchersSold := 150 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the VMU will create vouchers and sell them to clients through distributors, so it should not sell more vouchers than it created.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 12.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1/I9",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The filed office will validate the claim form manually and through system,",
+      "text_predicate": "Requirement 2.1.1/I9 (Overall Description > System Perspective > Outline of entire system):\nThe filed office will validate the claim form manually and through system,",
+      "lean_predicate": "structure ClaimForm where\n  formNumber : String\n  patientName : String\n  amount : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  formNumber : String\n  patientName : String\n  amount : Nat\n  isValid : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  isValid : Bool\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.formNumber ≠ \"\" ∧ i.patientName ≠ \"\" ∧ 0 < i.amount\n  post := fun i o => (o.isValid = true ↔ i.isValid) ∧\n                     (o.message = \"Claim form is valid.\" ↔ o.isValid = true) ∧\n                     (o.message = \"Claim form is invalid.\" ↔ o.isValid = false)\n\nexample : Spec.pre { formNumber := \"F12345\", patientName := \"John Doe\", amount := 500, isValid := true } ∧\n          Spec.post { formNumber := \"F12345\", patientName := \"John Doe\", amount := 500, isValid := true }\n                    { isValid := true, message := \"Claim form is valid.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { formNumber := \"12345\", patientName := \"John Doe\", amount := 100, isValid := false } ∧ ¬ Spec.post { formNumber := \"12345\", patientName := \"John Doe\", amount := 100, isValid := false } { isValid := true, message := \"Claim form is valid.\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { formNumber := \"12345\", patientName := \"John Doe\", amount := 100, isValid := false } ∧ ¬ Spec.post { formNumber := \"12345\", patientName := \"John Doe\", amount := 100, isValid := false } { isValid := true, message := \"Claim form is valid.\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the field office will validate the claim form manually and through the system. A buggy system might return that the form is valid when it is not, which the requirement does not allow.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 12.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1/I11",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The quarantined forms will be sent back to the VSP for verification, if the VSP returns the claim with satisfactory details, the claims will be entered on to the system, in the following month's batch.",
+      "text_predicate": "Requirement 2.1.1/I11 (Overall Description > System Perspective > Outline of entire system):\nThe quarantined forms will be sent back to the VSP for verification, if the VSP returns the claim with satisfactory details, the claims will be entered on to the system, in the following month's batch.",
+      "lean_predicate": "structure Input where\n  claims : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  claims : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.claims.Nodup\n  post := fun i o => o.claims = i.claims ∧\n                     (o.claims.length = i.claims.length →\n                      ∃ next_month : Nat, next_month = i.claims.length + 1 ∧\n                      ∀ claim ∈ o.claims, claim ∈ i.claims)\n\nexample : Spec.pre { claims := [\"claim1\", \"claim2\"] } ∧\n          Spec.post { claims := [\"claim1\", \"claim2\"] }\n                    { claims := [\"claim1\", \"claim2\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 34.0,
+      "error": "<generated>:22:15: error: failed to synthesize\n  Decidable\n    ({ pre := fun i => i.claims.Nodup,\n            post := fun i o =>\n              o.claims = i.claims ∧\n                (o.claims.length = i.claims.length →\n                  ∃ next_month,\n                    next_month = i.claims.length + 1 ∧ ∀ (claim : String), claim ∈ o.claims → claim ∈ i.claims) }.pre\n        { claims := [\"claim1\", \"claim2\"] } ∧\n      { pre := fun i => i.claims.Nodup,\n            post := fun i o =>\n              o.claims = i.claims ∧\n                (o.claims.length = i.claims.length →\n                  ∃ next_month,\n                    next_month = i.claims.length + 1 ∧ ∀ (claim : String), claim ∈ o.claims → claim ∈ i.claims) }.post\n        { claims := [\"claim1\", \"claim2\"] } { claims := [\"claim1\", \"claim2\"] })\n\nHint: Additional diagnostic information may be available using the `set_option diagnostics true` command.\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1/I12",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Based on the payment terms agreed by VSP, the field office will generate BiMonth or Monthly financial and medical report and send it to MSIU Admin team to arrange the payments for the VSP.",
+      "text_predicate": "Requirement 2.1.1/I12 (Overall Description > System Perspective > Outline of entire system):\nBased on the payment terms agreed by VSP, the field office will generate BiMonth or Monthly financial and medical report and send it to MSIU Admin team to arrange the payments for the VSP.",
+      "lean_predicate": "structure Input where\n  reportType : String\n  financialData : List String\n  medicalData : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sentToMSIU : Bool\n  reportType : String\n  financialData : List String\n  medicalData : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.reportType = \"BiMonth\" ∨ i.reportType = \"Monthly\"\n  post := fun i o => o.sentToMSIU = true ∧\n                     o.reportType = i.reportType ∧\n                     o.financialData = i.financialData ∧\n                     o.medicalData = i.medicalData\n\nexample : Spec.pre { reportType := \"Monthly\", financialData := [\"1000\", \"2000\"], medicalData := [\"3000\", \"4000\"] } ∧\n          Spec.post { reportType := \"Monthly\", financialData := [\"1000\", \"2000\"], medicalData := [\"3000\", \"4000\"] }\n                    { sentToMSIU := true, reportType := \"Monthly\", financialData := [\"1000\", \"2000\"], medicalData := [\"3000\", \"4000\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { reportType := \"BiMonth\", financialData := [\"data1\", \"data2\"], medicalData := [\"data3\", \"data4\"] } ∧ ¬ Spec.post { reportType := \"BiMonth\", financialData := [\"data1\", \"data2\"], medicalData := [\"data3\", \"data4\"] } { sentToMSIU := false, reportType := \"BiMonth\", financialData := [\"data1\", \"data2\"], medicalData := [\"data3\", \"data4\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { reportType := \"BiMonth\", financialData := [\"data1\", \"data2\"], medicalData := [\"data3\", \"data4\"] } ∧ ¬ Spec.post { reportType := \"BiMonth\", financialData := [\"data1\", \"data2\"], medicalData := [\"data3\", \"data4\"] } { sentToMSIU := false, reportType := \"BiMonth\", financialData := [\"data1\", \"data2\"], medicalData := [\"data3\", \"data4\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the field office will send the report to MSIU Admin team to arrange payments, so a wrong output would be not sending the report.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "2.1.1/I13",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "To understand the satisfaction of client the MSIU Admin team will get client feedback from some of the clients and send those documents to field office to enter those into database.",
+      "text_predicate": "Requirement 2.1.1/I13 (Overall Description > System Perspective > Outline of entire system):\nTo understand the satisfaction of client the MSIU Admin team will get client feedback from some of the clients and send those documents to field office to enter those into database.",
+      "lean_predicate": "structure ClientFeedback where\n  clientName : String\n  feedback   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  clients     : List ClientFeedback\n  clientCount : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  fieldOfficeRecords : List ClientFeedback\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.clientCount\n  post := fun i o => o.fieldOfficeRecords.Nodup ∧\n                     o.fieldOfficeRecords.length ≤ i.clientCount ∧\n                     ∀ f ∈ o.fieldOfficeRecords, ∃ c ∈ i.clients, c.clientName = f.clientName ∧ c.feedback = f.feedback\n\nexample : Spec.pre { clients := [{ clientName := \"Client1\", feedback := \"Good\" },\n                                  { clientName := \"Client2\", feedback := \"Great\" }],\n                     clientCount := 2 } ∧\n          Spec.post { clients := [{ clientName := \"Client1\", feedback := \"Good\" },\n                                  { clientName := \"Client2\", feedback := \"Great\" }],\n                      clientCount := 2 }\n                    { fieldOfficeRecords := [{ clientName := \"Client1\", feedback := \"Good\" },\n                                             { clientName := \"Client2\", feedback := \"Great\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 46.4,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` mentions `o.fieldOfficeRecords` but still holds when `o.fieldOfficeRecords` is `[]` instead of `[{ clientName := \"Client1\", feedback := \"Good\" }, { clientName := \"Client2\", feedback := \"Great\" }]` for the example input. The requirement says: \"To understand the satisfaction of client the MSIU Admin team will get client feedback from some of the clients and send those documents to field office to enter those into database.\" Add a condition on `o.fieldOfficeRecords` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "1./S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The created unique numbers are then printed out in the form of bar-codes, which will complement (or stuck on the voucher) the voucher.",
+      "text_predicate": "Requirement 1./S2 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Voucher Creation / Preparation):\nThe created unique numbers are then printed out in the form of bar-codes, which will complement (or stuck on the voucher) the voucher.",
+      "lean_predicate": "structure Voucher where\n  number : Nat\n  barCode : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  vouchers : List Voucher\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vouchers : List Voucher\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.vouchers.all (fun v => v.number ≠ 0)\n  post := fun i o => o.vouchers = i.vouchers ∧\n                     o.vouchers.all (fun v => v.barCode ≠ \"\" ∧ v.barCode.length = 13)\n\nexample : Spec.pre { vouchers := [{ number := 12345, barCode := \"1234567890123\" },\n                                   { number := 67890, barCode := \"6789012345678\" }] } ∧\n          Spec.post { vouchers := [{ number := 12345, barCode := \"1234567890123\" },\n                                    { number := 67890, barCode := \"6789012345678\" }] }\n                    { vouchers := [{ number := 12345, barCode := \"1234567890123\" },\n                                   { number := 67890, barCode := \"6789012345678\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { vouchers := [{ number := 1, barCode := \"1234567890123\" }, { number := 2, barCode := \"123456789012\" }] } ∧ ¬ Spec.post { vouchers := [{ number := 1, barCode := \"1234567890123\" }, { number := 2, barCode := \"123456789012\" }] } { vouchers := [{ number := 1, barCode := \"1234567890123\" }, { number := 2, barCode := \"123456789012\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vouchers := [{ number := 1, barCode := \"1234567890123\" }, { number := 2, barCode := \"123456789012\" }] } ∧ ¬ Spec.post { vouchers := [{ number := 1, barCode := \"1234567890123\" }, { number := 2, barCode := \"123456789012\" }] } { vouchers := [{ number := 1, barCode := \"1234567890123\" }, { number := 2, barCode := \"123456789012\" }] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the bar-codes must be 13 characters long, but the output does not enforce this.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 36.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "1./I7",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Additionally the provision for validity date check for the period of vouchers to be used in the program is provided. This validity date can be amended or altered at the system level ONLY by the authorized user",
+      "text_predicate": "Requirement 1./I7 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Voucher Creation / Preparation):\nAdditionally the provision for validity date check for the period of vouchers to be used in the program is provided. This validity date can be amended or altered at the system level ONLY by the authorized user",
+      "lean_predicate": "structure Input where\n  voucherId : Nat\n  validityDate : String\n  isAuthorized : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  voucherId : Nat\n  validityDate : String\n  isAuthorized : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.isAuthorized\n  post := fun i o => o.voucherId = i.voucherId ∧\n                     o.validityDate = i.validityDate ∧\n                     o.isAuthorized = i.isAuthorized\n\nexample : Spec.pre { voucherId := 1, validityDate := \"2023-12-31\", isAuthorized := true } ∧\n          Spec.post { voucherId := 1, validityDate := \"2023-12-31\", isAuthorized := true }\n                    { voucherId := 1, validityDate := \"2023-12-31\", isAuthorized := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { voucherId := 1, validityDate := \"2023-10-01\", isAuthorized := false } ∧ ¬ Spec.post { voucherId := 1, validityDate := \"2023-10-01\", isAuthorized := false } { voucherId := 1, validityDate := \"2023-11-01\", isAuthorized := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { voucherId := 1, validityDate := \"2023-10-01\", isAuthorized := false } ∧ ¬ Spec.post { voucherId := 1, validityDate := \"2023-10-01\", isAuthorized := false } { voucherId := 1, validityDate := \"2023-11-01\", isAuthorized := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the validity date can only be amended by an authorized user, but the output shows an unauthorized user changing the validity date.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "1./I11",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Each voucher slip should contain the bar code of the Voucher with two identifications one for the client and the other for the partner.",
+      "text_predicate": "Requirement 1./I11 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Voucher Creation / Preparation):\nEach voucher slip should contain the bar code of the Voucher with two identifications one for the client and the other for the partner.",
+      "lean_predicate": "structure Voucher where\n  barcode : String\n  clientID : String\n  partnerID : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  barcode : String\n  clientID : String\n  partnerID : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  voucher : Voucher\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.barcode ≠ \"\" ∧ i.clientID ≠ \"\" ∧ i.partnerID ≠ \"\"\n  post := fun i o => o.voucher = { barcode := i.barcode, clientID := i.clientID, partnerID := i.partnerID }\n\nexample : Spec.pre { barcode := \"1234567890\", clientID := \"C001\", partnerID := \"P001\" } ∧\n          Spec.post { barcode := \"1234567890\", clientID := \"C001\", partnerID := \"P001\" }\n                    { voucher := { barcode := \"1234567890\", clientID := \"C001\", partnerID := \"P001\" } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { barcode := \"1234567890\", clientID := \"CID123\", partnerID := \"PID456\" } ∧ ¬ Spec.post { barcode := \"1234567890\", clientID := \"CID123\", partnerID := \"PID456\" } { voucher := { barcode := \"1234567890\", clientID := \"\", partnerID := \"\" } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { barcode := \"1234567890\", clientID := \"CID123\", partnerID := \"PID456\" } ∧ ¬ Spec.post { barcode := \"1234567890\", clientID := \"CID123\", partnerID := \"PID456\" } { voucher := { barcode := \"1234567890\", clientID := \"\", partnerID := \"\" } } := by\n  unfold Spec; decide",
+          "why": "The requirement states that each voucher slip should contain two identifications, one for the client and the other for the partner. A buggy system might return a voucher without either identification.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ]
+      }
+    },
+    {
+      "id": "Design Constraints/I1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The voucher will be created ONLY by the authorized person.",
+      "text_predicate": "Requirement Design Constraints/I1 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Voucher Creation / Preparation):\nThe voucher will be created ONLY by the authorized person.",
+      "lean_predicate": "structure Input where\n  creator : String\n  authorized : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  created : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.authorized\n  post := fun i o => o.created = true ↔ i.authorized\n\nexample : Spec.pre { creator := \"Alice\", authorized := true } ∧\n          Spec.post { creator := \"Alice\", authorized := true }\n                    { created := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { creator := \"unauthorizedPerson\", authorized := false } ∧ ¬ Spec.post { creator := \"unauthorizedPerson\", authorized := false } { created := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { creator := \"unauthorizedPerson\", authorized := false } ∧ ¬ Spec.post { creator := \"unauthorizedPerson\", authorized := false } { created := true } := by\n  unfold Spec; decide",
+          "why": "The voucher should not be created by an unauthorized person",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/I2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The will be a provision to create a minimum quantity of vouchers at one time (such minimum numbers will be decided by the management team).",
+      "text_predicate": "Requirement Design Constraints/I2 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Voucher Creation / Preparation):\nThe will be a provision to create a minimum quantity of vouchers at one time (such minimum numbers will be decided by the management team).",
+      "lean_predicate": "structure Input where\n  quantity : Nat\n  minQuantity : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  created : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.minQuantity\n  post := fun i o => o.created = i.quantity ∧ i.quantity ≥ i.minQuantity\n\nexample : Spec.pre { quantity := 10, minQuantity := 5 } ∧\n          Spec.post { quantity := 10, minQuantity := 5 }\n                    { created := 10 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { quantity := 100, minQuantity := 50 } ∧ ¬ Spec.post { quantity := 100, minQuantity := 50 } { created := 50 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { quantity := 100, minQuantity := 50 } ∧ ¬ Spec.post { quantity := 100, minQuantity := 50 } { created := 50 } := by\n  unfold Spec; decide",
+          "why": "The output created quantity is less than the input quantity, which violates the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 7.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/I3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Once created vouchers will not be edited or deleted but there will be a provision to with-hold any voucher number if the admin team decides to do for any reason.",
+      "text_predicate": "Requirement Design Constraints/I3 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Voucher Creation / Preparation):\nOnce created vouchers will not be edited or deleted but there will be a provision to with-hold any voucher number if the admin team decides to do for any reason.",
+      "lean_predicate": "structure Voucher where\n  number : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  voucherNumbers : List Nat\n  withholding    : Option Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  voucherNumbers : List Nat\n  withholding    : Option Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.voucherNumbers = i.voucherNumbers ∧\n                     o.withholding = i.withholding\n\nexample : Spec.pre { voucherNumbers := [100, 101, 102], withholding := none } ∧\n          Spec.post { voucherNumbers := [100, 101, 102], withholding := none }\n                    { voucherNumbers := [100, 101, 102], withholding := none } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { voucherNumbers := [1, 2, 3], withholding := none } ∧ ¬ Spec.post { voucherNumbers := [1, 2, 3], withholding := none } { voucherNumbers := [1, 2, 3], withholding := some 1 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { voucherNumbers := [1, 2, 3], withholding := none } ∧ ¬ Spec.post { voucherNumbers := [1, 2, 3], withholding := none } { voucherNumbers := [1, 2, 3], withholding := some 1 } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids editing or deleting vouchers, but the output shows a voucher number in the list even though it should be withheld.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ]
+      }
+    },
+    {
+      "id": "i/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Each distributor will have unique code and detailed descriptions such as name, address, locations and type of business etc. such valid information will help us track information related to sales and distributions.",
+      "text_predicate": "Requirement i/S2 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Marketing / Sales > Distributor Master Information):\nEach distributor will have unique code and detailed descriptions such as name, address, locations and type of business etc. such valid information will help us track information related to sales and distributions.\nIgnore these non-formal words: etc.",
+      "lean_predicate": "structure Distributor where\n  code      : String\n  name      : String\n  address   : String\n  locations : List String\n  businessType : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  distributors : List Distributor\n  deriving DecidableEq, Repr\n\nstructure Output where\n  distributors : List Distributor\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.distributors.Nodup\n  post := fun i o => o.distributors = i.distributors ∧\n                     ∀ d ∈ o.distributors, d.code ≠ \"\" ∧\n                     d.name ≠ \"\" ∧\n                     d.address ≠ \"\" ∧\n                     d.locations.Nodup ∧\n                     d.businessType ≠ \"\"\n\nexample : Spec.pre { distributors := [{ code := \"D1\", name := \"Distributor1\", address := \"123 Main St\", locations := [\"Office1\"], businessType := \"Retail\" },\n                                       { code := \"D2\", name := \"Distributor2\", address := \"456 Elm St\", locations := [\"Office2\"], businessType := \"Wholesale\" }] } ∧\n          Spec.post { distributors := [{ code := \"D1\", name := \"Distributor1\", address := \"123 Main St\", locations := [\"Office1\"], businessType := \"Retail\" },\n                                       { code := \"D2\", name := \"Distributor2\", address := \"456 Elm St\", locations := [\"Office2\"], businessType := \"Wholesale\" }] }\n                    { distributors := [{ code := \"D1\", name := \"Distributor1\", address := \"123 Main St\", locations := [\"Office1\"], businessType := \"Retail\" },\n                                       { code := \"D2\", name := \"Distributor2\", address := \"456 Elm St\", locations := [\"Office2\"], businessType := \"Wholesale\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { distributors := [{ code := \"123\", name := \"Distributor A\", address := \"123 Street\", locations := [\"Location 1\"], businessType := \"Retail\" }] } ∧ ¬ Spec.post { distributors := [{ code := \"123\", name := \"Distributor A\", address := \"123 Street\", locations := [\"Location 1\"], businessType := \"Retail\" }] } { distributors := [{ code := \"123\", name := \"Distributor A\", address := \"123 Street\", locations := [\"Location 1\"], businessType := \"Retail\" }, { code := \"123\", name := \"Distributor A\", address := \"123 Street\", locations := [\"Location 1\"], businessType := \"Retail\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { distributors := [{ code := \"123\", name := \"Distributor A\", address := \"123 Street\", locations := [\"Location 1\"], businessType := \"Retail\" }] } ∧ ¬ Spec.post { distributors := [{ code := \"123\", name := \"Distributor A\", address := \"123 Street\", locations := [\"Location 1\"], businessType := \"Retail\" }] } { distributors := [{ code := \"123\", name := \"Distributor A\", address := \"123 Street\", locations := [\"Location 1\"], businessType := \"Retail\" }, { code := \"123\", name := \"Distributor A\", address := \"123 Street\", locations := [\"Location 1\"], businessType := \"Retail\" }] } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure that each distributor has a unique code, name, address, and non-empty business type.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 17.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "All the level of details will have a master table in order to update as per the program requirements.",
+      "text_predicate": "Requirement Design Constraints/S2 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Marketing / Sales > Distributor Master Information):\nAll the level of details will have a master table in order to update as per the program requirements.",
+      "lean_predicate": "structure Input where\n  distributorId : Nat\n  voucherDetails : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  updated : Bool\n  message : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.distributorId ≠ 0 ∧ i.voucherDetails ≠ \"\"\n  post := fun i o => o.updated = true ↔\n    (o.message = \"Distributor master information updated successfully.\" ∧\n     i.voucherDetails = \"new details\" ∨\n     o.message = \"No changes needed as the details are already up to date.\")\n\nexample : Spec.pre { distributorId := 1, voucherDetails := \"new details\" } ∧\n          Spec.post { distributorId := 1, voucherDetails := \"new details\" }\n                    { updated := true, message := \"Distributor master information updated successfully.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { distributorId := 1, voucherDetails := \"old details\" } ∧ ¬ Spec.post { distributorId := 1, voucherDetails := \"old details\" } { updated := true, message := \"Distributor master information updated successfully.\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { distributorId := 1, voucherDetails := \"old details\" } ∧ ¬ Spec.post { distributorId := 1, voucherDetails := \"old details\" } { updated := true, message := \"Distributor master information updated successfully.\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the message should indicate whether the details were updated or not, and the updated field should reflect this. A buggy system might return a success message without actually updating the details.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/S5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "On capture of any duplicate name the system will give a warning message to have the duplicate name or to change the name.",
+      "text_predicate": "Requirement Design Constraints/S5 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Marketing / Sales > Distributor Master Information):\nOn capture of any duplicate name the system will give a warning message to have the duplicate name or to change the name.",
+      "lean_predicate": "structure Input where\n  names : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  warning : Bool\n  newNames : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.names.Nodup\n  post := fun i o => (o.warning = true ↔ i.names.contains (i.names.filter (fun n => i.names.count n > 1).head)) ∧\n                     (o.newNames = i.names.filter (fun n => i.names.count n = 1))\n\nexample : Spec.pre { names := [\"Alice\", \"Bob\", \"Alice\"] } ∧\n          Spec.post { names := [\"Alice\", \"Bob\", \"Alice\"] }\n                     { warning := true, newNames := [\"Alice\", \"Bob\", \"Alice\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 30.8,
+      "error": "<generated>:15:105: error(lean.invalidField): Invalid field `head`: The environment does not contain `Function.head`, so it is not possible to project the field `head` from an expression\n  fun n => List.count n i.names > 1\nof type `String → Prop`\n<generated>:18:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/I9",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Delete (deleting will be allowed only if no child records are created)",
+      "text_predicate": "Requirement Design Constraints/I9 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Marketing / Sales > Distributor Master Information):\nDelete (deleting will be allowed only if no child records are created)",
+      "lean_predicate": "structure Input where\n  distributorId : Nat\n  childRecords   : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deleted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.deleted = true ↔\n    (i.childRecords = 0)\n\nexample : Spec.pre { distributorId := 123, childRecords := 0 } ∧\n          Spec.post { distributorId := 123, childRecords := 0 }\n                    { deleted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { distributorId := 1, childRecords := 1 } ∧ ¬ Spec.post { distributorId := 1, childRecords := 1 } { deleted := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { distributorId := 1, childRecords := 1 } ∧ ¬ Spec.post { distributorId := 1, childRecords := 1 } { deleted := true } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids deleting a distributor if there are any child records.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 14.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ]
+      }
+    },
+    {
+      "id": "Design Constraints/S3#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "On capture of any duplicate name the system will give a warning message to have the duplicate name or to change the name.",
+      "text_predicate": "Requirement Design Constraints/S3#2 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Marketing / Sales):\nOn capture of any duplicate name the system will give a warning message to have the duplicate name or to change the name.",
+      "lean_predicate": "structure Input where\n  names : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  warning : Bool\n  newNames : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.names.Nodup\n  post := fun i o => (o.warning = true ↔ i.names.contains (i.names.filter (fun n => i.names.count n > 1).head)) ∧\n                     (o.newNames.length = i.names.length ∧\n                      ∀ n ∈ o.newNames, o.newNames.count n = 1 ∧\n                      (o.newNames.contains (i.names.filter (fun n => i.names.count n > 1).head) ↔ o.warning = true))\n\nexample : Spec.pre { names := [\"apple\", \"banana\", \"apple\"] } ∧\n          Spec.post { names := [\"apple\", \"banana\", \"apple\"] }\n                     { warning := true, newNames := [\"apple1\", \"banana\", \"apple1\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 30.3,
+      "error": "<generated>:15:105: error(lean.invalidField): Invalid field `head`: The environment does not contain `Function.head`, so it is not possible to project the field `head` from an expression\n  fun n => List.count n i.names > 1\nof type `String → Prop`\n<generated>:18:90: error(lean.invalidField): Invalid field `head`: The environment does not contain `Function.head`, so it is not possible to project the field `head` from an expression\n  fun n => List.count n i.names > 1\nof type `String → Prop`\n<generated>:20:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "weakened",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "iii/I5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "According to the number of vouchers required by the distributor, the system should allocate the relevant vouchers with their numbers and batch numbers based on the stock.",
+      "text_predicate": "Requirement iii/I5 (Overall Description > System Perspective > 2.1.2 Voucher Management System Modules > Marketing / Sales > Distribution Transactions (Sales from MSIU to Distributor)):\nAccording to the number of vouchers required by the distributor, the system should allocate the relevant vouchers with their numbers and batch numbers based on the stock.",
+      "lean_predicate": "structure Voucher where\n  number : Nat\n  batchNumber : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  vouchersRequired : Nat\n  vouchersStock : List Voucher\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vouchersAllocated : List Voucher\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.vouchersRequired ≤ i.vouchersStock.length\n  post := fun i o => o.vouchersAllocated.length = i.vouchersRequired ∧\n                     (∀ v ∈ o.vouchersAllocated, v ∈ i.vouchersStock ∧\n                      ∃ v' ∈ i.vouchersStock, v = v' ∧ v.batchNumber = v'.batchNumber)\n\nexample : Spec.pre { vouchersRequired := 3, vouchersStock := [{ number := 101, batchNumber := 1001 },\n                                                              { number := 102, batchNumber := 1002 },\n                                                              { number := 103, batchNumber := 1003 }] } ∧\n          Spec.post { vouchersRequired := 3, vouchersStock := [{ number := 101, batchNumber := 1001 },\n                                                                { number := 102, batchNumber := 1002 },\n                                                                { number := 103, batchNumber := 1003 }] }\n                    { vouchersAllocated := [{ number := 101, batchNumber := 1001 },\n                                            { number := 102, batchNumber := 1002 },\n                                            { number := 103, batchNumber := 1003 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { vouchersRequired := 5, vouchersStock := [Voucher.number 1.batchNumber 1, Voucher.number 2.batchNumber 2, Voucher.number 3.batchNumber 3] } ∧ ¬ Spec.post { vouchersRequired := 5, vouchersStock := [Voucher.number 1.batchNumber 1, Voucher.number 2.batchNumber 2, Voucher.number 3.batchNumber 3] } { vouchersAllocated := [Voucher.number 1.batchNumber 1, Voucher.number 2.batchNumber 2, Voucher.number 3.batchNumber 3, Voucher.number 4.batchNumber 4, Voucher.number 5.batchNumber 5] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vouchersRequired := 5, vouchersStock := [Voucher.number 1.batchNumber 1, Voucher.number 2.batchNumber 2, Voucher.number 3.batchNumber 3] } ∧ ¬ Spec.post { vouchersRequired := 5, vouchersStock := [Voucher.number 1.batchNumber 1, Voucher.number 2.batchNumber 2, Voucher.number 3.batchNumber 3] } { vouchersAllocated := [Voucher.number 1.batchNumber 1, Voucher.number 2.batchNumber 2, Voucher.number 3.batchNumber 3, Voucher.number 4.batchNumber 4, Voucher.number 5.batchNumber 5] } := by\n  unfold Spec; decide",
+          "why": "The output does not respect the stock, allocating more vouchers than available",
+          "outcome": "not usable: unexpected identifier after decimal point; consider parenthesizing the number"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 56.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3./S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In this module you will see that every capture of data will be validated and checked on saving into the database.",
+      "text_predicate": "Requirement 3./S2 (Overall Description > System Perspective > Claim Entry/Processing):\nIn this module you will see that every capture of data will be validated and checked on saving into the database.",
+      "lean_predicate": "structure Input where\n  data : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.valid = true ↔\n    (i.data.isEmpty = false ∧\n     i.data.toList.all (fun c => c.isAlpha ∨ Char.isDigit c ∨ c == ' '))\n\nexample : Spec.pre { data := \"example data\" } ∧\n          Spec.post { data := \"example data\" }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { data := \"test!123\" } ∧ ¬ Spec.post { data := \"test!123\" } { valid := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { data := \"test!123\" } ∧ ¬ Spec.post { data := \"test!123\" } { valid := true } := by\n  unfold Spec; decide",
+          "why": "The output should indicate that the data is invalid due to containing non-alphanumeric characters.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 12.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "3./I5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The VSP will send the collected claim forms monthly and send it to MSIU field office.",
+      "text_predicate": "Requirement 3./I5 (Overall Description > System Perspective > Claim Entry/Processing):\nThe VSP will send the collected claim forms monthly and send it to MSIU field office.",
+      "lean_predicate": "structure ClaimForm where\n  formNumber : Nat\n  date       : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  forms : List ClaimForm\n  date  : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  sent : Bool\n  date : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.forms.length > 0\n  post := fun i o => o.sent = true ∧\n                     (o.date = i.date ∨ o.date = \"N/A\") ∧\n                     (o.date = \"N/A\" ↔ i.forms.length = 0)\n\nexample : Spec.pre { forms := [{ formNumber := 1, date := \"2023-10-01\" },\n                               { formNumber := 2, date := \"2023-10-01\" }],\n                     date := \"2023-10-01\" } ∧\n          Spec.post { forms := [{ formNumber := 1, date := \"2023-10-01\" },\n                                 { formNumber := 2, date := \"2023-10-01\" }],\n                      date := \"2023-10-01\" }\n                    { sent := true, date := \"2023-10-01\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { forms := [ClaimForm.formNumber(12345) date(\"2023-10-01\")], date := \"2023-10-01\" } ∧ ¬ Spec.post { forms := [ClaimForm.formNumber(12345) date(\"2023-10-01\")], date := \"2023-10-01\" } { sent := false, date := \"2023-10-01\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { forms := [ClaimForm.formNumber(12345) date(\"2023-10-01\")], date := \"2023-10-01\" } ∧ ¬ Spec.post { forms := [ClaimForm.formNumber(12345) date(\"2023-10-01\")], date := \"2023-10-01\" } { sent := false, date := \"2023-10-01\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the VSP will send the collected claim forms monthly,",
+          "outcome": "not usable: unexpected token '('; expected ':' or ']'"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 25.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/S3#4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system should generate message with two option \"Continue - Yes/No\" while the user trying to create a new VSP with an existing name, If the user press Yes the system will allow the user to enter the same, if not the system wont allow the new entry to save.",
+      "text_predicate": "Requirement Design Constraints/S3#4 (Overall Description > System Perspective > Claim Entry/Processing > Voucher Service Provider (VSP) Master Information):\nThe system should generate message with two option \"Continue - Yes/No\" while the user trying to create a new VSP with an existing name, If the user press Yes the system will allow the user to enter the same, if not the system wont allow the new entry to save.",
+      "lean_predicate": "structure Input where\n  vspName : String\n  existingVSPs : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  accepted : Bool\n  message  : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.vspName ≠ \"\"\n  post := fun i o => (o.accepted = true ↔\n    (o.message = \"Continue - Yes/No\" ∧ o.message.toList.all Char.isLower = true) ∧\n    (o.message = \"Continue - Yes\" → i.existingVSPs.contains i.vspName) ∧\n    (o.message = \"Continue - No\" → ¬i.existingVSPs.contains i.vspName))\n\nexample : Spec.pre { vspName := \"exampleVSP\", existingVSPs := [\"testVSP\"] } ∧\n          Spec.post { vspName := \"exampleVSP\", existingVSPs := [\"testVSP\"] }\n                    { accepted := false, message := \"Continue - No\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { vspName := \"existingName\", existingVSPs := [\"existingName\"] } ∧ ¬ Spec.post { vspName := \"existingName\", existingVSPs := [\"existingName\"] } { accepted := true, message := \"Continue - No\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vspName := \"existingName\", existingVSPs := [\"existingName\"] } ∧ ¬ Spec.post { vspName := \"existingName\", existingVSPs := [\"existingName\"] } { accepted := true, message := \"Continue - No\" } := by\n  unfold Spec; decide",
+          "why": "The system should not allow the new entry to save if the user presses No, but the output allows the entry.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 23.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/S15",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The allowed users only can able to Add, Modify or delete the VSP master information including payment terms.",
+      "text_predicate": "Requirement Design Constraints/S15 (Overall Description > System Perspective > Claim Entry/Processing > Voucher Service Provider (VSP) Master Information):\nThe allowed users only can able to Add, Modify or delete the VSP master information including payment terms.",
+      "lean_predicate": "structure VSP where\n  name    : String\n  terms   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  vsp     : Option VSP\n  action  : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  vsp     : Option VSP\n  action  : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.action ∈ [\"Add\", \"Modify\", \"Delete\"]\n  post := fun i o => (o.action = i.action) ∧\n                     (o.vsp = i.vsp ∨\n                      (o.action = \"Add\" → o.vsp.isSome ∧ o.vsp.getD { name := \"\", terms := \"\" } ≠ i.vsp.getD { name := \"\", terms := \"\" }) ∧\n                      (o.action = \"Modify\" → o.vsp = i.vsp ∨ o.vsp.getD { name := \"\", terms := \"\" } ≠ i.vsp.getD { name := \"\", terms := \"\" }) ∧\n                      (o.action = \"Delete\" → o.vsp = none))\n\nexample : Spec.pre { vsp := none, action := \"Add\" } ∧\n          Spec.post { vsp := none, action := \"Add\" }\n                    { vsp := some { name := \"VSP1\", terms := \"30 days\" }, action := \"Add\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { vsp := none, action := \"View\" } ∧ ¬ Spec.post { vsp := none, action := \"View\" } { vsp := none, action := \"View\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { vsp := none, action := \"View\" } ∧ ¬ Spec.post { vsp := none, action := \"View\" } { vsp := none, action := \"View\" } := by\n  unfold Spec; decide",
+          "why": "The output allows an action other than Add, Modify, or Delete",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 14.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/S19",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Cumulative Total Amount will show in Report footer for the previous payment done.",
+      "text_predicate": "Requirement Design Constraints/S19 (Overall Description > System Perspective > Claim Entry/Processing > Voucher Service Provider (VSP) Master Information):\nCumulative Total Amount will show in Report footer for the previous payment done.",
+      "lean_predicate": "structure PaymentRecord where\n  amount : Nat\n  deriving DecidableEq, Repr\n\nstructure Report where\n  footer : Option PaymentRecord\n  deriving DecidableEq, Repr\n\nstructure Input where\n  previousPayments : List PaymentRecord\n  deriving DecidableEq, Repr\n\nstructure Output where\n  report : Report\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.previousPayments.Nodup\n  post := fun i o => o.report.footer = i.previousPayments.lastOption\n\nexample : Spec.pre { previousPayments := [{ amount := 100 }, { amount := 200 }] } ∧\n          Spec.post { previousPayments := [{ amount := 100 }, { amount := 200 }] }\n                    { report := { footer := some { amount := 200 } } } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 33.8,
+      "error": "<generated>:22:58: error(lean.invalidField): Invalid field `lastOption`: The environment does not contain `List.lastOption`, so it is not possible to project the field `lastOption` from an expression\n  i.previousPayments\nof type `List PaymentRecord`\n<generated>:24:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Contraints/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system will automatically create Staff Code with Suffix as VSP Code + SC + 3 digit.",
+      "text_predicate": "Requirement Design Contraints/S3 (Overall Description > System Perspective > Claim Entry/Processing > VSP Staff Master Information):\nThe system will automatically create Staff Code with Suffix as VSP Code + SC + 3 digit.",
+      "lean_predicate": "structure Input where\n  vspCode : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  staffCode : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.vspCode ≠ \"\"\n  post := fun i o => o.staffCode = i.vspCode ++ \"SC\" ++ (i.vspCode.length + 2).toString.take 3\n\nexample : Spec.pre { vspCode := \"A123\" } ∧\n          Spec.post { vspCode := \"A123\" }\n                    { staffCode := \"A123SC001\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 25.2,
+      "error": "<generated>:14:79: error(lean.invalidField): Invalid field `toString`: The environment does not contain `Nat.toString`, so it is not possible to project the field `toString` from an expression\n  i.vspCode.length + 2\nof type `Nat`\n<generated>:16:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "iv/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If yes, then the user should mark that Claim (Treatment Form) status as Rejected and send back to VSP.",
+      "text_predicate": "Requirement iv/S3 (Overall Description > System Perspective > Claim Entry/Processing):\nIf yes, then the user should mark that Claim (Treatment Form) status as Rejected and send back to VSP.",
+      "lean_predicate": "structure Input where\n  status  : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  status  : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.status = \"Yes\"\n  post := fun i o => o.status = \"Rejected\" ∧ o.status ≠ i.status\n\nexample : Spec.pre { status := \"Yes\" } ∧\n          Spec.post { status := \"Yes\" } { status := \"Rejected\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { status := \"Yes\" } ∧ ¬ Spec.post { status := \"Yes\" } { status := \"Yes\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { status := \"Yes\" } ∧ ¬ Spec.post { status := \"Yes\" } { status := \"Yes\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that if the status is \"Yes\", the system should mark the claim as \"Rejected\" and send it back. A buggy system might return the same status without sending it back.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 29.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "For Second Follow UP/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system will have the provision to enter any number of Syndrome, Clinical Examinations, Diagnosis, Lab Test, Drugs and Other Measures in any treatment level based on MSIU treatment master.",
+      "text_predicate": "Requirement For Second Follow UP/S1 (Overall Description > System Perspective > Claim Entry/Processing):\nThe system will have the provision to enter any number of Syndrome, Clinical Examinations, Diagnosis, Lab Test, Drugs and Other Measures in any treatment level based on MSIU treatment master.",
+      "lean_predicate": "structure Syndrome where\n  code : String\n  description : String\n  deriving DecidableEq, Repr\n\nstructure ClinicalExamination where\n  code : String\n  description : String\n  deriving DecidableEq, Repr\n\nstructure Diagnosis where\n  code : String\n  description : String\n  deriving DecidableEq, Repr\n\nstructure LabTest where\n  code : String\n  description : String\n  deriving DecidableEq, Repr\n\nstructure Drug where\n  code : String\n  description : String\n  deriving DecidableEq, Repr\n\nstructure OtherMeasure where\n  code : String\n  description : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  syndromes : List Syndrome\n  clinicalExaminations : List ClinicalExamination\n  diagnoses : List Diagnosis\n  labTests : List LabTest\n  drugs : List Drug\n  otherMeasures : List OtherMeasure\n  treatmentLevel : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  syndromes : List Syndrome\n  clinicalExaminations : List ClinicalExamination\n  diagnoses : List Diagnosis\n  labTests : List LabTest\n  drugs : List Drug\n  otherMeasures : List OtherMeasure\n  treatmentLevel : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.treatmentLevel > 0\n  post := fun i o => o.syndromes = i.syndromes ∧\n                     o.clinicalExaminations = i.clinicalExaminations ∧\n                     o.diagnoses = i.diagnoses ∧\n                     o.labTests = i.labTests ∧\n                     o.drugs = i.drugs ∧\n                     o.otherMeasures = i.otherMeasures ∧\n                     o.treatmentLevel = i.treatmentLevel\n\nexample : Spec.pre { syndromes := [{ code := \"S1\", description := \"Syndrome 1\" }],\n                     clinicalExaminations := [{ code := \"CE1\", description := \"Clinical Exam 1\" }],\n                     diagnoses := [{ code := \"D1\", description := \"Diagnosis 1\" }],\n                     labTests := [{ code := \"LT1\", description := \"Lab Test 1\" }],\n                     drugs := [{ code := \"D1\", description := \"Drug 1\" }],\n                     otherMeasures := [{ code := \"OM1\", description := \"Other Measure 1\" }],\n                     treatmentLevel := 1 } ∧\n          Spec.post { syndromes := [{ code := \"S1\", description := \"Syndrome 1\" }],\n                      clinicalExaminations := [{ code := \"CE1\", description := \"Clinical Exam 1\" }],\n                      diagnoses := [{ code := \"D1\", description := \"Diagnosis 1\" }],\n                      labTests := [{ code := \"LT1\", description := \"Lab Test 1\" }],\n                      drugs := [{ code := \"D1\", description := \"Drug 1\" }],\n                      otherMeasures := [{ code := \"OM1\", description := \"Other Measure 1\" }],\n                      treatmentLevel := 1 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 97.1,
+      "error": "<generated>:71:10: error: Application type mismatch: The argument\n  Spec.post\n    { syndromes := [{ code := \"S1\", description := \"Syndrome 1\" }],\n      clinicalExaminations := [{ code := \"CE1\", description := \"Clinical Exam 1\" }],\n      diagnoses := [{ code := \"D1\", description := \"Diagnosis 1\" }],\n      labTests := [{ code := \"LT1\", description := \"Lab Test 1\" }],\n      drugs := [{ code := \"D1\", description := \"Drug 1\" }],\n      otherMeasures := [{ code := \"OM1\", description := \"Other Measure 1\" }], treatmentLevel := 1 }\nhas type\n  Output → Prop\nbut is expected to have type\n  Prop\nin the application\n  Spec.pre\n      { syndromes := [{ code := \"S1\", description := \"Syndrome 1\" }],\n        clinicalExaminations := [{ code := \"CE1\", description := \"Clinical Exam 1\" }],\n        diagnoses := [{ code := \"D1\", description := \"Diagnosis 1\" }],\n        labTests := [{ code := \"LT1\", description := \"Lab Test 1\" }],\n        drugs := [{ code := \"D1\", description := \"Drug 1\" }],\n        otherMeasures := [{ code := \"OM1\", description := \"Other Measure 1\" }], treatmentLevel := 1 } ∧\n    Spec.post\n      { syndromes := [{ code := \"S1\", description := \"Syndrome 1\" }],\n        clinicalExaminations := [{ code := \"CE1\", description := \"Clinical Exam 1\" }],\n        diagnoses := [{ code := \"D1\", description := \"Diagnosis 1\" }],\n        labTests := [{ code := \"LT1\", description := \"Lab Test 1\" }],\n        drugs := [{ code := \"D1\", description := \"Drug 1\" }],\n        otherMeasures := [{ code := \"OM1\", description := \"Other Measure 1\" }], treatmentLevel := 1 }\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/S2#6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The following part will explain how the systems will validate every information during claim entry.",
+      "text_predicate": "Requirement Design Constraints/S2#6 (Overall Description > System Perspective > Claim Entry/Processing):\nThe following part will explain how the systems will validate every information during claim entry.",
+      "lean_predicate": "structure Claim where\n  amount : Nat\n  code   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  claims : List Claim\n  maxAmount : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  accepted : Bool\n  message  : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.claims.Nodup ∧ 0 < i.maxAmount\n  post := fun i o =>\n    (o.accepted = true ↔\n      ∃ c ∈ i.claims, c.amount ≤ i.maxAmount) ∧\n    (o.accepted = false →\n      o.message = \"All claims exceed the maximum amount.\")\n\nexample : Spec.pre { claims := [{ amount := 50, code := \"A1\" },\n                                 { amount := 70, code := \"B2\" }],\n                     maxAmount := 100 } ∧\n          Spec.post { claims := [{ amount := 50, code := \"A1\" },\n                                 { amount := 70, code := \"B2\" }],\n                     maxAmount := 100 }\n                    { accepted := false, message := \"All claims exceed the maximum amount.\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 39.1,
+      "error": "<generated>:31:65: error: unexpected identifier; expected '}'\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/I17",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Claim Status - Status of the claim is depends information available in the Claim, if any false data or any mandatory information is available in Claim, then the claims status will change, if the value of status is not \"Accepted\" then the claim will be stored in quarantine area and can able to precede it further from its status. The system should have a provision to capture the reason suppose if the claim status is \"Rejection or Quarantine\"",
+      "text_predicate": "Requirement Design Constraints/I17 (Overall Description > System Perspective > Claim Entry/Processing):\nClaim Status - Status of the claim is depends information available in the Claim, if any false data or any mandatory information is available in Claim, then the claims status will change, if the value of status is not \"Accepted\" then the claim will be stored in quarantine area and can able to precede it further from its status. The system should have a provision to capture the reason suppose if the claim status is \"Rejection or Quarantine\"",
+      "lean_predicate": "structure Claim where\n  status     : String\n  reason     : Option String\n  dataValid  : Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  claim      : Claim\n  deriving DecidableEq, Repr\n\nstructure Output where\n  status     : String\n  reason     : Option String\n  dataValid  : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.claim.status ≠ \"Accepted\"\n  post := fun i o => \n    (o.status = \"Rejection\" ∨ o.status = \"Quarantine\") ↔\n    (i.claim.status = \"Rejection\" ∨ i.claim.status = \"Quarantine\") ∧\n    (o.status = \"Rejection\" → o.reason = i.claim.reason) ∧\n    (o.status = \"Quarantine\" → o.reason = i.claim.reason) ∧\n    o.status = i.claim.status ∧\n    o.dataValid = i.claim.dataValid\n\nexample : Spec.pre { claim := { status := \"Rejection\", reason := some \"False data in claim\", dataValid := true } } ∧\n          Spec.post { claim := { status := \"Rejection\", reason := some \"False data in claim\", dataValid := true } }\n                    { status := \"Rejection\", reason := some \"False data in claim\", dataValid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { claim := { status := \"Rejected\", reason := some \"Invalid Data\", dataValid := false } } ∧ ¬ Spec.post { claim := { status := \"Rejected\", reason := some \"Invalid Data\", dataValid := false } } { status := \"Quarantine\", reason := none, dataValid := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { claim := { status := \"Rejected\", reason := some \"Invalid Data\", dataValid := false } } ∧ ¬ Spec.post { claim := { status := \"Rejected\", reason := some \"Invalid Data\", dataValid := false } } { status := \"Quarantine\", reason := none, dataValid := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that if the claim status is not \"Accepted\", the claim should be stored in the quarantine area with a reason. The output does not provide a reason when the status is \"Quarantine\", which is forbidden.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 37.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/S9#3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The authorized user can alter / amend the Claim if required.",
+      "text_predicate": "Requirement Design Constraints/S9#3 (Overall Description > System Perspective > Claim Entry/Processing):\nThe authorized user can alter / amend the Claim if required.",
+      "lean_predicate": "structure Claim where\n  id          : Nat\n  user        : String\n  status      : String\n  description : String\n  amount      : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  claims : List Claim\n  id     : Nat\n  user   : String\n  status : String\n  description : String\n  amount   : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  claims : List Claim\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.user ≠ \"\" ∧ i.id ≠ 0 ∧\n                  ∃ c ∈ i.claims, c.user = i.user ∧ c.id = i.id\n  post := fun i o => (o.claims.length = i.claims.length ∧\n                      ∀ c ∈ o.claims, (c.id = i.id →\n                        (c.status = i.status ∧\n                         c.description = i.description ∧\n                         c.amount = i.amount) ∨\n                        (c.id ≠ i.id ∧\n                         ∃ c' ∈ i.claims, c'.id = i.id ∧\n                         c = c'))) ∧\n                     (o.claims.length = i.claims.length →\n                      ∃ c ∈ o.claims, c.id = i.id ∧\n                      (c.status = i.status ∨\n                       c.description = i.description ∨\n                       c.amount = i.amount))\n\nexample : Spec.pre { claims := [{ id := 1, user := \"user1\", status := \"pending\", description := \"claim1\", amount := 500 }],\n                     id := 1, user := \"user1\", status := \"amended\", description := \"claim1\", amount := 600 } ∧\n          Spec.post { claims := [{ id := 1, user := \"user1\", status := \"amended\", description := \"claim1\", amount := 600 }],\n                      id := 1, user := \"user1\", status := \"amended\", description := \"claim1\", amount := 600 }\n                    { claims := [{ id := 1, user := \"user1\", status := \"amended\", description := \"claim1\", amount := 600 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 60.1,
+      "error": "L0.5: The example gives `Spec.pre` and `Spec.post` different input records. Use exactly the same input record in both.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "compiles, but the generation loop's own checks failed: L0.5: The example gives `Spec.pre` and `Spec.post` different input records. Use exactly the same input record in both."
+        ]
+      }
+    },
+    {
+      "id": "Assumptions/I5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "System should calculate Claim Amount only based on treatment matrix",
+      "text_predicate": "Requirement Assumptions/I5 (Overall Description > System Perspective > Claim Entry/Processing):\nSystem should calculate Claim Amount only based on treatment matrix",
+      "lean_predicate": "structure Treatment where\n  code : String\n  amount : Nat\n  deriving DecidableEq, Repr\n\nstructure Claim where\n  treatments : List Treatment\n  deriving DecidableEq, Repr\n\nstructure Input where\n  treatments : List Treatment\n  deriving DecidableEq, Repr\n\nstructure Output where\n  claimAmount : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.treatments.Nodup\n  post := fun i o => o.claimAmount = (i.treatments.map (fun t => t.amount)).sum\n\nexample : Spec.pre { treatments := [{ code := \"T1\", amount := 100 },\n                                      { code := \"T2\", amount := 200 }] } ∧\n          Spec.post { treatments := [{ code := \"T1\", amount := 100 },\n                                      { code := \"T2\", amount := 200 }] }\n                    { claimAmount := 300 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 38.4,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { treatments := [{ code := \"A\", amount := 100 }, { code := \"B\", amount := 200 }, { code := \"A\", amount := 150 }] } { claimAmount := 450 }` holds, but the requirement forbids this output for this input (The output should not include any claim amount calculation based on duplicate treatments). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "compiles, but the generation loop's own checks failed: L0.5: your spec accepts a forbidden behaviour: `Spec.post { treatments := [{ code := \"A\", amount := 100 }, { code := \"B\", amount := 200 }, { code := \"A\", amount := 150 }] } { claimAmount := 450 }` holds, but the requirement forbids this output for this input (The output should not include any claim "
+        ]
+      }
+    },
+    {
+      "id": "Assumptions/I2#2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user will not alter any information about treatment, which is populating from the system",
+      "text_predicate": "Requirement Assumptions/I2#2 (Overall Description > System Perspective):\nThe user will not alter any information about treatment, which is populating from the system",
+      "lean_predicate": "structure Treatment where\n  id     : Nat\n  name   : String\n  details: String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  treatments : List Treatment\n  deriving DecidableEq, Repr\n\nstructure Output where\n  treatments : List Treatment\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.treatments = i.treatments\n\nexample : Spec.pre { treatments := [{ id := 1, name := \"Treatment A\", details := \"Details A\" },\n                                     { id := 2, name := \"Treatment B\", details := \"Details B\" }] } ∧\n          Spec.post { treatments := [{ id := 1, name := \"Treatment A\", details := \"Details A\" },\n                                      { id := 2, name := \"Treatment B\", details := \"Details B\" }] }\n                    { treatments := [{ id := 1, name := \"Treatment A\", details := \"Details A\" },\n                                     { id := 2, name := \"Treatment B\", details := \"Details B\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { treatments := [ Treatment.id 1; Treatment.name \"Test\"; Treatment.details \"Detail\" ] } ∧ ¬ Spec.post { treatments := [ Treatment.id 1; Treatment.name \"Test\"; Treatment.details \"Detail\" ] } { treatments := [ Treatment.id 1; Treatment.name \"Test\"; Treatment.details \"Changed Detail\" ] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { treatments := [ Treatment.id 1; Treatment.name \"Test\"; Treatment.details \"Detail\" ] } ∧ ¬ Spec.post { treatments := [ Treatment.id 1; Treatment.name \"Test\"; Treatment.details \"Detail\" ] } { treatments := [ Treatment.id 1; Treatment.name \"Test\"; Treatment.details \"Changed Detail\" ] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids altering any information about treatment, which means the treatment details should not change.",
+          "outcome": "not usable: unexpected token ';'; expected ':' or ']'"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/I1#9",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system admin only can able to create User Groups",
+      "text_predicate": "Requirement Design Constraints/I1#9 (Overall Description > System Perspective > Security and User Privileges):\nThe system admin only can able to create User Groups",
+      "lean_predicate": "structure UserGroup where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure User where\n  name : String\n  groups : List UserGroup\n  deriving DecidableEq, Repr\n\nstructure Admin where\n  name : String\n  groups : List UserGroup\n  deriving DecidableEq, Repr\n\nstructure Input where\n  admin : Admin\n  name  : String\n  groups : List UserGroup\n  deriving DecidableEq, Repr\n\nstructure Output where\n  created : Bool\n  groups  : List UserGroup\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.admin.groups = [] -- The admin has no user groups\n  post := fun i o => o.created = true ↔\n    i.admin.name ≠ \"\" ∧\n    i.name ≠ \"\" ∧\n    i.groups = [] ∧\n    o.groups = i.groups\n\nexample : Spec.pre { admin := { name := \"admin\", groups := [] },\n                     name := \"group1\", groups := [] } ∧\n          Spec.post { admin := { name := \"admin\", groups := [] },\n                      name := \"group1\", groups := [] }\n                    { created := true, groups := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { admin := { name := \"admin\", groups := [] }, name := \"group1\", groups := [] } ∧ ¬ Spec.post { admin := { name := \"admin\", groups := [] }, name := \"group1\", groups := [] } { created := true, groups := [{ name := \"group1\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { admin := { name := \"admin\", groups := [] }, name := \"group1\", groups := [] } ∧ ¬ Spec.post { admin := { name := \"admin\", groups := [] }, name := \"group1\", groups := [] } { created := true, groups := [{ name := \"group1\" }] } := by\n  unfold Spec; decide",
+          "why": "The system should not allow the admin to create User Groups",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 11.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/I2#9",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system should have the provision to create any number of individual user under any user group. Each Individual User should have the following information Group Name (Selecting from User Group) User Name Password Verify Password",
+      "text_predicate": "Requirement Design Constraints/I2#9 (Overall Description > System Perspective > Security and User Privileges):\nThe system should have the provision to create any number of individual user under any user group. Each Individual User should have the following information Group Name (Selecting from User Group) User Name Password Verify Password",
+      "lean_predicate": "structure UserGroup where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure IndividualUser where\n  groupName : String\n  userName  : String\n  password  : String\n  verifyPassword : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  userGroups : List UserGroup\n  individualUser : IndividualUser\n  deriving DecidableEq, Repr\n\nstructure Output where\n  created : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.individualUser.groupName ∈ i.userGroups.map (·.name)\n  post := fun i o =>\n    (o.created = true ↔\n      i.individualUser.userName ≠ \"\" ∧\n      i.individualUser.password = i.individualUser.verifyPassword ∧\n      i.individualUser.groupName ∈ i.userGroups.map (·.name))\n\nexample : Spec.pre { userGroups := [{ name := \"Admin\" }],\n                     individualUser := { groupName := \"Admin\", userName := \"user1\", password := \"pass\", verifyPassword := \"pass\" } } ∧\n          Spec.post { userGroups := [{ name := \"Admin\" }],\n                      individualUser := { groupName := \"Admin\", userName := \"user1\", password := \"pass\", verifyPassword := \"pass\" } }\n                    { created := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { userGroups := [{ name := \"Group1\" }], individualUser := { groupName := \"Group1\", userName := \"User1\", password := \"pass123\", verifyPassword := \"pass456\" } } ∧ ¬ Spec.post { userGroups := [{ name := \"Group1\" }], individualUser := { groupName := \"Group1\", userName := \"User1\", password := \"pass123\", verifyPassword := \"pass456\" } } { created := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { userGroups := [{ name := \"Group1\" }], individualUser := { groupName := \"Group1\", userName := \"User1\", password := \"pass123\", verifyPassword := \"pass456\" } } ∧ ¬ Spec.post { userGroups := [{ name := \"Group1\" }], individualUser := { groupName := \"Group1\", userName := \"User1\", password := \"pass123\", verifyPassword := \"pass456\" } } { created := true } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow the password and verify password to be different",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 32.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/I3#9",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system should save the user information only if the Password and Verify password values are equal",
+      "text_predicate": "Requirement Design Constraints/I3#9 (Overall Description > System Perspective > Security and User Privileges):\nThe system should save the user information only if the Password and Verify password values are equal",
+      "lean_predicate": "structure Input where\n  password  : String\n  verifyPassword : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  saved : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.password = i.verifyPassword\n  post := fun i o => o.saved = true\n\nexample : Spec.pre { password := \"test123\", verifyPassword := \"test123\" } ∧\n          Spec.post { password := \"test123\", verifyPassword := \"test123\" }\n                    { saved := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { password := \"test123\", verifyPassword := \"test321\" } ∧ ¬ Spec.post { password := \"test123\", verifyPassword := \"test321\" } { saved := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { password := \"test123\", verifyPassword := \"test321\" } ∧ ¬ Spec.post { password := \"test123\", verifyPassword := \"test321\" } { saved := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the system should only save user information if the Password and Verify password values are equal. The output should not save the user information if the values are not equal, but the given output incorrectly states that the user was saved.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    },
+    {
+      "id": "Design Constraints/I4#8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system should not allow the user to create a User Group and Individual User with existing names",
+      "text_predicate": "Requirement Design Constraints/I4#8 (Overall Description > System Perspective > Security and User Privileges):\nThe system should not allow the user to create a User Group and Individual User with existing names",
+      "lean_predicate": "structure UserGroup where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure IndividualUser where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  userGroups : List UserGroup\n  individualUsers : List IndividualUser\n  newGroupName : String\n  newUserName : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  createdGroup : Option UserGroup\n  createdUser : Option IndividualUser\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.newGroupName ≠ \"\" ∧ i.newUserName ≠ \"\"\n  post := fun i o =>\n    (o.createdGroup = some { name := i.newGroupName } ↔\n      ¬ ∃ g ∈ i.userGroups, g.name = i.newGroupName) ∧\n    (o.createdUser = some { name := i.newUserName } ↔\n      ¬ ∃ u ∈ i.individualUsers, u.name = i.newUserName)\n\nexample : Spec.pre { userGroups := [{ name := \"Admin\" }],\n                     individualUsers := [{ name := \"Alice\" }],\n                     newGroupName := \"NewGroup\",\n                     newUserName := \"NewUser\" } ∧\n          Spec.post { userGroups := [{ name := \"Admin\" }],\n                      individualUsers := [{ name := \"Alice\" }],\n                      newGroupName := \"NewGroup\",\n                      newUserName := \"NewUser\" }\n                    { createdGroup := some { name := \"NewGroup\" },\n                      createdUser := some { name := \"NewUser\" } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { userGroups := [{ name := \"Admins\" }], individualUsers := [{ name := \"Alice\" }], newGroupName := \"Admins\", newUserName := \"Alice\" } ∧ ¬ Spec.post { userGroups := [{ name := \"Admins\" }], individualUsers := [{ name := \"Alice\" }], newGroupName := \"Admins\", newUserName := \"Alice\" } { createdGroup := some { name := \"Admins\" }, createdUser := some { name := \"Alice\" } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { userGroups := [{ name := \"Admins\" }], individualUsers := [{ name := \"Alice\" }], newGroupName := \"Admins\", newUserName := \"Alice\" } ∧ ¬ Spec.post { userGroups := [{ name := \"Admins\" }], individualUsers := [{ name := \"Alice\" }], newGroupName := \"Admins\", newUserName := \"Alice\" } { createdGroup := some { name := \"Admins\" }, createdUser := some { name := \"Alice\" } } := by\n  unfold Spec; decide",
+          "why": "The system should not allow creating a User Group and Individual User with existing names",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": []
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 21,
+    "flag": 5,
+    "fail": 8
+  }
+}
