@@ -23,8 +23,8 @@ decision someone else would need to know.
 | `harness/agents/coding_agent.py` (L2) | Merged from `feat/l2-coding-agent` (PR #1): `code` stage in `main.py`, `code_lean.py`, tests. Not run through `main.py` yet. |
 | `harness/main.py` | Single entry point. Stages `parse` → `spec` → `check` (L0) → `graph` → `arch` (L1); `--until graph/arch` read the frozen L0 run and never rerun L0. `code` (L2) reads the accepted L1 architectures. Auto-starts the Qwen server. |
 | `harness/agents/chain_architect.py`, `chain_coder.py` (per-spec L1/L2) | **chain-v3 (2026-11-12), run with Qwen 2026-11-13** (3 seeds × both SRSs, strict + fallback; see *chain-v3 → Qwen results* and `results.md`). The model writes definitions only; the harness states and proves PO1/PO2/PO3. v2 was run end to end 2026-11-06 (see *L1/L2 end-to-end*). |
-| `harness/chain_checks.py`, `chain_failures.py`, `po.py` | Done (chain-v3). Static checks + strength record + PO diagnosis; failure classes; PO code shared by both L1/L2 paths. |
-| `harness/chain_pipeline.py`, `main.py --until chain` | Done (chain-v3). The chain path is a `main.py` stage with `--repeat`; `e2e_l1l2.py` is a thin CLI over the same code (shards). Job file: `runs/qwen-chain-v3.sbatch`. |
+| `harness/chain_checks.py`, `chain_failures.py`, `po.py` | Done (chain-v3; **chain-v4 2026-11-13**: routing by intermediate result, constant-result check, PO1 repair, weak-spec flag, see *chain-v4*). Static checks + strength record + PO diagnosis; failure classes; PO code shared by both L1/L2 paths. |
+| `harness/chain_pipeline.py`, `main.py --until chain` | Done (chain-v3). The chain path is a `main.py` stage with `--repeat`; `e2e_l1l2.py` is a thin CLI over the same code (shards). Job files: `runs/qwen-chain-v3.sbatch` (run), `runs/qwen-chain-v4.sbatch` (to run). |
 | `harness/reverify.py` | Not started. |
 | `benchmark/gammaj/` | `GammaJ_L0.lean`: hand-written gold L0 (25 specs `Spec_<id>` (16 data dictionary, 3 cart, 4 use case, 1 business rule, 1 security), all with `_sat` witnesses, ambiguities marked), compiles. `Domain.lean`: **DRAFT, needs human review**, extracted from it (`Product`, `CartLine`, `Cart`, `Account`, `Order`, `qtyOf`, `itemCount`, `totalCost`; adds `deriving DecidableEq, Repr`). |
 | `evaluation/compare_runs.py` | Done (v10; arch mode L1-v1). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. L1 folders get the arch report (now with `accepted-degraded` and degraded operations). |
@@ -333,7 +333,60 @@ write-up in `results.md` at the repo root.
   real decompositions with the new prompt and feedback is not known. If it cannot, most specs end
   as `single` / `single-fallback`, which is the honest result.
 
-### Graph v2 (`req_graph.py`, issue 6)
+## chain-v4 (2026-11-13): what the v3 Qwen run showed, and the fixes. **Not yet run with Qwen**
+
+Read from `runs/*/qwen-chain-v3*/rep*/l1l2.json` (job 74718). `results.md` reports the counts; these are the causes.
+
+### Issues found in the v3 run
+1. **Accepted gamma j chains were fake.** 11 of the 12 verified chains (3 reps) have a first component that copies
+   fields and sets a constant: `m.ok = true`, `m.logged_in = false`, `m.ok = true ↔ <the precondition>`. The model
+   satisfied the identity check with a constant field; the v3 prompt and feedback suggested it ("e.g. a `Bool`
+   decision"). The strength score gave these 5/5.
+2. **The real chains repeat the prompt example**: video search `REQ-5` and `REQ-7#2` are `FindMatches` → `ShowResults`
+   with a `found` list, i.e. Example 2 of the architect prompt.
+3. **Forcing a split was the wrong rule.** 23 gamma j specs were split only because `post` has more than one condition;
+   most have independent conditions, not stages. They produced the identity / visibility / PO1 failures.
+4. **Repair loops made no progress**: 25 of 50 gamma j L1 failures and 11 of 17 L2 failures hit the same stage 5 times.
+5. **L2 second component set fields `Output` does not have** (`ok := x.ok`, copied from `Mid`): `3.2.3/S1` and
+   `UC-customer-add-item-to-cart` in every rep, both settings. The feedback was Lean's raw message.
+6. **Weak L0 specs → stub implementations.** "The initial inventory will be 100 items" verifies with
+   `{ items := x.items }`; register-customer with `cookie := "abc123"`.
+7. **PO1 failures share one pattern**: the second `pre` selects the success case (`m.ok`, `m.passwordMatch`).
+8. Video search PO2 failures are list properties (sorted, permutation, "every wanted item is in the results") that
+   do not survive `Mid`. Not addressed.
+9. Some specs fail PO3 even as one component (`SI-1.2`, `UC-administrator-add-user`, `…-remove-user`, `3.1.3/S1`,
+   `3.1.3/S3`, `REQ-1`, `REQ-4`, `REQ-6`). `add-user`'s `post` looks contradictory; the others are not checked.
+
+### Fixes (all harness-side; `CHAIN_VERSION = "chain-v4"`)
+| Fix | Where | What |
+|-----|-------|------|
+| Routing | `chain_checks.single_step`, `intermediate_results` | A spec is split only if a condition of `Spec.post` relates two output fields (one output stated in terms of another = an intermediate result). The architect is told which fields. Everything else is one component; its decomposition belongs to the graph path |
+| Constant result | `chain_checks.constant_fields`, `copied_fields`, in `prove_obligations` | Lean tries to prove each first-component result field equal for any two inputs satisfying `pre` (constant) or equal to an `Input` field of the same type (copy hidden in a `↔`). If no field is left, the architecture is rejected (`identity` class). `Bool` hints removed from prompt and feedback; prompt Example 1 replaced by one with a real intermediate (total → budget decision) |
+| PO1 repair | `prove_obligations` | When PO1 fails, the conjuncts of the second `pre` that the first `post` does not give are removed by the harness (`repairs` in the record); PO1/PO2 are proved for the repaired definitions. Sound: PO2 does not use the second `pre`, and L2 must then implement the stronger contract |
+| L2 fields | `chain_coder.record_problems` | Before Lean, the returned record's fields are compared with the result structure; unknown / missing / repeated fields are reported with the exact field list. The list is also in the first prompt |
+| Weak-spec flag | `chain_checks.trivial_witness`, `spec_check` in the record | Up to 48 implementations made of copied input fields and constants are tried against `Spec` in one Lean run. A hit marks the spec `trivial` (with the witness). A flag, not a rejection; `summarize_e2e.py` reports "weak specs" and "end to end, non-trivial spec" |
+
+Strength is now out of 6 (new: `first_result_depends_on_input`). `summarize_e2e.py` also counts repaired chains.
+
+### Replay of the v3 records under v4 (no model; Lean only)
+| | gamma j (61) | video search (15) |
+|---|---|---|
+| routed to a split | 4 (`3.1.3/S1`, `3.1.3/S2`, `5.1/R5`, `UC-customer-login-customer`) | 4 (`REQ-3`, `REQ-4`, `REQ-5`, `REQ-7#2`) |
+| weak specs (copy/constant witness) | 24 (12 requirements, 12 use cases; 0 data constraints) | 6 |
+| v3 chain architectures, 3 reps | 57 now single; of 12 still split: 4 accepted (3 by PO1 repair: login-customer), 5 identity, 3 PO1/PO2 | 18 now single; of 12: 7 accepted, 1 identity, 4 PO2 |
+| v3 L2 unknown-field / type-error failures now named by the harness | 7 of 8 | 2 of 2 |
+
+All 11 fake chains are rejected or no longer split. **What this does not show:** whether Qwen acts on the new
+messages, and the end-to-end count. Expect the "chain" count to fall to a handful and the single count to rise;
+the number to report is "end to end, non-trivial spec". Run `sbatch runs/qwen-chain-v4.sbatch`.
+
+### Still open
+- Weak L0 specs (30 of 76) are an L0 problem: the fix belongs in the L0 checks (reject or repair a spec with a
+  trivial witness), not in the chain path. Not done; needs a decision, because it will lower the L0 acceptance rate.
+- Per-spec decomposition applies to 8 specs. Real architecture work is the graph path (`--until arch`).
+- Items 8 and 9 above.
+
+### Graph v2 (`req_graph.py`, issue 6; part of chain-v3 work, 2026-11-12)
 | | v1 | v2 `--vocab full` | v2 `--vocab srs` (no Domain.lean, no synonyms file) |
 |---|---|---|---|
 | gamma j fields mapped | 47.2 % (36.2 % without Domain.lean) | 74.0 % | 73.2 % |
@@ -482,16 +535,18 @@ Video search (it has no Domain.lean): 58.5 % mapped, 1 group, 3 components, no c
   Fixed in `runs/qwen-chain-v3.sbatch`; copy the `-f` into any new sbatch.
 - **Default `lake` on ada is Lean 4.35.0**; inside `framework/`, elan switches to 4.29.1 from `lean-toolchain`.
 
-## Tests (2026-11-12)
+## Tests (2026-11-13)
 
-`cd harness && python -m pytest`: **157 pass, 0 skipped** (about 3 min with Lean; checked again 2026-11-13). If you see
+`cd harness && python -m pytest`: **162 pass, 0 skipped** (about 4 min with Lean; `test_chain.py` is now 26: plus routing by intermediate result, constant result, PO1 repair, weak-spec witness, coder field feedback). If you see
 skips, `networkx`/spaCy are missing (`pip install -r requirements.txt`): the graph tests skip silently. New: `tests/test_chain.py` (21: static
 checks, PO diagnosis, single-step routing, coder, pipeline with a scripted model, repetition summary);
 `test_arch.py` 15 (degrading); `test_req_graph.py` 15 (state entities, split rule, broken cycles).
 
 ## Next steps
 
-00. ~~Run chain-v3 with Qwen~~ done 2026-11-13 (see *chain-v3 → Qwen results*). Next for the chain path: the
+000. **Run chain-v4 with Qwen**: `sbatch runs/qwen-chain-v4.sbatch` (see *chain-v4*). Then decide whether L0 should
+     reject specs with a trivial witness.
+00. ~~Run chain-v3 with Qwen~~ done 2026-11-13 (see *chain-v3 → Qwen results*). Next for the chain path (most now addressed by chain-v4): the
     second-component L2 failures (`unknown-field` on `Mid`, PO3 on the output `post`), PO1/visibility on gamma j and
     PO2 on video search for splits. Rebuild the gamma j graph
     (`--until graph`) and rerun graph L1 ×3 to measure degrading and graph v2 with the model.

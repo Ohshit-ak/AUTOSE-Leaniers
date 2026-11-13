@@ -21,9 +21,21 @@ The model writes only `structure Mid` and the two contracts. Everything else is 
                      `discharge_po2`). When one fails, each conjunct is tried on its own and
                      the feedback names the part that does not follow
 
-`single_step` says which specs are not split at all (one condition, or a data constraint):
-their architecture is `Spec` itself and PO2 is `Refines Spec Spec`.
+        constant     a first component whose results are the same for every input that
+                     satisfies its `pre` (`m.ok = true`, `m.ok = true ↔ <the pre>`) decides
+                     nothing: it is an identity with a constant added, and is rejected
+        PO1 repair   the parts of the second `pre` that the first `post` does not give are
+                     removed by the harness (the second component must accept every `Mid`
+                     the first can produce); PO1 and PO2 are then proved for the result
+
+`single_step` says which specs are not split at all (a data constraint, or a `post` in which
+no output field is stated in terms of another, so there is no intermediate result): their
+architecture is `Spec` itself and PO2 is `Refines Spec Spec`.
+
+`trivial_witness` flags a weak L0 spec: one that an implementation made only of copied input
+fields and constants satisfies.
 """
+import itertools
 import re
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple
@@ -174,18 +186,40 @@ def _bound(text: str) -> set:
     return {v for b in _BINDER.findall(text) for v in _vars(b)}
 
 
+def intermediate_results(spec_code: str) -> List[Tuple[str, List[str]]]:
+    """[(condition, output fields in it)] for the conditions of `Spec.post` that relate two or
+    more output fields: there one output is stated in terms of another, so the other one is
+    an intermediate result a first component can compute (`o.message = … ↔ o.results = []`:
+    the results come first)."""
+    s = spec_contract(spec_code)
+    if s is None:
+        return []
+    out = []
+    for c in conjuncts(s.post):
+        fs = list(dict.fromkeys(_refs(c, s.out_var)))
+        if len(fs) >= 2:
+            out.append((c, fs))
+    return out
+
+
 def single_step(spec_code: str, kind: Optional[str] = None) -> Optional[str]:
     """Why this spec is not split into two components, or None if it should be.
 
-    A data constraint is one validity rule, and a `post` with a single condition (a format
-    check, one decision, one bound) has no intermediate result to hand over: any split makes
-    one component an identity or moves the condition into the second `pre`, which breaks
-    PO2."""
+    A chain needs an intermediate result: something the first component computes and the
+    second one uses. A data constraint is one validity rule. A `post` whose conditions each
+    describe one output field from the input has independent parts, not stages: every split
+    of it makes one component an identity (or an identity plus a constant field), which is
+    what a small model produces when it is forced to split. Such specs are one component;
+    their decomposition is the graph path's job (components from the requirements graph)."""
     if kind == "data_constraint":
         return "data constraint (one validity rule)"
     s = spec_contract(spec_code)
-    if s is not None and len(conjuncts(s.post)) <= 1:
+    if s is None:
+        return None
+    if len(conjuncts(s.post)) <= 1:
         return "`post` is a single condition"
+    if not intermediate_results(spec_code):
+        return "no intermediate result (no output field of `post` is stated in terms of another)"
     return None
 
 
@@ -324,9 +358,9 @@ def static_check(code: str, spec_code: str) -> dict:
         what = "only copies `Input` fields" + (" and restates the precondition" if restated or claims else "")
         problems.append(
             f"`{a.name}` is an identity: its `post` {what}, so `{b.name}` does all the work of `Spec`. "
-            f"The first component must compute or decide something: give `{mid}` a field for that "
-            f"intermediate result (e.g. a `Bool` decision or a computed value) and state it in the `post` "
-            f"of `{a.name}` in terms of `{i}` (e.g. `{m}.ok = true ↔ <condition on {i}>`).")
+            f"The first component must compute a result that is different for different inputs: give "
+            f"`{mid}` a field for it and state it in the `post` of `{a.name}` in terms of `{i}`. A field "
+            f"that is always the same (`{m}.ok = true`) does not count.")
     if not b_work:
         problems.append(
             f"`{b.name}` is an identity: its `post` only copies `{mid}` fields to `Output`, so `{a.name}` does "
@@ -380,15 +414,60 @@ def diagnose_po2(prefix: str, a: Contract, b: Contract, spec: Contract) -> Tuple
     return res[0][0], [c for c, (ok, _) in zip(parts, res[1:]) if not ok]
 
 
+def constant_fields(prefix: str, a: Contract, fields: List[str]) -> List[str]:
+    """The `fields` of the first component's result that Lean proves equal for any two inputs
+    that satisfy `a.pre`: they do not depend on the input, so computing them is no work."""
+    thms = [f"example : ∀ (i1__ i2__ : {a.dom}) (m1__ m2__ : {a.cod}), {a.name}.pre i1__ → {a.name}.pre i2__ → "
+            f"{a.name}.post i1__ m1__ → {a.name}.post i2__ m2__ → m1__.{f} = m2__.{f} := by\n"
+            f"  intro i1__ i2__ m1__ m2__ hp1 hp2 hq1 hq2\n  simp only [{a.name}] at hp1 hp2 hq1 hq2\n"
+            f"  first | (simp_all; done) | omega | grind" for f in fields]
+    return [f for f, (ok, _) in zip(fields, po.run_theorems(prefix, thms)) if ok]
+
+
+def copied_fields(prefix: str, a: Contract, fields: List[str]) -> List[str]:
+    """The `fields` of the first component's result that Lean proves equal to an `Input` field
+    of the same type: copies that the text check missed (e.g. `m.f = i.f ∧ m.ok = true ↔ P`,
+    which is one `↔` condition, not a copy and a decision)."""
+    types = field_types(prefix)
+    inp, mid = types.get(a.dom, {}), types.get(a.cod, {})
+    norm = lambda t: " ".join((t or "").split())  # noqa: E731
+    pairs = [(f, g) for f in fields
+             for g in sorted((g for g, t in inp.items() if norm(t) == norm(mid.get(f))), key=lambda g: g != f)[:3]]
+    thms = [f"example : ∀ (i__ : {a.dom}) (m__ : {a.cod}), {a.name}.pre i__ → {a.name}.post i__ m__ → "
+            f"m__.{f} = i__.{g} := by\n  intro i__ m__ hp hq\n  simp only [{a.name}] at hp hq\n"
+            f"  first | (simp_all; done) | omega | grind" for f, g in pairs]
+    return list(dict.fromkeys(f for (f, _), (ok, _) in zip(pairs, po.run_theorems(prefix, thms)) if ok))
+
+
+def contract_text(c: Contract) -> str:
+    return (f"def {c.name} : Contract {c.dom} {c.cod} where\n"
+            f"  pre  := fun {c.pre_var} => {c.pre}\n"
+            f"  post := fun {c.in_var} {c.out_var} => {c.post}")
+
+
+def replace_contract(code: str, c: Contract) -> str:
+    """`code` (comments removed) with the definition of `c.name` rewritten from `c`."""
+    code = strip_comments(code)
+    for m in _DEF_CONTRACT.finditer(code):
+        if m.group(1) == c.name:
+            return code[:m.start()] + contract_text(c) + "\n\n" + code[m.end():].lstrip("\n")
+    return code
+
+
 def prove_obligations(spec_code: str, code: str, facts: dict) -> dict:
-    """Realizability, PO1 and PO2 for definitions that compile.
+    """Realizability, the constant-result check, PO1 (with repair) and PO2 for definitions
+    that compile.
 
     Returns {"problems": [...], "theorems": Lean text of po1/po2 (when both are proved),
-    "proved": {"po1": bool, "po2": bool}}."""
+    "proved": {"po1": bool, "po2": bool}, "code": the definitions the theorems are about
+    (differs from `code` when the second `pre` was repaired), "repairs": [...],
+    "constant": [first-component result fields that do not depend on the input],
+    "results": [the ones that are neither constant nor copies: the real intermediate results]}."""
     prefix = strip_examples(spec_code) + "\n\n" + code
     cs = {c.name: c for c in parse_contracts(code)}
     a, b, spec = cs[facts["a"]], cs[facts["b"]], spec_contract(spec_code)
     problems: List[str] = []
+    repairs: List[str] = []
 
     claims = facts.get("carried_claims") or []
     if claims:
@@ -401,24 +480,56 @@ def prove_obligations(spec_code: str, code: str, facts: dict) -> dict:
                 problems.append(
                     f"`{a.name}` cannot guarantee `{c['conjunct']}`: the fields in it are copies of `Input` "
                     f"fields, so this says `{c['on_input']}` about the input, and `{a.name}.pre` does not "
-                    "ensure that. A component cannot change its input. State it as a decision instead "
-                    f"(a `Bool` field of `{a.cod}`: `m.ok = true ↔ {c['on_input']}`), not as a fact.")
+                    "ensure that. A component cannot change its input: remove this condition from "
+                    f"`{a.name}.post`.")
+
+    derived = facts.get("derived") or []
+    constant = constant_fields(prefix, a, derived) if derived else []
+    rest = [f for f in derived if f not in constant]
+    copied = copied_fields(prefix, a, rest) if rest else []
+    results = [f for f in rest if f not in copied]
+    if derived and not results:
+        m = _var(a.out_var, "m")
+        what = []
+        if constant:
+            what.append(", ".join(f"`{m}.{f}`" for f in constant) + " always has the same value")
+        if copied:
+            what.append(", ".join(f"`{m}.{f}`" for f in copied) + " is a copy of an `Input` field")
+        problems.append(
+            f"`{a.name}` computes nothing: for every input that satisfies its `pre`, "
+            + " and ".join(what) + ", so it is an identity "
+            f"with a constant added and `{b.name}` does all the work of `Spec`. The first component must "
+            f"produce a result that is different for different inputs (a filtered list, a computed value, "
+            f"a decision that can be true or false under `{a.name}.pre`).")
 
     proved, lines = {}, []
     for key, (stmt, proofs) in po_theorems(a.name, b.name).items():
         proof, errors = po.prove(prefix, stmt, proofs)
+        if not proof and key == "po1":
+            # The second component must accept every Mid the first can produce: drop what
+            # the first `post` does not give from the second `pre` (PO2 does not use it).
+            bad = diagnose_po1(prefix, a, b)
+            keep = [c for c in conjuncts(b.pre) if c not in bad]
+            if bad:
+                fixed = Contract(b.name, b.dom, b.cod, b.pre_var, " ∧ ".join(f"({c})" for c in keep) or "True",
+                                 b.in_var, b.out_var, b.post)
+                new_code = replace_contract(code, fixed)
+                new_prefix = strip_examples(spec_code) + "\n\n" + new_code
+                proof, errors = po.prove(new_prefix, stmt, proofs)
+                if proof:
+                    repairs.append(f"removed from `{b.name}.pre` (not guaranteed by `{a.name}.post`): "
+                                   + "; ".join(f"`{c}`" for c in bad))
+                    code, prefix, b = new_code, new_prefix, fixed
         proved[key] = proof is not None
         if proof:
             lines.append(po.theorem(stmt, proof))
             continue
         if key == "po1":
-            bad = diagnose_po1(prefix, a, b)
             what = ("these parts of its `pre`: " + "; ".join(f"`{c}`" for c in bad)) if bad else "its `pre`"
             problems.append(
                 f"PO1 fails: `{b.name}` assumes more than `{a.name}` guarantees. `{a.name}.post` does not give "
-                f"{what}. `{b.name}` must accept every `{a.cod}` that `{a.name}` can produce: do not use its "
-                f"`pre` to pick the success case (put that decision in its `post` with `↔`). Either drop "
-                f"that part of `{b.name}.pre`, or state it in `{a.name}.post` if `{a.name}` really ensures it.")
+                f"{what}. `{b.name}` must accept every `{a.cod}` that `{a.name}` can produce: remove that part "
+                f"of `{b.name}.pre` (write `pre := fun _ => True` if nothing is left).")
         else:
             pre_ok, bad = diagnose_po2(prefix, a, b, spec) if spec else (True, [])
             if not pre_ok:
@@ -433,5 +544,50 @@ def prove_obligations(spec_code: str, code: str, facts: dict) -> dict:
                     f"`{a.cod}`. A condition that is only in `{b.name}.pre` is not guaranteed by the chain.")
             if pre_ok and not bad:
                 problems.append("PO2 could not be proved: " + "; ".join(errors[:2]))
-    return {"problems": problems, "proved": proved,
+    return {"problems": problems, "proved": proved, "code": code, "repairs": repairs, "constant": constant, "results": results,
             "theorems": "\n\n".join(lines) if all(proved.values()) and not problems else ""}
+
+
+# ---------------------------------------------------------------------------
+# L0 strength: is the spec satisfied by copies and constants?
+# ---------------------------------------------------------------------------
+
+_DEFAULTS = {"Nat": ["0", "1"], "Int": ["0", "1"], "Bool": ["true", "false"], "String": ['""', '"x"'],
+             "Float": ["0.0"]}
+MAX_WITNESSES = 48
+
+
+def _candidates(typ: str, inp: Dict[str, str], name: str) -> List[str]:
+    typ = " ".join(typ.split())
+    same = [f"x.{f}" for f, t in inp.items() if " ".join(t.split()) == typ]
+    same.sort(key=lambda e: e != f"x.{name}")          # the field of the same name first
+    if typ.startswith("List "):
+        consts = ["[]"]
+    elif typ.startswith("Option "):
+        consts = ["none"]
+    else:
+        consts = _DEFAULTS.get(typ, [])
+    return same[:3] + consts
+
+
+def trivial_witness(spec_code: str) -> Optional[str]:
+    """An implementation of `Spec` in which every output field is a copied input field or a
+    constant, if Lean accepts one (at most MAX_WITNESSES are tried, in one Lean run). A spec
+    with such a witness asks for no computation: verified code for it can be a stub. None
+    when there is no witness among the candidates (or an output field has no candidate)."""
+    fields = field_types(spec_code)
+    inp, out = fields.get("Input"), fields.get("Output")
+    if spec_contract(spec_code) is None or inp is None or not out:
+        return None
+    options = [_candidates(t, inp, f) for f, t in out.items()]
+    if not all(options):
+        return None
+    bodies = ["{ " + ", ".join(f"{f} := {v}" for f, v in zip(out, combo)) + " }"
+              for combo in itertools.islice(itertools.product(*options), MAX_WITNESSES)]
+    thms = [f"def Trivial__{k} (x : Input) : Output :=\n  {body}\n"
+            f"example : Spec.Satisfies Trivial__{k} := by\n  discharge_po3 [Spec, Trivial__{k}]"
+            for k, body in enumerate(bodies)]
+    for body, (ok, _) in zip(bodies, po.run_theorems(strip_examples(spec_code), thms)):
+        if ok:
+            return body
+    return None

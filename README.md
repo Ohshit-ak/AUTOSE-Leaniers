@@ -42,6 +42,16 @@ splits; v2's 19 were mostly such splits). Splits fail mostly on PO1 and visibili
 in L2 the second component fails. Full write-up: **[results.md](results.md)**; per-run tables in
 `runs/<doc>/qwen-chain-v3/summary.md`; details in [MEMORY.md](MEMORY.md), *chain-v3 → Qwen results*.
 
+> **chain-v4 (2026-11-13, not yet run with Qwen).** Reading the v3 records showed that the table above overstates
+> decomposition: in 11 of the 12 verified gamma j chains the first component only copies fields and sets a constant
+> (`m.ok = true`), and the only real chains (video search `REQ-5`, `REQ-7#2`) repeat the prompt example. chain-v4
+> changes the harness: a spec is split only when its `post` states one output in terms of another (8 of the 76 specs);
+> a first component whose result is constant or a disguised copy is rejected (Lean-checked); the harness removes from
+> the second `pre` what the first `post` does not give; the coder is told the exact fields of its result type; and
+> every spec is flagged when copies and constants satisfy it (30 of 76: weak L0 specs, where verified code can be a
+> stub). Evidence so far is a replay of the v3 records; run `sbatch runs/qwen-chain-v4.sbatch` for numbers.
+> See [MEMORY.md](MEMORY.md), *chain-v4*.
+
 ---
 
 ## Branches (and where to go if `main` breaks)
@@ -73,7 +83,7 @@ git restore --source origin/l0-v10 -- harness/e2e_l1l2.py   # or take one file f
 git diff origin/backup/main-pre-merge main -- harness/      # see what the merge changed
 ```
 
-After the merge, `lake build` succeeds and all tests in `harness/tests` pass on `main` (157 as of 2026-11-13, none skipped once `requirements.txt` is installed).
+After the merge, `lake build` succeeds and all tests in `harness/tests` pass on `main` (162 as of 2026-11-13, none skipped once `requirements.txt` is installed).
 `harness/tests/` is a package (`__init__.py`) and `harness/pytest.ini` pins `testpaths`/`pythonpath`,
 so an unrelated top-level `tests` package installed elsewhere in your Python can no longer
 shadow ours. Run `python -m pytest` (or `python -m unittest discover -s tests`) from `harness/`.
@@ -109,7 +119,7 @@ AUTOSE-Leaniers/
 ├── harness/                # Python orchestration
 │   ├── main.py             # pipeline entry point: parse → spec (L0) → check → graph → arch (L1) → code (L2); or → chain
 │   ├── chain_pipeline.py   # chain path (`--until chain`): per spec L1 → L2 → end-to-end theorem
-│   ├── chain_checks.py     # chain L1 checks: shape, field visibility, identity/copy, strength, PO1/PO2 + diagnosis
+│   ├── chain_checks.py     # chain L1 checks: routing, shape, field visibility, identity/copy/constant, strength, PO1 (repair)/PO2 + diagnosis, weak-spec flag
 │   ├── chain_failures.py   # failure classes of chain L1/L2 results; root cause of an unimplementable contract
 │   ├── po.py               # PO code shared by both L1/L2 paths: forbidden words, statements, batched proving
 │   ├── e2e_l1l2.py         # older CLI of the chain path (one run folder, shardable)
@@ -455,35 +465,37 @@ The second L1/L2 path. It reads the **frozen** L0 run (default `runs/<doc>/qwen-
 cd harness
 python main.py "../Requirements/0000 - gamma j.xml" --until chain --repeat 3     # seeds 42, 43, 44
 python main.py … --until chain --only 5.3/R4 UC-customer-login-customer          # some specs
-python main.py … --until chain --repeat 3 --fallback-single --run-name qwen-chain-v3-fallback
-cd .. && python evaluation/summarize_e2e.py "runs/0000 - gamma j/qwen-chain-v3"  # results, failure classes, spread
+python main.py … --until chain --repeat 3 --fallback-single --run-name qwen-chain-v4-fallback
+cd .. && python evaluation/summarize_e2e.py "runs/0000 - gamma j/qwen-chain-v4"  # results, failure classes, spread
 ```
 
-On ada: `sbatch runs/qwen-chain-v3.sbatch` (both SRSs, 3 seeds, with and without fallback, summary).
+On ada: `sbatch runs/qwen-chain-v4.sbatch` (both SRSs, 3 seeds, with and without fallback, summary).
 `e2e_l1l2.py <run_dir> [--start A --end B]` is the older CLI of the same pipeline (one folder, shards).
 
 | Step | Who writes what | Checks |
 |------|-----------------|--------|
-| route | harness (`chain_checks.single_step`) | a data constraint, or a `post` with one condition, is **not split**: its one component is `Spec`, PO2 is `Refines Spec Spec`, no model call (`mode: single`) |
-| L1 | model: `structure Mid` and two contracts `Input → Mid → Output`, definitions only. Harness: the PO1/PO2 statements and proofs (`discharge_po1`, `discharge_po2`) | before Lean: shape; **visibility** (a contract reads only its own records; an `Input` field used by the second contract is reported with the field to add to `Mid`); **work** (a `post` that only copies fields or restates the precondition is an identity; a contract equal to `Spec` up to variable names is a copy; the second must use what the first computes). In Lean: a fact claimed about a copied `Input` field must follow from `pre`; PO1; PO2. A failed PO names the conjunct that does not follow |
-| L2 | model: `def <C>Impl (x : A) : B` with the signature it is given. Harness: PO3 statement and proof (`discharge_po3`) | signature; PO3, and on failure the `post` conjuncts the function does not establish |
+| spec check | harness (`chain_checks.trivial_witness`) | flags a **weak L0 spec**: Lean accepts an implementation made only of copied input fields and constants (`spec_check.trivial`, with the witness). Not a rejection; the summary reports "end to end, non-trivial spec" separately |
+| route | harness (`chain_checks.single_step`) | a spec is split only if its `post` has an **intermediate result**: a condition that relates two output fields (`o.message = … ↔ o.results = []`). A data constraint, a one-condition `post`, or a `post` whose conditions each state one output field from the input is **not split**: its one component is `Spec`, PO2 is `Refines Spec Spec`, no model call (`mode: single`). Decomposing those is the graph path's job |
+| L1 | model: `structure Mid` and two contracts `Input → Mid → Output`, definitions only. Harness: the PO1/PO2 statements and proofs (`discharge_po1`, `discharge_po2`) | before Lean: shape; **visibility** (a contract reads only its own records; an `Input` field used by the second contract is reported with the field to add to `Mid`); **work** (a `post` that only copies fields or restates the precondition is an identity; a contract equal to `Spec` up to variable names is a copy; the second must use what the first computes). In Lean: a fact claimed about a copied `Input` field must follow from `pre`; **constant result** (the first component is rejected when every result field is the same for all inputs that satisfy `pre`, or is a copy hidden in a `↔`); **PO1 with repair** (parts of the second `pre` that the first `post` does not give are removed by the harness and recorded in `repairs`); PO2. A failed PO names the conjunct that does not follow |
+| L2 | model: `def <C>Impl (x : A) : B` with the signature it is given. Harness: PO3 statement and proof (`discharge_po3`) | signature; **record fields** (a wrong, missing or repeated field of the returned record is reported with the exact field list of the result structure, before Lean); PO3, and on failure the `post` conjuncts the function does not establish |
 | end | harness | one file per spec with `theorem system_ok : Spec.Satisfies (<B>Impl ∘ <A>Impl)` from `Contract.system_sound po1 po2 …` (or `refines_sound` for a single component), checked by Lean (`full_check`) |
 
 `--fallback-single`: when the two-component split fails, `Spec` is implemented as one component
 (`mode: single-fallback`, reported separately; keep these runs in their own `--run-name`).
 `--split always|never` overrides the routing.
 
-Outputs in `runs/<doc>/<model>-chain-v3/rep<k>/`:
+Outputs in `runs/<doc>/<model>-chain-v4/rep<k>/`:
 
 | File | Contents |
 |------|----------|
-| `l1l2.json` | per spec: `l1` (success, `mode`, attempts, contracts, `strength`, error, `error_class`, code), `l2` per contract (success, attempts, error, `error_class`, code), `full_check`, `system_theorem`, `l2_root_cause` |
+| `l1l2.json` | per spec: `spec_check` (`trivial`, `witness`), `l1` (success, `mode`, attempts, contracts, `strength`, `repairs`, error, `error_class`, code), `l2` per contract (success, attempts, error, `error_class`, code), `full_check`, `system_theorem`, `l2_root_cause` |
 | `l1l2/<id>.lean` | spec + architecture + implementations + `system_ok`, checkable with `lake env lean` from the repo root |
 | `chain_meta.json` | model, seed, prompt hashes, commit, L0 run, options |
 
 `strength` (chain architectures) records what the decomposition adds to `Spec`: first component
 does work, second does work, second uses the first's result, neither is a copy of `Spec`, the
-second states an interface assumption (score out of 5; the first four are required).
+second states an interface assumption, the first result depends on the input (score out of 6;
+all but the interface assumption are required).
 `error_class` (`harness/chain_failures.py`): shape, visibility, identity, unrealizable, po1, po2,
 signature, po3, or a Lean class (redeclared, unknown-field, unknown-name, syntax, type-error,
 proof). `summarize_e2e.py` counts them, lists specs with one of two components implemented with

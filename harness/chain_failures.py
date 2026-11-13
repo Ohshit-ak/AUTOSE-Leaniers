@@ -7,10 +7,13 @@ be counted (`evaluation/summarize_e2e.py`) instead of read one by one. The class
         shape          not two contracts, or the types do not chain Input → Mid → Output
         visibility     a contract reads a field its records do not have (e.g. an Input
                        field in the second contract)
-        identity       a component only copies fields / is `Spec` again
+        identity       a component only copies fields / is `Spec` again / computes a result
+                       that is constant or a disguised copy
         unrealizable   the first contract promises a fact about its input
         po1 / po2      the obligation does not hold; the message names the conjunct
         signature      the implementation has the wrong name or type
+        unknown-field  the record an implementation returns does not have the fields of
+                       its result structure
         po3            the implementation does not establish the contract
         forbidden      `sorry`, `axiom`, …
     Lean errors (older runs, or code that does not compile)
@@ -31,8 +34,9 @@ _RULES = [
     ("forbidden", r"is not allowed"),
     ("shape", r"exactly two contracts|types must chain|declare `structure"),
     ("signature", r"exactly this signature|has type `[^`]*`, but `|must be a term"),
+    ("unknown-field", r"does not match `structure "),
     ("visibility", r"has no field `|is not one of its variables"),
-    ("identity", r"is an identity|is `Spec` again|never reads what"),
+    ("identity", r"is an identity|is `Spec` again|never reads what|computes nothing"),
     ("unrealizable", r"cannot guarantee `"),
     ("po1", r"PO1 fails"),
     ("po2", r"PO2 fails|PO2 could not be proved"),
@@ -43,8 +47,8 @@ _LEAN = [
     ("unknown-field", r"Invalid field|is not a field of structure|does not contain `"),
     ("unknown-name", r"[Uu]nknown (identifier|constant|namespace)"),
 ]
-CLASSES = [c for c, _ in _RULES] + [c for c, _ in _LEAN] + [
-    "syntax", "type-error", "proof", "truncated", "timeout", "crash", "unknown"]
+CLASSES = list(dict.fromkeys([c for c, _ in _RULES] + [c for c, _ in _LEAN] + [
+    "syntax", "type-error", "proof", "truncated", "timeout", "crash", "unknown"]))
 
 
 def classify(error: Optional[str], stages: Optional[List[str]] = None) -> Optional[str]:

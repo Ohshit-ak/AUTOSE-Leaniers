@@ -95,6 +95,37 @@ def Spec : Contract Input Output where
 example : Spec.pre { raw := "123456789" } ∧ Spec.post { raw := "123456789" } { valid := true } := by
   unfold Spec; decide
 """
+# `o.accepted` is stated in terms of `o.total`: the total is an intermediate result.
+STAGED = """structure Input where
+  price : Nat
+  qty : Nat
+  budget : Nat
+  deriving DecidableEq, Repr
+
+structure Output where
+  total : Nat
+  accepted : Bool
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.qty > 0
+  post := fun i o => o.total = i.price * i.qty ∧ (o.accepted = true ↔ o.total ≤ i.budget)
+"""
+STAGED_GOOD = """structure Mid where
+  total  : Nat
+  budget : Nat
+  deriving DecidableEq, Repr
+
+def ComputeTotalContract : Contract Input Mid where
+  pre  := fun i => i.qty > 0
+  post := fun i m => m.total = i.price * i.qty ∧ m.budget = i.budget
+
+def DecideOrderContract : Contract Mid Output where
+  pre  := fun _ => True
+  post := fun m o => o.total = m.total ∧ (o.accepted = true ↔ m.total ≤ m.budget)
+"""
+# The "decision" of the first component is the same for every input: an identity in disguise.
+CONSTANT = GOOD.replace("(m.inStock = true ↔ i.qty ≤ i.stock)", "m.inStock = true")
 IMPL_SINGLE = "def SpecImpl (i : Input) : Output :=\n  { valid := decide (i.raw.length = 9) }"
 
 
@@ -122,7 +153,11 @@ class TextChecks(unittest.TestCase):
         self.assertEqual(C.conjuncts("True"), [])
 
     def test_single_step(self):
-        self.assertIsNone(C.single_step(SPEC, "requirement"))
+        # two independent conditions (each one output field from the input): not stages
+        self.assertIn("no intermediate result", C.single_step(SPEC, "requirement"))
+        self.assertIsNone(C.single_step(STAGED, "requirement"))
+        self.assertEqual([fs for _, fs in C.intermediate_results(STAGED)], [["accepted", "total"]])
+        self.assertEqual(C.static_check(STAGED_GOOD, STAGED)["problems"], [])
         self.assertIn("single condition", C.single_step(SINGLE, "requirement"))
         self.assertIn("data constraint", C.single_step(SPEC, "data_constraint"))
 
@@ -169,6 +204,9 @@ class TextChecks(unittest.TestCase):
         self.assertEqual(classify("static: `B` reads `m.x`, but `Mid` has no field `x` (…)"), "visibility")
         self.assertEqual(classify("static: `A` is an identity: its `post` only copies"), "identity")
         self.assertEqual(classify("L1: PO1 fails: `B` assumes more"), "po1")
+        self.assertEqual(classify("L1: `A` computes nothing: for every input"), "identity")
+        self.assertEqual(classify("static: the record `BImpl` returns does not match `structure Output`: `ok` is"),
+                         "unknown-field")
         self.assertEqual(classify("L1: `A` cannot guarantee `m.q ≤ 9`: …"), "unrealizable")
         self.assertEqual(classify("L2: PO3 fails: for an input"), "po3")
         self.assertEqual(classify("static: `XImpl` has type `Mid → Input`, but `X : Contract Input Mid`"), "signature")
@@ -201,13 +239,46 @@ class LeanChecks(unittest.TestCase):
         self.assertIn("theorem po1 : Contract.Compatible CheckStockContract PriceOrderContract", r["theorems"])
         self.assertIn("theorem po2 : Contract.Refines (CheckStockContract.seq PriceOrderContract) Spec", r["theorems"])
 
-    def test_po1_names_the_assumption(self):
+    def test_po1_repair_drops_the_unguaranteed_assumption(self):
         r = self.obligations(PRE_SELECTS)
-        self.assertFalse(r["proved"]["po1"])
-        p = " ".join(r["problems"])
-        self.assertIn("PO1 fails", p)
-        self.assertIn("`m.inStock = true`", p)
+        self.assertEqual(r["problems"], [])
+        self.assertEqual(r["proved"], {"po1": True, "po2": True})
+        self.assertIn("removed from `PriceOrderContract.pre`", r["repairs"][0])
+        self.assertIn("`m.inStock = true`", r["repairs"][0])
+        fixed = {c.name: c for c in C.parse_contracts(r["code"])}["PriceOrderContract"]
+        self.assertEqual(fixed.pre, "True")
+        from lean_runner import check_lean
+        self.assertTrue(check_lean(C.strip_examples(SPEC) + "\n\n" + r["code"] + "\n\n" + r["theorems"])["success"])
+        # only the part that does not follow is removed
+        both = GOOD.replace("pre  := fun m => m.qty > 0", "pre  := fun m => m.qty > 0 ∧ m.inStock = true")
+        r = self.obligations(both)
+        fixed = {c.name: c for c in C.parse_contracts(r["code"])}["PriceOrderContract"]
+        self.assertEqual(fixed.pre, "(m.qty > 0)")
+
+    def test_constant_result_is_rejected(self):
+        r = self.obligations(CONSTANT)
+        self.assertEqual(r["constant"], ["inStock"])
+        self.assertIn("`CheckStockContract` computes nothing", " ".join(r["problems"]))
         self.assertEqual(r["theorems"], "")
+        good = self.obligations(GOOD)
+        self.assertEqual((good["constant"], good["results"]), ([], ["inStock"]))
+        # a copy and a constant inside one `↔` condition (seen in the Qwen runs)
+        hidden = GOOD.replace("m.price = i.price ∧ m.qty = i.qty ∧ (m.inStock = true ↔ i.qty ≤ i.stock)",
+                              "m.price = i.price ∧ (m.qty = i.qty ∧ m.inStock = true ↔ i.qty > 0)")
+        r = self.obligations(hidden)
+        self.assertEqual((r["constant"], r["results"]), (["inStock"], []))
+        self.assertIn("`m.qty` is a copy of an `Input` field", " ".join(r["problems"]))
+        # `m.ok = true ↔ <the precondition>` is constant too
+        self.assertEqual(self.obligations(LOSES_FACT)["constant"], ["inStock"])
+
+    def test_trivial_witness_flags_a_weak_spec(self):
+        weak = SINGLE.replace("o.valid = true ↔ i.raw.length = 9", "o.valid = true → i.raw.length ≤ 100 ∨ True")
+        self.assertIsNotNone(C.trivial_witness(weak))
+        self.assertIsNone(C.trivial_witness(SINGLE))
+        self.assertIsNone(C.trivial_witness(SPEC))
+        copy = STAGED.replace("o.total = i.price * i.qty ∧ (o.accepted = true ↔ o.total ≤ i.budget)",
+                              "o.total = i.price ∧ o.accepted = true")
+        self.assertEqual(C.trivial_witness(copy), "{ total := x.price, accepted := true }")
 
     def test_po2_names_the_lost_conjunct(self):
         r = self.obligations(LOSES_FACT)
@@ -252,7 +323,7 @@ class Pipeline(unittest.TestCase):
         r = {"id": "T-1", "kind": "requirement", "requirement_text": "toy", "lean_predicate": SPEC}
         replies = iter([GOOD + "\ntheorem po1 : False := by\n  sorry\n", IMPL_A, IMPL_B])
         with mock.patch.object(base, "call_llm", lambda *a, **k: fenced(next(replies))):
-            e = chain_pipeline.run_entry(r, "fake")
+            e = chain_pipeline.run_entry(r, "fake", split="always")
         self.assertTrue(e["l1"]["success"], e["l1"]["error"])
         self.assertEqual(e["l1"]["mode"], "chain")
         self.assertEqual(e["l1"]["contracts"], ["CheckStockContract", "PriceOrderContract"])
@@ -269,12 +340,31 @@ class Pipeline(unittest.TestCase):
         import agents.chain_architect as arch
         model = Scripted([HIDDEN_FIELD, IDENTITY, GOOD])
         with mock.patch.object(base, "call_llm", model):
-            r = arch.run_architect(SPEC, "fake", kind="requirement")
+            r = arch.run_architect(SPEC, "fake", kind="requirement", split="always")
         self.assertTrue(r["success"])
         self.assertEqual(r["attempts"], 3)
         self.assertEqual([x["stage"] for x in r["log"]], ["static", "static", "ok"])
         self.assertIn("Add `stock : Nat` to `structure Mid`", model.prompts[1])
         self.assertIn("is an identity", model.prompts[2])
+
+    def test_staged_spec_is_split_and_told_the_intermediate(self):
+        import agents.base as base
+        import agents.chain_architect as arch
+        model = Scripted([STAGED_GOOD])
+        with mock.patch.object(base, "call_llm", model):
+            r = arch.run_architect(STAGED, "fake", kind="requirement")
+        self.assertTrue(r["success"], r.get("error"))
+        self.assertEqual(r["mode"], "chain")
+        self.assertIn("relates the output fields `accepted`, `total`", model.prompts[0])
+        self.assertEqual((r["strength"]["score"], r["strength"]["of"]), (5, 6))   # no interface assumption
+
+    def test_two_independent_conditions_are_one_component(self):
+        impl = "def SpecImpl (i : Input) : Output :=\n  { accepted := decide (i.qty ≤ i.stock), total := i.price * i.qty }"
+        e, model = self.run_entry(SPEC, [impl])
+        self.assertEqual(e["l1"]["mode"], "single")
+        self.assertIn("no intermediate result", e["l1"]["why_single"])
+        self.assertEqual(e["spec_check"], {"trivial": False})
+        self.assertTrue(e["full_check"])
 
     def test_dropping_an_assumption_is_not_weakening(self):
         import agents.base as base
@@ -282,10 +372,14 @@ class Pipeline(unittest.TestCase):
         fixed = PRE_SELECTS.replace("pre  := fun m => m.inStock = true", "pre  := fun _ => True")
         model = Scripted([PRE_SELECTS, fixed])
         with mock.patch.object(base, "call_llm", model):
-            r = arch.run_architect(SPEC, "fake", kind="requirement")
+            r = arch.run_architect(SPEC, "fake", kind="requirement", split="always")
         self.assertTrue(r["success"], r.get("error"))
-        self.assertEqual([x["stage"] for x in r["log"]], ["check", "ok"])
-        self.assertIn("PO1 fails", model.prompts[1])
+        # the harness removes the unguaranteed assumption itself: no second model call
+        self.assertEqual([x["stage"] for x in r["log"]], ["ok"])
+        self.assertIn("`m.inStock = true`", r["repairs"][0])
+        self.assertIn("pre  := fun m => True", r["code"])
+        self.assertFalse(r["strength"]["interface_assumption"])
+        self.assertTrue(r["strength"]["first_result_depends_on_input"])
 
     def test_single_step_spec_is_not_split(self):
         e, model = self.run_entry(SINGLE, [IMPL_SINGLE])
@@ -297,12 +391,12 @@ class Pipeline(unittest.TestCase):
         self.assertTrue(e["full_check"])
 
     def test_failed_split_and_fallback(self):
-        e, _ = self.run_entry(SPEC, [IDENTITY])
+        e, _ = self.run_entry(SPEC, [IDENTITY], split="always")
         self.assertFalse(e["l1"]["success"])
         self.assertEqual(e["l1"]["error_class"], "identity")
         self.assertEqual(e["l2"], [])
         impl = "def SpecImpl (i : Input) : Output :=\n  { accepted := decide (i.qty ≤ i.stock), total := i.price * i.qty }"
-        e, _ = self.run_entry(SPEC, [IDENTITY, IDENTITY, IDENTITY, impl], fallback_single=True)
+        e, _ = self.run_entry(SPEC, [IDENTITY, IDENTITY, IDENTITY, impl], fallback_single=True, split="always")
         self.assertEqual(e["l1"]["mode"], "single-fallback")
         self.assertEqual(e["l1"]["failed_split"]["error_class"], "identity")
         self.assertTrue(e["full_check"])
@@ -333,13 +427,16 @@ class Pipeline(unittest.TestCase):
             # rep1: everything works. rep2: the split of R/1 fails (identity every time).
             for rep, replies in (("rep1", [GOOD, IMPL_A, IMPL_B, IMPL_SINGLE]),
                                  ("rep2", [IDENTITY, IDENTITY, IDENTITY, IMPL_SINGLE])):
-                with mock.patch.object(base, "call_llm", Scripted(replies)), mock.patch.object(base, "MAX_RETRIES", 3):
+                with mock.patch.object(base, "call_llm", Scripted(replies)), mock.patch.object(base, "MAX_RETRIES", 3), \
+                        mock.patch.object(C, "intermediate_results",          # treat the order spec as staged
+                                          lambda s: [("x", ["accepted", "total"])] if "stock" in s else []):
                     out = chain_pipeline.run(l0, run / rep, "fake", meta={"seed": 42})
                 self.assertEqual([e["id"] for e in out], ["R/1", "DD-x"])     # R/2 was not checked
             rep1 = json.loads((run / "rep1" / "l1l2.json").read_text())
             self.assertEqual([e["full_check"] for e in rep1], [True, True])
             self.assertEqual([e["l1"]["mode"] for e in rep1], ["chain", "single"])
-            self.assertEqual(rep1[0]["l1"]["strength"]["score"], 5)
+            self.assertEqual(rep1[0]["l1"]["strength"]["score"], 6)
+            self.assertEqual([e["spec_check"]["trivial"] for e in rep1], [False, False])
             self.assertIn("theorem system_ok", (run / "rep1" / "l1l2" / "R_1.lean").read_text())
             self.assertTrue((run / "rep1" / "chain_meta.json").exists())
             # resume keeps finished records and asks the model nothing
@@ -371,6 +468,25 @@ class Pipeline(unittest.TestCase):
         self.assertIn("`o.total = m.price * m.qty`", model.prompts[2])   # the conjunct that fails
         self.assertNotIn("`o.accepted = true ↔ m.inStock = true`", model.prompts[2])
         self.assertIn("theorem PriceOrderContractImpl_ok : PriceOrderContract.Satisfies PriceOrderContractImpl", r["code"])
+        self.assertIn("`Output` has exactly these fields: `accepted : Bool`, `total : Nat`", model.prompts[0])
+
+    def test_coder_is_told_the_fields_of_the_result(self):
+        """A `Mid` field copied into `Output` is reported with the field list, before Lean."""
+        import agents.base as base
+        from agents.chain_coder import record_problems, run_coder
+        wrong = "def PriceOrderContractImpl (x : Mid) : Output :=\n  { accepted := x.inStock, total := x.price * x.qty, qty := x.qty }"
+        model = Scripted([wrong, IMPL_B])
+        with mock.patch.object(base, "call_llm", model):
+            r = run_coder("PriceOrderContract", SPEC + "\n\n" + GOOD, "fake")
+        self.assertTrue(r["success"], r.get("error"))
+        self.assertEqual([x["stage"] for x in r["log"]], ["static", "ok"])
+        self.assertIn("`qty` is not a field of `Output` (`qty` belongs to `Mid`", model.prompts[1])
+        self.assertIn("Write `{ accepted := …, total := … }` and nothing else.", model.prompts[1])
+        fields = {"Mid": {"a": "Nat"}, "Output": {"a": "Nat", "b": "Nat"}}
+        p = record_problems("def FImpl (x : Mid) : Output :=\n  { a := 1, a := 2 }", "FImpl", "Mid", "Output", fields)
+        self.assertIn("`a` is set more than once; missing: `b`", p[0])
+        nested = "def FImpl (x : Mid) : Output :=\n  if x.a = 0 then { a := 0, b := 0 } else { a := (fun y => y) 1, b := 2 }"
+        self.assertEqual(record_problems(nested, "FImpl", "Mid", "Output", fields), [])
 
 
 if __name__ == "__main__":

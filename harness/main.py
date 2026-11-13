@@ -15,7 +15,7 @@ Stages run in order up to --until:
             alternative to graph → arch → code): each spec is split into two chained contracts
             Input → Mid → Output, or kept whole if it is a single step; each contract is
             implemented; the harness states and proves PO1/PO2/PO3 and the end-to-end theorem
-            (chain_pipeline.py) → runs/<stem>/<model>-chain-v3/rep<k>/
+            (chain_pipeline.py) → runs/<stem>/<model>-chain-v4/rep<k>/
 --until graph / --until arch / --until code / --until chain do NOT rerun L0: they read the frozen
 L0 run (--l0-run, default runs/<stem>/qwen-v10.1/rep1) and frozen L1 run (--arch-run).
 
@@ -35,7 +35,7 @@ Run from harness/:
     python main.py … --until arch --component AccountSys    # one component group only
     python main.py "../Requirements/0000 - gamma j.xml" --until chain --repeat 3           # chain L1 + L2
     python main.py … --until chain --only 5.3/R4 --fallback-single
-    python ../evaluation/summarize_e2e.py "../runs/0000 - gamma j/qwen-chain-v3"           # results + spread
+    python ../evaluation/summarize_e2e.py "../runs/0000 - gamma j/qwen-chain-v4"           # results + spread
 
 With --model qwen, the local llama.cpp server is started automatically if it is not
 already running (needs a GPU node: srun -p u22 --gres=gpu:1 --pty bash), and stopped

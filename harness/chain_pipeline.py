@@ -8,9 +8,12 @@ Used by `main.py --until chain` (one output folder per repetition) and by `e2e_l
     l1l2/<id>.lean        spec + architecture + implementations + `system_ok`
 
 A record:
+    spec_check   L0 strength: `trivial` is true when an implementation made only of copied
+         input fields and constants satisfies `Spec` (`witness`): verified code for such a
+         spec can be a stub, so the summary counts these separately
     l1   success, mode ("chain" two components | "single" not split | "single-fallback" the
          split failed and --fallback-single is on), attempts, contracts, strength
-         (chain_checks), error + error_class (chain_failures), stages, code
+         (chain_checks), repairs (parts the harness removed from the second `pre`), error + error_class (chain_failures), stages, code
     l2   per contract: success, attempts, error + error_class, stages, code
     full_check   Lean accepts the whole file including
                  `theorem system_ok : Spec.Satisfies (<B>Impl ∘ <A>Impl)`   (chain)
@@ -26,10 +29,11 @@ from typing import List, Optional
 
 from agents.chain_architect import run_architect, single_architecture
 from agents.chain_coder import run_coder
+from chain_checks import trivial_witness
 from chain_failures import classify, root_cause
 from lean_runner import HEADER, check_lean
 
-CHAIN_VERSION = "chain-v3"
+CHAIN_VERSION = "chain-v4"
 
 
 def system_theorem(contracts: List[str]) -> str:
@@ -49,6 +53,7 @@ def _l1_record(arch: dict) -> dict:
             "contracts": arch.get("contracts") or [], "strength": arch.get("strength"),
             "error": err[:1500], "error_class": classify(err, stages), "stages": stages,
             **({"why_single": arch["why_single"]} if arch.get("why_single") else {}),
+            **({"repairs": arch["repairs"]} if arch.get("repairs") else {}),
             "code": arch.get("code") or ""}
 
 
@@ -58,6 +63,8 @@ def run_entry(r: dict, model: str, split: str = "auto", fallback_single: bool = 
     e = {"id": sid, "kind": r["kind"], "requirement_text": r["requirement_text"]}
     t0 = time.time()
     try:
+        witness = trivial_witness(spec)
+        e["spec_check"] = {"trivial": witness is not None, **({"witness": witness} if witness else {})}
         arch = run_architect(spec, model, kind=r.get("kind"), split=split)
         e["l1"] = _l1_record(arch)
         if not arch["success"] and fallback_single:

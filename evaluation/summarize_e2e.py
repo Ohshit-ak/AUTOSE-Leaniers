@@ -9,16 +9,25 @@ With repetitions every number is `mean (min–max)`; a difference between two ru
 real if it is larger than that spread.
 
 What is counted:
-    L1 by mode     chain (two components), single (not split: one condition or a data
-                   constraint), single-fallback (the split failed, `Spec` kept whole)
+    L1 by mode     chain (two components), single (not split: a data constraint, or a `post`
+                   with no intermediate result), single-fallback (the split failed, `Spec`
+                   kept whole)
     end to end     L1 + every L2 + the whole file with `system_ok` accepted by Lean
-    strength       for chain architectures: the chain_checks score out of 5
+    weak specs     (chain-v4 runs) specs that an implementation made only of copied input
+                   fields and constants satisfies (`spec_check.trivial`). Code verified
+                   against such a spec can be a stub, so "end to end, non-trivial spec" is
+                   the number to read as "verified code that had to compute something"
+    strength       for chain architectures: the chain_checks score (of 6 from chain-v4:
+                   the sixth point is "the first result depends on the input"; of 5 before)
+    repairs        chain architectures in which the harness removed an unguaranteed part of
+                   the second `pre`
     failure classes (harness/chain_failures.py) for L1 and for each L2 component
     1-of-2         specs where exactly one of two components was implemented: which one
                    failed, its class, and whether the contract was implementable at all
 Runs made before chain-v3 have no `mode`/`error_class`: they are classified here from the
-stored error text, and their accepted architectures are re-judged with the v3 static check
-(identity / copy-of-Spec components).
+stored error text. Accepted architectures are re-judged with the current routing rule and
+static check (identity / copy-of-Spec components); that re-judgement runs no Lean, so it
+does not find constant first results.
 """
 import argparse
 import collections
@@ -84,9 +93,15 @@ def metrics(d: list, specs: dict) -> dict:
                                        if chain_tried else 0.0),
         "minutes": sum(e.get("seconds", 0) for e in d) / 60,
     }
-    scores = [x["strength"]["score"] for x in ok if mode(x) == "chain" and x.get("strength")]
-    if scores:
-        m["strength of chain architectures (of 5)"] = statistics.mean(scores)
+    if any("spec_check" in e for e in d):
+        weak = lambda e: (e.get("spec_check") or {}).get("trivial") is True  # noqa: E731
+        m["weak specs (satisfied by copies and constants)"] = sum(weak(e) for e in d)
+        m["end to end, non-trivial spec"] = sum(not weak(e) for e in full)
+    m["L1 chain with a repaired second `pre`"] = sum(bool(x.get("repairs")) for x in ok if mode(x) == "chain")
+    chains = [x for x in ok if mode(x) == "chain" and x.get("strength")]
+    if chains:
+        of = max(x["strength"].get("of", 5) for x in chains)
+        m[f"strength of chain architectures (of {of})"] = statistics.mean(x["strength"]["score"] for x in chains)
     for kind in sorted({e["kind"] for e in d}):
         m[f"end to end, {kind}"] = sum(e["kind"] == kind for e in full)
         m[f"specs, {kind}"] = sum(e["kind"] == kind for e in d)
@@ -116,7 +131,7 @@ def failures(d: list) -> dict:
 
 
 def rejudge(d: list, specs: dict) -> collections.Counter:
-    """Accepted two-component architectures under the v3 static check."""
+    """Accepted two-component architectures under the current routing rule and static check."""
     out = collections.Counter()
     for e in d:
         l1 = e.get("l1") or {}
@@ -128,7 +143,7 @@ def rejudge(d: list, specs: dict) -> collections.Counter:
             continue
         why = C.single_step(spec, e.get("kind"))
         if why:
-            out["single-step spec (v3 does not split it)"] += 1
+            out["single-step spec (not split now)"] += 1
             continue
         problems = C.static_check(C.strip_theorems(l1.get("code") or ""), spec)["problems"]
         out["real decomposition" if not problems else (classify("static: " + "; ".join(problems)) or "other")] += 1
@@ -184,7 +199,7 @@ def report(run: Path) -> str:
                   for name, o in rows]
     judged = [rejudge(d, specs) for _, d in reps]
     if any(judged):
-        lines += ["", "### Accepted two-component architectures under the v3 static check", ""]
+        lines += ["", "### Accepted two-component architectures under the current routing and static check", ""]
         keys = sorted({k for j in judged for k in j}, key=lambda k: -sum(j[k] for j in judged))
         lines += ["| verdict | " + ("mean (min–max)" if len(reps) > 1 else "count") + " |", "|---|---|"]
         lines += [f"| {k} | {spread([j[k] for j in judged])} |" for k in keys]

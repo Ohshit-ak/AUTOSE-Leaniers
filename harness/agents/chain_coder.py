@@ -2,12 +2,15 @@
 # of the graph path (--until code) lives in coding_agent.py.
 """L2: one locked contract → implementation. The model writes the function; the harness states
 and proves PO3 (`<C>.Satisfies <C>Impl`) and, when it fails, names the `post` conjunct the
-implementation does not establish."""
+implementation does not establish. Before Lean, the fields of the record the function returns
+are compared with the result structure (`record_problems`): a wrong, missing or repeated field
+is reported with the exact field list, not as Lean's "is not a field of structure"."""
 import hashlib
 import re
 
 import chain_checks as C
 import po
+from validate import field_types
 from agents.base import generate_verified
 
 SYSTEM_PROMPT_CODER = """\
@@ -25,6 +28,9 @@ Rules:
 - The function is an ordinary term: a record `{ field := …, … }` with EVERY field of the
   result type, `if … then … else …`, list functions (`List.filter`, `List.map`,
   `List.take`). Never a tactic block (`:= by …`). Lean 4 core only, no Mathlib.
+- The record has exactly the fields of the RESULT type (you are given the list). The
+  fields of the argument type are what you read (`x.f`); do not copy them into the result
+  unless the result type has a field of that name.
 - A `Bool` field that `post` describes with `o.f = true ↔ P` is `f := decide (P)`.
 - Helper functions are allowed (`def <C>Impl_<name> …`), written before the function.
 - Output ONLY Lean 4 code in one ```lean block.
@@ -57,6 +63,63 @@ def _model_proof(reply: str, name: str):
     return m.group(1).strip() if m else None
 
 
+def _records(body: str) -> list:
+    """[(field names, has `with`)] for the record literals of `body` that are not inside
+    another bracket (the value the function returns, in each `if` branch)."""
+    out, depth, start, in_str = [], 0, None, False
+    for k, ch in enumerate(body):
+        if ch == '"' and body[k - 1:k] != "\\":
+            in_str = not in_str
+        if in_str:
+            continue
+        if ch in "([{":
+            if ch == "{" and depth == 0:
+                start = k
+            depth += 1
+        elif ch in ")]}":
+            depth -= 1
+            if ch == "}" and depth == 0 and start is not None:
+                inner = body[start + 1:k]
+                flat = C._mask(inner)
+                out.append((re.findall(r"(?:^|,|\bwith\b)\s*([A-Za-z_][\w']*)\s*:=", flat),
+                            bool(re.search(r"\bwith\b", flat))))
+                start = None
+    return out
+
+
+def record_problems(code: str, impl: str, dom: str, cod: str, fields: dict) -> list:
+    """Problems with the fields of the record(s) `impl` returns, against `structure cod`."""
+    want = fields.get(cod)
+    m = re.search(rf"^def\s+{re.escape(impl)}\b[^\n]*?:=(.*?)(?=^\S|\Z)", C.strip_comments(code),
+                  re.MULTILINE | re.DOTALL)
+    if want is None or not m:
+        return []
+    listing = ", ".join(f"`{f} : {t}`" for f, t in want.items())
+    problems = []
+    for names, has_with in _records(m.group(1)):
+        unknown = [f for f in dict.fromkeys(names) if f not in want]
+        repeated = [f for f in dict.fromkeys(names) if names.count(f) > 1]
+        missing = [] if has_with else [f for f in want if f not in names]
+        if not (unknown or repeated or missing):
+            continue
+        parts = []
+        if unknown:
+            src = [f for f in unknown if f in fields.get(dom, {})]
+            parts.append(", ".join(f"`{f}`" for f in unknown) + f" {'is not a' if len(unknown) == 1 else 'are not'} "
+                         f"field{'' if len(unknown) == 1 else 's'} of `{cod}`"
+                         + (f" ({', '.join(f'`{f}`' for f in src)} belong{'s' if len(src) == 1 else ''} to "
+                            f"`{dom}`, the argument: read as `x.{src[0]}`, never set)" if src else ""))
+        if repeated:
+            parts.append(", ".join(f"`{f}`" for f in repeated) + " is set more than once")
+        if missing:
+            parts.append("missing: " + ", ".join(f"`{f}`" for f in missing))
+        problems.append(f"the record `{impl}` returns does not match `structure {cod}`: " + "; ".join(parts)
+                        + f". `{cod}` has exactly these fields: {listing}. Write "
+                        "`{ " + ", ".join(f"{f} := …" for f in want) + " }` and nothing else.")
+        break
+    return problems
+
+
 def diagnose_po3(prefix: str, c: C.Contract, impl: str, unfold: str) -> list:
     """The conjuncts of `c.post` that `impl` does not establish."""
     i = c.in_var if c.in_var != "_" else "x__"
@@ -78,6 +141,7 @@ def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
     sig = f"def {impl} (x : {dom}) : {cod}"
     statement = po.po3_statement(contract_name, impl, ok_name)
     locked_defs = C.strip_examples(locked_code)
+    fields = field_types(locked_code)
     state = {"model_proof": None}
 
     def prepare(code: str) -> str:
@@ -94,7 +158,7 @@ def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
                             f"needs `{dom} → {cod}`. Use exactly: `{sig} := …`")
         if re.search(rf"^def\s+{re.escape(impl)}\b[^\n]*:=\s*by\b", code, re.MULTILINE):
             problems.append("the implementation must be a term (a record, `if … then … else`), not `:= by …`")
-        return problems
+        return problems + record_problems(code, impl, dom, cod, fields)
 
     def validate(code: str) -> list:
         prefix = locked_defs + "\n\n" + code
@@ -114,7 +178,9 @@ def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
         return ["PO3 could not be proved: " + "; ".join(errors[:2])]
 
     prompt = (f"Code already in scope (LOCKED, do not repeat it):\n\n{locked_code}\n\n"
-              f"Implement ONLY `{contract_name}` with exactly this signature:\n`{sig} := …`")
+              f"Implement ONLY `{contract_name}` with exactly this signature:\n`{sig} := …`"
+              + (f"\nThe result type `{cod}` has exactly these fields: "
+                 + ", ".join(f"`{f} : {t}`" for f, t in fields[cod].items()) + "." if fields.get(cod) else ""))
     result = generate_verified(prompt, SYSTEM_PROMPT_CODER, model, context=locked_code, validate=validate,
                                precheck=precheck, prepare=prepare, check_weakened=False, check_label="L2")
     if result["success"]:
