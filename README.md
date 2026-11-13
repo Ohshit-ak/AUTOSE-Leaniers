@@ -371,6 +371,9 @@ python main.py --resume                           # skip entries that already pa
 python main.py --skip-lean                        # don't type-check (specs marked unchecked)
 python main.py --until spec                       # stop after L0, skip the L0.5 checks
 python main.py --on-l0-fail redo                  # redo L0 once for entries failing L0.5 (or: exclude, stop)
+python main.py --on-l0-fail loop                  # regenerate L0.5 failures with the reasons as feedback
+                                                  # (CF_L05_ROUNDS rounds, default 2; a new spec is kept only
+                                                  # if it improves; what still fails is excluded before L1)
 ```
 
 With `--model qwen`, the local server is started automatically if it isn't running

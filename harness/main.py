@@ -256,6 +256,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
                                  "summary": summary, "results": ordered})
         return summary
 
+    feedback = getattr(args, "_feedback", None) or {}
     for i, p in enumerate(items, 1):
         prev = results.get(p["id"])
         if args.resume and prev and prev["checked"] is not False:
@@ -263,7 +264,8 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
             continue
         t0 = time.time()
         try:
-            r = _generate_spec(p, args.model, args.skip_lean)
+            gen = {**p, "prompt": p["prompt"] + feedback[p["id"]]} if p["id"] in feedback else p
+            r = _generate_spec(gen, args.model, args.skip_lean)
         except KeyboardInterrupt:
             save()
             raise
@@ -281,6 +283,7 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
             "attempts": r.get("attempts"), "seconds": secs,
             **({"error": r["error"]} if r.get("error") else {}),
             **({"log": r["log"]} if r.get("log") else {}),
+            **({"l05_feedback": feedback[p["id"]]} if p["id"] in feedback else {}),
         }
         (lean_dir / f"{_safe(p['id'])}.lean").write_text(_lean_file(p, r), encoding="utf-8")
         save()
@@ -314,6 +317,13 @@ def stage_check(doc: dict, stem: str, args) -> dict:
     failed = [r["id"] for r in specs["results"] if r["l05"]["status"] == "fail"]
     if not failed:
         return counts
+    if args.on_l0_fail == "loop":
+        counts = _l05_loop(doc, stem, args, entries)
+        specs = json.loads(specs_path.read_text(encoding="utf-8"))
+        failed = [r["id"] for r in specs["results"] if r["l05"]["status"] == "fail"]
+        if not failed:
+            return counts
+        args = argparse.Namespace(**{**vars(args), "on_l0_fail": "exclude"})
     if args.on_l0_fail == "redo" and not getattr(args, "_redone", False):
         print(f"[check] redoing L0 for {len(failed)} failed entries")
         redo = argparse.Namespace(**{**vars(args), "only": failed, "resume": True, "kinds": None,
@@ -333,7 +343,76 @@ def stage_check(doc: dict, stem: str, args) -> dict:
         print(f"[check] excluded {len(failed)} failed entries in {review_path.relative_to(ROOT)}")
     else:
         print(f"[check] {len(failed)} entries failed L0.5; stopping before L1. Edit "
-              f"{(out_dir / 'review.json').relative_to(ROOT)} or rerun with --on-l0-fail redo|exclude")
+              f"{(out_dir / 'review.json').relative_to(ROOT)} or rerun with --on-l0-fail loop|redo|exclude")
+    return counts
+
+
+L05_STATUS_RANK = {"fail": 0, "flag": 1, "pass": 2}
+L05_FEEDBACK_ERROR_CHARS = 1500
+
+
+def l05_feedback(r: dict) -> str:
+    """Prompt suffix for regenerating a spec that failed L0.5: the reasons and the failed code."""
+    reasons = list(r["l05"]["problems"])
+    if "does not compile" in reasons and r.get("error"):
+        reasons.append("Lean / check error: " + r["error"][:L05_FEEDBACK_ERROR_CHARS])
+    text = ("\n\nA previous specification for this entry was rejected by the checks:\n"
+            + "\n".join(f"- {p}" for p in reasons))
+    if r.get("lean_predicate"):
+        text += f"\n\nThe rejected specification:\n```lean\n{r['lean_predicate']}\n```"
+    return text + "\n\nWrite a new specification that fixes these problems."
+
+
+def keep_better(old: dict, new: dict) -> dict:
+    """Keep the regenerated result only if its L0.5 status is strictly better."""
+    return new if L05_STATUS_RANK[new["l05"]["status"]] > L05_STATUS_RANK[old["l05"]["status"]] else old
+
+
+def _l05_loop(doc: dict, stem: str, args, entries: dict) -> dict:
+    """Regenerate L0.5 failures with the reasons fed back, up to CF_L05_ROUNDS rounds.
+    A new spec replaces the old one only if its L0.5 status improves."""
+    from validate import review_run, write_report
+
+    out_dir = run_dir(stem, args)
+    specs_path, lean_dir = out_dir / "specs.json", out_dir / "lean"
+    rounds = int(os.getenv("CF_L05_ROUNDS", "2"))
+    counts = None
+    for k in range(1, rounds + 1):
+        specs = json.loads(specs_path.read_text(encoding="utf-8"))
+        old = {r["id"]: r for r in specs["results"] if r["l05"]["status"] == "fail"}
+        if not old:
+            break
+        print(f"[check] L0.5 loop round {k}/{rounds}: regenerating {len(old)} failed entries")
+        old_lean = {i: (lean_dir / f"{_safe(i)}.lean").read_text(encoding="utf-8")
+                    for i in old if (lean_dir / f"{_safe(i)}.lean").exists()}
+        for r in specs["results"]:  # make --resume retry them
+            if r["id"] in old:
+                r["checked"] = False
+        _write_json(specs_path, specs)
+        sub = argparse.Namespace(**{**vars(args), "only": list(old), "resume": True, "kinds": None,
+                                    "limit": None, "_feedback": {i: l05_feedback(r) for i, r in old.items()}})
+        stage_spec(doc, stem, sub)
+
+        specs = json.loads(specs_path.read_text(encoding="utf-8"))
+        review_run(specs, entries)
+        improved = 0
+        for n, r in enumerate(specs["results"]):
+            if r["id"] not in old:
+                continue
+            r["l05_rounds"] = old[r["id"]].get("l05_rounds", 0) + 1
+            kept = keep_better(old[r["id"]], r)
+            if kept is r:
+                improved += 1
+                print(f"[check]   {r['id']}: fail -> {r['l05']['status']}")
+            else:
+                kept = {**kept, "l05_rounds": r["l05_rounds"]}
+                if r["id"] in old_lean:
+                    (lean_dir / f"{_safe(r['id'])}.lean").write_text(old_lean[r["id"]], encoding="utf-8")
+            specs["results"][n] = kept
+        counts = review_run(specs, entries)
+        _write_json(specs_path, specs)
+        write_report(specs, out_dir)
+        print(f"[check] round {k}: {improved}/{len(old)} improved -> {counts}")
     return counts
 
 
@@ -623,8 +702,11 @@ def main(argv=None) -> int:
     ap.add_argument("--kinds", nargs="+", choices=["requirement", "data_constraint", "use_case"])
     ap.add_argument("--resume", action="store_true", help="skip entries already done in a previous run")
     ap.add_argument("--skip-lean", action="store_true", help="do not type-check (specs marked unchecked)")
-    ap.add_argument("--on-l0-fail", choices=["stop", "redo", "exclude"], default="stop",
-                    help="entries failing L0.5: stop before L1 (default), redo them once, or exclude them")
+    ap.add_argument("--on-l0-fail", choices=["stop", "loop", "redo", "exclude"], default="stop",
+                    help="entries failing L0.5: stop before L1 (default); loop: regenerate them with "
+                         "the L0.5 reasons as feedback ($CF_L05_ROUNDS rounds, default 2), keep a "
+                         "new spec only if it improves, exclude what still fails; redo them once "
+                         "blind; or exclude them")
     ap.add_argument("--repeat", type=int, metavar="N",
                     help="run N times with seeds CF_SEED, CF_SEED+1, …; outputs in "
                          "runs/<doc>/<model>-<version>/rep<k>/")
