@@ -20,7 +20,7 @@ cd $ROOT/harness
 
 bash ../scripts/start_qwen_server.sh > ../runs/qwen_server_chain.log 2>&1 & SRV=$!
 trap "kill $SRV" EXIT
-for i in $(seq 1 120); do curl -s localhost:8082/v1/models >/dev/null && break; sleep 2; done
+for i in $(seq 1 120); do curl -sf localhost:8082/v1/models >/dev/null && break; sleep 2; done
 
 for DOC in "0000 - gamma j" "2009 - video search"; do
   python -u main.py "../Requirements/$DOC.xml" --until chain --model qwen --repeat 3; echo "EXIT chain $DOC $?"

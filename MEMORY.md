@@ -4,7 +4,7 @@ A running log of where ContractForge stands, why things are the way they are,
 and what comes next. Update it whenever you finish a piece of work or make a
 decision someone else would need to know.
 
-## Status (2026-11-12)
+## Status (2026-11-13)
 
 | Part | State |
 |------|-------|
@@ -22,7 +22,7 @@ decision someone else would need to know.
 | `framework/ContractForge/Tactics.lean` | `discharge_po1`, `discharge_po2`, `discharge_po3` added 2026-11-12 (`discharge_po` unchanged). Run `lake build` in `framework/` after pulling. |
 | `harness/agents/coding_agent.py` (L2) | Merged from `feat/l2-coding-agent` (PR #1): `code` stage in `main.py`, `code_lean.py`, tests. Not run through `main.py` yet. |
 | `harness/main.py` | Single entry point. Stages `parse` → `spec` → `check` (L0) → `graph` → `arch` (L1); `--until graph/arch` read the frozen L0 run and never rerun L0. `code` (L2) reads the accepted L1 architectures. Auto-starts the Qwen server. |
-| `harness/agents/chain_architect.py`, `chain_coder.py` (per-spec L1/L2) | **chain-v3 (2026-11-12), not yet run with Qwen** (see *chain-v3*). The model writes definitions only; the harness states and proves PO1/PO2/PO3. v2 was run end to end 2026-11-06 (see *L1/L2 end-to-end*). |
+| `harness/agents/chain_architect.py`, `chain_coder.py` (per-spec L1/L2) | **chain-v3 (2026-11-12), run with Qwen 2026-11-13** (3 seeds × both SRSs, strict + fallback; see *chain-v3 → Qwen results* and `results.md`). The model writes definitions only; the harness states and proves PO1/PO2/PO3. v2 was run end to end 2026-11-06 (see *L1/L2 end-to-end*). |
 | `harness/chain_checks.py`, `chain_failures.py`, `po.py` | Done (chain-v3). Static checks + strength record + PO diagnosis; failure classes; PO code shared by both L1/L2 paths. |
 | `harness/chain_pipeline.py`, `main.py --until chain` | Done (chain-v3). The chain path is a `main.py` stage with `--repeat`; `e2e_l1l2.py` is a thin CLI over the same code (shards). Job file: `runs/qwen-chain-v3.sbatch`. |
 | `harness/reverify.py` | Not started. |
@@ -227,14 +227,14 @@ Why v1 failed (all 75):
 v2 fixes (commits efaeef8..): `discharge_po [A, B, Spec]` unfolds named defs; `base.strip_redeclared` drops top-level declarations already in the context; example-only path only without context; L1 prompt: exactly two contracts, `Input → Mid → Output`, no copy-of-Spec/identity components, Lean-checked worked example; harness proof search (`agents/autoprove.py`) tries generic unfold + `simp_all`/`grind`/`omega` scripts on each PO when only the theorems fail; L0.5 report flags (not passes) a spec whose in-loop checks failed (`checked=False`, e.g. `3.4.3/S2`, `UC-administrator-manage-plug-in-options` in the e2e run).
 
 Still open for L1/L2 as of v2 (known failures for the mid-submission report). **All five are addressed in code by
-chain-v3 (2026-11-12, next section); none is measured with Qwen yet.**
+chain-v3 (2026-11-12, next section); measured with Qwen 2026-11-13 (see *chain-v3 → Qwen results*).**
 - No semantic L1 validator: 15 of 26 end-to-end passes (both SRS) have a pass-through first component (`m.x = i.x` only). They verify but do not decompose. → chain-v3 item 1 (the v3 check finds more: 37 of the 38 accepted architectures are single-step or identity).
 - Single-step specs (all data constraints) cannot be split into two components; L1 should skip them or allow one.
 - `Mid` must carry every `Input` field the second component needs (video search `REQ-1` refers to `i.query` in the second contract). Not yet in the prompt. → chain-v3 item 3 (prompt rule + a check that names the field).
 - L2 often proves only 1 of 2 components; L2 failures not yet analysed.
-- Single runs (seed 42), so no spread yet; not wired into `main.py`. → chain-v3 items 8 and 9 (`main.py --until chain --repeat N`); the 3-seed runs are still to do.
+- Single runs (seed 42), so no spread yet; not wired into `main.py`. → chain-v3 items 8 and 9 (`main.py --until chain --repeat N`); 3-seed runs done 2026-11-13.
 
-## chain-v3 (2026-11-12): fixes to the per-spec L1/L2 path. **Qwen not rerun yet**
+## chain-v3 (2026-11-12): fixes to the per-spec L1/L2 path. **Run with Qwen 2026-11-13** (results below)
 
 There is no Qwen model on the machine this was written on. Everything below was checked with
 Lean, unit tests with a scripted model, and by replaying the 75 architectures and 76
@@ -300,7 +300,33 @@ fails it tries each conjunct on its own and names the one that does not follow (
 does not give \`m.inStock = true\``). `weakened()` is off for L1/L2: dropping an assumption from a
 component `pre` is a legitimate repair.
 
-### Expected effect and risk (unmeasured)
+### Qwen results (2026-11-13, job 74718)
+
+`runs/qwen-chain-v3.sbatch`, commit `372bda4`, Qwen 2.5 7B, seeds 42–44, L0 frozen at `qwen-v10.1/rep1`. 2 h 36 min
+for all four settings on a GTX 1080 Ti. Mean (min–max) over 3 reps; full tables in `runs/<doc>/qwen-chain-v3/summary.md`,
+write-up in `results.md` at the repo root.
+
+| | gamma j (61) | video search (15) |
+|---|---|---|
+| end to end, v2 (1 run) | 19 | 7 (of 14) |
+| end to end, v3 strict | **38.67** (37–40) | **6.67** (6–7) |
+| end to end, v3 `--fallback-single` | **50.67** (50–51) | **9.33** (7–11) |
+| single-step specs (routed, no split) / end to end | 38 / 34.67 | 5 / 5.00 |
+| specs needing a split / L1 accepted (strict) / end to end | 23 / 6.33 / 4.00 | 10 / 3.67 / 1.67 |
+| strength of accepted chains (of 5) | 4.94 | 4.19 |
+| main L1 failure classes (strict) | po1 4.67, visibility 3.67, identity 3.33 | po2 4.00, identity 1.33 |
+| main L2 failure classes (strict) | po3 3.00, unknown-field 2.00 | po3 2.33 |
+
+- Data constraints: **17/17 end to end** in every rep (v2: 0/17). Requirements 15.33/27, use cases 6.33/17 (strict);
+  fallback 20.67/27 and 13.00/17.
+- The expectation below held: single-step routing is the gain, real decompositions stay rare (~28 % / 37 % of the specs
+  that need one), but the ones accepted are real (strength ≈ 5/5 on gamma j).
+- One-of-two L2 failures are now **always the second component** (consumer of `Mid`); v2's backwards-implementation
+  failures of the first component are gone. `3.2.3/S1` and `UC-customer-add-item-to-cart` fail with `unknown-field`
+  on the second component in every rep.
+- Video search's 15 specs vs v2's 14: v3 reads `qwen-v10.1/rep1`, which has `REQ-6` accepted; v2 used its own L0 copy.
+
+### Expected effect and risk (written before the run; see results above)
 - Data constraints and one-condition specs (38 of 75 on the two SRSs) should now reach verified code
   through the single path: v2 got 0/17 data constraints end to end.
 - The two-component rate may **fall**: v2's passes were identities, and whether Qwen 7B can write
@@ -451,18 +477,23 @@ Video search (it has no Domain.lean): 58.5 % mapped, 1 group, 3 components, no c
   - Plain `conda install` fails until you accept Anaconda's ToS; use `--override-channels -c conda-forge`, or `python -m pip install --user cmake`.
   - CUDA comes from modules: `module load u22/cuda/12.4`.
 - **Build llama.cpp with `-DGGML_NATIVE=OFF`.** A build on `ada-gw1` uses that CPU's instructions and crashes on the GPU nodes with exit code `-4` (illegal instruction). Also pass `-DCMAKE_CUDA_ARCHITECTURES="61;75;80;86;89"` (61 = GTX 1080 Ti, e.g. gnode005), because the login node has no GPU to detect.
+- **Wait for llama-server with `curl -sf`, not `curl -s`.** While it loads the model it answers 503, which `curl -s`
+  counts as up; `main.py` then sees it down, starts a second server on 8082 and the bind fails (job 74716, 2026-11-12).
+  Fixed in `runs/qwen-chain-v3.sbatch`; copy the `-f` into any new sbatch.
 - **Default `lake` on ada is Lean 4.35.0**; inside `framework/`, elan switches to 4.29.1 from `lean-toolchain`.
 
 ## Tests (2026-11-12)
 
-`cd harness && python -m pytest`: **157 pass** (about 3 min with Lean). New: `tests/test_chain.py` (21: static
+`cd harness && python -m pytest`: **157 pass, 0 skipped** (about 3 min with Lean; checked again 2026-11-13). If you see
+skips, `networkx`/spaCy are missing (`pip install -r requirements.txt`): the graph tests skip silently. New: `tests/test_chain.py` (21: static
 checks, PO diagnosis, single-step routing, coder, pipeline with a scripted model, repetition summary);
 `test_arch.py` 15 (degrading); `test_req_graph.py` 15 (state entities, split rule, broken cycles).
 
 ## Next steps
 
-00. **Run chain-v3 with Qwen** (`sbatch runs/qwen-chain-v3.sbatch`: both SRSs, 3 seeds, with and
-    without `--fallback-single`) and put the summary here. Rebuild the gamma j graph
+00. ~~Run chain-v3 with Qwen~~ done 2026-11-13 (see *chain-v3 → Qwen results*). Next for the chain path: the
+    second-component L2 failures (`unknown-field` on `Mid`, PO3 on the output `post`), PO1/visibility on gamma j and
+    PO2 on video search for splits. Rebuild the gamma j graph
     (`--until graph`) and rerun graph L1 ×3 to measure degrading and graph v2 with the model.
     Then: review the state entities by hand; decide whether `--fallback-single` should be the
     default; Lean implementation → Python (the last step of the intended pipeline, not started).

@@ -1,0 +1,700 @@
+[
+  {
+    "id": "REQ-1",
+    "kind": "requirement",
+    "requirement_text": "Torrent search will share the same search bar with the streaming search.",
+    "l1": {
+      "success": true,
+      "mode": "single-fallback",
+      "attempts": 5,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "the two-component split failed",
+      "code": "-- not split (the two-component split failed): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.streamingResults.length = 0 ↔ i.query = \"\"`; `o.streamingResults.length > 0 → i.query ≠ \"\"`. Whatever `Spec.post` says about the input must pass through `Mid`: `TorrentSearchContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `StreamingSearchContract.post` relates `Output` to `Mid`. A condition that is only in `StreamingSearchContract.pre` is not guaranteed by the chain.",
+        "error_class": "po2",
+        "stages": [
+          "static",
+          "check",
+          "static",
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  torrentResults : List String\n  streamingResults : List String\n  deriving DecidableEq, Repr\n\ndef TorrentSearchContract : Contract Input Mid where\n  pre  := fun i => True\n  post := fun i m => \n    m.torrentResults.length ≤ 100 ∧\n    (m.torrentResults.length = 0 ↔ i.query = \"\") ∧\n    (m.torrentResults.length > 0 → i.query ≠ \"\")\n\ndef StreamingSearchContract : Contract Mid Output where\n  pre  := fun m => True\n  post := fun m o => \n    o.streamingResults.length ≤ 100 ∧\n    (o.streamingResults.length = 0 ↔ m.streamingResults.length = 0) ∧\n    (o.streamingResults.length > 0 → m.streamingResults.length > 0) ∧\n    o.torrentResults.length = m.torrentResults.length"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.torrentResults.length = 0 ↔ i.query = \"\"`; `o.streamingResults.length = 0 ↔ i.query = \"\"`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "types",
+          "check",
+          "types",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { torrentResults := if x.query = \"\" then [] else [], streamingResults := if x.query = \"\" then [] else [] }"
+      }
+    ],
+    "seconds": 59.4
+  },
+  {
+    "id": "REQ-2",
+    "kind": "requirement",
+    "requirement_text": "Database of torrent sites can be updated via the internet.",
+    "l1": {
+      "success": true,
+      "mode": "single-fallback",
+      "attempts": 5,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "the two-component split failed",
+      "code": "-- not split (the two-component split failed): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `UpdateDatabaseContract` is `Spec` again (same `pre` and `post` up to variable names). A component must be a part of the work, not the whole spec.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "static",
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  sites : List String\n  deriving DecidableEq, Repr\n\ndef UpdateDatabaseContract : Contract Input Mid where\n  pre  := fun i => i.sites.length > 0\n  post := fun i m => m.sites.length = i.sites.length ∧\n                     (∀ s ∈ i.sites, m.sites.contains s)\n\ndef ReturnSitesContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.sites.length = m.sites.length ∧\n                     (∀ s ∈ m.sites, o.sites.contains s)"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { sites := x.sites }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 19.4
+  },
+  {
+    "id": "REQ-3",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include torrent searching in the search.",
+    "l1": {
+      "success": true,
+      "mode": "single-fallback",
+      "attempts": 5,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "the two-component split failed",
+      "code": "-- not split (the two-component split failed): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.message = \"No results were found.\" ↔ o.results = []`; `i.includeTorrent = true →\n      (∀ r ∈ o.results, r.contains i.query) ∧\n      o.results.length ≤ 100`; `i.includeTorrent = false →\n      (∀ r ∈ o.results, ¬r.contains i.query) ∧\n      o.results.length ≤ 100`. Whatever `Spec.post` says about the input must pass through `Mid`: `SearchContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `FormatResultsContract.post` relates `Output` to `Mid`. A condition that is only in `FormatResultsContract.pre` is not guaranteed by the chain.",
+        "error_class": "po2",
+        "stages": [
+          "check",
+          "check",
+          "static",
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  query          : String\n  found          : List String\n  deriving DecidableEq, Repr\n\ndef SearchContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.query = i.query ∧\n                     (i.includeTorrent = true →\n                       ∀ r ∈ m.found, r.contains i.query) ∧\n                     (i.includeTorrent = false →\n                       ∀ r ∈ m.found, ¬r.contains i.query) ∧\n                     m.found.length ≤ 100\n\ndef FormatResultsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.results = m.found ∧\n                     o.message = \"No results were found.\" ↔ o.results = []"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "<generated>:33:82: error: Application type mismatch: The argument\n  fun n => List.take n [\"\"]\nhas type\n  Nat → List String\nbut is expected to have type\n  List ?m.4\nin the application\n  List.filter (fun r => ?m.6) fun n => List.take n [\"\"]\n<generated>:33:62: error(lean.invalidField): Invalid field notation: Type of\n  r\nis not known; cannot resolve field `contains`\n\nHint: Consider replacing the field projection with a call to one of the following:\n  • `Array.contains`\n  • `List.contains`\n  • `String.contains`\n  • `Vector.contains`\n  • `String.Internal.contains`\n  • `String.Slice.contains`\n  • `Substring.Raw.contains`\n  • `Lean.Meta.Occurrences.contains`\n",
+        "error_class": "type-error",
+        "stages": [
+          "names",
+          "types",
+          "names",
+          "types",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { results := if x.includeTorrent then List.filter (fun r => r.contains x.query) [\"\"].take 100 else [], \n    message := if x.includeTorrent then \"No results were found.\" else \"No results were found.\" }"
+      }
+    ],
+    "seconds": 49.5
+  },
+  {
+    "id": "REQ-4",
+    "kind": "requirement",
+    "requirement_text": "Query will retrieve the no. of seed and peers, size of the file, date posted and a link to the webpage itself.",
+    "l1": {
+      "success": true,
+      "mode": "single-fallback",
+      "attempts": 5,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "the two-component split failed",
+      "code": "-- not split (the two-component split failed): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: PO1 fails: `ShowResultsContract` assumes more than `FilterTorrentsContract` guarantees. `FilterTorrentsContract.post` does not give these parts of its `pre`: `m.filtered.length ≤ 100`. `ShowResultsContract` must accept every `Mid` that `FilterTorrentsContract` can produce: do not use its `pre` to pick the success case (put that decision in its `post` with `↔`). Either drop that part of `ShowResultsContract.pre`, or state it in `FilterTorrentsContract.post` if `FilterTorrentsContract` really ensures it.; PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.results.length < 100 → ∀ t ∈ i.torrents, Wanted i t = true → t ∈ o.results`. Whatever `Spec.post` says about the input must pass through `Mid`: `FilterTorrentsContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `ShowResultsContract.post` relates `Output` to `Mid`. A condition that is only in `ShowResultsContract.pre` is not guaranteed by the chain.",
+        "error_class": "po1",
+        "stages": [
+          "check",
+          "static",
+          "types",
+          "types",
+          "check",
+          "returned"
+        ],
+        "code": "structure Mid where\n  filtered : List Torrent\n  deriving DecidableEq, Repr\n\ndef FilterTorrentsContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.filtered = i.torrents.filter (fun t => Wanted i t)\n\ndef ShowResultsContract : Contract Mid Output where\n  pre  := fun m => m.filtered.length ≤ 100\n  post := fun m o => (o.results = m.filtered.take 100) ∧\n                     (o.message = \"No results were found.\" ↔ o.results = []) ∧\n                     List.Pairwise (fun a b => a.seed ≥ b.seed ∧ a.peer ≥ b.peer ∧ a.size ≥ b.size) o.results"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.results.length ≤ 100`; `List.Pairwise (fun a b => a.seed ≥ b.seed ∧ a.peer ≥ b.peer ∧ a.size ≥ b.size) o.results`; `o.message = \"No results were found.\" ↔ o.results = []`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "names",
+          "check",
+          "check",
+          "names",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { results := x.torrents.filter (fun t => Wanted x t),\n    message := if (x.torrents.filter (fun t => Wanted x t)).length < 100 then \"\" else \"Results truncated.\" }"
+      }
+    ],
+    "seconds": 85.8
+  },
+  {
+    "id": "REQ-5",
+    "kind": "requirement",
+    "requirement_text": "If no results are found on a search it will display a message \"No results were found for this search.\"",
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 1,
+      "contracts": [
+        "FindMatchesContract",
+        "ShowResultsContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "ok"
+      ],
+      "code": "structure Mid where\n  found : List String\n  deriving DecidableEq, Repr\n\ndef FindMatchesContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => ∀ it ∈ m.found, it ∈ i.items\n\ndef ShowResultsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.message = \"No results were found for this search.\" ↔ o.results = []) ∧\n                     (∀ it ∈ o.results, it ∈ m.found)\n\ntheorem po1 : Contract.Compatible FindMatchesContract ShowResultsContract := by\n  discharge_po1 [FindMatchesContract, ShowResultsContract, Spec]\n\ntheorem po2 : Contract.Refines (FindMatchesContract.seq ShowResultsContract) Spec := by\n  discharge_po2 [FindMatchesContract, ShowResultsContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "FindMatchesContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def FindMatchesContractImpl (x : Input) : Mid :=\n  { found := x.items.filter (fun it => it.contains x.query) }\n\ntheorem FindMatchesContractImpl_ok : FindMatchesContract.Satisfies FindMatchesContractImpl := by\n  discharge_po3 [FindMatchesContract, FindMatchesContractImpl]"
+      },
+      {
+        "contract": "ShowResultsContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def ShowResultsContractImpl (x : Mid) : Output :=\n  { results := x.found, message := if x.found = [] then \"No results were found for this search.\" else \"Results found.\" }\n\ntheorem ShowResultsContractImpl_ok : ShowResultsContract.Satisfies ShowResultsContractImpl := by\n  discharge_po3 [ShowResultsContract, ShowResultsContractImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies (ShowResultsContractImpl ∘ FindMatchesContractImpl) :=\n  Contract.system_sound po1 po2 FindMatchesContractImpl_ok ShowResultsContractImpl_ok",
+    "full_check": true,
+    "seconds": 14.3
+  },
+  {
+    "id": "REQ-6",
+    "kind": "requirement",
+    "requirement_text": "Results will be arranged in size/date/alphabetical order by clicking on the column headers.",
+    "l1": {
+      "success": true,
+      "mode": "single-fallback",
+      "attempts": 5,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "the two-component split failed",
+      "code": "-- not split (the two-component split failed): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `List.Pairwise (fun a b => a.size ≤ b.size) o.torrents`; `List.Perm i.torrents o.torrents`. Whatever `Spec.post` says about the input must pass through `Mid`: `SortBySizeContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `SortByDateAndNameContract.post` relates `Output` to `Mid`. A condition that is only in `SortByDateAndNameContract.pre` is not guaranteed by the chain.",
+        "error_class": "po2",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "static",
+          "types",
+          "returned"
+        ],
+        "code": "structure Mid where\n  torrents : List Torrent\n  deriving DecidableEq, Repr\n\ndef SortBySizeContract : Contract Input Mid where\n  pre  := fun i => True\n  post := fun i m => List.Pairwise (fun a b => a.size ≤ b.size) m.torrents\n\ndef SortByDateAndNameContract : Contract Mid Output where\n  pre  := fun m => List.Pairwise (fun a b => a.size ≤ b.size) m.torrents\n  post := fun m o => List.Pairwise (fun a b => a.date ≤ b.date) o.torrents ∧\n                     List.Pairwise (fun a b => a.name ≤ b.name) o.torrents ∧\n                     List.Perm m.torrents o.torrents"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `List.Pairwise (fun a b => a.size ≤ b.size) o.torrents`; `List.Pairwise (fun a b => a.date ≤ b.date) o.torrents`; `List.Pairwise (fun a b => a.name ≤ b.name) o.torrents`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { torrents := x.torrents }"
+      }
+    ],
+    "seconds": 59.3
+  },
+  {
+    "id": "REQ-2#2",
+    "kind": "requirement",
+    "requirement_text": "Database of video hosting and video linking sites can be updated via the internet.",
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { updated := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.4
+  },
+  {
+    "id": "REQ-3#2",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include video host searching in the search.",
+    "l1": {
+      "success": true,
+      "mode": "single-fallback",
+      "attempts": 5,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "the two-component split failed",
+      "code": "-- not split (the two-component split failed): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.results.length = 0 ↔ i.includeHost = false`. Whatever `Spec.post` says about the input must pass through `Mid`: `FilterResultsContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `FormatOutputContract.post` relates `Output` to `Mid`. A condition that is only in `FormatOutputContract.pre` is not guaranteed by the chain.",
+        "error_class": "po2",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "structure Mid where\n  includeHost : Bool\n  query       : String\n  results     : List String\n  deriving DecidableEq, Repr\n\ndef FilterResultsContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.includeHost = i.includeHost ∧ m.query = i.query ∧ m.results.length = 0 ↔ i.includeHost = false\n\ndef FormatOutputContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.results = m.results ∧ (o.results.length = 0 ↔ m.includeHost = false) ∧\n                     (o.results.length > 0 → m.includeHost = true)"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { results := if x.includeHost then [\"host1\", \"host2\"] else [] }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 57.1
+  },
+  {
+    "id": "REQ-4#2",
+    "kind": "requirement",
+    "requirement_text": "There will be a tick box to allow the user to choose to include video link searching in the search.",
+    "l1": {
+      "success": true,
+      "mode": "single-fallback",
+      "attempts": 5,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "the two-component split failed",
+      "code": "-- not split (the two-component split failed): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "<generated>:32:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:32:41: error: unexpected token ':='; expected command\n",
+        "error_class": "syntax",
+        "stages": [
+          "static",
+          "syntax",
+          "syntax",
+          "static",
+          "syntax",
+          "returned"
+        ],
+        "code": "structure Mid where\n  query             : String\n  found             : List String\n  includeVideoLinks : Bool\n  deriving DecidableEq, Repr\n\ndef FindMatchesContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => m.includeVideoLinks := i.includeVideoLinks; ∀ r ∈ m.found, r ∈ i.query\n\ndef ShowResultsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => \n    (o.results.length = 0 ↔ m.found.length = 0) ∧\n    (o.results.length > 0 → m.found.length > 0) ∧\n    (o.results.length = 0 ↔ m.includeVideoLinks = false) ∧\n    (o.results.length > 0 → m.includeVideoLinks = true)"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { results := if x.includeVideoLinks then [\"video1\", \"video2\"] else [] }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 25.9
+  },
+  {
+    "id": "REQ-7#2",
+    "kind": "requirement",
+    "requirement_text": "If no results are found on a search it will display a message \"No results were found for this search.\"",
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 1,
+      "contracts": [
+        "FindMatchesContract",
+        "ShowResultsContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "ok"
+      ],
+      "code": "structure Mid where\n  found : List String\n  deriving DecidableEq, Repr\n\ndef FindMatchesContract : Contract Input Mid where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i m => ∀ v ∈ m.found, v ∈ i.videos ∧ v.contains i.query\n\ndef ShowResultsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.message = \"No results were found for this search.\" ↔ o.results = []) ∧\n                     o.results.length ≤ 100 ∧\n                     (∀ v ∈ o.results, v ∈ m.found)\n\ntheorem po1 : Contract.Compatible FindMatchesContract ShowResultsContract := by\n  discharge_po1 [FindMatchesContract, ShowResultsContract, Spec]\n\ntheorem po2 : Contract.Refines (FindMatchesContract.seq ShowResultsContract) Spec := by\n  discharge_po2 [FindMatchesContract, ShowResultsContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "FindMatchesContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def FindMatchesContractImpl (x : Input) : Mid :=\n  { found := x.videos.filter (fun v => v.contains x.query) }\n\ntheorem FindMatchesContractImpl_ok : FindMatchesContract.Satisfies FindMatchesContractImpl := by\n  discharge_po3 [FindMatchesContract, FindMatchesContractImpl]"
+      },
+      {
+        "contract": "ShowResultsContract",
+        "success": true,
+        "attempts": 5,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "check",
+          "check",
+          "types",
+          "check",
+          "ok"
+        ],
+        "code": "def ShowResultsContractImpl (x : Mid) : Output :=\n  { results := if x.found = [] then [] else List.take 100 x.found, message := if x.found = [] then \"No results were found for this search.\" else \"Results were found.\" }\n\ntheorem ShowResultsContractImpl_ok : ShowResultsContract.Satisfies ShowResultsContractImpl := by\n  discharge_po3 [ShowResultsContract, ShowResultsContractImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies (ShowResultsContractImpl ∘ FindMatchesContractImpl) :=\n  Contract.system_sound po1 po2 FindMatchesContractImpl_ok ShowResultsContractImpl_ok",
+    "full_check": true,
+    "seconds": 38.8
+  },
+  {
+    "id": "REQ-1#3",
+    "kind": "requirement",
+    "requirement_text": "Query times will take no longer than 5 seconds to any website.",
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 0 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.6
+  },
+  {
+    "id": "REQ-2#3",
+    "kind": "requirement",
+    "requirement_text": "Sending the hyperlink to the default browser will take less than 1 second.",
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 0 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.5
+  },
+  {
+    "id": "REQ-3#3",
+    "kind": "requirement",
+    "requirement_text": "Loading the program will take less than 10 seconds.",
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 0 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.4
+  },
+  {
+    "id": "REQ-4#3",
+    "kind": "requirement",
+    "requirement_text": "Any torrent result with 0 seeds will not be displayed.",
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 1,
+      "contracts": [
+        "FilterSeedsContract",
+        "CollectResultsContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "ok"
+      ],
+      "code": "structure Mid where\n  torrents : List Torrent\n  filtered : List Torrent\n  deriving DecidableEq, Repr\n\ndef FilterSeedsContract : Contract Input Mid where\n  pre  := fun i => True\n  post := fun i m => m.torrents = i.torrents ∧ m.filtered = i.torrents.filter (fun t => t.seeds ≠ 0)\n\ndef CollectResultsContract : Contract Mid Output where\n  pre  := fun m => True\n  post := fun m o => o.results = m.filtered ∧ (o.results = [] ↔ m.filtered.all (fun t => t.seeds = 0))\n\ntheorem po1 : Contract.Compatible FilterSeedsContract CollectResultsContract := by\n  discharge_po1 [FilterSeedsContract, CollectResultsContract, Spec]\n\ntheorem po2 : Contract.Refines (FilterSeedsContract.seq CollectResultsContract) Spec := by\n  discharge_po2 [FilterSeedsContract, CollectResultsContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "FilterSeedsContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def FilterSeedsContractImpl (x : Input) : Mid :=\n  { torrents := x.torrents, filtered := x.torrents.filter (fun t => t.seeds ≠ 0) }\n\ntheorem FilterSeedsContractImpl_ok : FilterSeedsContract.Satisfies FilterSeedsContractImpl := by\n  discharge_po3 [FilterSeedsContract, FilterSeedsContractImpl]"
+      },
+      {
+        "contract": "CollectResultsContract",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `CollectResultsContract.pre`, `CollectResultsContractImpl` does not establish these parts of `CollectResultsContract.post`: `o.results = [] ↔ m.filtered.all (fun t => t.seeds = 0)`. Change the function so that they hold (the contract is locked).",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def CollectResultsContractImpl (x : Mid) : Output :=\n  { results := x.filtered, }"
+      }
+    ],
+    "seconds": 43.3
+  },
+  {
+    "id": "REQ-5#3",
+    "kind": "requirement",
+    "requirement_text": "Sorting results should take less than 0.1 seconds.",
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 0 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]"
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.4
+  }
+]

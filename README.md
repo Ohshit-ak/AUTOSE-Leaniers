@@ -25,27 +25,22 @@ the verified Lean implementation into Python, is not built yet.
 
 > Current status, design decisions and next steps are in **[MEMORY.md](MEMORY.md)**. Read it first.
 
-**Status (2026-11-12; Qwen results are from 2026-11-06).** All three layers run end to end with an open-weight model
-(Qwen 2.5 7B, local). Single runs, seed 42, on the L0 specs that passed every L0 check:
+**Status (2026-11-13).** All three layers run end to end with an open-weight model
+(Qwen 2.5 7B, local), on the L0 specs that passed every L0 check. Per-spec L1/L2 (chain-v3, `--until chain`),
+mean (min–max) over 3 seeds (42–44):
 
-| SRS | L0 specs into L1 | L1 (PO1+PO2) | L2 components (PO3) | Fully verified end to end |
-|-----|------------------|--------------|---------------------|---------------------------|
-| `0000 - gamma j` | 61 of 74 | 29/61 | 48/58 | **19/61** |
-| `2009 - video search` | 14 of 21 | 9/14 | 16/18 | **7/14** |
+| SRS | L0 specs into L1 | single-step (not split) → verified | need a split → real L1 architecture → verified | **Fully verified end to end** | with `--fallback-single` | v2 (2026-11-06, 1 run) |
+|-----|---|---|---|---|---|---|
+| `0000 - gamma j` | 61 of 74 | 38 → 34.67 | 23 → 6.33 → 4.00 | **38.67** (37–40) | **50.67** (50–51) | 19 |
+| `2009 - video search` | 15 of 21 | 5 → 5.00 | 10 → 3.67 → 1.67 | **6.67** (6–7) | **9.33** (7–11) | 7 (of 14) |
 
-"Fully verified" means that Lean re-checks the spec, both component contracts, PO1, PO2,
-both implementations and their PO3 proofs together in one file. Known limits: 15 of these
-26 split off a first component that only copies fields; none of the 17 data constraints
-decompose (a single validity check); L2 often proves only one of the two components.
-Details are in [MEMORY.md](MEMORY.md) under *L1/L2 end-to-end*.
-
-**2026-11-12, chain-v3 (code changed, Qwen not rerun yet).** The table above is the v2 run.
-Judged by the v3 checks, the 38 architectures v2 accepted on both SRSs are 21 single-step specs
-(now not split at all), 16 identity / copy-of-`Spec` splits (now rejected) and 1 real
-decomposition, so the v2 L1 numbers overstate decomposition. v3: the model writes only
-definitions and the harness states and proves PO1/PO2/PO3; single-step specs keep `Spec` as their
-one component; the chain path is a `main.py` stage with repetitions. New numbers need
-`runs/qwen-chain-v3.sbatch` on a GPU node. See MEMORY.md, *chain-v3*.
+"Fully verified" means that Lean re-checks the spec, the architecture, PO1, PO2, the implementations
+and their PO3 proofs together in one file, ending in `theorem system_ok : Spec.Satisfies (…)`. Single-step
+specs (all 17 data constraints: 17/17, v2 0/17) keep `Spec` as their one component. Real two-component
+decompositions are still rare with a 7B model, but the accepted ones are genuine (no identity or copy-of-`Spec`
+splits; v2's 19 were mostly such splits). Splits fail mostly on PO1 and visibility (gamma j) or PO2 (video search);
+in L2 the second component fails. Full write-up: **[results.md](results.md)**; per-run tables in
+`runs/<doc>/qwen-chain-v3/summary.md`; details in [MEMORY.md](MEMORY.md), *chain-v3 → Qwen results*.
 
 ---
 
@@ -78,7 +73,7 @@ git restore --source origin/l0-v10 -- harness/e2e_l1l2.py   # or take one file f
 git diff origin/backup/main-pre-merge main -- harness/      # see what the merge changed
 ```
 
-After the merge, `lake build` succeeds and all 128 tests in `harness/tests` pass on `main`.
+After the merge, `lake build` succeeds and all tests in `harness/tests` pass on `main` (157 as of 2026-11-13, none skipped once `requirements.txt` is installed).
 `harness/tests/` is a package (`__init__.py`) and `harness/pytest.ini` pins `testpaths`/`pythonpath`,
 so an unrelated top-level `tests` package installed elsewhere in your Python can no longer
 shadow ours. Run `python -m pytest` (or `python -m unittest discover -s tests`) from `harness/`.
@@ -91,6 +86,7 @@ shadow ours. Run `python -m pytest` (or `python -m unittest discover -s tests`) 
 AUTOSE-Leaniers/
 ├── README.md               # this file: what it is, how to navigate, how to use
 ├── MEMORY.md               # project state, decisions, gotchas, next steps
+├── results.md              # latest Qwen results (chain-v3, 3 seeds, both SRSs)
 ├── .env.example            # API key names (copy to .env)
 ├── requirements.txt        # Python dependencies (pip install -r requirements.txt)
 ├── .env                    # your API keys (gitignored)

@@ -1,0 +1,44 @@
+import ContractForge
+open ContractForge
+
+-- 5.3/R4: The system shall auto detect IP DOS attacks and block IP automatically.
+
+-- L0 spec
+
+structure Input where
+  ip : String
+  failedAttempts : Nat
+  deriving DecidableEq, Repr
+
+structure Output where
+  ip : String
+  blocked : Bool
+  failedAttempts : Nat
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.failedAttempts < 10
+  post := fun i o => (o.blocked = true ↔ i.failedAttempts + 1 ≥ 10) ∧
+                     o.failedAttempts = i.failedAttempts + 1
+
+example : Spec.pre { ip := "192.168.1.1", failedAttempts := 9 } ∧
+          Spec.post { ip := "192.168.1.1", failedAttempts := 9 }
+                    { ip := "192.168.1.1", blocked := true, failedAttempts := 10 } := by
+  unfold Spec; decide
+
+-- L1 architecture (mode=chain, success=False)
+
+structure Mid where
+  ip : String
+  failedAttempts : Nat
+  nextFailedAttempts : Nat
+  deriving DecidableEq, Repr
+
+def CheckAttemptsContract : Contract Input Mid where
+  pre  := fun i => i.failedAttempts < 10
+  post := fun i m => m.ip = i.ip ∧ m.failedAttempts = i.failedAttempts ∧
+                     m.nextFailedAttempts = i.failedAttempts + 1
+
+def ApplyLimitContract : Contract Mid Output where
+  pre  := fun m => m.nextFailedAttempts < 10
+  post := fun m o => o.ip = m.ip ∧ o.blocked = true ∧ o.failedAttempts = m.nextFailedAttempts
