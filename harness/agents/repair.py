@@ -5,11 +5,15 @@ locked context + code). This keeps the first few errors, maps each position to
 a line of the model's own code, trims long type dumps, and adds a one-line hint
 chosen by the kind of error.
 """
+import os
 import re
 from typing import List, Optional
 
+import lean_docs
 from config import FRAMEWORK_PATH
 from lean_runner import HEADER, core_names
+
+LEAN_DOCS = os.getenv("CF_LEAN_DOCS", "1") == "1"   # v11: quote real Lean entries in feedback
 
 MAX_ERRORS = 3          # errors shown per repair
 MAX_MSG_LINES = 8       # lines kept per error message
@@ -374,8 +378,13 @@ def error_signature(output: str) -> str:
     return re.sub(r"`[^`]*`|\d+", "_", first)
 
 
-def format_feedback(code: str, output: str, context: str = "") -> str:
-    """Repair feedback for `code` that failed to check with Lean output `output`."""
+def format_feedback(code: str, output: str, context: str = "", also_stage: Optional[str] = None) -> str:
+    """Repair feedback for `code` that failed to check with Lean output `output`.
+
+    Only the earliest error layer is shown, plus `also_stage` when it is given: when repairs
+    swing between two layers (names → types → names), fixing one layer at a time keeps
+    reintroducing the other, so both are shown together. For names, types and instances the
+    real Lean entries are quoted (lean_docs.py, at most 3)."""
     offset = HEADER.count("\n") + ((context.count("\n") + 2) if context else 0)
     code_lines = code.splitlines()
     errors = parse_errors(output)
@@ -383,20 +392,29 @@ def format_feedback(code: str, output: str, context: str = "") -> str:
         return f"Lean output:\n{_trim(output)}"
 
     stage = min((error_stage(e["msg"]) for e in errors), key=STAGES.index)
-    errors = [e for e in errors if error_stage(e["msg"]) == stage]
-    parts, hints = [], []
+    stages = [stage] + ([also_stage] if also_stage and also_stage != stage else [])
+    errors = [e for e in errors if error_stage(e["msg"]) in stages]
+    parts, hints, refs = [], [], []
     for e in errors[:MAX_ERRORS]:
         n = e["line"] - offset
         where = f"line {n}" if 1 <= n <= len(code_lines) else "locked context"
-        src = f"\n    {code_lines[n - 1].strip()}" if 1 <= n <= len(code_lines) else ""
+        src_line = code_lines[n - 1].strip() if 1 <= n <= len(code_lines) else ""
+        src = f"\n    {src_line}" if src_line else ""
         parts.append(f"- {where}:{src}\n  error: {_trim(e['msg'])}")
         h = hint_for(e["msg"], code)
         if h and h not in hints:
             hints.append(h)
+        if LEAN_DOCS:
+            for r in lean_docs.lookup(e["msg"], src_line):
+                if r not in refs and len(refs) < lean_docs.MAX_ENTRIES:
+                    refs.append(r)
     more = len(errors) - MAX_ERRORS
-    text = f"Lean errors — {STAGE_LABEL[stage]}:\n" + "\n".join(parts)
+    label = " and ".join(STAGE_LABEL[s] for s in stages)
+    text = f"Lean errors — {label}:\n" + "\n".join(parts)
     if more > 0:
         text += f"\n(+{more} more errors, often caused by the ones above)"
     if hints:
         text += "\n\nHow to fix:\n" + "\n".join(f"- {h}" for h in hints)
+    if refs:
+        text += "\n\nReal Lean definitions (use these, with exactly these types):\n" + "\n".join(refs)
     return text

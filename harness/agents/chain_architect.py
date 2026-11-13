@@ -15,10 +15,12 @@
                         from the second `pre` what the first `post` does not give (`repairs`)
 """
 import hashlib
+import os
 import re
 
 import chain_checks as C
 from agents.base import generate_verified
+from chain_failures import classify
 
 SYSTEM_PROMPT_ARCHITECT = """\
 You are an architecture agent for ContractForge (Lean 4).
@@ -102,6 +104,11 @@ def ShowResultsContract : Contract Mid Output where
 ```
 """
 
+# v11 (issue 1): Input fields the second contract reads are added to Mid by the harness.
+CARRY_FIELDS = os.getenv("CF_CARRY_FIELDS", "1") == "1"
+# v11 (issue 2): identity splits this many times → stop; the pipeline falls back to one component.
+IDENTITY_STOP = int(os.getenv("CF_IDENTITY_STOP", "2"))
+NOT_DECOMPOSABLE = "not decomposable: every split made one component an identity"
 _CONTRACT_DEF = re.compile(r"^def\s+(\w+Contract)\b", re.MULTILINE)
 SINGLE_PO2 = ("theorem po2 : Contract.Refines Spec Spec :=\n"
               "  ⟨fun _ h => h, fun _ _ _ h => h⟩")
@@ -127,7 +134,16 @@ def run_architect(spec_code: str, model: str, kind: str = None, split: str = "au
     if reason:
         return single_architecture(reason)
 
-    state = {}
+    state = {"carried": []}
+
+    def prepare(code: str) -> str:
+        code = C.strip_theorems(code)
+        if not CARRY_FIELDS:
+            return code
+        code, added = C.carry_input_fields(code, spec_code)
+        if added:
+            state["carried"] = list(dict.fromkeys(state["carried"] + added))
+        return code
 
     def precheck(code: str) -> list:
         r = C.static_check(code, spec_code)
@@ -149,14 +165,27 @@ def run_architect(spec_code: str, model: str, kind: str = None, split: str = "au
     prompt = (f"These definitions are already in scope (LOCKED, do not repeat them):\n\n{spec_code}\n\n{hint}"
               "Split `Spec` into exactly two chained component contracts (`structure Mid` and two "
               "`def …Contract`). Definitions only.")
+    identity = {"n": 0}
+
+    def stop_on(error: str):
+        """v11 (issue 2): a split whose component only copies, twice, means the spec has no
+        real intermediate result: stop and report it as not decomposable."""
+        if classify(error) == "identity":
+            identity["n"] += 1
+            if identity["n"] >= IDENTITY_STOP:
+                return NOT_DECOMPOSABLE
+        return None
+
     result = generate_verified(prompt, SYSTEM_PROMPT_ARCHITECT, model, context=spec_code,
-                               validate=validate, precheck=precheck, prepare=C.strip_theorems,
-                               check_weakened=False, check_label="L1")
+                               validate=validate, precheck=precheck, prepare=prepare,
+                               check_weakened=False, check_label="L1", stop_on=stop_on)
     result["mode"] = "chain"
     facts = C.static_check(result.get("code") or "", spec_code)["facts"] if result.get("code") else {}
     result["strength"] = facts.get("strength")
     result["contracts"] = [facts["a"], facts["b"]] if "a" in facts else extract_contracts(result.get("code") or "")
     result["repairs"] = []
+    if state["carried"]:
+        result["carried_by_harness"] = state["carried"]
     if result["success"]:
         _, proved = state["proved"]
         result["repairs"] = proved["repairs"]

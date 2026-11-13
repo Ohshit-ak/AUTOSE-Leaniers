@@ -12,7 +12,13 @@ What is counted:
     L1 by mode     chain (two components), single (not split: a data constraint, or a `post`
                    with no intermediate result), single-fallback (the split failed, `Spec`
                    kept whole)
+                   single-not-decomposable (v11: every split was an identity, so the spec is
+                   verified as one component; not an L1 failure)
     end to end     L1 + every L2 + the whole file with `system_ok` accepted by Lean
+    v11            copy-ok (weak, but the requirement only passes data through), L2
+                   components the harness skeleton implemented without the model, result
+                   fields written by the harness vs the model, loops stopped early.
+                   Headline: "end to end, non-trivial spec" (and "…, model wrote code")
     weak specs     (chain-v4 runs) specs that an implementation made only of copied input
                    fields and constants satisfies (`spec_check.trivial`). Code verified
                    against such a spec can be a stub, so "end to end, non-trivial spec" is
@@ -84,6 +90,7 @@ def metrics(d: list, specs: dict) -> dict:
         "L1 chain (two components)": sum(mode(x) == "chain" for x in ok),
         "L1 single (not split)": sum(mode(x) == "single" for x in ok),
         "L1 single-fallback": sum(mode(x) == "single-fallback" for x in ok),
+        "L1 not decomposable (identity split → single)": sum(mode(x) == "single-not-decomposable" for x in ok),
         "L2 components implemented": len([x for x in l2 if x["success"]]),
         "L2 components total": len(l2),
         "end to end": len(full),
@@ -95,8 +102,22 @@ def metrics(d: list, specs: dict) -> dict:
     }
     if any("spec_check" in e for e in d):
         weak = lambda e: (e.get("spec_check") or {}).get("trivial") is True  # noqa: E731
+        copy_ok = lambda e: weak(e) and (e.get("spec_check") or {}).get("copy_ok") is True  # noqa: E731
         m["weak specs (satisfied by copies and constants)"] = sum(weak(e) for e in d)
         m["end to end, non-trivial spec"] = sum(not weak(e) for e in full)
+        if any("copy_ok" in (e.get("spec_check") or {}) for e in d):     # v11
+            m["weak specs that only pass data through (copy-ok)"] = sum(copy_ok(e) for e in d)
+            m["end to end, copy-ok spec"] = sum(copy_ok(e) for e in full)
+    if any("harness_only" in x for x in l2):                              # v11 skeleton
+        done = [x for x in l2 if x["success"]]
+        m["L2 implemented by the harness skeleton alone"] = sum(bool(x.get("harness_only")) for x in done)
+        m["L2 implemented with the model"] = sum(not x.get("harness_only") for x in done)
+        m["L2 result fields written by the harness"] = sum(len((x.get("fields") or {}).get("harness", [])) for x in done)
+        m["L2 result fields written by the model"] = sum(len((x.get("fields") or {}).get("model", [])) for x in done)
+        full_model = [e for e in full if not all(x.get("harness_only") for x in e.get("l2", []))]
+        m["end to end, non-trivial spec, model wrote code"] = sum(not weak(e) for e in full_model) \
+            if any("spec_check" in e for e in d) else len(full_model)
+        m["repair loops stopped early (L1 + L2)"] = sum(bool(x.get("stopped")) for x in l1 + l2)
     m["L1 chain with a repaired second `pre`"] = sum(bool(x.get("repairs")) for x in ok if mode(x) == "chain")
     chains = [x for x in ok if mode(x) == "chain" and x.get("strength")]
     if chains:

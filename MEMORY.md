@@ -382,7 +382,7 @@ the number to report is "end to end, non-trivial spec". Run `sbatch runs/qwen-ch
 
 ### Still open
 - Weak L0 specs (30 of 76) are an L0 problem: the fix belongs in the L0 checks (reject or repair a spec with a
-  trivial witness), not in the chain path. Not done; needs a decision, because it will lower the L0 acceptance rate.
+  trivial witness), not in the chain path. **Done in v11** (fed back once, then recorded; see *v11*).
 - Per-spec decomposition applies to 8 specs. Real architecture work is the graph path (`--until arch`).
 - Items 8 and 9 above.
 
@@ -411,6 +411,52 @@ Video search (it has no Domain.lean): 58.5 % mapped, 1 group, 3 components, no c
   says nothing about Qwen.
 - State entities are structural, so generic names (`name`, `success`, `result`) can link specs that
   only share a word. Not reviewed by hand yet.
+
+## v11 / chain-v5 (2026-11-13): fixes for the failure patterns. **Not yet run with Qwen**
+
+Source: `docs/failure_patterns.pdf` (18 SRS, qwen-v10.1 L0, qwen-chain-v4 L1/L2, 3 reps). Rule: every fix works
+for any SRS (no field, function or requirement names); deterministic harness checks before prompt changes.
+`HARNESS_VERSION = "v11"` (L0), `CHAIN_VERSION = "chain-v5"`. Job: `runs/qwen-v11.sbatch` (L0 v11 + chain-v5 strict
+/ fallback, plus chain-v5 on the frozen v10.1 L0 as an ablation). Each fix has a `CF_*` switch (`=0` → old behaviour).
+
+| Issue | Fix | Where | Switch |
+|---|---|---|---|
+| 4 spec defects | **Output-mention**: every `post` conjunct must constrain the output. A conjunct with no `o.`, or one that only talks about the input once the outputs `post` fixes elsewhere are put in (`o.items = i.items ∧ ∀ t ∈ o.items, t.id ≠ 0`), and that Lean cannot prove from `pre` → L0.5 **fail**, fed back ("move it to `pre` …") | `spec_checks.unrealizable_conjuncts`, `validate.hard_checks` / `review` | `CF_SPEC_CHECKS` |
+| 4 | **Copy-satisfiability**: `trivial_witness` (chain-v4) moved into L0: a weak spec is fed back **once**, then accepted and recorded as weak (`l05.strength.class`: strong / weak / copy-ok / unrealizable). Status unchanged, so weak specs still reach L1/L2 | `spec_checks.loop_checks`, `spec_strength` | `CF_SPEC_CHECKS` |
+| 4 | If the model's stronger retries all fail, the weak attempt is re-checked (the once-only finding is silent now) and accepted (`weak_fallback` in specs.json), so a weak spec is never dropped for being weak | `spec_agent.run_spec` | – |
+| 4 | **copy-ok**: weak, but the requirement only passes data through (echo verb, no compute verb, no condition/bound/number) → not fed back, reported apart | `spec_checks.copy_ok` | – |
+| 4 | **Realizability search**: built, **off** (see replay) | `spec_checks.realizability_misses` | `CF_REALIZABILITY=1` |
+| 6 / 1 names | **Lean doc lookup**: signature + first docstring sentence + an example from the Lean 4.29.1 environment (`findDocString?`), cached in `framework/.lake/cf_core_docs.json`; ≤3 entries per error: invented name → `?`/`D` variants and near names; missing instance → the container type's functions (`Membership _ String` → `String.contains`); type error → the real signature of the projection in the term | `lean_docs.py`, `repair.format_feedback` | `CF_LEAN_DOCS` |
+| 1 L1 visibility | Harness adds every `Input` field the second contract reads to `Mid` (+ `m.f = i.f` in the first `post`; foreign `i.f` rewritten). `Spec` never changes | `chain_checks.carry_input_fields`, architect `prepare` | `CF_CARRY_FIELDS` |
+| 2 identity | 2 identity splits → loop stops; the spec is verified as one component, mode `single-not-decomposable` (not an L1 failure) | `chain_architect.stop_on`, `chain_pipeline` | `CF_IDENTITY_STOP`, `CF_NOT_DECOMPOSABLE_FALLBACK` |
+| 3 relational post | **Spec-directed skeleton**: `o.f = e` → `f := e`; `o.f = true ↔ c` → `decide c`; `A → o.f = e` (+ `¬A → …`) → `if`; `∀ e ∈ o.L, P e` → `filter` (+ `.take n`); unconstrained → copy/constant. Complete → PO3 tried with no model call (`harness_only`); else the skeleton (with `FILL`) is in the prompt. PO3 feedback adds actions ("add a branch on `x.mode = …`"). Records `fields: {harness, model}` | `skeleton.py`, `chain_coder` | `CF_SKELETON` |
+| 5 loop | Same check again → (1) fresh prompt, (2) fresh + `strategy_hint` (L2: skeleton + actions), (3) stop. Same failure word for word 3× → stop (after the hint was tried). names ↔ types swing → both layers in one feedback | `base.generate_verified`, `repair.format_feedback(also_stage=)` | – |
+
+Summary (`summarize_e2e.py`) adds: not decomposable, copy-ok, L2 by the skeleton alone, harness vs model fields,
+loops stopped early, and **"end to end, non-trivial spec, model wrote code"**. Expect "end to end" to drop when
+weak specs get strengthened at L0; read the non-trivial numbers.
+
+### Replay on existing records (no model; Lean only; 18 SRS, v10.1 rep1 L0 = 541 accepted specs, chain-v4 strict)
+| Check | Result |
+|---|---|
+| Output-mention | **32 of 541** specs fail (26 only after substituting fixed outputs). 30 reached chain-v4: **0 verified in any rep**. **87 of the 285** chain-v4 PO3 failures are on these specs. (The first version without the `pre` check had 2 false alarms, both verified; fixed) |
+| Copy-satisfiable | 241 weak, 237 strong, 8 copy-ok (narrow verb list: 18 of 541 tagged copy-ok by verbs). In chain-v4: weak specs verified in 560/657 spec-runs (85 %), strong in 390/621 (63 %) |
+| Realizability search | 48 misses; but 56 of the 129 chain-v4 spec-runs it flags **verified** (a PO3 proof shows an output exists) → too many search misses; off |
+| Doc lookup | First Lean error of the 110 saved L0 compile failures: invented functions 23/31 get entries (e.g. `List.last` → `getLast?`, `getLastD`, `getLast`), typeclass 4/12 (the 6 `Decidable (a = b)` keep the `deriving DecidableEq` hint), types 7/18; + 22 undeclared fields with the existing hint ≈ 56/110 addressed |
+| Mid carrying | 8 L1 visibility failures: field added in 7 (the 8th's stored code no longer has it); what remains is the real problem (identity) |
+| Identity → not decomposable | 66 identity splits; in the chain-v4 **fallback** runs, 42 of them verified as one component |
+| Skeleton | 285 PO3 failures (113 distinct contracts): skeleton derives ≥1 field in 187, complete in 141, PO3 proved by the harness alone in 9 (3 distinct). 87 of the 132 complete-but-unproved are the L0-defective specs above |
+| Skeleton on **all** L2 components (successes too) | 1373 components (481 distinct), v4 implemented 1059. The skeleton alone proves PO3 for **751 of the 1059** (71 %) and 13 of the failed ones. 0 exceptions in skeleton / action / provenance / carry over all real inputs |
+
+**Read this before the chain-v5 numbers:** about 70 % of components verified in chain-v5 are expected to be
+`harness_only` (the harness's own code; no model call). "End to end" will mostly measure the harness. The model's
+share is "end to end, non-trivial spec, model wrote code" and the harness / model field counts. `CF_SKELETON=0`
+gives the chain-v4 coder for a model-only comparison.
+
+**What this does not show:** whether Qwen acts on the doc entries, skeletons and actions, and the end-to-end
+numbers. Run `sbatch runs/qwen-v11.sbatch` (see its header; build the doc index once before parallel jobs).
+**Report caveat:** harness-derived L2 code is correct by construction for the conjuncts it came from: report
+`harness_only` components and harness-written fields separately from model-written ones.
 
 ## Decisions
 

@@ -3,7 +3,7 @@ import re
 from typing import Callable, List, Optional
 
 from agents.fixups import apply_fixups
-from agents.repair import earliest_stage, error_signature, format_feedback, parse_errors
+from agents.repair import STAGES, earliest_stage, error_signature, format_feedback, parse_errors
 from config import MAX_RETRIES, RESTART_TEMPERATURE, TEMPERATURE
 from lean_runner import HEADER, check_lean
 from llm import Truncated, call_llm, extract_lean
@@ -20,6 +20,7 @@ When fixing code that failed to check:
   Code that was given to you as already in scope is NOT part of your file: never repeat it."""
 
 HISTORY_TURNS = 2       # earlier (code, errors) exchanges kept in the conversation
+EARLY_STOP_SAME = 3     # v11: the same failure, word for word, this many times → give up
 VALUE_ATTEMPTS = 2      # example-only repairs before the definitions are unlocked again
 
 _EXAMPLE_START = re.compile(r"^(example|theorem)\b", re.MULTILINE)
@@ -104,6 +105,12 @@ def _errors_only_in_example(code: str, error: str, context: str) -> bool:
     return bool(lines) and all(n >= first_example_line for n in lines)
 
 
+def _exact_signature(error: str) -> str:
+    """The failure word for word, without positions and file paths (for the early stop)."""
+    text = re.sub(r"<generated>:\d+:\d+", "", error or "")
+    return " ".join(text.split())[:2000]
+
+
 def _too_long(e: Exception) -> bool:
     text = str(e).lower()
     return "context" in text and ("exceed" in text or "too long" in text or "maximum" in text)
@@ -139,7 +146,9 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
                       auto_prove: Optional[Callable[[str, str], Optional[str]]] = None,
                       prepare: Optional[Callable[[str], str]] = None,
                       precheck: Optional[Validator] = None,
-                      check_weakened: bool = True, check_label: str = "L0.5") -> dict:
+                      check_weakened: bool = True, check_label: str = "L0.5",
+                      strategy_hint: Optional[Callable[[str, str], Optional[str]]] = None,
+                      stop_on: Optional[Callable[[str], Optional[str]]] = None) -> dict:
     """Ask the model for Lean code, retrying with Lean's errors until it checks.
 
     `context` is already-verified Lean (e.g. a locked spec/contract) that is
@@ -162,7 +171,14 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
          itself (`find_witness`); if none exist the spec is likely contradictory and
          the model is told to fix the spec. Otherwise the definitions are locked and
          the model writes just a new example (at most VALUE_ATTEMPTS times in a row);
-      5. if the same error comes back twice, the model starts over at a higher temperature.
+      5. (v11) when the same check fails again the strategy changes instead of repeating:
+         2nd time in a row → fresh prompt without history at a higher temperature;
+         3rd → fresh prompt plus `strategy_hint(code, error)` (e.g. the L2 skeleton built
+         from the contract), or a plain fresh prompt if there is none; 4th → stop.
+         The same failure, word for word, 3 times (not necessarily in a row) → stop.
+         `stop_on(error)` returns a reason to stop at once (e.g. L1: the split is an identity
+         twice, so the spec is not decomposable). When Lean's error layers swing back
+         (names → types → names), both layers are shown in one feedback.
     """
     system = system + REPAIR_RULES
     code = extract_lean(_ask(prompt, system, model))
@@ -172,6 +188,8 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
     log: List[dict] = []
     result = {"error": ""}
     best = None  # (rank, attempt, code, error) of the furthest-reaching attempt
+    same_check, seen_errors, stages = 0, {}, []   # v11 strategy ladder / early stop / oscillation
+    stopped, hint_used = None, False
 
     for attempt in range(1, MAX_RETRIES + 1):
         if code == TRUNCATED:  # never sent to Lean: start over with a request to be brief
@@ -221,7 +239,10 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
                                  "problems:\n" + "\n".join(f"- {p}" for p in problems))
             else:
                 stage = earliest_stage(result["error"]) or "other"
-                feedback_body = format_feedback(code, result["error"], context)
+                # names → types → names: show both layers instead of only the earliest
+                swing = (stages[-1] if len(stages) >= 2 and stages[-2] == stage and stages[-1] != stage
+                         and stages[-1] in STAGES else None)
+                feedback_body = format_feedback(code, result["error"], context, also_stage=swing)
                 # Lean failed, so `validate` did not run; an always-false equation is
                 # worth reporting anyway (the example can never be proved with it).
                 from validate import check_contradictions  # imported here: validate imports this module
@@ -236,10 +257,20 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
                                           + "\n".join(f"- {b}" for b in broken)
                                           + "\nChange the example values so that every condition holds.")
         log.append({"attempt": attempt, "stage": stage, "fixups": fixes})
+        stages.append(stage)
         rank = {"weakened": RANK_NOT_CHECKED, "static": RANK_NOT_CHECKED,
                 "check": RANK_COMPILES}.get(stage, RANK_LEAN_ERROR)
         if best is None or rank > best[0]:  # ties keep the earlier attempt
             best = (rank, attempt, code, result["error"])
+        exact = _exact_signature(result["error"])
+        seen_errors[exact] = seen_errors.get(exact, 0) + 1
+        # the skeleton/hint strategy is always tried once before giving up on repeats
+        repeat_stop = seen_errors[exact] >= EARLY_STOP_SAME and (strategy_hint is None or hint_used)
+        stopped = (stop_on(result["error"]) if stop_on else None) or (
+            f"the same failure {EARLY_STOP_SAME} times" if repeat_stop else None)
+        if stopped:
+            log[-1]["stopped"] = stopped
+            break
         if attempt == MAX_RETRIES:
             break
 
@@ -288,12 +319,23 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
             continue
         locked_defs, value_tries = None, 0
 
-        sig = error_signature(result["error"])
-        if sig == last_sig:
-            history, last_sig = [], None
-            code = extract_lean(_ask(prompt, system, model, temperature=RESTART_TEMPERATURE))
-            continue
+        sig = (stage, error_signature(result["error"]))
+        same_check = same_check + 1 if sig == last_sig else 1
         last_sig = sig
+        if same_check >= 4:
+            stopped = "the same check failed 4 times in a row"
+            log[-1]["stopped"] = stopped
+            break
+        if seen_errors[exact] >= EARLY_STOP_SAME and strategy_hint and not hint_used:
+            same_check = max(same_check, 3)   # repeats word for word: go straight to the hint
+        if same_check >= 2:   # change strategy, do not repeat the same repair
+            history = []
+            extra = strategy_hint(code, result["error"]) if (strategy_hint and same_check == 3) else None
+            hint_used = hint_used or same_check == 3
+            log[-1]["strategy"] = "fresh+hint" if extra else "fresh"
+            ask = f"{prompt}\n\n{extra}" if extra else prompt
+            code = extract_lean(_ask(ask, system, model, temperature=RESTART_TEMPERATURE))
+            continue
         if not history:
             history = [{"role": "user", "content": prompt}]
         history.append({"role": "assistant", "content": f"```lean\n{code}\n```"})
@@ -308,5 +350,8 @@ def generate_verified(prompt: str, system: str, model: str, context: str = "",
     # failed L0.5), not whatever the last repair produced.
     _, best_attempt, best_code, best_error = best
     log.append({"attempt": best_attempt, "stage": "returned"})
-    return {"success": False, "code": best_code, "attempts": MAX_RETRIES,
-            "error": best_error, "log": log}
+    out = {"success": False, "code": best_code, "attempts": attempt,
+           "error": best_error, "log": log}
+    if stopped:
+        out["stopped"] = stopped
+    return out

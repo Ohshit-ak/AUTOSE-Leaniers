@@ -52,6 +52,14 @@ in L2 the second component fails. Full write-up: **[results.md](results.md)**; p
 > stub). Evidence so far is a replay of the v3 records; run `sbatch runs/qwen-chain-v4.sbatch` for numbers.
 > See [MEMORY.md](MEMORY.md), *chain-v4*.
 
+> **v11 / chain-v5 (2026-11-13, not yet run with Qwen).** Fixes for the failure patterns in
+> `docs/failure_patterns.pdf`, all harness-side and SRS-independent: L0.5 rejects `post` conditions that only
+> constrain the input (also after substituting outputs `post` fixes) and feeds weak (copy-satisfiable) specs back
+> once; repair feedback quotes the real Lean entries (`lean_docs.py`); L1 carries `Input` fields into `Mid` and
+> turns identity splits into "not decomposable"; L2 starts from a skeleton derived from `post` (`skeleton.py`);
+> the repair loop changes strategy instead of repeating and stops early. Replay on the 18-SRS records and the
+> numbers: [MEMORY.md](MEMORY.md), *v11*. Run `sbatch runs/qwen-v11.sbatch`.
+
 ---
 
 ## Branches (and where to go if `main` breaks)

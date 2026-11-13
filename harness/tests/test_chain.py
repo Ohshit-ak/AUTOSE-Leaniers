@@ -133,6 +133,24 @@ def fenced(code):
     return f"```lean\n{code}\n```"
 
 
+def chain_v4_behaviour(test):
+    """Run `test` with the v11 L1/L2 changes switched off (skeleton, Mid carrying, identity stop
+    and not-decomposable fallback): these tests check chain-v4 behaviour, which is still
+    available through the CF_* switches. The v11 behaviour is tested in test_v11_fixes.py."""
+    import functools
+
+    @functools.wraps(test)
+    def wrapped(*a, **k):
+        import agents.chain_architect as arch
+        import agents.chain_coder as coder
+        import chain_pipeline
+        with mock.patch.object(coder, "SKELETON", False), mock.patch.object(arch, "CARRY_FIELDS", False), \
+                mock.patch.object(arch, "IDENTITY_STOP", 99), \
+                mock.patch.object(chain_pipeline, "NOT_DECOMPOSABLE_FALLBACK", False):
+            return test(*a, **k)
+    return wrapped
+
+
 class Scripted:
     """A model that returns the given replies in order (the last one again when it runs out)."""
 
@@ -335,6 +353,7 @@ class Pipeline(unittest.TestCase):
         from lean_runner import check_lean
         self.assertTrue(check_lean(chain_pipeline.lean_file(r, e))["success"])
 
+    @chain_v4_behaviour
     def test_repair_gets_the_named_problem(self):
         import agents.base as base
         import agents.chain_architect as arch
@@ -381,6 +400,7 @@ class Pipeline(unittest.TestCase):
         self.assertFalse(r["strength"]["interface_assumption"])
         self.assertTrue(r["strength"]["first_result_depends_on_input"])
 
+    @chain_v4_behaviour
     def test_single_step_spec_is_not_split(self):
         e, model = self.run_entry(SINGLE, [IMPL_SINGLE])
         self.assertEqual(e["l1"]["mode"], "single")
@@ -390,6 +410,7 @@ class Pipeline(unittest.TestCase):
         self.assertIn("Spec.Satisfies SpecImpl", e["system_theorem"])
         self.assertTrue(e["full_check"])
 
+    @chain_v4_behaviour
     def test_failed_split_and_fallback(self):
         e, _ = self.run_entry(SPEC, [IDENTITY], split="always")
         self.assertFalse(e["l1"]["success"])
@@ -401,6 +422,7 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(e["l1"]["failed_split"]["error_class"], "identity")
         self.assertTrue(e["full_check"])
 
+    @chain_v4_behaviour
     def test_run_writes_files_resumes_and_summarizes_repetitions(self):
         """chain_pipeline.run on an L0 folder (as main.py --until chain does per repetition),
         then evaluation/summarize_e2e.py over two repetitions."""
@@ -455,6 +477,7 @@ class Pipeline(unittest.TestCase):
             self.assertIn("| identity | 0.50 (0–1) |", text)
             self.assertIn("Not end to end in every repetition (0)", text)
 
+    @chain_v4_behaviour
     def test_coder_wrong_direction_and_wrong_value(self):
         import agents.base as base
         from agents.chain_coder import run_coder
@@ -470,6 +493,7 @@ class Pipeline(unittest.TestCase):
         self.assertIn("theorem PriceOrderContractImpl_ok : PriceOrderContract.Satisfies PriceOrderContractImpl", r["code"])
         self.assertIn("`Output` has exactly these fields: `accepted : Bool`, `total : Nat`", model.prompts[0])
 
+    @chain_v4_behaviour
     def test_coder_is_told_the_fields_of_the_result(self):
         """A `Mid` field copied into `Output` is reported with the field list, before Lean."""
         import agents.base as base

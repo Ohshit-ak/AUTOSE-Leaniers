@@ -324,6 +324,16 @@ def run_spec(requirement: str, model: str, validate=None, entry=None) -> dict:
     r = generate_verified(requirement, SYSTEM_PROMPT_SPEC, model,
                           validate=full_check if (validate or checker) else None,
                           find_witness=find_witness)
+    # v11: a finding that is reported only once (a weak spec) must not cost the spec when the
+    # model's "stronger" retries then fail: the best attempt compiled, so check it again; the
+    # once-only finding stays silent now, and everything else must still pass.
+    if (not r["success"] and r.get("code") and (validate or checker)
+            and (r.get("error") or "").startswith("L0.5:")):
+        from lean_runner import check_lean
+        if check_lean(r["code"])["success"] and not full_check(r["code"]):
+            r.update(success=True, weak_fallback=True)
+            r["log"] = r.get("log", []) + [{"attempt": r.get("attempts"), "stage": "ok",
+                                             "fixups": ["accepted after a once-only finding"]}]
     r.update(checker.outcome(r["code"]) if checker
              else {"rejects_bad_example": None, "bad_example": None,
                    "negative_verdict": "unknown", "negative_examples": []})

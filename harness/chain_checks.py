@@ -373,6 +373,68 @@ def static_check(code: str, spec_code: str) -> dict:
     return {"problems": problems, "facts": facts}
 
 
+def _add_struct_fields(code: str, struct: str, add: Dict[str, str]) -> str:
+    """`code` with `name : type` lines added to `structure struct` (before its `deriving`)."""
+    m = re.search(rf"^structure\s+{re.escape(struct)}\b[^\n]*\bwhere[^\n]*\n((?:[ \t]+.*\n?)*)", code, re.MULTILINE)
+    if not m:
+        return code
+    block = m.group(1)
+    indent = (re.match(r"[ \t]+", block) or [None])[0] or "  "
+    lines = block.rstrip("\n").split("\n")
+    k = next((n for n, ln in enumerate(lines) if ln.strip().startswith("deriving")), len(lines))
+    lines[k:k] = [f"{indent}{f} : {t}" for f, t in add.items()]
+    return code[:m.start(1)] + "\n".join(lines) + "\n" + code[m.end(1):]
+
+
+def carry_input_fields(code: str, spec_code: str) -> Tuple[str, List[str]]:
+    """Make every `Input` field the second contract reads visible to it (v11, issue 1).
+
+    The second contract only sees `Mid`. When it reads an `Input` field (`m.f` with `f` not in
+    `Mid`, or the first contract's / `Spec`'s input variable directly), the harness adds `f` to
+    `structure Mid` and `m.f = i.f` to the first `post`, and rewrites a foreign variable to the
+    second contract's own. `Mid` is internal to the architecture, so `Spec` never changes.
+    Returns (code, added field names); `code` unchanged when nothing applies."""
+    cs = [c for c in parse_contracts(code) if c.name != "Spec"]
+    spec = spec_contract(spec_code)
+    if len(cs) != 2:
+        return code, []
+    a, b = cs
+    if a.dom != "Input" and b.dom == "Input":
+        a, b = b, a
+    if a.dom != "Input" or a.cod != b.dom or b.cod != "Output" or "_" in (a.in_var, a.out_var):
+        return code, []
+    fields = field_types(spec_code + "\n" + code)
+    inp, mid = fields.get("Input", {}), field_types(code).get(a.cod)
+    if mid is None:
+        return code, []
+    # A foreign input variable in the second contract: `i.f` where `i` is not its own.
+    foreign = {v for v in ({spec.pre_var, spec.in_var} if spec else set()) | {a.pre_var, a.in_var}
+               if v not in ("_", b.pre_var, b.in_var, b.out_var)}
+    local = _bound(b.pre) | _bound(b.post)
+    foreign -= local
+    pre, post = b.pre, b.post
+    for v in foreign:
+        for f in set(_refs(pre + "\n" + post, v)):
+            if f not in inp:
+                continue
+            rx = rf"(?<![\w.']){re.escape(v)}\.{re.escape(f)}(?![\w'])"
+            if b.pre_var != "_":
+                pre = re.sub(rx, f"{b.pre_var}.{f}", pre)
+            if b.in_var != "_":
+                post = re.sub(rx, f"{b.in_var}.{f}", post)
+    reads = list(dict.fromkeys(_refs(pre, b.pre_var) + _refs(post, b.in_var)))
+    add = {f: inp[f] for f in reads if f not in mid and f in inp}
+    if not add and (pre, post) == (b.pre, b.post):
+        return code, []
+    copies = " ∧ ".join(f"{a.out_var}.{f} = {a.in_var}.{f}" for f in add)
+    new_a = Contract(a.name, a.dom, a.cod, a.pre_var, a.pre, a.in_var, a.out_var,
+                     f"({a.post}) ∧ {copies}" if copies and a.post.strip() not in ("", "True") else (copies or a.post))
+    new_b = Contract(b.name, b.dom, b.cod, b.pre_var, pre, b.in_var, b.out_var, post)
+    out = _add_struct_fields(strip_comments(code), a.cod, add) if add else strip_comments(code)
+    out = replace_contract(replace_contract(out, new_a), new_b)
+    return out, list(add)
+
+
 # ---------------------------------------------------------------------------
 # Lean: realizability, PO1, PO2
 # ---------------------------------------------------------------------------

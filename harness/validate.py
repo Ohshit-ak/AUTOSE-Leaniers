@@ -15,11 +15,17 @@ JSON, so the same spec always gets the same verdict.
                      charset/format rules are accepted or rejected as they
                      should be                                             (flag)
 
+    5. spec checks   (v11, spec_checks.py) every `post` conjunct mentions the
+                     output                                                 (fail)
+                     realizability and copy-satisfiability: fed back once in
+                     the loop, recorded in `l05.strength`, status unchanged
+
 Hard problems (fail) are also fed back into L0's repair loop (`hard_checks`).
 Flags are for a person to review. Usage on an existing run:
     python validate.py "../runs/0000 - gamma j/qwen/specs.json"
 """
 import json
+import os
 import re
 import sys
 from pathlib import Path
@@ -33,6 +39,8 @@ _STRUCT_BLOCK = re.compile(r"^structure\s+(\w+)[^\n]*\bwhere\s*\n((?:[ \t]+.*\n?
 _FIELD_TYPE = re.compile(r"^[ \t]+(\w+)\s*:\s*(.+?)\s*$", re.MULTILINE)
 _TRIVIAL_PRE = re.compile(r"\bpre\s*:=\s*fun\s+[\w_]+\s*=>\s*[Tt]rue\s*$", re.MULTILINE)
 BIG = 1_000_000_000
+# v11 spec checks (output-mention, realizability, copy-satisfiability); CF_SPEC_CHECKS=0 = v10.1.
+SPEC_CHECKS = os.getenv("CF_SPEC_CHECKS", "1") == "1"
 
 
 # ---------------------------------------------------------------------------
@@ -625,7 +633,12 @@ def check_example_inputs(code: str) -> List[str]:
 
 
 def hard_checks(entry: dict):
-    """Validator for the L0 repair loop: problems that must be fixed before L1."""
+    """Validator for the L0 repair loop: problems that must be fixed before L1.
+    v11: then the spec checks (spec_checks.py): every `post` conjunct mentions the output;
+    realizability and copy-satisfiability are each fed back once."""
+    from spec_checks import loop_checks  # imported here: spec_checks imports this module
+    spec_level = loop_checks(entry) if SPEC_CHECKS else (lambda code: [])
+
     def validate(code: str) -> List[str]:
         problems = check_contradictions(code) + check_example_inputs(code)
         if problems:
@@ -635,7 +648,7 @@ def hard_checks(entry: dict):
             return problems
         problems += check_parser_facts(code, entry)[0]
         problems += check_vacuity(code, entry, detail=True)[0]
-        return problems
+        return problems or spec_level(code)
     return validate
 
 
@@ -657,8 +670,19 @@ def review(code: str, compiled: Optional[bool], entry: dict,
         problems += p
         flags += f
         flags += check_data_tests(code, entry)
+    strength = None
+    if SPEC_CHECKS and not problems:
+        from spec_checks import spec_strength  # imported here: spec_checks imports this module
+        strength = spec_strength(code, entry)
+        problems += strength["output_problems"]
+        # Weak (copy-satisfiable) and realizability misses do not change the status: weak specs
+        # still go to L1/L2 and are counted apart ("non-trivial verified"); the realizability
+        # search is incomplete. Both were already fed back once in the L0 loop.
     status = "fail" if problems else "flag" if flags else "pass"
-    return {"status": status, "problems": problems, "flags": flags}
+    out = {"status": status, "problems": problems, "flags": flags}
+    if strength is not None:
+        out["strength"] = strength
+    return out
 
 
 def review_run(specs: dict, entries: dict) -> dict:

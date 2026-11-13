@@ -6,12 +6,19 @@ implementation does not establish. Before Lean, the fields of the record the fun
 are compared with the result structure (`record_problems`): a wrong, missing or repeated field
 is reported with the exact field list, not as Lean's "is not a field of structure"."""
 import hashlib
+import os
 import re
 
 import chain_checks as C
 import po
+import skeleton as S
 from validate import field_types
 from agents.base import generate_verified
+
+# v11 (issue 3): spec-directed skeleton. The harness derives what `post` fixes, tries its own
+# implementation when nothing is left to fill, gives the rest to the model as a skeleton, and
+# turns PO3 failures into actions. CF_SKELETON=0 = chain-v4 behaviour.
+SKELETON = os.getenv("CF_SKELETON", "1") == "1"
 
 SYSTEM_PROMPT_CODER = """\
 You are a coding agent for ContractForge (Lean 4).
@@ -171,19 +178,51 @@ def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
             state["proved"] = (code, po.theorem(statement, proof))
             return []
         bad = diagnose_po3(prefix, contract, impl, unfold) if contract else []
+        state["bad"] = bad
         if bad:
-            return [f"PO3 fails: for an input that satisfies `{contract_name}.pre`, `{impl}` does not establish "
-                    f"these parts of `{contract_name}.post`: " + "; ".join(f"`{c}`" for c in bad)
-                    + ". Change the function so that they hold (the contract is locked)."]
+            msg = (f"PO3 fails: for an input that satisfies `{contract_name}.pre`, `{impl}` does not establish "
+                   f"these parts of `{contract_name}.post`: " + "; ".join(f"`{c}`" for c in bad)
+                   + ". Change the function so that they hold (the contract is locked).")
+            if SKELETON:
+                msg += " What to do: " + " ".join(
+                    f"({k}) {S.action_for(c, contract, fields)}." for k, c in enumerate(bad[:3], 1))
+            return [msg]
         return ["PO3 could not be proved: " + "; ".join(errors[:2])]
+
+    sk = S.build(contract, fields, impl) if (SKELETON and contract) else None
+
+    def strategy_hint(code: str, error: str):
+        """Ladder strategy (2): start again from the harness skeleton, with the actions."""
+        text = S.prompt_text(sk) if sk else ""
+        if state.get("bad"):
+            text += ("\n\nEvery previous attempt failed on: " + "; ".join(f"`{c}`" for c in state["bad"][:3])
+                     + ". " + " ".join(S.action_for(c, contract, fields) + "." for c in state["bad"][:3]))
+        return text.strip() or None
+
+    # Nothing left to fill: the harness's own implementation (correct by construction for the
+    # conjuncts it came from) goes to PO3 first, without a model call.
+    if sk is not None and sk.complete and sk.values:
+        own = S.render(sk)
+        if not precheck(own) and not validate(own):
+            code, thm = state["proved"]
+            return {"name": contract_name, "impl": impl, "success": True, "code": code + "\n\n" + thm,
+                    "attempts": 0, "log": [{"attempt": 0, "stage": "ok", "fixups": ["harness skeleton"]}],
+                    "harness_only": True, "fields": S.provenance(code, sk)}
 
     prompt = (f"Code already in scope (LOCKED, do not repeat it):\n\n{locked_code}\n\n"
               f"Implement ONLY `{contract_name}` with exactly this signature:\n`{sig} := …`"
               + (f"\nThe result type `{cod}` has exactly these fields: "
                  + ", ".join(f"`{f} : {t}`" for f, t in fields[cod].items()) + "." if fields.get(cod) else ""))
+    if sk is not None:
+        text = S.prompt_text(sk)
+        if text:
+            prompt += "\n\n" + text
     result = generate_verified(prompt, SYSTEM_PROMPT_CODER, model, context=locked_code, validate=validate,
-                               precheck=precheck, prepare=prepare, check_weakened=False, check_label="L2")
+                               precheck=precheck, prepare=prepare, check_weakened=False, check_label="L2",
+                               strategy_hint=strategy_hint if sk is not None else None)
     if result["success"]:
         code, thm = state["proved"]
         result["code"] = code + "\n\n" + thm
+        result["fields"] = S.provenance(code, sk)
+    result["harness_only"] = False
     return {"name": contract_name, "impl": impl, **result}

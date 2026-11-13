@@ -11,29 +11,39 @@ A record:
     spec_check   L0 strength: `trivial` is true when an implementation made only of copied
          input fields and constants satisfies `Spec` (`witness`): verified code for such a
          spec can be a stub, so the summary counts these separately
+         (v11) `copy_ok` (the requirement only passes data through) and `l05_class`
+         (strong | weak | copy-ok | unrealizable) from the L0.5 spec checks
     l1   success, mode ("chain" two components | "single" not split | "single-fallback" the
-         split failed and --fallback-single is on), attempts, contracts, strength
-         (chain_checks), repairs (parts the harness removed from the second `pre`), error + error_class (chain_failures), stages, code
-    l2   per contract: success, attempts, error + error_class, stages, code
+         split failed and --fallback-single is on | (v11) "single-not-decomposable" every split
+         was an identity, so the spec is verified as one component), attempts, contracts, strength
+         (chain_checks), repairs (parts the harness removed from the second `pre`),
+         carried_by_harness (v11: Input fields the harness added to Mid), stopped (v11: why the
+         repair loop gave up early), error + error_class (chain_failures), stages, code
+    l2   per contract: success, attempts, error + error_class, stages, code; (v11) harness_only
+         (the harness skeleton was complete and PO3 proved it, no model call), fields
+         ({"harness": [...], "model": [...]}: who wrote each result field), stopped
     full_check   Lean accepts the whole file including
                  `theorem system_ok : Spec.Satisfies (<B>Impl ∘ <A>Impl)`   (chain)
                  `theorem system_ok : Spec.Satisfies SpecImpl`              (single)
                  proved from PO1/PO2/PO3 with the framework's soundness theorems
 """
 import json
+import os
 import re
 import time
 import traceback
 from pathlib import Path
 from typing import List, Optional
 
-from agents.chain_architect import run_architect, single_architecture
+from agents.chain_architect import NOT_DECOMPOSABLE, run_architect, single_architecture
 from agents.chain_coder import run_coder
 from chain_checks import trivial_witness
 from chain_failures import classify, root_cause
 from lean_runner import HEADER, check_lean
 
-CHAIN_VERSION = "chain-v4"
+CHAIN_VERSION = "chain-v5"
+# v11 (issue 2): an identity split falls back to one component, reported as not decomposable.
+NOT_DECOMPOSABLE_FALLBACK = os.getenv("CF_NOT_DECOMPOSABLE_FALLBACK", "1") == "1"
 
 
 def system_theorem(contracts: List[str]) -> str:
@@ -54,6 +64,8 @@ def _l1_record(arch: dict) -> dict:
             "error": err[:1500], "error_class": classify(err, stages), "stages": stages,
             **({"why_single": arch["why_single"]} if arch.get("why_single") else {}),
             **({"repairs": arch["repairs"]} if arch.get("repairs") else {}),
+            **({"carried_by_harness": arch["carried_by_harness"]} if arch.get("carried_by_harness") else {}),
+            **({"stopped": arch["stopped"]} if arch.get("stopped") else {}),
             "code": arch.get("code") or ""}
 
 
@@ -65,9 +77,20 @@ def run_entry(r: dict, model: str, split: str = "auto", fallback_single: bool = 
     try:
         witness = trivial_witness(spec)
         e["spec_check"] = {"trivial": witness is not None, **({"witness": witness} if witness else {})}
+        strength = (r.get("l05") or {}).get("strength")
+        if strength:   # v11: the L0.5 verdict (copy-ok = the requirement only passes data through)
+            e["spec_check"].update(copy_ok=strength.get("copy_ok", False), l05_class=strength.get("class"))
         arch = run_architect(spec, model, kind=r.get("kind"), split=split)
         e["l1"] = _l1_record(arch)
-        if not arch["success"] and fallback_single:
+        if not arch["success"] and NOT_DECOMPOSABLE_FALLBACK and (
+                arch.get("stopped") == NOT_DECOMPOSABLE or e["l1"]["error_class"] == "identity"):
+            # v11 (issue 2): the split only copies, so the spec has no stages. Not an L1
+            # failure: it is verified as one component and reported as not decomposable.
+            failed = e["l1"]
+            e["l1"] = _l1_record(single_architecture("not decomposable (every split was an identity)"))
+            e["l1"].update(mode="single-not-decomposable", attempts=failed["attempts"],
+                           failed_split={k: failed[k] for k in ("error", "error_class", "stages", "code")})
+        elif not arch["success"] and fallback_single:
             failed = e["l1"]
             e["l1"] = _l1_record(single_architecture("the two-component split failed"))
             e["l1"].update(mode="single-fallback", attempts=failed["attempts"],
@@ -82,7 +105,10 @@ def run_entry(r: dict, model: str, split: str = "auto", fallback_single: bool = 
                 stages = [x.get("stage") for x in res.get("log", [])]
                 e["l2"].append({"contract": c, "success": res["success"], "attempts": res["attempts"],
                                 "error": err[:1500], "error_class": classify(err, stages),
-                                "stages": stages, "code": res.get("code") or ""})
+                                "stages": stages, "code": res.get("code") or "",
+                                "harness_only": bool(res.get("harness_only")),
+                                **({"fields": res["fields"]} if res.get("fields") else {}),
+                                **({"stopped": res["stopped"]} if res.get("stopped") else {})})
             if e["l2"] and all(x["success"] for x in e["l2"]):
                 e["system_theorem"] = system_theorem(l1["contracts"])
                 full = "\n\n".join([locked] + [x["code"] for x in e["l2"]] + [e["system_theorem"]])

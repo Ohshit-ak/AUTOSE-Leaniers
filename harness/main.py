@@ -284,6 +284,8 @@ def stage_spec(doc: dict, stem: str, args) -> dict:
             **({"error": r["error"]} if r.get("error") else {}),
             **({"log": r["log"]} if r.get("log") else {}),
             **({"l05_feedback": feedback[p["id"]]} if p["id"] in feedback else {}),
+            **({"weak_fallback": True} if r.get("weak_fallback") else {}),
+            **({"stopped": r["stopped"]} if r.get("stopped") else {}),
         }
         (lean_dir / f"{_safe(p['id'])}.lean").write_text(_lean_file(p, r), encoding="utf-8")
         save()
