@@ -1,0 +1,236 @@
+{
+  "source": {
+    "file": "2003 - qheadache.xml",
+    "sha256": "fcae0361459700decdfef7d512d3020e635a0275123424b2a518fa95d144a284"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v11",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "ed18e9b",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 4,
+    "compiles": 4,
+    "rejects_bad_example": 3,
+    "checked": 4,
+    "failed": 0,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "2.2.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The product must count and display the number of the user' asction.",
+      "text_predicate": "Requirement 2.2.3/S1 (GENERAL DESCRIPTION > Product Functions > Count of action number.):\nThe product must count and display the number of the user' asction.",
+      "lean_predicate": "structure Input where\n  actionCount : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  actionCount : Nat\n  displaying   : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.actionCount = i.actionCount ∧\n                     (o.displaying = true ↔ i.actionCount > 0)\n\nexample : Spec.pre { actionCount := 5 } ∧\n          Spec.post { actionCount := 5 } { actionCount := 5, displaying := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { actionCount := 5, … } ∧ ¬ Spec.post { actionCount := 5, … } { actionCount := -1, displaying := true, … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { actionCount := 5, … } ∧ ¬ Spec.post { actionCount := 5, … } { actionCount := -1, displaying := true, … } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the product must count and display the number of the user's action. A buggy system could return a negative number for actionCount, which is not allowed.",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 17.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "2.2.4/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The product must record the score (time and number of counts) of a play associated with the name of a user.",
+      "text_predicate": "Requirement 2.2.4/S1 (GENERAL DESCRIPTION > Product Functions > Score.):\nThe product must record the score (time and number of counts) of a play associated with the name of a user.",
+      "lean_predicate": "structure Play where\n  name  : String\n  time  : Nat\n  counts: Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  user  : String\n  play  : Play\n  deriving DecidableEq, Repr\n\nstructure Output where\n  user  : String\n  play  : Play\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.user ≠ \"\"\n  post := fun i o => o.user = i.user ∧\n                     (o.play.name = i.play.name ↔ true) ∧\n                     (o.play.time = i.play.time ↔ true) ∧\n                     (o.play.counts = i.play.counts ↔ true)\n\nexample : Spec.pre { user := \"alice\", play := { name := \"level1\", time := 120, counts := 5 } } ∧\n          Spec.post { user := \"alice\", play := { name := \"level1\", time := 120, counts := 5 } }\n                    { user := \"alice\", play := { name := \"level1\", time := 120, counts := 5 } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { user := \"Alice\", play := { name := \"Song1\", time := 5, counts := 10 } } ∧ ¬ Spec.post { user := \"Alice\", play := { name := \"Song1\", time := 5, counts := 10 } } { user := \"Alice\", play := { name := \"Song2\", time := 6, counts := 11 } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { user := \"Alice\", play := { name := \"Song1\", time := 5, counts := 10 } } ∧ ¬ Spec.post { user := \"Alice\", play := { name := \"Song1\", time := 5, counts := 10 } } { user := \"Alice\", play := { name := \"Song2\", time := 6, counts := 11 } } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow the play's name, time, or counts to be different in the output.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 20.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ user := x.user, play := x.play }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.2.1.4.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The selected block can' mt ove near other blocks at least 0.05x from the others blocks.",
+      "text_predicate": "Requirement 3.2.1.4.3/S2 (SPECIFIC REQUIREMENTS > Functional Requirements > Actions. > Block movement > Processing):\nThe selected block can' mt ove near other blocks at least 0.05x from the others blocks.",
+      "lean_predicate": "structure Block where\n  position : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  selectedBlock : Block\n  otherBlocks   : List Block\n  distance      : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  selectedBlock : Block\n  otherBlocks   : List Block\n  accepted      : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.distance ≥ 5\n  post := fun i o => (o.accepted = true ↔\n    ∀ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≤ other.position - 1 ∨\n    other.position + 5 ≤ i.selectedBlock.position - 1) ∧\n    (o.accepted = false ↔\n    ∃ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≥ other.position ∨\n    other.position + 5 ≥ i.selectedBlock.position)\n\nexample : Spec.pre { selectedBlock := { position := 10 }, otherBlocks := [], distance := 10 } ∧ Spec.post { selectedBlock := { position := 10 }, otherBlocks := [], distance := 10 } { selectedBlock := { position := 10 }, otherBlocks := [{ position := 16 }], accepted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], distance := 10 } ∧ ¬ Spec.post { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], distance := 10 } { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], accepted := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], distance := 10 } ∧ ¬ Spec.post { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], distance := 10 } { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], accepted := true } := by\n  unfold Spec; decide",
+          "why": "The output accepts the movement even though the selected block is too close to another block",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 40.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05_feedback": "\n\nA previous specification for this entry was rejected by the checks:\n- `post` accepts an output the requirement forbids: example : Spec.pre { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], distance := 10 } ∧ ¬ Spec.post { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], distance := 10 } { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }], accepted := true } := by unfold Spec; decide\n\nThe rejected specification:\n```lean\nstructure Block where\n  position : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  selectedBlock : Block\n  otherBlocks   : List Block\n  distance      : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  selectedBlock : Block\n  otherBlocks   : List Block\n  accepted      : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.distance ≥ 5\n  post := fun i o => (o.accepted = true ↔\n    ∀ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≤ other.position ∨\n    other.position + 5 ≤ i.selectedBlock.position)\n\nexample : Spec.pre { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }, { position := 20 }],\n                     distance := 10 } ∧\n          Spec.post { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }, { position := 20 }],\n                      distance := 10 }\n                    { selectedBlock := { position := 10 }, otherBlocks := [{ position := 15 }, { position := 20 }], accepted := true } := by\n  unfold Spec; decide\n```\n\nWrite a new specification that fixes these problems.",
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      },
+      "l05_rounds": 1
+    },
+    {
+      "id": "3.2.2.2.1/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Enter your name : \", an Edit Box that can contain 20 characters and a pushbutton with the label \"OK\".",
+      "text_predicate": "Requirement 3.2.2.2.1/S2 (SPECIFIC REQUIREMENTS > Functional Requirements > End of the game management > Finish Window with Statistics. > Description):\nEnter your name : \", an Edit Box that can contain 20 characters and a pushbutton with the label \"OK\".",
+      "lean_predicate": "structure Input where\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  name : String\n  statistics : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.name.length ≤ 20\n  post := fun i o => o.name = i.name ∧\n                     (o.statistics = \"Game finished. Your name: \" ++ i.name)\n\nexample : Spec.pre { name := \"Alice\" } ∧\n          Spec.post { name := \"Alice\" }\n                    { name := \"Alice\", statistics := \"Game finished. Your name: Alice\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { name := \"JohnDoe\" } ∧ ¬ Spec.post { name := \"JohnDoe\" } { name := \"JohnDoe\", statistics := \"You won the game!\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { name := \"JohnDoe\" } ∧ ¬ Spec.post { name := \"JohnDoe\" } { name := \"JohnDoe\", statistics := \"You won the game!\" } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow the statistics to contain any information other than \"Game finished. Your name: \"",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 4,
+    "flag": 0,
+    "fail": 0
+  }
+}

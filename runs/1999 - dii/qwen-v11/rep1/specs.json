@@ -1,0 +1,463 @@
+{
+  "source": {
+    "file": "1999 - dii.xml",
+    "sha256": "c7ccb237b1566db0e97d5db515c1d07979c33c91091e60dc533d7152d38a1310"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v11",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "ed18e9b",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 8,
+    "compiles": 7,
+    "rejects_bad_example": 6,
+    "checked": 6,
+    "failed": 2,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "4.1/I1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Environmental Mode: This is the real-time operations that must react to varying degrees of readiness to full scale wartime operations such as crisis planning with the use of heterogeneous data types and sources, transfer capabilities, data management services.",
+      "text_predicate": "Requirement 4.1/I1 (REQUIREMENTS > REQUIRED STATES AND MODES):\nEnvironmental Mode: This is the real-time operations that must react to varying degrees of readiness to full scale wartime operations such as crisis planning with the use of heterogeneous data types and sources, transfer capabilities, data management services.",
+      "lean_predicate": "structure Input where\n  readiness : Nat\n  crisisPlanning : Bool\n  transferCapabilities : Nat\n  dataManagement : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  environmentalMode : Bool\n  readiness : Nat\n  crisisPlanning : Bool\n  transferCapabilities : Nat\n  dataManagement : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.readiness > 0\n  post := fun i o => o.environmentalMode ↔\n    (i.readiness > 0) ∧\n    (o.crisisPlanning = i.crisisPlanning) ∧\n    (o.transferCapabilities = i.transferCapabilities) ∧\n    (o.dataManagement = i.dataManagement) ∧\n    (o.readiness = i.readiness) ∧\n    (o.environmentalMode = true ↔\n      (i.crisisPlanning = true) ∧\n      (i.transferCapabilities > 0) ∧\n      (i.dataManagement > 0))\n\nexample : Spec.pre { readiness := 50, crisisPlanning := true, transferCapabilities := 100, dataManagement := 80 } ∧\n          Spec.post { readiness := 50, crisisPlanning := true, transferCapabilities := 100, dataManagement := 80 }\n                    { environmentalMode := true, readiness := 50, crisisPlanning := true, transferCapabilities := 100, dataManagement := 80 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { readiness := 1, crisisPlanning := false, transferCapabilities := 0, dataManagement := 0 } ∧ ¬ Spec.post { readiness := 1, crisisPlanning := false, transferCapabilities := 0, dataManagement := 0 } { environmentalMode := true, readiness := 1, crisisPlanning := false, transferCapabilities := 0, dataManagement := 0 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { readiness := 1, crisisPlanning := false, transferCapabilities := 0, dataManagement := 0 } ∧ ¬ Spec.post { readiness := 1, crisisPlanning := false, transferCapabilities := 0, dataManagement := 0 } { environmentalMode := true, readiness := 1, crisisPlanning := false, transferCapabilities := 0, dataManagement := 0 } := by\n  unfold Spec; decide",
+          "why": "The output should not enable environmental mode if crisis planning is false, transfer capabilities or data management are zero.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 29.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "4.1/I3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In the fixed (static) mode of operation (base or data processing megacenter), the data management services shall have the capability of being tuned by on-site personnel to adjust for varying workloads and sizes of associated databases. These workloads and databases are expected to change more frequently and to a greater extent than for processing associated with deployed units",
+      "text_predicate": "Requirement 4.1/I3 (REQUIREMENTS > REQUIRED STATES AND MODES):\nIn the fixed (static) mode of operation (base or data processing megacenter), the data management services shall have the capability of being tuned by on-site personnel to adjust for varying workloads and sizes of associated databases. These workloads and databases are expected to change more frequently and to a greater extent than for processing associated with deployed units",
+      "lean_predicate": "structure Input where\n  workload  : Nat\n  databaseSize : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  tuned : Bool\n  workload : Nat\n  databaseSize : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.workload ∧ 0 < i.databaseSize\n  post := fun i o => o.tuned = true ↔\n    (i.workload < 500 → o.workload = i.workload * 2) ∧\n    (i.workload ≥ 500 → o.workload = i.workload / 2) ∧\n    (i.databaseSize < 1000 → o.databaseSize = i.databaseSize * 2) ∧\n    (i.databaseSize ≥ 1000 → o.databaseSize = i.databaseSize / 2) ∧\n    o.tuned = false → o.workload = i.workload ∧ o.databaseSize = i.databaseSize ∧\n    o.tuned = true → o.workload ≠ i.workload ∧ o.databaseSize ≠ i.databaseSize\n\nexample : Spec.pre { workload := 300, databaseSize := 500 } ∧ Spec.post { workload := 300, databaseSize := 500 } { tuned := true, workload := 600, databaseSize := 1000 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { workload := 300, databaseSize := 800 } ∧ ¬ Spec.post { workload := 300, databaseSize := 800 } { tuned := false, workload := 300, databaseSize := 800 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { workload := 300, databaseSize := 800 } ∧ ¬ Spec.post { workload := 300, databaseSize := 800 } { tuned := false, workload := 300, databaseSize := 800 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the system should be able to tune itself based on varying workloads and database sizes, but the output does not change the `tuned` field, violating the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 51.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ tuned := true, workload := x.workload, databaseSize := x.databaseSize }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "4.1/I6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "End User Mode: Portion of XS services shall be used by various classes of users: data consumers, data and database managers, network information infrastructure resource managers. Some of these uses of the data management services will entail unique requirements that shall be fulfilled within the capability of XS services.",
+      "text_predicate": "Requirement 4.1/I6 (REQUIREMENTS > REQUIRED STATES AND MODES):\nEnd User Mode: Portion of XS services shall be used by various classes of users: data consumers, data and database managers, network information infrastructure resource managers. Some of these uses of the data management services will entail unique requirements that shall be fulfilled within the capability of XS services.\nIgnore these non-formal words: various.",
+      "lean_predicate": "structure Input where\n  userClass : String\n  dataConsumed : Bool\n  dataAndDBManager : Bool\n  networkInfoManager : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  serviceUsed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.userClass ≠ \"\" ∧\n                  (i.dataConsumed ∨ i.dataAndDBManager ∨ i.networkInfoManager)\n  post := fun i o => o.serviceUsed = true ↔\n    (i.dataConsumed → o.serviceUsed) ∧\n    (i.dataAndDBManager → o.serviceUsed) ∧\n    (i.networkInfoManager → o.serviceUsed)\n\nexample : Spec.pre { userClass := \"dataConsumer\", dataConsumed := true, dataAndDBManager := false, networkInfoManager := false } ∧\n          Spec.post { userClass := \"dataConsumer\", dataConsumed := true, dataAndDBManager := false, networkInfoManager := false }\n                    { serviceUsed := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 39.8,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` mentions `o.serviceUsed` but still holds when `o.serviceUsed` is `false` instead of `true` for the example input. The requirement says: \"End User Mode: Portion of XS services shall be used by various classes of users: data consumers, data and database managers, network information infrastructure resource managers.\" Add a condition on `o.serviceUsed` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "1/I6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Consume xml & schema documents Parsers (dom, sax) Check conformance Well-formed Validate Create validation constraints shall enable a meaningful sharing of XML-based schemas and related information. Extract semantically-valid views from an XML document (e.g., XSL) Disassemble hierarchical view to relational representation Render",
+      "text_predicate": "Requirement 1/I6 (REQUIREMENTS > XML SERVICES CAPABILITY REQUIREMENTS > Register Terms and Structures (e.g., tags, DTDs, DCDs)):\nConsume xml & schema documents Parsers (dom, sax) Check conformance Well-formed Validate Create validation constraints shall enable a meaningful sharing of XML-based schemas and related information. Extract semantically-valid views from an XML document (e.g., XSL) Disassemble hierarchical view to relational representation Render",
+      "lean_predicate": "structure Input where\n  xmlDocument : String\n  schemaDocument : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  isValid : Bool\n  validationConstraints : List String\n  relationalRepresentation : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.xmlDocument ≠ \"\" ∧ i.schemaDocument ≠ \"\"\n  post := fun i o => (o.isValid = true ↔\n    (i.xmlDocument.isWellFormed ∧ i.xmlDocument.conformsTo i.schemaDocument)) ∧\n    (o.validationConstraints.length > 0 →\n      o.validationConstraints.all (fun c => i.xmlDocument.contains c)) ∧\n    o.relationalRepresentation.length > 0 ∧\n    o.relationalRepresentation.all (fun r => i.xmlDocument.contains r)\n\n-- Helper to check if an XML document is well-formed\ndef isWellFormed (doc : String) : Bool := \n  doc.length > 0 ∧ doc.toList.all (fun c => c = '<' ∨ c = '>' ∨ c = ' ' ∨ c.isAlphanum)\n\n-- Helper to check if an XML document conforms to a schema\ndef conformsTo (xml : String) (schema : String) : Bool := \n  -- This is a placeholder for the actual conformance check logic\n  true\n\nexample : Spec.pre { xmlDocument := \"<root><child>text</child></root>\", \n                     schemaDocument := \"<!DOCTYPE root [ <!ELEMENT root (child) > <!ELEMENT child (#PCDATA) > ]>\" } ∧\n          Spec.post { xmlDocument := \"<root><child>text</child></root>\", \n                      schemaDocument := \"<!DOCTYPE root [ <!ELEMENT root (child) > <!ELEMENT child (#PCDATA) > ]>\" }\n                    { isValid := true, \n                      validationConstraints := [\"<!ELEMENT root (child) >\", \"<!ELEMENT child (#PCDATA) >\"], \n                      relationalRepresentation := [\"root\", \"child\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 68.6,
+      "error": "<generated>:18:19: error(lean.invalidField): Invalid field `isWellFormed`: The environment does not contain `String.isWellFormed`, so it is not possible to project the field `isWellFormed` from an expression\n  i.xmlDocument\nof type `String`\n<generated>:18:48: error(lean.invalidField): Invalid field `conformsTo`: The environment does not contain `String.conformsTo`, so it is not possible to project the field `conformsTo` from an expression\n  i.xmlDocument\nof type `String`\n<generated>:29:16: warning: unused variable `xml`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:29:31: warning: unused variable `schema`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:33:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "4.14.2/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The Qualification Methods applied to the software shall include test, demonstration, analysis, and inspection (T, D, A, I).",
+      "text_predicate": "Requirement 4.14.2/S2 (REQUIREMENTS > PRECEDENCE AND CRITICALITY OF REQUIREMENTS > QUALIFICATION PROVISIONS):\nThe Qualification Methods applied to the software shall include test, demonstration, analysis, and inspection (T, D, A, I).",
+      "lean_predicate": "structure Input where\n  method : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  qualified : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.qualified = true ↔\n    (i.method = \"T\" ∨ i.method = \"D\" ∨ i.method = \"A\" ∨ i.method = \"I\")\n\nexample : Spec.pre { method := \"T\" } ∧\n          Spec.post { method := \"T\" } { qualified := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { method := \"X\" } ∧ ¬ Spec.post { method := \"X\" } { qualified := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { method := \"X\" } ∧ ¬ Spec.post { method := \"X\" } { qualified := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the Qualification Methods shall include T, D, A, I. Any other method should not result in a qualified output.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "4.14.7/I4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "COE Chief Engineer's Role. The COE Chief Engineer will approve a single Point of Contact (POC) for a COI to manage the tags within that COI. The COE Chief Engineer will reserve ultimate authority to mediate any unresolved disputes within all COIs.",
+      "text_predicate": "Requirement 4.14.7/I4 (REQUIREMENTS > PRECEDENCE AND CRITICALITY OF REQUIREMENTS > APPENDIX A):\nCOE Chief Engineer's Role. The COE Chief Engineer will approve a single Point of Contact (POC) for a COI to manage the tags within that COI. The COE Chief Engineer will reserve ultimate authority to mediate any unresolved disputes within all COIs.",
+      "lean_predicate": "structure Input where\n  coeChiefEngineerApproval : Bool\n  pocForCOI               : String\n  disputesMediationRight : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  pocForCOI               : String\n  disputesMediationRight : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.coeChiefEngineerApproval = true\n  post := fun i o => o.pocForCOI = i.pocForCOI ∧\n                     o.disputesMediationRight = i.disputesMediationRight ∧\n                     (o.disputesMediationRight = true ↔ i.disputesMediationRight = true)\n\nexample : Spec.pre { coeChiefEngineerApproval := true, pocForCOI := \"John Doe\", disputesMediationRight := true } ∧\n          Spec.post { coeChiefEngineerApproval := true, pocForCOI := \"John Doe\", disputesMediationRight := true }\n                     { pocForCOI := \"John Doe\", disputesMediationRight := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { coeChiefEngineerApproval := true, pocForCOI := \"JohnDoe\", disputesMediationRight := false } ∧ ¬ Spec.post { coeChiefEngineerApproval := true, pocForCOI := \"JohnDoe\", disputesMediationRight := false } { pocForCOI := \"JohnDoe\", disputesMediationRight := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { coeChiefEngineerApproval := true, pocForCOI := \"JohnDoe\", disputesMediationRight := false } ∧ ¬ Spec.post { coeChiefEngineerApproval := true, pocForCOI := \"JohnDoe\", disputesMediationRight := false } { pocForCOI := \"JohnDoe\", disputesMediationRight := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the COE Chief Engineer reserves ultimate authority to mediate any unresolved disputes. Therefore, the COE Chief Engineer can approve a POC and also reserve the right to mediate disputes, even if the input does not explicitly grant this right.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 21.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ pocForCOI := x.pocForCOI, disputesMediationRight := x.disputesMediationRight }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "4.14.7/I5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The COE Data Engineering Team's Role. Tags and semantics will be analyzed to identify opportunities to consolidate tags towards a single or a minimal number of representations. A \"market forces\" model can also guide COE Data Engineering in identifying the weak candidates from the strong.8",
+      "text_predicate": "Requirement 4.14.7/I5 (REQUIREMENTS > PRECEDENCE AND CRITICALITY OF REQUIREMENTS > APPENDIX A):\nThe COE Data Engineering Team's Role. Tags and semantics will be analyzed to identify opportunities to consolidate tags towards a single or a minimal number of representations. A \"market forces\" model can also guide COE Data Engineering in identifying the weak candidates from the strong.8",
+      "lean_predicate": "structure Input where\n  tags : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  consolidatedTags : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.tags.Nodup\n  post := fun i o => o.consolidatedTags.Nodup ∧\n                     o.consolidatedTags.length ≤ i.tags.length ∧\n                     (∀ t ∈ o.consolidatedTags, ∃ t' ∈ i.tags, t' = t) ∧\n                     o.consolidatedTags ≠ []\n\nexample : Spec.pre { tags := [\"tag1\", \"tag2\", \"tag3\"] } ∧\n          Spec.post { tags := [\"tag1\", \"tag2\", \"tag3\"] }\n                    { consolidatedTags := [\"tag1\", \"tag2\", \"tag3\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { tags := [\"tag1\", \"tag2\", \"tag3\"] } ∧ ¬ Spec.post { tags := [\"tag1\", \"tag2\", \"tag3\"] } { consolidatedTags := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { tags := [\"tag1\", \"tag2\", \"tag3\"] } ∧ ¬ Spec.post { tags := [\"tag1\", \"tag2\", \"tag3\"] } { consolidatedTags := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids consolidating tags to an empty list, but the output does not adhere to this.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 20.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "Include descriptive definitions AND synonyms for the Information Resource Definition./S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Initially, the Registry will not have keyword, thesaurus, or ontology support but it will have a substring search for a number of fields, including definition.",
+      "text_predicate": "Requirement Include descriptive definitions AND synonyms for the Information Resource Definition./S1 (REQUIREMENTS > PRECEDENCE AND CRITICALITY OF REQUIREMENTS > APPENDIX A):\nInitially, the Registry will not have keyword, thesaurus, or ontology support but it will have a substring search for a number of fields, including definition.",
+      "lean_predicate": "structure Input where\n  definition : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  found     : Bool\n  definition: String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.definition ≠ \"\"\n  post := fun i o => o.found ↔\n    (o.definition = i.definition) ∧\n    (o.definition = i.definition →\n      (i.definition.toList.all Char.isAlphanum = true) ∧\n      (i.definition.length ≤ 100)) ∧\n    (o.definition ≠ i.definition →\n      o.found = false) ∧\n    (o.definition = i.definition →\n      o.found = true)\n\nexample : Spec.pre { definition := \"A descriptive definition.\" } ∧ Spec.post { definition := \"A descriptive definition.\" } { found := false, definition := \"A descriptive definition.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { definition := \"example definition\" } ∧ ¬ Spec.post { definition := \"example definition\" } { found := true, definition := \"example\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { definition := \"example definition\" } ∧ ¬ Spec.post { definition := \"example definition\" } { found := true, definition := \"example\" } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow substring search for fields other than definition",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 25.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ found := false, definition := x.definition }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 6,
+    "flag": 0,
+    "fail": 2
+  }
+}

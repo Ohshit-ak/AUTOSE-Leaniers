@@ -412,7 +412,7 @@ Video search (it has no Domain.lean): 58.5 % mapped, 1 group, 3 components, no c
 - State entities are structural, so generic names (`name`, `success`, `result`) can link specs that
   only share a word. Not reviewed by hand yet.
 
-## v11 / chain-v5 (2026-11-13): fixes for the failure patterns. **Not yet run with Qwen**
+## v11 / chain-v5 (2026-11-13): fixes for the failure patterns. **Run with Qwen 2026-11-14** (results below)
 
 Source: `docs/failure_patterns.pdf` (18 SRS, qwen-v10.1 L0, qwen-chain-v4 L1/L2, 3 reps). Rule: every fix works
 for any SRS (no field, function or requirement names); deterministic harness checks before prompt changes.
@@ -587,6 +587,28 @@ numbers. Run `sbatch runs/qwen-v11.sbatch` (see its header; build the doc index 
 skips, `networkx`/spaCy are missing (`pip install -r requirements.txt`): the graph tests skip silently. New: `tests/test_chain.py` (21: static
 checks, PO diagnosis, single-step routing, coder, pipeline with a scripted model, repetition summary);
 `test_arch.py` 15 (degrading); `test_req_graph.py` 15 (state entities, split rule, broken cycles).
+
+### Qwen results (2026-11-14, jobs 76822–76826, 76932, 78269; all 18 SRS, 3 seeds)
+End to end, sum over SRS of the per-SRS mean over seeds 42–44. peering and get real 0.2 parse to 1 requirement,
+flagged at L0.5, so 0 specs reach the chain (their summary step exits 1). Per SRS: `runs/<doc>/qwen-chain-v5/summary.md`.
+
+| Run | L0 specs | end to end | non-trivial e2e | non-trivial, model wrote code |
+|---|---|---|---|---|
+| chain-v4 strict (v10.1 L0) | 483 | 343.3 | 149.7 | – |
+| chain-v4 fallback | 483 | 365.0 | 157.3 | – |
+| chain-v5 strict on v10.1 L0 (ablation) | 483 | 372.0 | 163.7 | 56.3 |
+| **L0 v11 + chain-v5 strict** | 517 | **390.3** | **193.3** | 64.0 |
+| **L0 v11 + chain-v5 fallback** | 517 | **400.7** | **200.0** | 70.6 |
+
+- L1/L2 alone (ablation vs chain-v4, same specs): better or equal on every SRS; beyond the seed spread on eirene_fun_7-2,
+  eirene sys 15, gemini, keepass, phin, tcs. No regression.
+- New L0: drops on gamma j (≈53 → 49), ertms (31–33 → 28–29), dii (5 → 3) that the ablation does not show, so they come
+  from L0 v11. Not yet investigated.
+- Most verified components are the harness skeleton; the model wrote the code for ~1/3 of verified non-trivial specs.
+- Incidents: job 76825 landed on gnode042 (CUDA init failed → Qwen on CPU, 4 tok/s); cancelled and rerun excluding it.
+  Job 76932 hit the 16G limit and the OOM killer took the Qwen server during microcare strict (21 CRASH spec-runs,
+  kept in `runs/2005 - microcare/qwen-chain-v5.oom-damaged`); microcare strict rerun as 78269 with 32G. The sbatch now
+  asks for 32G and exits at startup when the server has no usable GPU.
 
 ## Next steps
 

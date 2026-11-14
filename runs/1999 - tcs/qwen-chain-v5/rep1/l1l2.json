@@ -1,0 +1,2322 @@
+[
+  {
+    "id": "1.2.2/S4",
+    "kind": "requirement",
+    "requirement_text": "Although developed as a total package, the TCS will be scaleable to meet the user's requirements for deployment.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ deploymentSize := x.deploymentSize, numControllers := x.deploymentSize, numSensors := x.deploymentSize }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { deploymentSize := x.deploymentSize,\n    numControllers := x.deploymentSize / 10 + 1,\n    numSensors := x.deploymentSize / 5 + 1 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "deploymentSize"
+          ],
+          "model": [
+            "numControllers",
+            "numSensors"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 13.7
+  },
+  {
+    "id": "3.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The states of operation of the TCS shall include Startup, Operation, and Shutdown. [SSS014] The TCS states shall not exist concurrently. [SSS015] Figure 3.1-1 shows the existing states of the TCS.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ state := x.state }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { state := x.state }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "state"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "3.1.1/S2",
+    "kind": "requirement",
+    "requirement_text": "When the TCS Software is terminated normally the TCS shall enter the Normal Startup Mode of operation upon application of power. [SSS019] When the TCS software is halted due to an unplanned power interruption as well as abnormal program termination, then the TCS shall enter the Recovery Startup Mode upon application of power. [SSS020] During startup, the TCS shall determine which of the 5 levels of interaction are achievable by the TCS configuration. [SSS021] Levels of interaction higher than those achievable by a particular TCS configuration shall be prohibited. [SSS022] The TCS shall inform the operator if the operator attempts to execute a function prohibited as a result of the determined level of interaction. [SSS023]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "ComputeStartupModeContract",
+        "DetermineInformedStatusContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "<generated>:35:47: error: unexpected token '↔'; expected ')', ',' or ':'\n",
+      "error_class": "syntax",
+      "stages": [
+        "syntax",
+        "names",
+        "names",
+        "syntax",
+        "names",
+        "returned"
+      ],
+      "carried_by_harness": [
+        "functionRequested",
+        "configLevel"
+      ],
+      "code": "structure Mid where\n  startupMode : String\n  functionRequested : Nat \n  configLevel : Nat \n  deriving DecidableEq, Repr\n\ndef ComputeStartupModeContract : Contract Input Mid where\n  pre  := fun i => i.powerApplied\n  post := fun i m => (m.startupMode = \"Normal\" ↔ i.powerApplied ∧ i.configLevel ≥ 1 ∧\n                     m.startupMode = \"Recovery\" ↔ i.powerApplied ∧ i.configLevel = 0) ∧ m.functionRequested = i.functionRequested ∧ m.configLevel = i.configLevel\n\ndef DetermineInformedStatusContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.informed = true ↔ m.startupMode = \"Recovery\" ∧ m.startupMode = \"Recovery\" ∧ m.functionRequested > m.configLevel)\n\n"
+    },
+    "l2": [],
+    "seconds": 31.4
+  },
+  {
+    "id": "3.1.1.2/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS in the Recovery Startup Mode shall provide the system functionality to resume the Operations State within 45 seconds. [SSS029] 10 Recovery of the TCS HWCIs shall include startup of HWCIs [SSS543], download of software [SSS544], startup of CSCIs [SSS545], and establishment of the state of readiness of all interfaces. [SSS546] The TCS shall be capable of automatically recording system state data, interface communications and other information necessary to support event reconstruction. [SSS528] **DELETED**. [SSS030] For recovery from abnormal termination, TCS shall prompt the operator to select the type of recovery to be executed: (1)Resume in the Same Modes And Data; (2)Resume in the Same Modes but Review and Modify the Command Data as Necessary; or, (3) Perform a Command Shutdown and Startup Via the Normal Startup Mode. [SSS031]",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ elapsedMicros := 1 }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := if 0 ≤ 45000000 then 45000000 else 0 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 9.3
+  },
+  {
+    "id": "3.2.1/S5",
+    "kind": "requirement",
+    "requirement_text": "As an objective, the TCS shall have the capability to import as well as create and modify map display overlays for fire support coordination measures [SSS547], airspace control measures [SSS548], and threat identification measures. [SSS060] Upon completion of radar cross section analysis and characterization by the Government for each UAV type, TCS shall utilize a UAV signature versus threat lookup table (database) that identities the lethality of the threat to the UAV [SSS065], and shall provide the capability of displaying aircraft signature versus threat, before and during flight. [SSS066] The TCS shall permit dynamic mission and payload retasking during all phases of operational mission execution. [SSS067] The TCS shall allow the operator to enter as well as review mission plan parameters, including AV flight parameters, payload control parameters, data link control parameters, AV VCR control parameters (if applicable to the selected AV), and AV loiter patterns. [SSS068] The TCS shall provide the capability to enter system configuration characteristics in the mission plan, to include selected AV type, AV identification number, selected payload type, ground control authorization information, and required communications pre-set for data links, tactical communications, and C4I data dissemination. [SSS069] The TCS shall provide the system functionality necessary to upload a flight route plan and payload plan (if applicable) to the AV via the selected system data link as well as direct ground connection. [SSS070] TCS shall provide the capability for the operator to retrieve a mission plan for viewing, modification, as well as deletion at the operator's discretion [SSS071], and allow the operator to save the mission plan under a different name, for future retrieval [SSS072].",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ missionPlanParams := x.missionPlanParams, avType := x.avType, avId := x.avId, payloadType := x.payloadType, gcaInfo := x.gcaInfo, commPreSet := x.commPreSet, flightRoutePlan := x.flightRoutePlan, payloadPlan := x.payloadPlan, saved := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { missionPlanParams := x.missionPlanParams,\n    avType := x.avType,\n    avId := x.avId,\n    payloadType := x.payloadType,\n    gcaInfo := x.gcaInfo,\n    commPreSet := x.commPreSet,\n    flightRoutePlan := x.flightRoutePlan,\n    payloadPlan := x.payloadPlan,\n    saved := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "missionPlanParams",
+            "avType",
+            "avId",
+            "payloadType",
+            "gcaInfo",
+            "commPreSet",
+            "flightRoutePlan",
+            "payloadPlan",
+            "saved"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 9.5
+  },
+  {
+    "id": "3.2.1/S6",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall automatically check the validity of the intended mission plan prior to being uploaded including altitude constraints, payload constraints, data link range constraints, airspace restrictions, fuel limitations, threat constraints, data link terrain masking effects, and Loss of Link (LOL) Plan. [SSS073] The TCS shall notify the operator of all discrepancies found during the mission plan check as well as indicate successful completion of the mission plan check. [SSS074] The TCS shall provide the capability to override validation faults after the fault is acknowledged by the operator. [SSS540] The TCS shall allow the operator to set the LOL delay timer(s) during mission planning. [SSS075] The LOL delay is the time from when the AV detects an unplanned LOL to the time it initiates LOL procedures.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 1,
+      "contracts": [
+        "ComputeValidityContract",
+        "GenerateOutputContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 5,
+        "of": 6,
+        "first_result_depends_on_input": true
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "ok"
+      ],
+      "carried_by_harness": [
+        "lolDelayTimer"
+      ],
+      "code": "structure Mid where\n  valid : Bool\n  discrepancies : List String\n  override : Bool\n  lolDelayTimer : Nat\n  deriving DecidableEq, Repr\n\ndef ComputeValidityContract : Contract Input Mid where\n  pre  := fun i => i.missionPlan ≠ \"\"\n  post := fun i m => (m.valid = true ↔\n                     i.altitudeConstraints.Nodup ∧\n                     i.payloadConstraints.Nodup ∧\n                     i.dataLinkRangeConstraints.Nodup ∧\n                     i.airspaceRestrictions.Nodup ∧\n                     i.fuelLimitations.Nodup ∧\n                     i.threatConstraints.Nodup ∧\n                     i.dataLinkTerrainMasking.Nodup ∧\n                     i.lolPlan.Nodup) ∧ m.lolDelayTimer = i.lolDelayTimer\n\ndef GenerateOutputContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.valid = m.valid ∧\n                     (o.valid = false →\n                       o.discrepancies.length > 0 ∧\n                       o.override = false) ∧\n                     o.lolDelayTimer = m.lolDelayTimer\n\n\n\ntheorem po1 : Contract.Compatible ComputeValidityContract GenerateOutputContract := by\n  discharge_po1 [ComputeValidityContract, GenerateOutputContract, Spec]\n\ntheorem po2 : Contract.Refines (ComputeValidityContract.seq GenerateOutputContract) Spec := by\n  discharge_po2 [ComputeValidityContract, GenerateOutputContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "ComputeValidityContract",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def ComputeValidityContractImpl (x : Input) : Mid :=\n  { valid := decide (x.altitudeConstraints.Nodup ∧\n                     x.payloadConstraints.Nodup ∧\n                     x.dataLinkRangeConstraints.Nodup ∧\n                     x.airspaceRestrictions.Nodup ∧\n                     x.fuelLimitations.Nodup ∧\n                     x.threatConstraints.Nodup ∧\n                     x.dataLinkTerrainMasking.Nodup ∧\n                     x.lolPlan.Nodup),\n    discrepancies := [],\n    override := false,\n    lolDelayTimer := x.lolDelayTimer }\n\ntheorem ComputeValidityContractImpl_ok : ComputeValidityContract.Satisfies ComputeValidityContractImpl := by\n  discharge_po3 [ComputeValidityContract, ComputeValidityContractImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "valid",
+            "discrepancies",
+            "override",
+            "lolDelayTimer"
+          ],
+          "model": []
+        }
+      },
+      {
+        "contract": "GenerateOutputContract",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `GenerateOutputContract.pre`, `GenerateOutputContractImpl` does not establish these parts of `GenerateOutputContract.post`: `o.valid = false →\n                       o.discrepancies.length > 0 ∧\n                       o.override = false`. Change the function so that they hold (the contract is locked). What to do: (1) compute `valid`, `discrepancies`, `override` from the input (count / compare / arithmetic) so that `o.valid = false → o.discrepancies.length > 0 ∧ o.override = false` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "syntax",
+          "check",
+          "returned"
+        ],
+        "code": "def GenerateOutputContractImpl (x : Mid) : Output :=\n  { valid := x.valid,\n    discrepancies := if x.valid then [] else [\"Validation failed\"],\n    override := if x.valid then false else true,\n    lolDelayTimer := x.lolDelayTimer }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 66.8
+  },
+  {
+    "id": "3.2.1.1/I5",
+    "kind": "requirement",
+    "requirement_text": "Payload search area information such as: visual acuity range due to atmospheric conditions, diurnal transition periods for thermal imagery, and lunar and solar terrain shadowing. [SSS086]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { visualAcuityRangeInfo := x.visualAcuityRange,\n    diurnalTransitionInfo := x.diurnalTransition,\n    lunarShadowingInfo := x.lunarShadowing,\n    solarShadowingInfo := x.solarShadowing }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "visualAcuityRangeInfo",
+            "diurnalTransitionInfo",
+            "lunarShadowingInfo",
+            "solarShadowingInfo"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.8
+  },
+  {
+    "id": "3.2.2/S2",
+    "kind": "requirement",
+    "requirement_text": "While flying two MAE AVs Beyond Line Of Sight (BLOS), the TCS shall provide full control functionality of each AV. [SSS108] AV specific components used to perform ground based closed loop command and control functions for TCS shall be initialized upon operator selection of a specific AV. [SSS109] The TCS shall transmit command and control information to the AV via the uplink to the AV [SSS110], and receive AV telemetry and payload information via downlink from the AV [SSS111].",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { av1Control := decide (x.av1Selected),\n    av2Control := decide (x.av2Selected),\n    telemetryReceived := decide (x.telemetry.Nodup),\n    payloadReceived := decide (x.payload.Nodup) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "av1Control",
+            "av2Control",
+            "telemetryReceived",
+            "payloadReceived"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.4
+  },
+  {
+    "id": "3.2.2.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall be capable of being interoperable with Predator and Outrider UAVs across the 5 levels of UAV interaction. [SSS011] The TCS shall have the capability to control and monitor multiple types of AVs. [SSS112] TCS shall notify the operator when AV performance parameters are out of limits. [SSS113] The TCS shall provide the capability to pass control of an AV to another TCS [SSS114], and receive control of an AV from another TCS [SSS115].",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 3,
+      "contracts": [
+        "ComputeControlContract",
+        "ApplyControlContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.controlPassed = (o.passControlTo.isSome ∧ o.passControlTo.getD \"\" ≠ i.receiveControlFrom.getD \"\")`; `o.controlReceived = (o.receiveControlFrom.isSome ∧ o.receiveControlFrom.getD \"\" ≠ i.passControlTo.getD \"\")`. Whatever `Spec.post` says about the input must pass through `Mid`: `ComputeControlContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `ApplyControlContract.post` relates `Output` to `Mid`. A condition that is only in `ApplyControlContract.pre` is not guaranteed by the chain.",
+      "error_class": "po2",
+      "stages": [
+        "check",
+        "check",
+        "check",
+        "returned"
+      ],
+      "carried_by_harness": [
+        "avType",
+        "isInteroperable",
+        "notifyLimit"
+      ],
+      "stopped": "the same failure 3 times",
+      "code": "structure Mid where\n  passControlTo : Option String\n  receiveControlFrom : Option String\n  controlPassed : Bool\n  controlReceived : Bool\n  avType : String\n  isInteroperable : Bool\n  notifyLimit : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeControlContract : Contract Input Mid where\n  pre  := fun i => i.isInteroperable = true\n  post := fun i m => ((m.passControlTo = i.passControlTo) ∧\n    (m.receiveControlFrom = i.receiveControlFrom) ∧\n    (m.controlPassed = (m.passControlTo.isSome ∧ m.passControlTo.getD \"\" ≠ i.receiveControlFrom.getD \"\")) ∧\n    (m.controlReceived = false)) ∧ m.avType = i.avType ∧ m.isInteroperable = i.isInteroperable ∧ m.notifyLimit = i.notifyLimit\n\ndef ApplyControlContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.avType = m.avType) ∧\n    (o.isInteroperable = m.isInteroperable) ∧\n    (o.notifyLimit = m.notifyLimit) ∧\n    (o.passControlTo.getD \"\" = m.passControlTo.getD \"\") ∧\n    (o.receiveControlFrom.getD \"\" = m.receiveControlFrom.getD \"\") ∧\n    (o.controlPassed = m.controlPassed) ∧\n    (o.controlReceived = (m.receiveControlFrom.isSome ∧ m.receiveControlFrom.getD \"\" ≠ m.passControlTo.getD \"\"))\n\n"
+    },
+    "l2": [],
+    "seconds": 66.8
+  },
+  {
+    "id": "3.2.2.1/S2",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall provide the capability to control the AV flight commands as well as to release the AV to an autonomous flight control mode. [SSS118] AV telemetry data shall be available to support other TCS functions as required. [SSS119] The TCS shall provide the capability to control the flight of the selected AV in accordance with the specific AV's operational performance capabilities. [SSS120] The TCS shall provide the capability to fully control and display the AV's Identification Friend or Foe (IFF). [SSS121] The TCS shall provide the capability to enter AV preset limits which, as a minimum, will include airspeed limits, altitude limits, and fuel limits. [SSS122]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { avFlightMode := decide (x.avFlightCommands.Nodup),\n    avTelemetryMode := decide (x.avTelemetryData.Nodup),\n    avIffMode := decide (x.avIdentification ≠ \"\"),\n    avPresetLimits := x.presetLimits }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "avFlightMode",
+            "avTelemetryMode",
+            "avIffMode",
+            "avPresetLimits"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.7
+  },
+  {
+    "id": "3.2.2.1.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall allow the operator to control an AV using the LOS as well as SATCOM data links. [SSS124] The TCS shall provide the necessary system capabilities required for AV flight control BLOS via uplink command to two MAE air vehicles. [SSS125] The TCS shall support operation of the AV via all flight modes, to include manual controls. [SSS126102] The TCS shall provide the capability to implement an emergency action plan, if supported by the AV, to control the AV during equipment failures. [SSS539] The TCS shall provide interactive displays necessary to command the flight of an AV. [SSS127]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { controlMode := x.mode,\n    emergencyAction := x.mode = \"emergency\",\n    interactiveDisplay := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "controlMode",
+            "emergencyAction",
+            "interactiveDisplay"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.0
+  },
+  {
+    "id": "3.2.2.2/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall be capable of being interoperable with the installed payloads across the 5 levels of UAV interaction. [SSS012] The TCS will have the capability to control and monitor the AV payload(s). [SSS147] The TCS shall have the capability to receive data from and control payloads on an AV that is being controlled from another TCS. [SSS148] The TCS shall provide the necessary system capabilities required for payload control beyond line of sight via uplink command of two air vehicles of the same type using sequential communication techniques. [SSS149] Sequential communication means alternatively communicating with one air vehicle and then the other.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.status = \"Control sent\" ↔ i.data ≠ \"\"`. Change the function so that they hold (the contract is locked). What to do: (1) add a branch on `x.data ≠ \"\"`: `status := if x.data ≠ \"\" then \"Control sent\" else <value otherwise>`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { tcsId := x.tcsId,\n    payloadId := x.payloadId,\n    data := x.data,\n    status := if x.data ≠ \"\" then \"Data received\" else if x.data = \"\" then \"Control sent\" else \"Unknown\" }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 29.9
+  },
+  {
+    "id": "3.2.2.2.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall permit the operator to control the payload using all methods supported by the payload installed in the selected AV. [SSS152] The TCS shall provide a graphical user interface display for the purpose of controlling the payload. [SSS153] The TCS shall provide override of payload automated as well as preprogrammed inputs. [SSS154]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.payloadControl ∈ i.payloadMethods`. Change the function so that they hold (the contract is locked). What to do: (1) change `payloadControl` so that `o.payloadControl ∈ x.payloadMethods` holds.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "names",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { payloadControl := if x.override = true then \"override\" else \"manual\" }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 22.5
+  },
+  {
+    "id": "3.2.2.3.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall be capable of interfacing with the specified data terminal and issuing data link terminal commands required to establish, control, and maintain the data link with a selected AV. [SSS159] Data terminal control shall include, but is not limited to, antenna pointing control, transmitter control, and receiver control. [SSS160] The TCS shall be capable of automatically selecting the proper mode of operation for the selected data terminal. [SSS161] As a minimum the TCS LOS data terminal control modes shall include acquisition, autotrack, search, manual point, omni directional, as well as directional modes of operation, if applicable to the selected data link. [SSS162] The operator shall be able to manually override any automatic data terminal control mode selection if desired, except during Emission Control (EMCON) and Hazards of Electromagnetic Radiation to Ordnance (HERO) conditions. [SSS163] The TCS shall support a LOS data link and SATCOM data link capability. [SSS164] For shipboard operations, the TCS shall provide the capability to switch to a second LOS antenna, if a second antenna is available, when desired (e.g. the currently active antenna is masked by shipboard obstructions). [SSS116] The TCS shall provide the capability to switch to a SATellite COMmunication (SATCOM) antenna, if the selected AV has SATCOM capability, when desire (e.g. the AV proceeds beyond LOS range as well as when LOS is obstructed). [SSS117] The TCS shall provide an interactive display for the purpose of controlling the data link terminal. [SSS165]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { selectedMode := x.mode,\n    antennaPointing := x.antennaPointing,\n    transmitterControl := x.transmitterControl,\n    receiverControl := x.receiverControl,\n    secondAntenna := x.secondAntennaAvailable,\n    satcom := x.satcomCapability }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "selectedMode",
+            "antennaPointing",
+            "transmitterControl",
+            "receiverControl",
+            "secondAntenna",
+            "satcom"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 10.6
+  },
+  {
+    "id": "3.2.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS will have the functionality necessary to manage all aspects of payload product handling to include receiving, processing, displaying, and performing limited exploitation.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { success := decide ((x.operation = \"receive\" → x.data ≠ \"\" ∧ x.data.length ≤ 1000) ∧\n    (x.operation = \"process\" → x.data ≠ \"\" ∧ x.data.length ≤ 1000) ∧\n    (x.operation = \"display\" → x.data ≠ \"\" ∧ x.data.length ≤ 1000) ∧\n    (x.operation = \"exploit\" → x.data ≠ \"\" ∧ x.data.length ≤ 1000)),\n    message := \"\",\n    payloadId := x.payloadId }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "success",
+            "message",
+            "payloadId"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 21.0
+  },
+  {
+    "id": "3.2.3.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall have the functionality to process payload product data from Electro Optical (EO), Infrared (IR), and Synthetic Aperture Radar (SAR) payloads. [SSS182] This functionality, as a minimum, shall include: formatting, storing, internally routing, and recording the video [SSS190]; creating and storing a freeze frame of the video [SSS191]; retrieving and displaying the video [SSS192]; printing a hard copy of freeze frame video [SSS193]; and processing digital imagery for export and dissemination [SSS194].",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { formatted := x.video,\n    stored := x.video,\n    routed := x.video,\n    recorded := x.video,\n    freezeFrameStored := x.freezeFrame,\n    videoRetrieved := x.video,\n    videoDisplayed := x.video,\n    freezeFramePrinted := x.freezeFrame,\n    imageryProcessed := x.video }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "formatted",
+            "stored",
+            "routed",
+            "recorded",
+            "freezeFrameStored",
+            "videoRetrieved",
+            "videoDisplayed",
+            "freezeFramePrinted",
+            "imageryProcessed"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 12.2
+  },
+  {
+    "id": "3.2.3.1/S4",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall be in compliance with Common Imagery Ground Surface Station (CIGSS), United States Imagery Standards (USIS), Video Working Group Standards Architecture, National Imagery Transmission Format (NITF) Version 2.0, and Global Command Control Systems (GCCS) when processing payload imagery data. [SSS185] The NITF 2.0 imagery files generated by the TCS shall contain the necessary telemetry and support data to permit subsequent imagery exploitation by C4I systems. [SSS186] The TCS shall have a built-in text entry capability including the ability to annotate textual information on imagery. [SSS187] The TCS shall be capable of receiving secondary HAE UAV payload imagery. [SSS188] Payload telemetry data shall be available to support other TCS functions as required. [SSS189]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.annotations.length > 1 → \n      o.annotations.all (fun a => a.all (fun c => c.isAlphanum) = true) = true`. Change the function so that they hold (the contract is locked). What to do: (1) compute `annotations` from the input (count / compare / arithmetic) so that `o.annotations.length > 1 → o.annotations.all (fun a => a.all (fun c => c.isAlphanum) = true) = true` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "syntax",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { imageryData := x.imageryData,\n    telemetryData := x.telemetryData,\n    annotations := if x.annotations.length > 0 then\n      if x.annotations.length = 1 then\n        if x.annotations = [\"12345\"] then\n          x.annotations\n        else\n          [\"12345\"]\n      else\n        x.annotations\n    else\n      [\"12345\"] }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 53.0
+  },
+  {
+    "id": "3.2.3.2/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall display live and recorded imagery data, with as well as without annotation and overlay, upon operator request. [SSS195] Annotation includes operator generated comments as well as graphics which are superimposed on the imagery.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "ComputeAnnotationContract",
+        "ApplyAnnotationContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.imageryData.live = i.imageryData.live`; `o.imageryData.image = i.imageryData.image`; `o.annotation = i.annotation ∨\n                      (o.annotation = none ∧ i.annotation = some \"\")`; `o.overlay = i.overlay ∨\n                      (o.overlay = none ∧ i.overlay = some \"\")`; `o.imageryData.live = true → o.annotation = i.annotation`; `o.imageryData.live = false → o.annotation = none`; `o.imageryData.live = true → o.overlay = i.overlay`; `o.imageryData.live = false → o.overlay = none`. Whatever `Spec.post` says about the input must pass through `Mid`: `ComputeAnnotationContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `ApplyAnnotationContract.post` relates `Output` to `Mid`. A condition that is only in `ApplyAnnotationContract.pre` is not guaranteed by the chain.",
+      "error_class": "po2",
+      "stages": [
+        "syntax",
+        "static",
+        "syntax",
+        "syntax",
+        "check",
+        "returned"
+      ],
+      "carried_by_harness": [
+        "overlay",
+        "imageryData"
+      ],
+      "code": "structure Mid where\n  annotation : Option String\n  imageryData : ImageryData\n  overlay : Option String\n  deriving DecidableEq, Repr\n\ndef ComputeAnnotationContract : Contract Input Mid where\n  pre  := fun i => i.imageryData.live ∨ i.imageryData.image ≠ \"\"\n  post := fun i m => (m.annotation = i.annotation ∨ (m.annotation = none ∧ i.annotation = some \"\") ∧\n                     (m.imageryData.live = true → m.annotation = i.annotation) ∧\n                     (m.imageryData.live = false → m.annotation = none)) ∧ m.imageryData = i.imageryData ∧ m.overlay = i.overlay\n\ndef ApplyAnnotationContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.imageryData.live = m.imageryData.live ∧\n                     o.imageryData.image = m.imageryData.image ∧\n                     o.annotation = m.annotation ∨ (o.annotation = none ∧ m.annotation = some \"\") ∧\n                     o.overlay = m.overlay ∨ (o.overlay = none ∧ m.overlay = some \"\")\n\n"
+    },
+    "l2": [],
+    "seconds": 43.3
+  },
+  {
+    "id": "3.2.3.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall have the functionality to conduct limited exploitation, to include voice and textual reporting for spot and mission objectives, on the payload product data. [SSS200] Limited exploitation, as a minimum, will include image enhancement and annotation.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { enhancedImage := if x.payloadData ≠ \"\" ∧ x.spotObjective ∨ x.missionObjective then \"enhanced123\" else \"\",\n    annotation := if x.payloadData ≠ \"\" ∧ x.spotObjective ∨ x.missionObjective then \"annotated123\" else \"\",\n    report := if x.payloadData ≠ \"\" ∧ x.spotObjective ∨ x.missionObjective then \"report123\" else \"\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "enhancedImage",
+            "annotation",
+            "report"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 9.3
+  },
+  {
+    "id": "3.2.3.3/S2",
+    "kind": "requirement",
+    "requirement_text": "The image enhancement capability shall include contrast, brightness, edge enhancement, and sharpness. [SSS201] The TCS shall provide the capability to capture frozen-frames of imagery and store these frozen images for further review and processing. [SSS202] The TCS shall have the capability to display Near-Real Time (NRT) imagery to include, as a minimum, date/time group, target location coordinates when the target is in the center of the field of view, north seeking arrow, and AV position and heading. [SSS203] The TCS shall provide the capability to compute the range and bearing between two geographic positions located on the payload imagery display. [SSS560]",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ frozen_frame := x.imagery, nrt_imagery := x.imagery, range := 0, bearing := 0 }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { frozen_frame := x.imagery,\n    nrt_imagery := x.imagery,\n    range := 0,\n    bearing := 0 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "frozen_frame",
+            "nrt_imagery",
+            "range",
+            "bearing"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 12.1
+  },
+  {
+    "id": "3.2.5/S5",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall have the capability to interoperate with a data server to receive, extract, and push intelligence data. [SSS212] The TCS shall have the capability to use cable to deliver live video imagery in multiple locations. [SSS213] The TCS shall have the ability to interface with Service specific ground and airborne Ultra High Frequency (UHF), Very High Frequency (VHF), UHF/VHF, and High Frequency (HF) radios for digital message transmission while using the same radios for record traffic. [SSS214] Record traffic is defined as operational/voice communications.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 4,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.receivedData = true ↔\n    i.dataServer ≠ \"\" ∧\n    (∃ v ∈ i.videoCables, o.liveVideo = true) ∧\n    (∃ r ∈ i.radios, o.interfacedRadios = true)`; `o.liveVideo = true ↔\n    ∃ v ∈ i.videoCables, o.liveVideo = true`; `o.interfacedRadios = true ↔\n    ∃ r ∈ i.radios, o.interfacedRadios = true`. Whatever `Spec.post` says about the input must pass through `Mid`: `ComputeFlagsContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `DeliverDataContract.post` relates `Output` to `Mid`. A condition that is only in `DeliverDataContract.pre` is not guaranteed by the chain.",
+        "error_class": "po2",
+        "stages": [
+          "check",
+          "check",
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  liveVideo : Bool\n  interfacedRadios : Bool\n  dataServer : String\n  deriving DecidableEq, Repr\n\ndef ComputeFlagsContract : Contract Input Mid where\n  pre  := fun i => i.dataServer ≠ \"\" ∧ i.videoCables.Nodup ∧ i.radios.Nodup\n  post := fun i m => ((m.liveVideo = true ↔\n    ∃ v ∈ i.videoCables, m.liveVideo = true) ∧\n    (m.interfacedRadios = true ↔\n    ∃ r ∈ i.radios, m.interfacedRadios = true)) ∧ m.dataServer = i.dataServer\n\ndef DeliverDataContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.receivedData = true ↔\n    m.dataServer ≠ \"\" ∧\n    m.liveVideo = true ∧\n    m.interfacedRadios = true)\n\n"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.receivedData = true ↔\n    i.dataServer ≠ \"\" ∧\n    (∃ v ∈ i.videoCables, o.liveVideo = true) ∧\n    (∃ r ∈ i.radios, o.interfacedRadios = true)`. Change the function so that they hold (the contract is locked). What to do: (1) build `receivedData`, `liveVideo`, `interfacedRadios` with `List.filter` / `List.map` over an input list so that `o.receivedData = true ↔ x.dataServer ≠ \"\" ∧ (∃ v ∈ x.videoCables, o.liveVideo = true) ∧ (∃ r ∈ x.radios, o.interfacedRadios = true)` holds for every element.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "syntax",
+          "syntax",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { receivedData := x.dataServer ≠ \"\", liveVideo := ∃ v ∈ x.videoCables, x.liveVideo, interfacedRadios := ∃ r ∈ x.radios, x.interfacedRadios }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 79.2
+  },
+  {
+    "id": "3.2.5/S6",
+    "kind": "requirement",
+    "requirement_text": "Where applicable, TCS data burst messages shall comply with Variable Message Formats. [SSS215] The TCS shall export and disseminate formatted NITF 2.0 files [SSS558], digital imagery (if applicable) [SSS218], RS-170A video (with as well as without overlay) [SSS219], and tactical communication messages [SSS220].",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { compliant := true,\n    nits := [\"NITF201\"],\n    imagery := [\"IMAGE1\"],\n    video := [\"RS170A\", \"RS170A_OVERLAY\"],\n    messages := [\"COMM1\"] }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "compliant"
+          ],
+          "model": [
+            "nits",
+            "imagery",
+            "video",
+            "messages"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 12.2
+  },
+  {
+    "id": "3.2.5.2/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS will have the functionality to process received C4I messages and to prepare C4I messages for transmission.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ processedMessages := x.c4iMessages, preparedMessages := x.c4iMessages }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ProcessMessagesContract` is an identity: its `post` only copies `Input` fields, so `PrepareMessagesContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ProcessMessagesContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.; `PrepareMessagesContract` is an identity: its `post` only copies `Mid` fields to `Output`, so `ProcessMessagesContract` does all the work of `Spec`. Leave part of the work to `PrepareMessagesContract`: `ProcessMessagesContract` states an intermediate result in `Mid`, and `PrepareMessagesContract` states `o` in terms of it.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  processedMessages : List String\n  deriving DecidableEq, Repr\n\ndef ProcessMessagesContract : Contract Input Mid where\n  pre  := fun i => i.c4iMessages.Nodup\n  post := fun i m => m.processedMessages = i.c4iMessages\n\ndef PrepareMessagesContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.preparedMessages.length = m.processedMessages.length ∧\n                     o.processedMessages = m.processedMessages"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { processedMessages := x.c4iMessages,\n    preparedMessages := x.c4iMessages }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "processedMessages"
+          ],
+          "model": [
+            "preparedMessages"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 11.7
+  },
+  {
+    "id": "3.2.5.2/S2",
+    "kind": "requirement",
+    "requirement_text": "Processing will include formatting, storing, routing, and display.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ formatted := x.format, stored := true, routed := true, displayed := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { formatted := x.format,\n    stored := true,\n    routed := true,\n    displayed := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "formatted",
+            "stored",
+            "routed",
+            "displayed"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "3.2.11/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall allow authorized operators to install software upgrades via CD-ROM as well as other media storage devices. [SSS276] The TCS shall restrict operator access to this capability via password protection. [SSS277] The TCS shall provide the capability for Authorized Operators to modify all TCS programmable parameters. [SSS278] As a minimum, the TCS shall restrict Operator access to this capability via password protection. [SSS279] The TCS shall be capable of importing National Imagery Mapping Agency (NIMA) Digital Terrain Elevation Data (DTED), Digital Feature Analysis Data (DFAD), Arc Digitized Raster Graphic and scanned hard copy maps, via compact disk. [SSS280] The TCS shall be capable of importing map information via operator procedure [SSS555] and shall be capable of incorporating vector format and Compressed ADRG (CADRG) maps. [SSS281]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { success := decide (x.operatorPassword = \"authorized\" ∧\n    (x.mediaType = \"CD-ROM\" ∨ x.mediaType = \"other storage device\") ∧\n    (x.mediaData = \"NIMA DTED\" ∨ x.mediaData = \"NIMA DFAD\" ∨\n     x.mediaData = \"Arc Digitized Raster Graphic\" ∨ x.mediaData = \"scanned hard copy maps\" ∨\n     x.mediaData = \"vector format\" ∨ x.mediaData = \"Compressed ADRG (CADRG) maps\")),\n    message := \"\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "success",
+            "message"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.6
+  },
+  {
+    "id": "3.3/S2",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall provide the capability to interface with equipment necessary to provide connectivity with standard DoD tactical (VHF, UHF, and UHF/VHF) radios, Mobile Subscriber Equipment, and military and commercial satellite communications equipment. [SSS285] The TCS shall interface with external mission tasking systems (e.g., receive tasking orders, coordinate mission certification). [SSS286] The TCS shall provide the system functionality necessary to interface with the data terminal. [SSS287] The TCS shall provide the system functionality to allow interfacing with external systems via a local area network. [SSS288] The TCS shall provide external interfaces to launch and recovery systems. [SSS289]",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ taskingAcknowledged := false, networkInterfaces := 0, launchRecovery := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { taskingAcknowledged := decide (x.taskingOrders.length > 0),\n    networkInterfaces := x.taskingOrders.length,\n    launchRecovery := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "taskingAcknowledged",
+            "networkInterfaces",
+            "launchRecovery"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.3
+  },
+  {
+    "id": "3.3.1.4/S2",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall provide an interface between the TCS and external data storage systems. [SSS317] The TCS shall have the functionality to transfer digital data as well as digital imagery to and from external data storage systems. [SSS318] Details of the Tactical Control System (TCS) to external data storage interface will be defined in the TCS to External Data Storage IDD, TCS256.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.transferred = true ↔\n    (i.data.length = 0 → o.transferred = false) ∧\n    (i.data.length > 0 →\n      ∃ transferredData ∈ i.data, transferredData ∈ i.data ∧\n      (transferredData = \"digital data\" ∨ transferredData = \"digital imagery\"))`. Change the function so that they hold (the contract is locked). What to do: (1) compute `transferred` from the input (count / compare / arithmetic) so that `o.transferred = true ↔ (x.data.length = 0 → o.transferred = false) ∧ (x.data.length > 0 → ∃ transferredData ∈ x.data, transferredData ∈ x.data ∧ (transferredData = \"digital data\" ∨ transferredData = \"digital imagery\"))` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { transferred := decide (x.data.length = 0 → false ∧ x.data.length > 0 →\n    ∃ transferredData ∈ x.data, transferredData ∈ x.data ∧\n    (transferredData = \"digital data\" ∨ transferredData = \"digital imagery\")) }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 26.7
+  },
+  {
+    "id": "3.3.1.6/S2",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall have an interface to a source of current navigation information. [SSS321] As a minimum this information will include the location of all data terminals, launch and recovery sites, and the controlling TCS.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.geopositionalData = i.locationData → o.geopositionalData = []`. Change the function so that they hold (the contract is locked). What to do: (1) change `geopositionalData` so that `o.geopositionalData = x.locationData → o.geopositionalData = []` holds.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "static",
+          "check",
+          "static",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { geopositionalData := x.locationData }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 22.8
+  },
+  {
+    "id": "3.4.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall provide an internal interface for the SAR Processor in order to disseminate SAR information (to include imagery and telemetry) to other components of the TCS. [SSS330] The SAR Processor interface requirements and specifications will be defined in the TCS to SAR Processor IDD, TCS 240.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ disseminated := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { disseminated := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "disseminated"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "3.4.7/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall be able to access data storage devices. [SSS339] The TCS shall have the functionality to transfer digital data as well as digital imagery to and from data storage devices. [SSS340]",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ success := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { success := decide ((x.data ≠ \"\" →\n      (x.image = \"\" →\n        \n        true\n      ) ∧\n      (x.image ≠ \"\" →\n        \n        true\n      )\n    ) ∧\n    (x.data = \"\" →\n      (x.image = \"\" →\n        \n        true\n      )\n    )) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "success"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.3
+  },
+  {
+    "id": "3.8.1/S1",
+    "kind": "requirement",
+    "requirement_text": "Using risk assessment procedures defined in DoD 5200.28(D), a risk index and the minimum security requirements for TCS shall be determined. [SSS363] The inputs to this procedure are the clearance or authorization of the TCS users and the sensitivities of the data that the TCS processes, stores or transfers.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.securityRequirements.length = 3`. Change the function so that they hold (the contract is locked). What to do: (1) compute `securityRequirements` from the input (count / compare / arithmetic) so that `o.securityRequirements.length = 3` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "types",
+          "check",
+          "check",
+          "types",
+          "types",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { riskIndex := 1 + x.sensitivities.length,\n    securityRequirements := (x.sensitivities.filter (fun req => req = \"Requirement1\" ∨ req = \"Requirement2\" ∨ req = \"Requirement3\")).take 3 }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 27.0
+  },
+  {
+    "id": "3.8.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall be designed to protect its communication and data links against enemy Electronic Warfare (EW) threats, physical anti-radiation weaponry and physical destruction. [SSS366] All hardware, software, documentation, and sensitive information processed by TCS shall be physically protected, minimally at the level determined by the risk index computed in Section 3.8.1, to prevent intentional as well as unintentional disclosure, destruction, and modification. [SSS367] The TCS shall be approved for operation at the same level as the systems with which it interfaces. [SSS368]",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ approvedLevel := x.riskIndex, hardwareProtected := true, softwareProtected := true, docsProtected := true, sensitiveInfoProtected := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { approvedLevel := x.riskIndex,\n    hardwareProtected := true,\n    softwareProtected := true,\n    docsProtected := true,\n    sensitiveInfoProtected := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "approvedLevel",
+            "hardwareProtected",
+            "softwareProtected",
+            "docsProtected",
+            "sensitiveInfoProtected"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.0
+  },
+  {
+    "id": "3.8.4/S1",
+    "kind": "requirement",
+    "requirement_text": "All TCS users, operators, maintainers and other personnel having access to TCS shall be cleared to the highest sensitivity of the data that the TCS processes, stores and transfers. [SSS369] Additional local site procedures shall be developed to prevent the intentional or unintentional disclosure of sensitive information to unauthorized individuals. [SSS370] A training program consisting of an initial security training and awareness briefing covering AIS security in general but also tailored to the TCS shall be developed. [SSS371]",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ personnel := x.personnel, dataSensitivity := x.dataSensitivity, trainingCompleted := x.trainingCompleted }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { personnel := x.personnel,\n    dataSensitivity := x.dataSensitivity,\n    trainingCompleted := x.trainingCompleted }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "personnel",
+            "dataSensitivity",
+            "trainingCompleted"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.0
+  },
+  {
+    "id": "3.10.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS hardware will provide the functionality and capability to receive, process, and disseminate video and telemetry data from the AV and payload; perform mission planning; monitor and control the payload; monitor and control the AV; and monitor and control the data links.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { processedVideoData := x.videoData,\n    processedTelemetryData := x.telemetryData,\n    missionPlanStatus := \"planned\",\n    payloadControlStatus := \"controlled\",\n    avControlStatus := \"controlled\",\n    dataLinkControlStatus := \"controlled\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "processedVideoData",
+            "processedTelemetryData",
+            "missionPlanStatus",
+            "payloadControlStatus",
+            "avControlStatus",
+            "dataLinkControlStatus"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 10.4
+  },
+  {
+    "id": "3.10.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS software will provide the functionality and capability to receive, process, and disseminate video and telemetry data from the AV and payload; perform mission planning; monitor and control the payload; monitor and control the AV; and monitor and control the data links.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { processedVideoData := x.videoData,\n    processedTelemetry := x.telemetry,\n    missionPlanStatus := \"planned\",\n    payloadStatus := \"monitored and controlled\",\n    avStatus := \"monitored and controlled\",\n    dataLinksStatus := \"monitored and controlled\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "processedVideoData",
+            "processedTelemetry",
+            "missionPlanStatus",
+            "payloadStatus",
+            "avStatus",
+            "dataLinksStatus"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 12.7
+  },
+  {
+    "id": "3.11.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS maintainability will be considered in every phase of the design and development process and shall achieve a system maintainability (Mean Time To Repair MTTR) equal to or greater than that which is specified in the Predator and Outrider ORDs. [SSS411] The Design features shall be included to: [SSS412]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.mttrAchieved = i.mttrSpec →\n                      (∀ x < i.mttrSpec, x ≥ 0) ∧\n                      (∀ x < i.mttrSpec, x ≤ 1000)`. Change the function so that they hold (the contract is locked). What to do: (1) set `mttrAchieved := x.mttrSpec →\n                      (∀ x < x.mttrSpec, x ≥ 0) ∧\n                      (∀ x < x.mttrSpec, x ≤ 1000)`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "types",
+          "check",
+          "types",
+          "truncated",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { mttrAchieved := x.mttrSpec }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 153.6
+  },
+  {
+    "id": "3.11.4/I3",
+    "kind": "requirement",
+    "requirement_text": "TPM denotes Total Preventative Maintenance",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ComputeTPMContract` is an identity: its `post` only copies `Input` fields, so `DetermineSuccessContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ComputeTPMContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  TPM : Nat\n  failures : Nat\n  deriving DecidableEq, Repr\n\ndef ComputeTPMContract : Contract Input Mid where\n  pre  := fun i => 0 < i.TPM\n  post := fun i m => m.TPM = i.TPM ∧ m.failures = i.failures\n\ndef DetermineSuccessContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.success = true ↔ m.failures = 0) ∧\n                     (o.success = false → o.TPM = m.TPM) ∧\n                     o.failures = m.failures"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { TPM := x.TPM,\n    failures := x.failures,\n    success := decide (x.failures = 0) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "failures",
+            "success"
+          ],
+          "model": [
+            "TPM"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 17.6
+  },
+  {
+    "id": "3.11.4/I4",
+    "kind": "requirement",
+    "requirement_text": "TCM denotes Total Corrective Maintenance",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { failedAttempts := x.failedAttempts + 1,\n    totalMaintenance := x.totalMaintenance,\n    succeeded := decide (x.totalMaintenance > x.failedAttempts) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "failedAttempts",
+            "totalMaintenance",
+            "succeeded"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.5
+  },
+  {
+    "id": "3.11.4/I5",
+    "kind": "requirement",
+    "requirement_text": "TALDT denotes Total Administrative and Logistic Downtime",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { availability := 100 - x.downtime }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "availability"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.3
+  },
+  {
+    "id": "3.11.6/S1",
+    "kind": "requirement",
+    "requirement_text": "Hardware and software shall be selected for use in the TCS with the goal of providing ease of future changes to the TCS elements. [SSS418] The object of portability for the TCS is to select or develop hardware which will readily host emerging software packages and software which will be as independent of host hardware as possible.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { hardware := \"generic\",\n    software := \"cross-platform\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "hardware",
+            "software"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.7
+  },
+  {
+    "id": "3.12.6/S1",
+    "kind": "requirement",
+    "requirement_text": "After emplacement at the operational site, the TCS shall be capable of planning and launching a mission within 1 hour of tasking. [SSS441] Required activities include 1) mission planning of a minimum 1 waypoint mission, 2) preparing 2 AVs for flight, 3) data terminal set-up, 4) safety equipment emplaced, 5) and a single AV launched.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ elapsedMicros := 0, missionPlanned := true, avsPrepared := true, dataTerminalSetUp := true, safetyEquipmentEmplaced := true, avLaunched := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 3600000000,\n    missionPlanned := true,\n    avsPrepared := true,\n    dataTerminalSetUp := true,\n    safetyEquipmentEmplaced := true,\n    avLaunched := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "missionPlanned",
+            "avsPrepared",
+            "dataTerminalSetUp",
+            "safetyEquipmentEmplaced",
+            "avLaunched"
+          ],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.0
+  },
+  {
+    "id": "3.12.7/S1",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall be capable of operating continuously in functional Operation Mode for a minimum of 72 hours. [SSS442]",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 259199999999 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.2
+  },
+  {
+    "id": "3.13.1/S4",
+    "kind": "requirement",
+    "requirement_text": "The TCS shall facilitate Human-Computer Interfaces (HCIs) that support operation of all system modes, functions, and capabilities. [SSS461] The Human Computer Interface (HCI) shall be designed and implemented in accordance with the TCS HCI Specification, TCS 108.[SSS462] The HCI shall provide redundancy in all operations, so that the loss of any one HCI input device does not prohibit operation of any TCS function. [SSS463] The TCS shall provide the functionality to display all HCI elements on any available monitor on the TCS workstation. [SSS464] The TCS shall be capable of displaying a window within a window format to include, as a minimum, displaying a video window overlaid on a map screen as well as a map screen overlaid on a video screen. [SSS465] The TCS shall provide full complementary control operations from the keyset as well as the X/Y control device (e.g., trackball, mouse, joystick). [SSS466] The TCS shall provide access to the DII Style Manager so that pointing device characteristics can be modified. [SSS467] The shall provide the functionality to have a maximum delay time of 1 second from operator command to system acknowledgement and response.[SSS 559] The TCS shall provide a capability for porting an off-the-shelf, complex control joystick with multiple toggle and multi-position switches as part of the TCS hardware suite. [SSS468] The TCS shall use graphical representations to convey information, such as system status, C4I links, and AV-GDT links. [SSS469] The TCS shall provide for multi-level information display tailoring by the operator. [SSS470] The TCS shall provide automated TCS system information, control options, and logical and simple operator guidance and support for immediate and adaptive responding to crisis situations. [SSS471] The TCS shall provide maximum automated system software support to system status monitoring and alerting of the TCS operator when a preset system parameter goes under as well as over a set threshold. [SSS472] The TCS shall provide the necessary processing, display, and control capabilities to ensure dynamic situational awareness input to the TCS operator. [SSS473] The TCS shall minimize alphanumeric data display in favor of graphic, pictorial information display [SSS474] The TCS HCI shall provide unambiguous AV and payload control and status feedback indicators to ensure safe, efficient operations of two AVs and their payloads by a single TCS station. [SSS475] The TCS shall provide for a specific icon shape on a constant contrast background, as well as other visual information coding mechanisms, to cue the TCS operator regarding which UAVs are under his or her primary control. [SSS476] The TCS HCI shall provide the capability to select and amplify an object and point on a map as well as payload screen. [SSS477] The TCS HCI shall provide coarse and fine payload control capabilities directly on the payload screen. [SSS478] The TCS HCI shall display the SAR imaging swath on the map display. [SSS479] The TCS HCI shall provide the on-screen capability to select and efficiently move as well as reorient a previously defined SAR imaging swath. [SSS480] The TCS HCI shall provide the capability to lock onto and hold a coordinate point on the payload imagery window. [SSS481] The TCS HCI shall provide the capability to display operator definable \"Lock Out\" zones around waypoints, Launch and Recovery Point (LRP), as well as any selected point on the AV flight path. [SSS482] The TCS HCI shall provide for a rapid means to cancel aural warnings. [SSS484] The TCS HCI shall provide for separation, grouping, and visual coding of multiple categories of alerts, to include Warnings, Cautions, and Advisories. [SSS485] The TCS HCI shall provide for visual Warnings, Cautions, and Advisories to be displayed at or near the center of the field of view, i.e., within a 30o cone, of all monitors in a TCS system. [SSS486] For AV safety as well as mission-critical Warnings, the TCS HCI shall provide a default selection as well as an override option, along with a selection of adaptive responses, and the minimum information necessary to assist the operator in responding quickly and adaptively to the emergency. [SSS487] The TCS HCI shall provide for on-screen information to include, as a minimum, overlays, headers, cursors, alphanumeric annotation, waypoints, crosshairs, designed to be visible against the complete spectrum of map and payload video backgrounds. [SSS488] The TCS HCI shall provide continuously-available, on-screen control functions for time and missioncritical operations, to include as a minimum print, freeze, declassification, mark VCR, declutter, cease RF transmission. [SSS489] The TCS HCI shall provide for the capability to automatically designate target locations from the payload screen onto the map screen. [SSS490]",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ elapsedMicros := 1, mode := x.mode }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := if x.mode = \"operational\" ∧ x.function = \"navigation\" ∧ x.capability = \"sensor\" ∧ x.mode = \"failure\" then 0 else 1000000,\n    mode := x.mode }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "mode"
+          ],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.5
+  },
+  {
+    "id": "3.14/S3",
+    "kind": "requirement",
+    "requirement_text": "TCS training and training support shall include the processes, procedures, techniques, training devices and equipment to train civilian, active duty and reserve military personnel to operate and support the TCS system. [SSS491] This will include: individual and crew training; new equipment training; initial, formal, and on-the-job training.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.trainingComplete = true ↔\n                      (i.personnelType = \"civilian\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"new equipment\" ∨\n                        i.trainingType = \"initial\" ∨ i.trainingType = \"formal\" ∨\n                        i.trainingType = \"on-the-job\")) ∨\n                      (i.personnelType = \"active duty\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"new equipment\" ∨\n                        i.trainingType = \"initial\" ∨ i.trainingType = \"formal\" ∨\n                        i.trainingType = \"on-the-job\")) ∨\n                      (i.personnelType = \"reserve military\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"crew\" ∨\n                        i.trainingType = \"new equipment\" ∨ i.trainingType = \"initial\" ∨\n                        i.trainingType = \"formal\" ∨ i.trainingType = \"on-the-job\"))`; `o.trainingComplete = false ↔\n                      (i.personnelType = \"active duty\" ∧ i.trainingType = \"crew\")`. Change the function so that they hold (the contract is locked). What to do: (1) set `trainingComplete := decide ((x.personnelType = \"civilian\" ∧\n                       (x.trainingType = \"individual\" ∨ x.trainingType = \"new equipment\" ∨\n                        x.trainingType = \"initial\" ∨ x.trainingType = \"formal\" ∨\n                        x.trainingType",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { trainingComplete := decide (x.personnelType = \"active duty\" ∧ x.trainingType = \"crew\") }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 48.9
+  },
+  {
+    "id": "3.14/S5",
+    "kind": "requirement",
+    "requirement_text": "The TCS system shall provide, for the operator and maintainer, an embedded or add-on interactive training courseware with self-paced instruction, duplicating UAV flight performance characteristics, capabilities, and limitations. [SSS492] The OUTRIDER TCS system shall be compatible with the U.S.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 5,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: `ComputeTrainingCoursewareContract` computes nothing: for every input that satisfies its `pre`, `m.trainingCourseware` always has the same value, so it is an identity with a constant added and `DetermineOtherFieldsContract` does all the work of `Spec`. The first component must produce a result that is different for different inputs (a filtered list, a computed value, a decision that can be true or false under `ComputeTrainingCoursewareContract.pre`).; PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.trainingCourseware = true ↔ i.operator ∨ i.maintainer`; `o.flightPerformance = true ↔ o.trainingCourseware`; `o.capabilities = true ↔ o.trainingCourseware`; `o.limitations = true ↔ o.trainingCourseware`. Whatever `Spec.post` says about the input must pass through `Mid`: `ComputeTrainingCoursewareContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `DetermineOtherFieldsContract.post` relates `Output` to `Mid`. A condition that is only in `DetermineOtherFieldsContract.pre` is not guaranteed by the chain.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "syntax",
+          "static",
+          "static",
+          "check",
+          "returned"
+        ],
+        "code": "structure Mid where\n  trainingCourseware : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeTrainingCoursewareContract : Contract Input Mid where\n  pre  := fun i => i.operator ∨ i.maintainer\n  post := fun i m => m.trainingCourseware = (i.operator ∨ i.maintainer)\n\ndef DetermineOtherFieldsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.flightPerformance = true ↔ m.trainingCourseware) ∧\n                     (o.capabilities = true ↔ m.trainingCourseware) ∧\n                     (o.limitations = true ↔ m.trainingCourseware)"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "<generated>:34:25: error(lean.unknownIdentifier): Unknown identifier `trainingCourseware`\n<generated>:35:20: error(lean.unknownIdentifier): Unknown identifier `trainingCourseware`\n<generated>:36:19: error(lean.unknownIdentifier): Unknown identifier `trainingCourseware`\n",
+        "error_class": "unknown-name",
+        "stages": [
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { trainingCourseware := decide (x.operator ∨ x.maintainer),\n    flightPerformance := trainingCourseware,\n    capabilities := trainingCourseware,\n    limitations := trainingCourseware }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 37.5
+  },
+  {
+    "id": "3.14/S6",
+    "kind": "requirement",
+    "requirement_text": "Army Intelligence and Electronic Warfare Tactical Proficiency Trainer as an objective. [SSS493] The interactive courseware training capability for TCS shall be developed during Phase I and introduced to the user during scheduled demonstrations and tests. [SSS494] The training capability for performance of TCS functions shall include primary mission (flight route/payload) planning, mission control and monitoring, imagery processing, tactical communications, AV control communications and TCS system on line diagnostics. [SSS495] This capability will be qualified and improved during Phase I based upon use and feedback from qualified operators and users demonstrating TCS system equipment throughout Phase I.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ primaryMission := true, missionControl := true, imageryProcessing := true, tacticalComm := true, avComm := true, diagnosticsFunc := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: `ComputePrimaryMissionContract` computes nothing: for every input that satisfies its `pre`, `m.primaryMission`, `m.missionControl` always has the same value, so it is an identity with a constant added and `ComputeOtherFunctionsContract` does all the work of `Spec`. The first component must produce a result that is different for different inputs (a filtered list, a computed value, a decision that can be true or false under `ComputePrimaryMissionContract.pre`).",
+        "error_class": "identity",
+        "stages": [
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "structure Mid where\n  primaryMission  : Bool\n  missionControl  : Bool\n  imagery : String\n  comm : String\n  avControl : String\n  diagnostics : String\n  deriving DecidableEq, Repr\n\ndef ComputePrimaryMissionContract : Contract Input Mid where\n  pre  := fun i => i.flightRoute ≠ \"\" ∧ i.payload ≠ \"\"\n  post := fun i m => (m.primaryMission = true ∧ m.missionControl = true) ∧ m.imagery = i.imagery ∧ m.comm = i.comm ∧ m.avControl = i.avControl ∧ m.diagnostics = i.diagnostics\n\ndef ComputeOtherFunctionsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.imageryProcessing = true ↔ m.primaryMission = true ∧ m.missionControl = true ∧ m.imagery ≠ \"\") ∧\n                     (o.tacticalComm = true ↔ m.comm ≠ \"\") ∧\n                     (o.avComm = true ↔ m.avControl ≠ \"\") ∧\n                     (o.diagnosticsFunc = true ↔ m.diagnostics ≠ \"\") ∧\n                     (o.primaryMission = false → o.missionControl = false) ∧\n                     (o.missionControl = false → o.imageryProcessing = false) ∧\n                     (o.imageryProcessing = false → o.tacticalComm = false) ∧\n                     (o.tacticalComm = false → o.avComm = false) ∧\n                     (o.avComm = false → o.diagnosticsFunc = false)\n\n"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { primaryMission := decide (x.flightRoute ≠ \"\" ∧ x.payload ≠ \"\"),\n    missionControl := decide (x.flightRoute ≠ \"\" ∧ x.payload ≠ \"\"),\n    imageryProcessing := decide (x.imagery ≠ \"\"),\n    tacticalComm := decide (x.comm ≠ \"\"),\n    avComm := decide (x.avControl ≠ \"\"),\n    diagnosticsFunc := decide (x.diagnostics ≠ \"\") }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "primaryMission",
+            "missionControl",
+            "imageryProcessing",
+            "tacticalComm",
+            "avComm",
+            "diagnosticsFunc"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 34.7
+  }
+]

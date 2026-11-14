@@ -1,0 +1,1200 @@
+{
+  "source": {
+    "file": "0000 - cctns.xml",
+    "sha256": "13b2cce138133a0cca3526d29133a24f1c0ba29fce84a394a4a9a5745f33c1ce"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v11",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "ed18e9b",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 22,
+    "compiles": 15,
+    "rejects_bad_example": 6,
+    "checked": 14,
+    "failed": 8,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "3/registration/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Citizens can register their complaints with police and then based on the evidence, facts and following investigation, police shall take the complaint forward.",
+      "text_predicate": "Requirement 3/registration/S1 (DESCRIPTION OF THE MODULES AND FUNCTIONAL REQUIREMENTS > Registration):\nCitizens can register their complaints with police and then based on the evidence, facts and following investigation, police shall take the complaint forward.",
+      "lean_predicate": "structure Complaint where\n  complaintID : Nat\n  description : String\n  evidence    : List String\n  status     : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  citizenID : Nat\n  complaint  : Complaint\n  evidence   : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  accepted  : Bool\n  complaintID : Nat\n  status     : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.citizenID ≠ 0 ∧ i.complaint.description ≠ \"\" ∧ i.evidence.Nodup\n  post := fun i o =>\n    (o.accepted = true ↔\n      i.complaint.status = \"New\" ∧\n      i.evidence.all (fun e => e ∈ i.complaint.evidence)) ∧\n    (o.complaintID = i.complaint.complaintID ∧\n     o.status = \"New\" ↔ o.accepted = true) ∧\n    (o.accepted = false →\n      o.complaintID = i.complaint.complaintID ∧\n      o.status = \"Rejected\" ∧\n      i.evidence.all (fun e => e ∉ i.complaint.evidence))\n\nexample : Spec.pre { citizenID := 1, complaint := { complaintID := 1, description := \"Theft\", evidence := [\"eye-witness\", \"video\"], status := \"New\" }, evidence := [\"eye-witness\", \"video\"] } ∧\n          Spec.post { citizenID := 1, complaint := { complaintID := 1, description := \"Theft\", evidence := [\"eye-witness\", \"video\"], status := \"New\" }, evidence := [\"eye-witness\", \"video\"] }\n                    { accepted := true, complaintID := 1, status := \"New\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { citizenID := 1, complaint := { complaintID := 1, description := \"Test complaint\", evidence := [\"e1\"], status := \"New\" }, evidence := [\"e2\"] } ∧ ¬ Spec.post { citizenID := 1, complaint := { complaintID := 1, description := \"Test complaint\", evidence := [\"e1\"], status := \"New\" }, evidence := [\"e2\"] } { accepted := true, complaintID := 1, status := \"New\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { citizenID := 1, complaint := { complaintID := 1, description := \"Test complaint\", evidence := [\"e1\"], status := \"New\" }, evidence := [\"e2\"] } ∧ ¬ Spec.post { citizenID := 1, complaint := { complaintID := 1, description := \"Test complaint\", evidence := [\"e1\"], status := \"New\" }, evidence := [\"e2\"] } { accepted := true, complaintID := 1, status := \"New\" } := by\n  unfold Spec; decide",
+          "why": "The output accepts the complaint even though the evidence does not match",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 38.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "4/R2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The solution should send alerts (e.g., email, SMS) to the user if the user chooses to whenever any action has been taken on the alert.",
+      "text_predicate": "Requirement 4/R2 (NON-FUNCTIONAL REQUIREMENTS):\nThe solution should send alerts (e.g., email, SMS) to the user if the user chooses to whenever any action has been taken on the alert.",
+      "lean_predicate": "structure Alert where\n  user    : String\n  action  : String\n  message : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  user    : String\n  action  : String\n  message : String\n  alert   : Alert\n  deriving DecidableEq, Repr\n\nstructure Output where\n  user    : String\n  action  : String\n  message : String\n  alert   : Alert\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.user ≠ \"\" ∧ i.action ≠ \"\" ∧ i.message ≠ \"\"\n  post := fun i o => (o.user = i.user ∧ o.action = i.action ∧ o.message = i.message) ∧\n                     (o.alert = i.alert → o.alert.message = i.alert.message) ∧\n                     (o.alert.message ≠ i.alert.message → o.alert = i.alert)\n\nexample : Spec.pre { user := \"user1\", action := \"login\", message := \"Welcome\", alert := { user := \"user1\", action := \"login\", message := \"Alert sent\" } } ∧\n          Spec.post { user := \"user1\", action := \"login\", message := \"Welcome\", alert := { user := \"user1\", action := \"login\", message := \"Alert sent\" } }\n                    { user := \"user1\", action := \"login\", message := \"Welcome\", alert := { user := \"user1\", action := \"login\", message := \"Alert sent\" } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { user := \"testUser\", action := \"testAction\", message := \"testMessage\", alert := { user := \"testUser\", action := \"testAction\", message := \"testMessage\" } } ∧ ¬ Spec.post { user := \"testUser\", action := \"testAction\", message := \"testMessage\", alert := { user := \"testUser\", action := \"testAction\", message := \"testMessage\" } } { user := \"testUser\", action := \"testAction\", message := \"testMessage\", alert := { user := \"testUser\", action := \"testAction\", message := \"testMessage\" } } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 63.0,
+      "error": "L0.5: `post` is too weak: the implementation `{ user := x.user, action := x.action, message := x.message, alert := x.alert }` (only copied input fields and fixed values) satisfies it, so code verified against this spec need not do anything the requirement asks. Add the conditions that tie each output field to the rule in the requirement (what it must be computed from, and when it differs from the input).",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { user := \"testUser\", action := \"testAction\", message := \"testMessage\", alert := { user := \"testUser\", action := \"testAction\", message := \"testMessage\" } } ∧ ¬ Spec.post { user := \"testUser\", action := \"testAction\", message := \"testMessage\", alert := { user := \"testUser\", action := \"testAction\", message := \"testMessage\" } } { user := \"testUser\", action := \"testAction\", message := \"testMessage\", alert := { user := \"testUser\", action := \"testAction\", message := \"testMessage\" } } := by unfold Spec; decide"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "4/audit-module/R2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Once the audit trail functionality has been activated, the System must track events without manual intervention, and store in the audit trail information about them.",
+      "text_predicate": "Requirement 4/audit-module/R2 (NON-FUNCTIONAL REQUIREMENTS > Audit Module):\nOnce the audit trail functionality has been activated, the System must track events without manual intervention, and store in the audit trail information about them.",
+      "lean_predicate": "structure Event where\n  timestamp : Nat\n  description : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  activated : Bool\n  events    : List Event\n  deriving DecidableEq, Repr\n\nstructure Output where\n  activated : Bool\n  events    : List Event\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.activated = true\n  post := fun i o => o.activated = true ∧\n                     (o.events.length = i.events.length + 1 ∧\n                      o.events.last.timestamp = i.events.length + 1 ∧\n                      o.events.last.description ≠ \"\")\n\nexample : Spec.pre { activated := true, events := [] } ∧\n          Spec.post { activated := true, events := [] }\n                    { activated := true, events := [{ timestamp := 1, description := \"Event occurred\" }] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 4,
+      "seconds": 26.7,
+      "error": "<generated>:23:31: error(lean.invalidField): Invalid field `last`: The environment does not contain `List.last`, so it is not possible to project the field `last` from an expression\n  o.events\nof type `List Event`\n<generated>:24:31: error(lean.invalidField): Invalid field `last`: The environment does not contain `List.last`, so it is not possible to project the field `last` from an expression\n  o.events\nof type `List Event`\n<generated>:26:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": [
+            "parenthesized a call before `.method` (e.g. `(xs.take 2).all`)"
+          ],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": [],
+          "stopped": "the same failure 3 times"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same failure 3 times",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "4/audit-module/R5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The System must be able to export audit trails for specified cases (without affecting the audit trail stored by the System). This functionality can be used by external auditors who wish to examine or analyse system activity.",
+      "text_predicate": "Requirement 4/audit-module/R5 (NON-FUNCTIONAL REQUIREMENTS > Audit Module):\nThe System must be able to export audit trails for specified cases (without affecting the audit trail stored by the System). This functionality can be used by external auditors who wish to examine or analyse system activity.",
+      "lean_predicate": "structure AuditCase where\n  caseId : Nat\n  description : String\n  deriving DecidableEq, Repr\n\nstructure AuditRecord where\n  timestamp : Nat\n  caseId : Nat\n  event : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cases : List AuditCase\n  deriving DecidableEq, Repr\n\nstructure Output where\n  exportedRecords : List AuditRecord\n  remainingRecords : List AuditRecord\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.cases.Nodup\n  post := fun i o => \n    o.exportedRecords.length + o.remainingRecords.length = i.cases.length ∧\n    ∀ cr ∈ o.exportedRecords, ∃ ac ∈ i.cases, cr.caseId = ac.caseId ∧\n    (o.exportedRecords = [] ↔ o.remainingRecords = i.cases.map (fun ac => { timestamp := 0, caseId := ac.caseId, event := \"\" })) ∧\n    (o.remainingRecords = [] ↔ o.exportedRecords = i.cases.map (fun ac => { timestamp := 0, caseId := ac.caseId, event := \"\" }))\n\nexample : Spec.pre { cases := [{ caseId := 1, description := \"Case 1\" }, { caseId := 2, description := \"Case 2\" }] } ∧\n          Spec.post { cases := [{ caseId := 1, description := \"Case 1\" }, { caseId := 2, description := \"Case 2\" }] }\n                    { exportedRecords := [], remainingRecords := [{ timestamp := 0, caseId := 1, event := \"\" }, { timestamp := 0, caseId := 2, event := \"\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { cases := [AuditCase.caseId 1 description \"test1\"] } ∧ ¬ Spec.post { cases := [AuditCase.caseId 1 description \"test1\"] } { exportedRecords := [AuditRecord.timestamp 0 caseId 1 event \"\"], remainingRecords := [AuditRecord.timestamp 0 caseId 1 event \"\" ] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { cases := [AuditCase.caseId 1 description \"test1\"] } ∧ ¬ Spec.post { cases := [AuditCase.caseId 1 description \"test1\"] } { exportedRecords := [AuditRecord.timestamp 0 caseId 1 event \"\"], remainingRecords := [AuditRecord.timestamp 0 caseId 1 event \"\" ] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the exported records should not affect the remaining records, but the buggy system returns all records in both lists.",
+          "outcome": "not usable: failed to synthesize instance of type class\n  OfNat AuditCase 1\nnumerals are polymorphic in Lean, but the numeral `1` cannot be used in a context where the expected type is\n  AuditCase\ndue to the absence of the instance above\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command."
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 16.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": true,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "4/audit-module/R6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The System must be able to capture and store violations (i.e. A user's attempts to access a case to which he is denied access), and (where violations can validly be attempted) attempted violations, of access control mechanisms.",
+      "text_predicate": "Requirement 4/audit-module/R6 (NON-FUNCTIONAL REQUIREMENTS > Audit Module):\nThe System must be able to capture and store violations (i.e. A user's attempts to access a case to which he is denied access), and (where violations can validly be attempted) attempted violations, of access control mechanisms.",
+      "lean_predicate": "structure Input where\n  user    : String\n  caseId  : Nat\n  access  : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  user    : String\n  caseId  : Nat\n  access  : Bool\n  violation : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.access = false\n  post := fun i o => (o.violation = true ↔ i.access = false) ∧\n                     (o.violation = false → o.access = i.access)\n\nexample : Spec.pre { user := \"user1\", caseId := 123, access := false } ∧\n          Spec.post { user := \"user1\", caseId := 123, access := false }\n                    { user := \"user1\", caseId := 123, access := false, violation := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { user := \"deniedUser\", caseId := 123, access := false } ∧ ¬ Spec.post { user := \"deniedUser\", caseId := 123, access := false } { user := \"deniedUser\", caseId := 123, access := false, violation := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { user := \"deniedUser\", caseId := 123, access := false } ∧ ¬ Spec.post { user := \"deniedUser\", caseId := 123, access := false } { user := \"deniedUser\", caseId := 123, access := false, violation := false } := by\n  unfold Spec; decide",
+          "why": "The system should capture and store violations, but the output does not indicate a violation even though access was denied.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ user := x.user, caseId := x.caseId, access := x.access, violation := true }",
+          "copy_ok": true,
+          "class": "copy-ok"
+        }
+      }
+    },
+    {
+      "id": "4/access-module/R6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The System must allow changes to security attributes for groups or users (such as access rights, security level, privileges, password allocation and management) to be made only by super-user.",
+      "text_predicate": "Requirement 4/access-module/R6 (NON-FUNCTIONAL REQUIREMENTS > Access Module):\nThe System must allow changes to security attributes for groups or users (such as access rights, security level, privileges, password allocation and management) to be made only by super-user.",
+      "lean_predicate": "structure SecurityAttribute where\n  user : String\n  privilege : String\n  password : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  user : String\n  privilege : String\n  password : String\n  isSuperUser : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  success : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.isSuperUser\n  post := fun i o => o.success ↔\n    (i.isSuperUser = true ∧\n     (i.privilege = \"change_security_attributes\" ∨\n      i.privilege = \"super_user\"))\n\nexample : Spec.pre { user := \"admin\", privilege := \"change_security_attributes\", password := \"pass\", isSuperUser := true } ∧\n          Spec.post { user := \"admin\", privilege := \"change_security_attributes\", password := \"pass\", isSuperUser := true }\n                    { success := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { user := \"regular_user\", privilege := \"change_security_attributes\", password := \"password123\", isSuperUser := false } ∧ ¬ Spec.post { user := \"regular_user\", privilege := \"change_security_attributes\", password := \"password123\", isSuperUser := false } { success := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { user := \"regular_user\", privilege := \"change_security_attributes\", password := \"password123\", isSuperUser := false } ∧ ¬ Spec.post { user := \"regular_user\", privilege := \"change_security_attributes\", password := \"password123\", isSuperUser := false } { success := true } := by\n  unfold Spec; decide",
+          "why": "The output allows changes to security attributes without being a super-user",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "4/access-module/R10",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Any access to cases, and all other activities involving the cases and related documents or data should also need to be stored in the audit trail to ensure legal admissibility and to assist in data recovery.",
+      "text_predicate": "Requirement 4/access-module/R10 (NON-FUNCTIONAL REQUIREMENTS > Access Module):\nAny access to cases, and all other activities involving the cases and related documents or data should also need to be stored in the audit trail to ensure legal admissibility and to assist in data recovery.",
+      "lean_predicate": "structure Case where\n  id       : Nat\n  title    : String\n  status   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  cases    : List Case\n  activity : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  cases    : List Case\n  activity : String\n  audit    : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.activity ≠ \"\"\n  post := fun i o => o.cases = i.cases ∧\n                     o.activity = i.activity ∧\n                     (o.audit = i.activity →\n                      o.cases.Nodup ∧\n                      ∀ c ∈ o.cases, c.status = \"active\" ∨ c.status = \"closed\")\n\nexample : Spec.pre { cases := [{ id := 1, title := \"Case A\", status := \"active\" }],\n                     activity := \"Review\" } ∧\n          Spec.post { cases := [{ id := 1, title := \"Case A\", status := \"active\" }],\n                      activity := \"Review\" }\n                    { cases := [{ id := 1, title := \"Case A\", status := \"active\" }],\n                      activity := \"Review\",\n                      audit := \"Review\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\" } ∧ ¬ Spec.post { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\" } { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\", audit := \"\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\" } ∧ ¬ Spec.post { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\" } { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\", audit := \"\" } := by\n  unfold Spec; decide",
+          "why": "The output does not store the activity in the audit trail, violating R10",
+          "outcome": "accepted"
+        }
+      ],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 66.9,
+      "error": "L0.5: `post` is too weak: the implementation `{ cases := x.cases, activity := x.activity, audit := \"\" }` (only copied input fields and fixed values) satisfies it, so code verified against this spec need not do anything the requirement asks. Add the conditions that tie each output field to the rule in the requirement (what it must be computed from, and when it differs from the input).",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\" } ∧ ¬ Spec.post { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\" } { cases := [{ id := 1, title := \"Test Case\", status := \"active\" }], activity := \"Reviewing case\", audit := \"\" } := by unfold Spec; decide"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "4/ease-of-use/R2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The System must employ a single set of user interface rules, or a small number of sets to provide a familiar and common look and feel for the application.",
+      "text_predicate": "Requirement 4/ease-of-use/R2 (NON-FUNCTIONAL REQUIREMENTS > Ease of Use):\nThe System must employ a single set of user interface rules, or a small number of sets to provide a familiar and common look and feel for the application.",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ _ => True\n\nexample : Spec.pre { } ∧ Spec.post { } { } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := \"value\" } ∧ ¬ Spec.post { field := \"value\" } { field := \"unexpected value\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := \"value\" } ∧ ¬ Spec.post { field := \"value\" } { field := \"unexpected value\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the system must employ a single set of user interface rules, or a small number of sets to provide a familiar and common look and feel for the application. A wrong output would violate this by having a different look and feel for different parts of the application.",
+          "outcome": "not usable: `field` is not a field of structure `Input`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (example not in `Spec.post {…} {…}` form)"
+        ],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "4/ease-of-use/R7",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The System must allow persistent defaults for data entry where desirable. These defaults should include: user-definable values; values same as previous item; values derived from context, e.g. date, file reference, user identifier;",
+      "text_predicate": "Requirement 4/ease-of-use/R7 (NON-FUNCTIONAL REQUIREMENTS > Ease of Use):\nThe System must allow persistent defaults for data entry where desirable. These defaults should include: user-definable values; values same as previous item; values derived from context, e.g. date, file reference, user identifier;",
+      "lean_predicate": "structure Input where\n  defaults : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  entries : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.defaults ≠ []\n  post := fun i o => o.entries.length = i.defaults.length ∧\n                     (o.entries.zip i.defaults).all (fun p => p.2 = p.1 ∨ p.2 = \"previous\" ∨\n                     (p.2 = \"context\" ∧ p.1 = \"date\" ∨ p.1 = \"file\" ∨ p.1 = \"user\"))\n\nexample : Spec.pre { defaults := [\"date\", \"file\", \"user\"] } ∧\n          Spec.post { defaults := [\"date\", \"file\", \"user\"] }\n                    { entries := [\"date\", \"file\", \"user\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { defaults := [\"user123\", \"previous\", \"context\", \"date\", \"file\", \"user\"] } ∧ ¬ Spec.post { defaults := [\"user123\", \"previous\", \"context\", \"date\", \"file\", \"user\"] } { entries := [\"admin123\", \"next\", \"none\", \"month\", \"folder\", \"guest\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { defaults := [\"user123\", \"previous\", \"context\", \"date\", \"file\", \"user\"] } ∧ ¬ Spec.post { defaults := [\"user123\", \"previous\", \"context\", \"date\", \"file\", \"user\"] } { entries := [\"admin123\", \"next\", \"none\", \"month\", \"folder\", \"guest\"] } := by\n  unfold Spec; decide",
+          "why": "The output does not match the requirement as it does not consider user-definable values or values derived from context.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "4/ease-of-use/R8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Frequently-executed System transactions must be designed so that they can be completed with a small number of interactions (e.g. mouse clicks).",
+      "text_predicate": "Requirement 4/ease-of-use/R8 (NON-FUNCTIONAL REQUIREMENTS > Ease of Use):\nFrequently-executed System transactions must be designed so that they can be completed with a small number of interactions (e.g. mouse clicks).",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  derivedInteractions : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o.derivedInteractions ≤ 3 ∧\n                     (o.derivedInteractions = 0 ↔ o.derivedInteractions = 0) ∧\n                     (o.derivedInteractions = 1 ↔ o.derivedInteractions = 1) ∧\n                     (o.derivedInteractions = 2 ↔ o.derivedInteractions = 2)\n\nexample : Spec.pre {} ∧ Spec.post {} { derivedInteractions := 2 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { derivedInteractions := 4, … } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := value, … } ∧ ¬ Spec.post { field := value, … } { derivedInteractions := 4, … } := by\n  unfold Spec; decide",
+          "why": "The output allows more than 3 interactions, violating the requirement.",
+          "outcome": "not usable: expected token"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 26.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ derivedInteractions := 0 }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "4/ease-of-use/R9",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Where the System employs a graphical user interface, it must allow users to customise it. Customisation should include, but need not be limited to the following changes: menu contents; layout of screens; use of function keys; on-screen colours, fonts and font sizes;",
+      "text_predicate": "Requirement 4/ease-of-use/R9 (NON-FUNCTIONAL REQUIREMENTS > Ease of Use):\nWhere the System employs a graphical user interface, it must allow users to customise it. Customisation should include, but need not be limited to the following changes: menu contents; layout of screens; use of function keys; on-screen colours, fonts and font sizes;",
+      "lean_predicate": "structure Input where\n  menuContents   : List String\n  screenLayout   : List String\n  functionKeys  : List String\n  onScreenColors : List String\n  fonts         : List String\n  fontSizes     : List Nat\n  updateMenu    : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  menuContents   : List String\n  screenLayout   : List String\n  functionKeys  : List String\n  onScreenColors : List String\n  fonts         : List String\n  fontSizes     : List Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.updateMenu = true\n  post := fun i o => (o.menuContents = i.menuContents ↔ i.updateMenu = false) ∧\n                     o.screenLayout = i.screenLayout ∧\n                     o.functionKeys = i.functionKeys ∧\n                     o.onScreenColors = i.onScreenColors ∧\n                     o.fonts = i.fonts ∧\n                     o.fontSizes = i.fontSizes\n\nexample : Spec.pre { menuContents := [\"File\", \"Edit\", \"View\"], screenLayout := [\"Home\", \"Settings\", \"Help\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\", \"red\"], fonts := [\"Arial\", \"Times New Roman\", \"Courier New\"], fontSizes := [12, 14, 16], updateMenu := true } ∧ Spec.post { menuContents := [\"File\", \"Edit\", \"View\"], screenLayout := [\"Home\", \"Settings\", \"Help\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\", \"red\"], fonts := [\"Arial\", \"Times New Roman\", \"Courier New\"], fontSizes := [12, 14, 16], updateMenu := true } { menuContents := [], screenLayout := [\"Home\", \"Settings\", \"Help\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\", \"red\"], fonts := [\"Arial\", \"Times New Roman\", \"Courier New\"], fontSizes := [12, 14, 16] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { menuContents := [\"File\", \"Edit\", \"View\"], screenLayout := [\"Home\", \"Settings\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\"], fonts := [\"Arial\", \"Times New Roman\"], fontSizes := [12, 14], updateMenu := true } ∧ ¬ Spec.post { menuContents := [\"File\", \"Edit\", \"View\"], screenLayout := [\"Home\", \"Settings\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\"], fonts := [\"Arial\", \"Times New Roman\"], fontSizes := [12, 14], updateMenu := true } { menuContents := [\"File\", \"Edit\", \"View\"], screenLayout := [\"Home\", \"Settings\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\"], fonts := [\"Arial\", \"Times New Roman\"], fontSizes := [12, 14] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { menuContents := [\"File\", \"Edit\", \"View\"], screenLayout := [\"Home\", \"Settings\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\"], fonts := [\"Arial\", \"Times New Roman\"], fontSizes := [12, 14], updateMenu := true } ∧ ¬ Spec.post { menuContents := [\"File\", \"Edit\", \"View\"], screenLayout := [\"Home\", \"Settings\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\"], fonts := [\"Arial\", \"Times New Roman\"], fontSizes := [12, 14], updateMenu := true } { menuContents := [\"File\", \"Edit\", \"View\"], screenLayout := [\"Home\", \"Settings\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\"], fonts := [\"Arial\", \"Times New Roman\"], fontSizes := [12, 14] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that customisation should include changes to menu contents, but the output does not change the menu contents.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 84.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "4/usability/R8",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Minimizing navigation effort: The number of navigation steps needed to reach a certain piece of content should be minimized as long as different mental models, navigation strategies and tasks of the user are taken into account.",
+      "text_predicate": "Requirement 4/usability/R8 (NON-FUNCTIONAL REQUIREMENTS > Usability):\nMinimizing navigation effort: The number of navigation steps needed to reach a certain piece of content should be minimized as long as different mental models, navigation strategies and tasks of the user are taken into account.",
+      "lean_predicate": "structure Input where\n  navigationSteps : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  navigationSteps : Nat\n  contentReached  : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.navigationSteps\n  post := fun i o => o.contentReached = true ∧\n                     o.navigationSteps = i.navigationSteps\n\nexample : Spec.pre { navigationSteps := 3 } ∧\n          Spec.post { navigationSteps := 3 }\n                    { contentReached := true, navigationSteps := 3 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { navigationSteps := 3, contentReached := false } ∧ ¬ Spec.post { navigationSteps := 3, contentReached := false } { navigationSteps := 3, contentReached := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { navigationSteps := 3, contentReached := false } ∧ ¬ Spec.post { navigationSteps := 3, contentReached := false } { navigationSteps := 3, contentReached := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the number of navigation steps should be minimized, but a wrong output would not change the number of steps, thus violating the requirement.",
+          "outcome": "not usable: `contentReached` is not a field of structure `Input`"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 16.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ navigationSteps := x.navigationSteps, contentReached := true }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "4/usability/R46",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Allowing users to see and change profiles: If user-specified profiles are used, users should be able to see, modify and delete that profile on demand.",
+      "text_predicate": "Requirement 4/usability/R46 (NON-FUNCTIONAL REQUIREMENTS > Usability):\nAllowing users to see and change profiles: If user-specified profiles are used, users should be able to see, modify and delete that profile on demand.",
+      "lean_predicate": "structure Profile where\n  name   : String\n  email  : String\n  phone  : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  profiles : List Profile\n  selected : Option Profile\n  deriving DecidableEq, Repr\n\nstructure Output where\n  profiles : List Profile\n  selected : Option Profile\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.selected.isSome\n  post := fun i o => (o.profiles = i.profiles ∧\n                      o.selected.getD i.selected = i.selected.getD i.selected) ∧\n                     (o.selected.isSome ↔ i.selected.isSome) ∧\n                     (o.selected.isNone → o.profiles = i.profiles)\n\nexample : Spec.pre { profiles := [{ name := \"Alice\", email := \"a@example.com\", phone := \"1234567890\" }],\n                     selected := some { name := \"Alice\", email := \"a@example.com\", phone := \"1234567890\" } } ∧\n          Spec.post { profiles := [{ name := \"Alice\", email := \"a@example.com\", phone := \"1234567890\" }],\n                      selected := some { name := \"Alice\", email := \"a@example.com\", phone := \"1234567890\" } }\n                    { profiles := [{ name := \"Alice\", email := \"a@example.com\", phone := \"1234567890\" }],\n                      selected := some { name := \"Alice\", email := \"a@example.com\", phone := \"1234567890\" } } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 55.0,
+      "error": "<generated>:23:38: error: Application type mismatch: The argument\n  i.selected\nhas type\n  Option Profile\nbut is expected to have type\n  Profile\nin the application\n  o.selected.getD i.selected\n<generated>:23:67: error: Application type mismatch: The last\n  i.selected\nargument has type\n  Option Profile\nbut is expected to have type\n  Profile\nin the application\n  i.selected.getD i.selected\n<generated>:27:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "4/system-availability/R4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The number of incidents of unplanned downtime for the System must not exceed <x> per <rolling three month period>.",
+      "text_predicate": "Requirement 4/system-availability/R4 (NON-FUNCTIONAL REQUIREMENTS > System Availability):\nThe number of incidents of unplanned downtime for the System must not exceed <x> per <rolling three month period>.",
+      "lean_predicate": "structure Input where\n  downtimeCount : Nat\n  rollingPeriod : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  downtimeCount : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.downtimeCount ≤ 3\n  post := fun i o => o.downtimeCount = i.downtimeCount ∧\n                     (o.downtimeCount < i.downtimeCount ↔ i.downtimeCount > 3)\n\nexample : Spec.pre { downtimeCount := 2, rollingPeriod := 90 } ∧\n          Spec.post { downtimeCount := 2, rollingPeriod := 90 }\n                    { downtimeCount := 2 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { downtimeCount := 4, rollingPeriod := 3 } ∧ ¬ Spec.post { downtimeCount := 4, rollingPeriod := 3 } { downtimeCount := 4, rollingPeriod := 3 } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { downtimeCount := 4, rollingPeriod := 3 } ∧ ¬ Spec.post { downtimeCount := 4, rollingPeriod := 3 } { downtimeCount := 4, rollingPeriod := 3 } := by\n  unfold Spec; decide",
+          "why": "The output would allow more than 3 incidents of unplanned downtime in a rolling three month period",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 22.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ downtimeCount := x.downtimeCount }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "4/system-availability/R5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In the event of any software or hardware failure, it must be possible to restore the System (with inline synchronization) within no more than <xx> hours.",
+      "text_predicate": "Requirement 4/system-availability/R5 (NON-FUNCTIONAL REQUIREMENTS > System Availability):\nIn the event of any software or hardware failure, it must be possible to restore the System (with inline synchronization) within no more than <xx> hours.",
+      "lean_predicate": "structure Input where\n  failedAttempts : Nat\n  systemState    : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  restored       : Bool\n  systemState    : String\n  failedAttempts : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.failedAttempts < 24\n  post := fun i o => o.restored = true ↔\n                     (i.failedAttempts + 1 ≤ 24) ∧\n                     o.systemState = \"normal\" ∧\n                     o.failedAttempts = i.failedAttempts + 1\n\nexample : Spec.pre { failedAttempts := 1, systemState := \"normal\" } ∧\n          Spec.post { failedAttempts := 1, systemState := \"normal\" }\n                    { restored := true, systemState := \"normal\", failedAttempts := 2 } := by\n  unfold Spec; decide\n\nexample : Spec.pre { failedAttempts := 23, systemState := \"normal\" } ∧\n          Spec.post { failedAttempts := 23, systemState := \"normal\" }\n                    { restored := true, systemState := \"normal\", failedAttempts := 24 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { failedAttempts := 25, systemState := \"backup\" } ∧ ¬ Spec.post { failedAttempts := 25, systemState := \"backup\" } { restored := true, systemState := \"backup\", failedAttempts := 26 } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { failedAttempts := 25, systemState := \"backup\" } ∧ ¬ Spec.post { failedAttempts := 25, systemState := \"backup\" } { restored := true, systemState := \"backup\", failedAttempts := 26 } := by\n  unfold Spec; decide",
+          "why": "The output allows the system to be restored within more than 24 hours, which the requirement forbids.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 28.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05_feedback": "\n\nA previous specification for this entry was rejected by the checks:\n- `post` accepts an output the requirement forbids: example : Spec.pre { failedAttempts := 1, systemState := \"normal\" } ∧ ¬ Spec.post { failedAttempts := 1, systemState := \"normal\" } { restored := true, systemState := \"normal\", failedAttempts := 2 } := by unfold Spec; decide\n\nThe rejected specification:\n```lean\nstructure Input where\n  failedAttempts : Nat\n  systemState    : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  restored       : Bool\n  systemState    : String\n  failedAttempts : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.failedAttempts < 24\n  post := fun i o => o.restored = true ∧\n                     o.systemState = i.systemState ∧\n                     o.failedAttempts = i.failedAttempts + 1\n\nexample : Spec.pre { failedAttempts := 2, systemState := \"backup\" } ∧\n          Spec.post { failedAttempts := 2, systemState := \"backup\" }\n                    { restored := true, systemState := \"backup\", failedAttempts := 3 } := by\n  unfold Spec; decide\n```\n\nWrite a new specification that fixes these problems.",
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ restored := false, systemState := x.systemState, failedAttempts := x.failedAttempts }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      },
+      "l05_rounds": 1
+    },
+    {
+      "id": "4/performance-and-scalability/R2",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The System must be able to perform a simple search within 5-8 seconds and a advanced search (multiple search criteria) within 10-15 seconds regardless of the storage capacity or number of cases in the system. In this context, performing a search means returning a result list. It does not include retrieving the records themselves.",
+      "text_predicate": "Requirement 4/performance-and-scalability/R2 (NON-FUNCTIONAL REQUIREMENTS > Performance and Scalability):\nThe System must be able to perform a simple search within 5-8 seconds and a advanced search (multiple search criteria) within 10-15 seconds regardless of the storage capacity or number of cases in the system. In this context, performing a search means returning a result list. It does not include retrieving the records themselves.\nIgnore these non-formal words: simple, advanced.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` <= 8000000 (us, operation: perform a simple search)\n- `elapsedMicros` <= 15000000 (us, operation: perform a simple search)",
+      "lean_predicate": "structure Input where\n  query          : String\n  items          : List Item\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros  : Nat\n  results        : List Item\n  message        : String\n  deriving DecidableEq, Repr\n\n-- an item may be returned: it matches the query and is not filtered out (rating 0 is never shown)\ndef Wanted (i : Input) (it : Item) : Bool :=\n  it.name == i.query && 0 < it.rating\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (∀ it ∈ o.results, it ∈ i.items ∧ Wanted i it = true) ∧\n    (o.results.length < 100 → ∀ it ∈ i.items, Wanted i it = true → it ∈ o.results) ∧\n    o.results.length ≤ 100 ∧\n    List.Pairwise (fun a b => a.rating ≥ b.rating) o.results ∧\n    (o.message = \"No results were found.\" ↔ o.results = []) ∧\n    o.elapsedMicros ≤ 8000000\n\nexample : Spec.pre { query := \"cats\", items := [{ name := \"cats\", rating := 3 },\n                                                { name := \"dogs\", rating := 5 }] } ∧\n          Spec.post { query := \"cats\", items := [{ name := \"cats\", rating := 3 },\n                                                  { name := \"dogs\", rating := 5 }] }\n                    { results := [{ name := \"cats\", rating := 3 }], message := \"\", elapsedMicros := 7000000 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 4,
+      "seconds": 37.1,
+      "error": "<generated>:7:11: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  Decidable (a✝ = b✝)\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:7:24: error: typeclass instance problem is stuck\n  Repr (List ?m.9)\n\nNote: Lean will not try to resolve this typeclass instance problem because the type argument to `Repr` contains metavariables. This argument must be fully determined before Lean will try to resolve the typeclass.\n\nHint: Adding type annotations and supplying implicit arguments to functions can give Lean more information for typeclass resolution. For example, if you have a variable `x` that you intend to be a `Nat`, but Lean reports it as having an unresolved type like `?m`, replacing `x` with `(x : Nat)` can get typeclass resolution un-stuck.\n<generated>:13:11: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  Decidable (a✝¹ = b✝¹)\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:13:24: error: typeclass instance problem is stuck\n  Repr (List ?m.9)\n\nNote: Lean will not try to resolve this typeclass instance problem because the type argument to `Repr` contains metavariables. This argument must be fully determined before Lean will try to resolve the typeclass.\n\nHint: Adding type annotations and supplying implicit arguments to functions can give Lean more information for typeclass resolution. For example, if you have a variable `x` that you intend to be a `Nat`, but Lean reports it as having an unresolved type like `?m`, replacing `x` with `(x : Nat)` can get typeclass resolution un-stuck.\n<generated>:17:2: error(lean.invalidField): Invalid field notation: Field projection operates on types of the form `C ...` where C is a constant. The expression\n  it\nhas type `Item` which does not have the necessary form.\n<generated>:17:28: error(lean.invalidField): Invalid field notation: Field projection operates on types of the form `C ...` where C is a constant. The expression\n  it\nhas type `Item` which does not have the necessary form.\n<generated>:19:20: error: Application type mismatch: The argument\n  Input\nhas type\n  Type 1\nof sort `Type 2` but is expected to have type\n  Type\nof sort `Type 1` in the application\n  Contract Input\n<generated>:25:30: error(lean.invalidField): Invalid field notation: Type of\n  a\nis not known; cannot resolve field `rating`\n<generated>:25:41: error(lean.invalidField): Invalid field notation: Type of\n  b\nis not known; cannot resolve field `rating`\n<generated>:29:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": [],
+          "stopped": "the same check failed 4 times in a row"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same check failed 4 times in a row",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "4/performance-and-scalability/R3",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The System must be able to retrieve and display within 5-8 seconds the case which has been accessed within the previous 2 months, regardless of storage capacity or number of cases in the system. This requirement is intended to allow for rapid retrieval of frequently-used cases, on the understanding that frequency of use is typically correlated with recent use.",
+      "text_predicate": "Requirement 4/performance-and-scalability/R3 (NON-FUNCTIONAL REQUIREMENTS > Performance and Scalability):\nThe System must be able to retrieve and display within 5-8 seconds the case which has been accessed within the previous 2 months, regardless of storage capacity or number of cases in the system. This requirement is intended to allow for rapid retrieval of frequently-used cases, on the understanding that frequency of use is typically correlated with recent use.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` <= 8000000 (us, operation: retrieve and display)",
+      "lean_predicate": "structure Input where\n  caseId : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  caseId : Nat\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.caseId = i.caseId ∧ o.elapsedMicros ≤ 8000000\n\nexample : Spec.pre { caseId := 12345 } ∧\n          Spec.post { caseId := 12345, elapsedMicros := 7500000 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 27.2,
+      "error": "<generated>:14:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:18:39: error: `elapsedMicros` is not a field of structure `Input`\n<generated>:18:10: error: Application type mismatch: The argument\n  Spec.post { caseId := 12345 }\nhas type\n  Output → Prop\nbut is expected to have type\n  Prop\nin the application\n  Spec.pre { caseId := 12345 } ∧ Spec.post { caseId := 12345 }\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "4/performance-and-scalability/R4",
+      "kind": "requirement",
+      "verification": "lean+python_runtime",
+      "requirement_text": "The System must be able to retrieve and display within 20 seconds the case which has not been accessed within the previous 2 months, regardless of storage capacity or number of cases in the system. This requirement is intended to allow for cases where cases used infrequently are stored on slower media than more active records.",
+      "text_predicate": "Requirement 4/performance-and-scalability/R4 (NON-FUNCTIONAL REQUIREMENTS > Performance and Scalability):\nThe System must be able to retrieve and display within 20 seconds the case which has not been accessed within the previous 2 months, regardless of storage capacity or number of cases in the system. This requirement is intended to allow for cases where cases used infrequently are stored on slower media than more active records.\nPart of this requirement is a runtime bound. A Python benchmark measures it and\nthe measured value is checked against your spec with `decide`. Add each measured\nvalue as a `Nat` field of `Output` with the field name given below, and state\nthe bound on it in `post`.\n- `elapsedMicros` <= 20000000 (us, operation: retrieve and display)",
+      "lean_predicate": "structure Input where\n  cases : List String\n  elapsedMicros : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  elapsedMicros : Nat\n  caseId        : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.cases.Nodup\n  post := fun i o => o.elapsedMicros ≤ 20000000 ∧\n                     (o.caseId = i.cases.getLastD \"C0\" ∧\n                      o.elapsedMicros > 0)\n\nexample : Spec.pre { cases := [\"C1\", \"C2\", \"C3\"], elapsedMicros := 15000000 } ∧\n          Spec.post { cases := [\"C1\", \"C2\", \"C3\"], elapsedMicros := 15000000 }\n                    { elapsedMicros := 15000000, caseId := \"C3\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { cases := [\"C1\", \"C2\"], elapsedMicros := 15000000 } ∧ ¬ Spec.post { cases := [\"C1\", \"C2\"], elapsedMicros := 15000000 } { elapsedMicros := 15000000, caseId := \"C1\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { cases := [\"C1\", \"C2\"], elapsedMicros := 15000000 } ∧ ¬ Spec.post { cases := [\"C1\", \"C2\"], elapsedMicros := 15000000 } { elapsedMicros := 15000000, caseId := \"C1\" } := by\n  unfold Spec; decide",
+          "why": "The output does not meet the requirement of retrieving and displaying the case which has not been accessed within the previous 2 months.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 19.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "5/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The core services, support layer and security and access control components can be deployed as standard components with necessary configuration changes.",
+      "text_predicate": "Requirement 5/S6 (FUNCTIONAL ARCHITECTURE RECOMMENDATIONS):\nThe core services, support layer and security and access control components can be deployed as standard components with necessary configuration changes.",
+      "lean_predicate": "structure Input where\n  coreServices   : List String\n  supportLayer   : List String\n  securityAccess : List String\n  configChanges  : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deployed      : List String\n  configApplied : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.coreServices ≠ [] ∧ i.supportLayer ≠ [] ∧ i.securityAccess ≠ [] ∧ i.configChanges ≠ []\n  post := fun i o => (o.deployed = i.coreServices ++ i.supportLayer ++ i.securityAccess) ∧\n                     (o.configApplied = i.configChanges)\n\nexample : Spec.pre { coreServices := [\"service1\", \"service2\"], supportLayer := [\"layer1\", \"layer2\"], securityAccess := [\"sec1\", \"sec2\"], configChanges := [\"change1\", \"change2\"] } ∧\n          Spec.post { coreServices := [\"service1\", \"service2\"], supportLayer := [\"layer1\", \"layer2\"], securityAccess := [\"sec1\", \"sec2\"], configChanges := [\"change1\", \"change2\"] }\n                    { deployed := [\"service1\", \"service2\", \"layer1\", \"layer2\", \"sec1\", \"sec2\"], configApplied := [\"change1\", \"change2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { coreServices := [], supportLayer := [\"layer1\"], securityAccess := [\"access1\"], configChanges := [\"change1\"] } ∧ ¬ Spec.post { coreServices := [], supportLayer := [\"layer1\"], securityAccess := [\"access1\"], configChanges := [\"change1\"] } { deployed := [\"layer1\", \"access1\"], configApplied := [\"change1\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { coreServices := [], supportLayer := [\"layer1\"], securityAccess := [\"access1\"], configChanges := [\"change1\"] } ∧ ¬ Spec.post { coreServices := [], supportLayer := [\"layer1\"], securityAccess := [\"access1\"], configChanges := [\"change1\"] } { deployed := [\"layer1\", \"access1\"], configApplied := [\"change1\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids the deployment of an empty list for any of the core services, support layer, or security and access control components.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 27.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "5/S7",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The customization layer can override and add to the core services based on the specific state requirements and can be plugged with the core services.",
+      "text_predicate": "Requirement 5/S7 (FUNCTIONAL ARCHITECTURE RECOMMENDATIONS):\nThe customization layer can override and add to the core services based on the specific state requirements and can be plugged with the core services.",
+      "lean_predicate": "structure Input where\n  coreServices : List String\n  customizationLayer : List String\n  stateRequirements : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  services : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.coreServices.Nodup ∧ i.customizationLayer.Nodup ∧ i.stateRequirements.Nodup\n  post := fun i o => \n    o.services = i.coreServices ++ i.customizationLayer.filter (fun x => i.stateRequirements.contains x)\n\nexample : Spec.pre { coreServices := [\"service1\", \"service2\"], customizationLayer := [\"service3\", \"service4\"], stateRequirements := [\"service3\", \"service4\", \"service5\"] } ∧\n          Spec.post { coreServices := [\"service1\", \"service2\"], customizationLayer := [\"service3\", \"service4\"], stateRequirements := [\"service3\", \"service4\", \"service5\"] }\n                    { services := [\"service1\", \"service2\", \"service3\", \"service4\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { coreServices := [\"service1\", \"service2\"], customizationLayer := [\"service3\", \"service4\"], stateRequirements := [\"service1\", \"service2\"] } ∧ ¬ Spec.post { coreServices := [\"service1\", \"service2\"], customizationLayer := [\"service3\", \"service4\"], stateRequirements := [\"service1\", \"service2\"] } { services := [\"service1\", \"service2\", \"service3\", \"service4\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { coreServices := [\"service1\", \"service2\"], customizationLayer := [\"service3\", \"service4\"], stateRequirements := [\"service1\", \"service2\"] } ∧ ¬ Spec.post { coreServices := [\"service1\", \"service2\"], customizationLayer := [\"service3\", \"service4\"], stateRequirements := [\"service1\", \"service2\"] } { services := [\"service1\", \"service2\", \"service3\", \"service4\"] } := by\n  unfold Spec; decide",
+          "why": "The customization layer should not be able to add services that do not match the state requirements.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 40.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "5/system-functionality/R21",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system should support selective encryption of the stored data",
+      "text_predicate": "Requirement 5/system-functionality/R21 (FUNCTIONAL ARCHITECTURE RECOMMENDATIONS > System Functionality):\nThe system should support selective encryption of the stored data",
+      "lean_predicate": "structure Input where\n  data : List String\n  fieldsToEncrypt : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  encryptedData : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.fieldsToEncrypt.Nodup ∧ i.fieldsToEncrypt.all (fun f => i.data.any (fun d => d.contains f))\n  post := fun i o => o.encryptedData.length = i.data.length ∧\n                     (∀ d ∈ i.data, ∃ e ∈ o.encryptedData, i.fieldsToEncrypt.contains d ∧ e ≠ d) ∧\n                     (∀ d ∈ i.data, ¬(i.fieldsToEncrypt.contains d) → o.encryptedData.contains d = i.data.contains d)\n\nexample : Spec.pre { data := [\"name\", \"address\", \"phone\"], fieldsToEncrypt := [\"name\", \"phone\"] } ∧\n          Spec.post { data := [\"name\", \"address\", \"phone\"], fieldsToEncrypt := [\"name\", \"phone\"] }\n                     { encryptedData := [\"encrypted_name\", \"address\", \"encrypted_phone\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 38.4,
+      "error": "<generated>:22:15: error: Tactic `decide` failed for proposition\n  { pre := fun i => i.fieldsToEncrypt.Nodup ∧ (i.fieldsToEncrypt.all fun f => i.data.any fun d => d.contains f) = true,\n          post := fun i o =>\n            o.encryptedData.length = i.data.length ∧\n              (∀ (d : String), d ∈ i.data → ∃ e, e ∈ o.encryptedData ∧ i.fieldsToEncrypt.contains d = true ∧ e ≠ d) ∧\n                ∀ (d : String),\n                  d ∈ i.data →\n                    ¬i.fieldsToEncrypt.contains d = true → o.encryptedData.contains d = i.data.contains d }.pre\n      { data := [\"name\", \"address\", \"phone\"], fieldsToEncrypt := [\"name\", \"phone\"] } ∧\n    {\n          pre := fun i =>\n            i.fieldsToEncrypt.Nodup ∧ (i.fieldsToEncrypt.all fun f => i.data.any fun d => d.contains f) = true,\n          post := fun i o =>\n            o.encryptedData.length = i.data.length ∧\n              (∀ (d : String), d ∈ i.data → ∃ e, e ∈ o.encryptedData ∧ i.fieldsToEncrypt.contains d = true ∧ e ≠ d) ∧\n                ∀ (d : String),\n                  d ∈ i.data →\n                    ¬i.fieldsToEncrypt.contains d = true → o.encryptedData.contains d = i.data.contains d }.post\n      { data := [\"name\", \"address\", \"phone\"], fieldsToEncrypt := [\"name\", \"phone\"] }\n      { encryptedData := [\"encrypted_name\", \"address\", \"encrypted_phone\"] }\nbecause its `Decidable` instance\n  instDecidableAnd\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `decEq`, `instDecidableAnd`, `instDecidableEqBitVec`, `instDecidableEqBool`, `instDecidableEqFin`, `instDecidableEqList`, `instDecidableEqNat`, `instDecidableEqString`, `instDecidableEqUInt8`, `instDecidableNot`, `instDecidableOr`, `BitVec.decEq`, `Bool.decEq`, `Classical.propDecidable`, `List.decidableBAll`, `List.instDecidablePairwise`, `List.nodupDecidable`, `Nat.decEq`, `Nat.decLe`, `Nat.decLt`, `String.decEq`, and `UInt8.decEq`, reduction got stuck at the `Decidable` instance\n  match\n    { data := [\"name\", \"address\", \"phone\"], fieldsToEncrypt := [\"name\", \"phone\"] }.fieldsToEncrypt.all fun f =>\n      { data := [\"name\", \"address\", \"phone\"], fieldsToEncrypt := [\"name\", \"phone\"] }.data.any fun d => d.contains f,\n    true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found",
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "weakened",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "weakened",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "weakened",
+          "fixups": [],
+          "stopped": "the same failure 3 times"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same failure 3 times",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "5/system-functionality/R24",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The system should ensure high scalability and performance through: Use of cache for storing frequent data Use of AJAX based technology to improve user experience. Aggressive page loading to be considered based on the screen and estimate usage pattern Leverage Asynchronous HTTP socket capabilities of web server for scalability and performance Host all the static content (documents, images) on the web server The search results should be fetched from the database in batches of 10 or 20 maximum as configured within the application Display of records on the screen in batches/paged manner The search should fetch only the fields that need to be displayed to the user. Only when the user clicks on a particular record to view its further details should a query be fired to fetch the additional details for this particular record only A hierarchical cache should be configured and used for caching of results of most frequently used searches Database Indexes should be applied on the key columns used for searching",
+      "text_predicate": "Requirement 5/system-functionality/R24 (FUNCTIONAL ARCHITECTURE RECOMMENDATIONS > System Functionality):\nThe system should ensure high scalability and performance through: Use of cache for storing frequent data Use of AJAX based technology to improve user experience. Aggressive page loading to be considered based on the screen and estimate usage pattern Leverage Asynchronous HTTP socket capabilities of web server for scalability and performance Host all the static content (documents, images) on the web server The search results should be fetched from the database in batches of 10 or 20 maximum as configured within the application Display of records on the screen in batches/paged manner The search should fetch only the fields that need to be displayed to the user. Only when the user clicks on a particular record to view its further details should a query be fired to fetch the additional details for this particular record only A hierarchical cache should be configured and used for caching of results of most frequently used searches Database Indexes should be applied on the key columns used for searching",
+      "lean_predicate": "structure Input where\n  screenType : String\n  config     : String\n  searchQuery : String\n  fieldsToDisplay : List String\n  userClicked : Bool\n  cacheLevel : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  records : List String\n  additionalDetails : List String\n  cacheHit : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.screenType ≠ \"\" ∧ i.config ≠ \"\" ∧ i.searchQuery ≠ \"\"\n  post := fun i o =>\n    (o.cacheHit = true ↔ i.cacheLevel > 0) ∧\n    (o.records.length ≤ 20 ∧ o.additionalDetails.length = 0 ↔\n      o.userClicked = false) ∧\n    (o.records.length ≤ 20 ∧ o.additionalDetails.length > 0 ↔\n      o.userClicked = true) ∧\n    (o.records.length = 10 ∨ o.records.length = 20) ∧\n    (o.additionalDetails.length = 0 → o.records.length = 10) ∧\n    (o.additionalDetails.length > 0 → o.records.length = 20)\n\nexample : Spec.pre { screenType := \"mobile\", config := \"batch10\", searchQuery := \"query1\", fieldsToDisplay := [\"field1\"], userClicked := false, cacheLevel := 5 } ∧\n          Spec.post { screenType := \"mobile\", config := \"batch10\", searchQuery := \"query1\", fieldsToDisplay := [\"field1\"], userClicked := false }\n                    { records := [\"record1\"], additionalDetails := [], cacheHit := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 66.3,
+      "error": "<generated>:24:8: error(lean.invalidField): Invalid field `userClicked`: The environment does not contain `Output.userClicked`, so it is not possible to project the field `userClicked` from an expression\n  o\nof type `Output`\n<generated>:26:8: error(lean.invalidField): Invalid field `userClicked`: The environment does not contain `Output.userClicked`, so it is not possible to project the field `userClicked` from an expression\n  o\nof type `Output`\n<generated>:32:20: error: Fields missing: `cacheLevel`\n\nHint: Add missing fields:\n  ,̲\n  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲c̲a̲c̲h̲e̲L̲e̲v̲e̲l̲ ̲:̲=̲ ̲_̲\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    }
+  ],
+  "l05_summary": {
+    "pass": 13,
+    "flag": 1,
+    "fail": 8
+  }
+}

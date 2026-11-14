@@ -1,0 +1,284 @@
+[
+  {
+    "id": "4.1/I1",
+    "kind": "requirement",
+    "requirement_text": "Environmental Mode: This is the real-time operations that must react to varying degrees of readiness to full scale wartime operations such as crisis planning with the use of heterogeneous data types and sources, transfer capabilities, data management services.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.environmentalMode ↔\n    (i.readiness > 0) ∧\n    (o.crisisPlanning = i.crisisPlanning) ∧\n    (o.transferCapabilities = i.transferCapabilities) ∧\n    (o.dataManagement = i.dataManagement) ∧\n    (o.readiness = i.readiness) ∧\n    (o.environmentalMode = true ↔\n      (i.crisisPlanning = true) ∧\n      (i.transferCapabilities > 0) ∧\n      (i.dataManagement > 0))`. Change the function so that they hold (the contract is locked). What to do: (1) compute `environmentalMode`, `crisisPlanning`, `transferCapabilities`, `dataManagement`, `readiness` from the input (count / compare / arithmetic) so that `o.environmentalMode ↔ (x.readiness > 0) ∧ (o.crisisPlanning = x.crisisPlanning) ∧ (o.transferCapabilities = x.transferCapabilities) ∧ (o.dataManagement = x.dataManagement) ∧ (o.readiness = x.readiness) ∧ (o.environmentalMode = true ↔ (x.crisisPlanning = true) ∧ (x.transferCapabilities > 0) ∧ (x.dataManagement > 0))` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { environmentalMode := (x.crisisPlanning = true) ∧ (x.transferCapabilities > 0) ∧ (x.dataManagement > 0),\n    readiness := x.readiness,\n    crisisPlanning := x.crisisPlanning,\n    transferCapabilities := x.transferCapabilities,\n    dataManagement := x.dataManagement }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 38.9
+  },
+  {
+    "id": "4.1/I3",
+    "kind": "requirement",
+    "requirement_text": "In the fixed (static) mode of operation (base or data processing megacenter), the data management services shall have the capability of being tuned by on-site personnel to adjust for varying workloads and sizes of associated databases. These workloads and databases are expected to change more frequently and to a greater extent than for processing associated with deployed units",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ tuned := true, workload := x.workload, databaseSize := x.databaseSize }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.tuned = true ↔\n    (i.workload < 500 → o.workload = i.workload * 2) ∧\n    (i.workload ≥ 500 → o.workload = i.workload / 2) ∧\n    (i.databaseSize < 1000 → o.databaseSize = i.databaseSize * 2) ∧\n    (i.databaseSize ≥ 1000 → o.databaseSize = i.databaseSize / 2) ∧\n    o.tuned = false → o.workload = i.workload ∧ o.databaseSize = i.databaseSize ∧\n    o.tuned = true → o.workload ≠ i.workload ∧ o.databaseSize ≠ i.databaseSize`. Change the function so that they hold (the contract is locked). What to do: (1) compute `tuned`, `workload`, `databaseSize` from the input (count / compare / arithmetic) so that `o.tuned = true ↔ (x.workload < 500 → o.workload = x.workload * 2) ∧ (x.workload ≥ 500 → o.workload = x.workload / 2) ∧ (x.databaseSize < 1000 → o.databaseSize = x.databaseSize * 2) ∧ (x.databaseSize ≥ 1000 → o.databaseSize = x.databaseSize / 2) ∧ o.tuned = false → o.workload = x.workload ∧ o.databaseSize = x.databaseSize ∧ o.tuned = true → o.workload ≠ x.workload ∧ o.databaseSize ≠ x.databaseSize` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "names",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { tuned := (x.workload < 500) ≠ (x.databaseSize < 1000),\n    workload := if x.workload < 500 then x.workload * 2 else x.workload / 2,\n    databaseSize := if x.databaseSize < 1000 then x.databaseSize * 2 else x.databaseSize / 2 }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 46.7
+  },
+  {
+    "id": "4.14.2/S2",
+    "kind": "requirement",
+    "requirement_text": "The Qualification Methods applied to the software shall include test, demonstration, analysis, and inspection (T, D, A, I).",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { qualified := decide ((x.method = \"T\" ∨ x.method = \"D\" ∨ x.method = \"A\" ∨ x.method = \"I\")) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "qualified"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.0
+  },
+  {
+    "id": "4.14.7/I4",
+    "kind": "requirement",
+    "requirement_text": "COE Chief Engineer's Role. The COE Chief Engineer will approve a single Point of Contact (POC) for a COI to manage the tags within that COI. The COE Chief Engineer will reserve ultimate authority to mediate any unresolved disputes within all COIs.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ pocForCOI := x.pocForCOI, disputesMediationRight := x.disputesMediationRight }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { pocForCOI := x.pocForCOI,\n    disputesMediationRight := x.disputesMediationRight }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "pocForCOI",
+            "disputesMediationRight"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.4
+  },
+  {
+    "id": "4.14.7/I5",
+    "kind": "requirement",
+    "requirement_text": "The COE Data Engineering Team's Role. Tags and semantics will be analyzed to identify opportunities to consolidate tags towards a single or a minimal number of representations. A \"market forces\" model can also guide COE Data Engineering in identifying the weak candidates from the strong.8",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.consolidatedTags ≠ []`. Change the function so that they hold (the contract is locked). What to do: (1) change `consolidatedTags` so that `o.consolidatedTags ≠ []` holds.",
+        "error_class": "po3",
+        "stages": [
+          "names",
+          "names",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { consolidatedTags := (x.tags.filter (fun t => ∃ t' ∈ x.tags, t' = t)).take x.tags.length }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 43.4
+  },
+  {
+    "id": "Include descriptive definitions AND synonyms for the Information Resource Definition./S1",
+    "kind": "requirement",
+    "requirement_text": "Initially, the Registry will not have keyword, thesaurus, or ontology support but it will have a substring search for a number of fields, including definition.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ found := false, definition := x.definition }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 4,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { found := (x.definition.toList.all Char.isAlphanum) ∧ (x.definition.length ≤ 100),\n    definition := x.definition }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "found",
+            "definition"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 24.1
+  }
+]

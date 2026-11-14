@@ -1,0 +1,1648 @@
+{
+  "source": {
+    "file": "1998 - themas.xml",
+    "sha256": "f7d594dddd0b03abb8fd57401a970fde0f79ce6dc8582ea10dc82f33e73c76aa"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v11",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "ed18e9b",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 30,
+    "compiles": 24,
+    "rejects_bad_example": 16,
+    "checked": 20,
+    "failed": 10,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "2.4/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When a signal is sent to a heating or cooling unit, no signal shall be available to allow the THEMAS system to determine if the signal sent to the unit was realized by the unit.",
+      "text_predicate": "Requirement 2.4/S4 (None > General Constraints):\nWhen a signal is sent to a heating or cooling unit, no signal shall be available to allow the THEMAS system to determine if the signal sent to the unit was realized by the unit.",
+      "lean_predicate": "structure Input where\n  signalSent : Bool\n  signalRealized : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  signalSent : Bool\n  signalRealized : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.signalSent\n  post := fun i o => o.signalSent = i.signalSent ∧\n                     o.signalRealized = false ∧\n                     (o.signalSent = true ↔ i.signalSent = true)\n\nexample : Spec.pre { signalSent := true, signalRealized := false } ∧\n          Spec.post { signalSent := true, signalRealized := false }\n                    { signalSent := true, signalRealized := false } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { signalSent := true, signalRealized := false } ∧ ¬ Spec.post { signalSent := true, signalRealized := false } { signalSent := true, signalRealized := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { signalSent := true, signalRealized := false } ∧ ¬ Spec.post { signalSent := true, signalRealized := false } { signalSent := true, signalRealized := true } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids the signalRealized field from being true when signalSent is true.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 29.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ signalSent := x.signalSent, signalRealized := false }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.1.1.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The THEMAS system shall use the information contained in the initialization data file to determine which heating and cooling units are part of the THEMAS system.",
+      "text_predicate": "Requirement 3.1.1.1.3/S1 (Engineering Requirements > Functional Requirements > Initialize Operational Parameters > Load H/C Unit Definitions (SRS -001) > Processing):\nThe THEMAS system shall use the information contained in the initialization data file to determine which heating and cooling units are part of the THEMAS system.\nThis requirement prescribes HOW to build something (a method, algorithm or\ntechnology). Record that in a `-- IMPL:` comment above `def Spec`, and specify\nonly the observable result in `pre`/`post`.",
+      "lean_predicate": "structure UnitDefinition where\n  unitId : Nat\n  type   : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  initializationData : List UnitDefinition\n  deriving DecidableEq, Repr\n\nstructure Output where\n  units : List UnitDefinition\n  deriving DecidableEq, Repr\n\n-- IMPL: The system reads the initialization data file and determines which units are heating or cooling units.\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.initializationData.Nodup\n  post := fun i o => o.units = i.initializationData.filter (fun u => u.type = \"heating\" ∨ u.type = \"cooling\")\n\nexample : Spec.pre { initializationData := [{ unitId := 1, type := \"heating\" },\n                                             { unitId := 2, type := \"cooling\" },\n                                             { unitId := 3, type := \"heating\" }] } ∧\n          Spec.post { initializationData := [{ unitId := 1, type := \"heating\" },\n                                              { unitId := 2, type := \"cooling\" },\n                                              { unitId := 3, type := \"heating\" }] }\n                    { units := [{ unitId := 1, type := \"heating\" },\n                                { unitId := 2, type := \"cooling\" },\n                                { unitId := 3, type := \"heating\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { initializationData := [{ unitId := 1, type := \"heating\" }, { unitId := 2, type := \"cooling\" }, { unitId := 3, type := \"none\" }] } ∧ ¬ Spec.post { initializationData := [{ unitId := 1, type := \"heating\" }, { unitId := 2, type := \"cooling\" }, { unitId := 3, type := \"none\" }] } { units := [{ unitId := 1, type := \"heating\" }, { unitId := 2, type := \"cooling\" }, { unitId := 3, type := \"none\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { initializationData := [{ unitId := 1, type := \"heating\" }, { unitId := 2, type := \"cooling\" }, { unitId := 3, type := \"none\" }] } ∧ ¬ Spec.post { initializationData := [{ unitId := 1, type := \"heating\" }, { unitId := 2, type := \"cooling\" }, { unitId := 3, type := \"none\" }] } { units := [{ unitId := 1, type := \"heating\" }, { unitId := 2, type := \"cooling\" }, { unitId := 3, type := \"none\" }] } := by\n  unfold Spec; decide",
+          "why": "The output should only contain units of type \"heating\" or \"cooling\", but it includes a unit of type \"none\".",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 13.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.1.1.2.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Each thermostat shall have a unique identifier by which that thermostat is identified in the THEMAS system.",
+      "text_predicate": "Requirement 3.1.1.2.1/S1 (Engineering Requirements > Functional Requirements > Initialize Operational Parameters > Load Thermostat Definitions (SRS -002) > Introduction):\nEach thermostat shall have a unique identifier by which that thermostat is identified in the THEMAS system.",
+      "lean_predicate": "structure Thermostat where\n  id : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  thermostats : List Thermostat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  thermostats : List Thermostat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.thermostats.Nodup ∧ i.thermostats.all (fun t => 0 < t.id)\n  post := fun i o => o.thermostats = i.thermostats ∧\n                     ∀ t ∈ o.thermostats, 0 < t.id\n\nexample : Spec.pre { thermostats := [{ id := 1 }, { id := 2 }] } ∧\n          Spec.post { thermostats := [{ id := 1 }, { id := 2 }] }\n                    { thermostats := [{ id := 1 }, { id := 2 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { thermostats := [{ id := 1 }, { id := 1 }] } ∧ ¬ Spec.post { thermostats := [{ id := 1 }, { id := 1 }] } { thermostats := [{ id := 1 }, { id := 1 }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { thermostats := [{ id := 1 }, { id := 1 }] } ∧ ¬ Spec.post { thermostats := [{ id := 1 }, { id := 1 }] } { thermostats := [{ id := 1 }, { id := 1 }] } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure each thermostat has a unique identifier",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 31.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ thermostats := x.thermostats }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.1.2.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The initialization file shall contain a unique identifier for each thermostat that the system is to monitor.",
+      "text_predicate": "Requirement 3.1.1.2.3/S2 (Engineering Requirements > Functional Requirements > Initialize Operational Parameters > Load Thermostat Definitions (SRS -002) > Processing):\nThe initialization file shall contain a unique identifier for each thermostat that the system is to monitor.",
+      "lean_predicate": "structure Thermostat where\n  id : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  thermostats : List Thermostat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  initialized : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.thermostats.Nodup ∧ i.thermostats.all (fun t => t.id ≠ 0)\n  post := fun i o => o.initialized = true\n\nexample : Spec.pre { thermostats := [{ id := 1 }, { id := 2 }] } ∧\n          Spec.post { thermostats := [{ id := 1 }, { id := 2 }] }\n                    { initialized := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { thermostats := [Thermostat.id 1, Thermostat.id 1] } ∧ ¬ Spec.post { thermostats := [Thermostat.id 1, Thermostat.id 1] } { initialized := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { thermostats := [Thermostat.id 1, Thermostat.id 1] } ∧ ¬ Spec.post { thermostats := [Thermostat.id 1, Thermostat.id 1] } { initialized := true } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the initialization file shall contain a unique identifier for each thermostat, which means that all thermostat IDs must be unique. The output does not reflect this requirement by setting `initialized` to `false` when there are duplicate IDs.",
+          "outcome": "not usable: failed to synthesize instance of type class\n  OfNat Thermostat 1\nnumerals are polymorphic in Lean, but the numeral `1` cannot be used in a context where the expected type is\n  Thermostat\ndue to the absence of the instance above\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command."
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 31.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ initialized := true }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.1.3.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "There shall be a maximum number of heating or cooling u nits that can be on at any given time.",
+      "text_predicate": "Requirement 3.1.1.3.1/S1 (Engineering Requirements > Functional Requirements > Initialize Operational Parameters > Load Thermostat Definitions (SRS -002) > Load Utilization Parameters (SRS -003) > Introduction):\nThere shall be a maximum number of heating or cooling u nits that can be on at any given time.",
+      "lean_predicate": "structure Input where\n  maxUnits : Nat\n  currentUnits : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  currentUnits : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.maxUnits ∧ i.currentUnits ≤ i.maxUnits\n  post := fun i o => o.currentUnits = i.currentUnits ∧\n                     o.currentUnits ≤ i.maxUnits\n\nexample : Spec.pre { maxUnits := 5, currentUnits := 3 } ∧\n          Spec.post { maxUnits := 5, currentUnits := 3 }\n                    { currentUnits := 3 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { maxUnits := 5, currentUnits := 3 } ∧ ¬ Spec.post { maxUnits := 5, currentUnits := 3 } { currentUnits := 6 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { maxUnits := 5, currentUnits := 3 } ∧ ¬ Spec.post { maxUnits := 5, currentUnits := 3 } { currentUnits := 6 } := by\n  unfold Spec; decide",
+          "why": "The output violates the requirement by setting currentUnits to a value greater than maxUnits",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 18.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05_feedback": "\n\nA previous specification for this entry was rejected by the checks:\n- `post` fixes `o.currentUnits` elsewhere, so `o.currentUnits ≤ i.maxUnits` only says `(i.currentUnits) ≤ i.maxUnits` about the input, and `pre` does not ensure that: no implementation can make it true. If the requirement assumes it, add it to `pre`; if the output should differ from the input (e.g. keep only the elements that satisfy it), change the condition that fixes `o.currentUnits`.\n\nThe rejected specification:\n```lean\nstructure Input where\n  maxUnits : Nat\n  currentUnits : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  currentUnits : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => 0 < i.maxUnits\n  post := fun i o => o.currentUnits = i.currentUnits ∧\n                     o.currentUnits ≤ i.maxUnits\n\nexample : Spec.pre { maxUnits := 5, currentUnits := 3 } ∧\n          Spec.post { maxUnits := 5, currentUnits := 3 }\n                    { currentUnits := 3 } := by\n  unfold Spec; decide\n```\n\nWrite a new specification that fixes these problems.",
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ currentUnits := x.currentUnits }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      },
+      "l05_rounds": 1
+    },
+    {
+      "id": "3.1.1.3.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The maximum number of heating or cooling units that can run concurrently shall reside in an initialization file.",
+      "text_predicate": "Requirement 3.1.1.3.3/S1 (Engineering Requirements > Functional Requirements > Initialize Operational Parameters > Load Thermostat Definitions (SRS -002) > Load Utilization Parameters (SRS -003) > Processing):\nThe maximum number of heating or cooling units that can run concurrently shall reside in an initialization file.",
+      "lean_predicate": "structure HeatingUnit where\n  id : Nat\n  status : Bool\n  deriving DecidableEq, Repr\n\nstructure CoolingUnit where\n  id : Nat\n  status : Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  maxHeatingUnits : Nat\n  maxCoolingUnits : Nat\n  heatingUnits : List HeatingUnit\n  coolingUnits : List CoolingUnit\n  deriving DecidableEq, Repr\n\nstructure Output where\n  maxHeatingUnits : Nat\n  maxCoolingUnits : Nat\n  heatingUnits : List HeatingUnit\n  coolingUnits : List CoolingUnit\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.maxHeatingUnits > 0 ∧ i.maxCoolingUnits > 0\n  post := fun i o => o.maxHeatingUnits = i.maxHeatingUnits ∧\n                     o.maxCoolingUnits = i.maxCoolingUnits ∧\n                     o.heatingUnits = i.heatingUnits ∧\n                     o.coolingUnits = i.coolingUnits\n\nexample : Spec.pre { maxHeatingUnits := 5, maxCoolingUnits := 3,\n                     heatingUnits := [{ id := 1, status := true }],\n                     coolingUnits := [{ id := 1, status := true }] } ∧\n          Spec.post { maxHeatingUnits := 5, maxCoolingUnits := 3,\n                      heatingUnits := [{ id := 1, status := true }],\n                      coolingUnits := [{ id := 1, status := true }] }\n                    { maxHeatingUnits := 5, maxCoolingUnits := 3,\n                      heatingUnits := [{ id := 1, status := true }],\n                      coolingUnits := [{ id := 1, status := true }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { maxHeatingUnits := 10, maxCoolingUnits := 15, heatingUnits := [], coolingUnits := [] } ∧ ¬ Spec.post { maxHeatingUnits := 10, maxCoolingUnits := 15, heatingUnits := [], coolingUnits := [] } { maxHeatingUnits := 20, maxCoolingUnits := 30, heatingUnits := [], coolingUnits := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { maxHeatingUnits := 10, maxCoolingUnits := 15, heatingUnits := [], coolingUnits := [] } ∧ ¬ Spec.post { maxHeatingUnits := 10, maxCoolingUnits := 15, heatingUnits := [], coolingUnits := [] } { maxHeatingUnits := 20, maxCoolingUnits := 30, heatingUnits := [], coolingUnits := [] } := by\n  unfold Spec; decide",
+          "why": "The maximum number of heating or cooling units that can run concurrently shall reside in an initialization file.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 32.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ maxHeatingUnits := x.maxHeatingUnits, maxCoolingUnits := x.maxCoolingUnits, heatingUnits := x.heatingUnits, coolingUnits := x.coolingUnits }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.1.3.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The maximum number of concurrently running units shall be read from the initialization file and stored in the THEMAS system.",
+      "text_predicate": "Requirement 3.1.1.3.3/S2 (Engineering Requirements > Functional Requirements > Initialize Operational Parameters > Load Thermostat Definitions (SRS -002) > Load Utilization Parameters (SRS -003) > Processing):\nThe maximum number of concurrently running units shall be read from the initialization file and stored in the THEMAS system.",
+      "lean_predicate": "structure UnitDefinition where\n  maxConcurrentUnits : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  initFile : String\n  maxConcurrentUnits : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  maxConcurrentUnits : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.initFile ≠ \"\"\n  post := fun i o => o.maxConcurrentUnits = i.maxConcurrentUnits\n\nexample : Spec.pre { initFile := \"thermostat_init.txt\", maxConcurrentUnits := 5 } ∧\n          Spec.post { initFile := \"thermostat_init.txt\", maxConcurrentUnits := 5 }\n                    { maxConcurrentUnits := 5 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { initFile := \"init.dat\", maxConcurrentUnits := 10 } ∧ ¬ Spec.post { initFile := \"init.dat\", maxConcurrentUnits := 10 } { maxConcurrentUnits := 5 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { initFile := \"init.dat\", maxConcurrentUnits := 10 } ∧ ¬ Spec.post { initFile := \"init.dat\", maxConcurrentUnits := 10 } { maxConcurrentUnits := 5 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the maximum number of concurrently running units must be read from the initialization file and stored in the THEMAS system. A wrong output would be any value other than what is specified in the initialization file.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 40.3,
+      "error": "L0.5: `post` is too weak: the implementation `{ maxConcurrentUnits := x.maxConcurrentUnits }` (only copied input fields and fixed values) satisfies it, so code verified against this spec need not do anything the requirement asks. Add the conditions that tie each output field to the rule in the requirement (what it must be computed from, and when it differs from the input).",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": [
+            "accepted after a once-only finding"
+          ]
+        }
+      ],
+      "weak_fallback": true,
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ maxConcurrentUnits := x.maxConcurrentUnits }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.3.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Two types of temperature data shall be recognized from the thermostats: 1) the temperature setting and 2) the current temperature.",
+      "text_predicate": "Requirement 3.1.3.3/S1 (Engineering Requirements > Functional Requirements > Validate Temperature (SRS -008) > Processing):\nTwo types of temperature data shall be recognized from the thermostats: 1) the temperature setting and 2) the current temperature.",
+      "lean_predicate": "structure Input where\n  temperatureSetting : Nat\n  currentTemperature : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  temperatureSetting : Nat\n  currentTemperature : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => (o.temperatureSetting = i.temperatureSetting ∧\n                      o.currentTemperature = i.currentTemperature) ∧\n                     (o.temperatureSetting ≠ i.temperatureSetting →\n                      o.temperatureSetting = i.temperatureSetting) ∧\n                     (o.currentTemperature ≠ i.currentTemperature →\n                      o.currentTemperature = i.currentTemperature)\n\nexample : Spec.pre { temperatureSetting := 23, currentTemperature := 20 } ∧\n          Spec.post { temperatureSetting := 23, currentTemperature := 20 }\n                    { temperatureSetting := 23, currentTemperature := 20 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { temperatureSetting := 23, currentTemperature := 20 } ∧ ¬ Spec.post { temperatureSetting := 23, currentTemperature := 20 } { temperatureSetting := 25, currentTemperature := 18 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { temperatureSetting := 23, currentTemperature := 20 } ∧ ¬ Spec.post { temperatureSetting := 23, currentTemperature := 20 } { temperatureSetting := 25, currentTemperature := 18 } := by\n  unfold Spec; decide",
+          "why": "The output does not match the input for both temperature fields, which is forbidden by the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 17.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ temperatureSetting := x.temperatureSetting, currentTemperature := x.currentTemperature }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.3.3/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "A current temperature value that is received from an individual thermostat shall be compared to the valid temperature range values.",
+      "text_predicate": "Requirement 3.1.3.3/S3 (Engineering Requirements > Functional Requirements > Validate Temperature (SRS -008) > Processing):\nA current temperature value that is received from an individual thermostat shall be compared to the valid temperature range values.",
+      "lean_predicate": "structure Input where\n  temperature : Nat\n  valid_min   : Nat\n  valid_max   : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  within_range : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.valid_min < i.valid_max\n  post := fun i o => o.within_range = true ↔ i.temperature ≥ i.valid_min ∧ i.temperature ≤ i.valid_max\n\nexample : Spec.pre { temperature := 22, valid_min := 18, valid_max := 25 } ∧\n          Spec.post { temperature := 22, valid_min := 18, valid_max := 25 }\n                    { within_range := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { temperature := 50, valid_min := 30, valid_max := 70 } ∧ ¬ Spec.post { temperature := 50, valid_min := 30, valid_max := 70 } { within_range := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 38.9,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { temperature := 50, valid_min := 30, valid_max := 70 } { within_range := true }` holds, but the requirement forbids this output for this input (The output should indicate that the temperature is not within the valid range, but a buggy system might return true.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { temperature := 50, valid_min := 30, valid_max := 70 } ∧ ¬ Spec.post { temperature := 50, valid_min := 30, valid_max := 70 } { within_range := true } := by unfold Spec; decide"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.3.3/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the current temperature value is strictly less than the lower value of the valid temperature range or if the received temperature value is strictly greater than the upper value of the valid temperature range, then the THEMAS system shall identify the current temperature value as an invalid temperature and shall output an invalid temperature status.",
+      "text_predicate": "Requirement 3.1.3.3/S4 (Engineering Requirements > Functional Requirements > Validate Temperature (SRS -008) > Processing):\nIf the current temperature value is strictly less than the lower value of the valid temperature range or if the received temperature value is strictly greater than the upper value of the valid temperature range, then the THEMAS system shall identify the current temperature value as an invalid temperature and shall output an invalid temperature status.",
+      "lean_predicate": "structure Input where\n  currentTemp : Nat\n  lower       : Nat\n  upper       : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  invalidTemp : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => (o.invalidTemp = true ↔\n    (i.currentTemp < i.lower) ∨\n    (i.currentTemp > i.upper))\n\nexample : Spec.pre { currentTemp := 10, lower := 15, upper := 25 } ∧\n          Spec.post { currentTemp := 10, lower := 15, upper := 25 }\n                    { invalidTemp := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { currentTemp := 10, lower := 15, upper := 25 } ∧ ¬ Spec.post { currentTemp := 10, lower := 15, upper := 25 } { invalidTemp := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { currentTemp := 10, lower := 15, upper := 25 } ∧ ¬ Spec.post { currentTemp := 10, lower := 15, upper := 25 } { invalidTemp := false } := by\n  unfold Spec; decide",
+          "why": "The output does not identify the current temperature value as invalid when it should",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 24.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05_feedback": "\n\nA previous specification for this entry was rejected by the checks:\n- does not compile\n- Lean / check error: <generated>:6:29: error: unexpected token ','; expected '//', '}' or structInstFieldDecl\n<generated>:6:53: error: unexpected identifier; expected 'instance'\n<generated>:7:10: error: unexpected identifier; expected 'instance'\n<generated>:13:4: warning: declaration uses `sorry`\n<generated>:14:14: warning: unused variable `i`\n\nNote: This linter can be disabled with `set_option linter.unusedVariables false`\n<generated>:19:56: error: `lower` is not a field of structure `Subtype`\n<generated>:19:69: error: `upper` is not a field of structure `Subtype`\n<generated>:19:54: error: Fields missing: `val`, `property`\n\nHint: Add missing fields:\n  ,̲ ̲v̲a̲l̲ ̲:̲=̲ ̲_̲,̲\n  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲p̲r̲o̲p̲e̲r̲t̲y̲ ̲:̲=̲ ̲_̲\n<generated>:20:57: error: `lower` is not a field of structure `Subtype`\n<generated>:20:70: error: `upper` is not a field of structure `Subtype`\n<generated>:20:55: error: Fields missing: `val`, `property`\n\nHint: Add missing fields:\n  ,̲ ̲v̲a̲l̲ ̲:̲=̲ ̲_̲,̲\n  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲p̲r̲o̲p̲e̲r̲t̲y̲ ̲:̲=̲ ̲_̲\n\n\nThe rejected specification:\n```lean\nstructure Input where\n  currentTemp : Nat\n  validRange  : { lower : Nat, upper : Nat } deriving DecidableEq, Repr\n  deriving DecidableEq, Repr\n\nstructure Output where\n  invalidTemp : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => (o.invalidTemp = true ↔\n    (i.currentTemp < i.validRange.lower) ∨\n    (i.currentTemp > i.validRange.upper))\n\nexample : Spec.pre { currentTemp := 10, validRange := { lower := 15, upper := 25 } } ∧\n          Spec.post { currentTemp := 10, validRange := { lower := 15, upper := 25 } }\n                    { invalidTemp := true } := by\n  unfold Spec; decide\n```\n\nWrite a new specification that fixes these problems.",
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      },
+      "l05_rounds": 1
+    },
+    {
+      "id": "3.1.3.3/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "A temperature setting value that is received from an individual thermostat shall be compared to the valid temperature range values.",
+      "text_predicate": "Requirement 3.1.3.3/S6 (Engineering Requirements > Functional Requirements > Validate Temperature (SRS -008) > Processing):\nA temperature setting value that is received from an individual thermostat shall be compared to the valid temperature range values.",
+      "lean_predicate": "structure Input where\n  setting : Nat\n  validMin : Nat\n  validMax : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  valid : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.validMin ≤ i.validMax\n  post := fun i o => o.valid = (i.validMin ≤ i.setting ∧ i.setting ≤ i.validMax)\n\nexample : Spec.pre { setting := 25, validMin := 20, validMax := 30 } ∧\n          Spec.post { setting := 25, validMin := 20, validMax := 30 }\n                    { valid := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { setting := 100, validMin := 50, validMax := 75 } ∧ ¬ Spec.post { setting := 100, validMin := 50, validMax := 75 } { valid := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { setting := 100, validMin := 50, validMax := 75 } ∧ ¬ Spec.post { setting := 100, validMin := 50, validMax := 75 } { valid := true } := by\n  unfold Spec; decide",
+          "why": "The output should indicate that the setting is invalid, but a buggy system might accept it.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 18.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.1.4.1.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The THEMAS system shall determine wh en a reported temperature or a changed temperature setting exceeds the limits set by the overtemperature values.",
+      "text_predicate": "Requirement 3.1.4.1.1/S1 (Engineering Requirements > Functional Requirements > Monitor Temperature > Determine Temperature Status (SRS -009) > Introduction):\nThe THEMAS system shall determine wh en a reported temperature or a changed temperature setting exceeds the limits set by the overtemperature values.",
+      "lean_predicate": "structure Input where\n  temperature : Nat\n  overtempValues : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  status : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.temperature ≤ 1000 ∧ i.overtempValues ≤ 1000\n  post := fun i o => o.status = true ↔ i.temperature > i.overtempValues\n\nexample : Spec.pre { temperature := 950, overtempValues := 900 } ∧\n          Spec.post { temperature := 950, overtempValues := 900 }\n                    { status := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { temperature := 500, overtempValues := 600 } ∧ ¬ Spec.post { temperature := 500, overtempValues := 600 } { status := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { temperature := 500, overtempValues := 600 } ∧ ¬ Spec.post { temperature := 500, overtempValues := 600 } { status := true } := by\n  unfold Spec; decide",
+          "why": "The output should be false because the temperature is not greater than the overtemperature value",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 32.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.1.4.1.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The THEMAS system shall compare the reported temperature value to the temperature setting and detect when the temperature value exceeds the specified limits.",
+      "text_predicate": "Requirement 3.1.4.1.3/S1 (Engineering Requirements > Functional Requirements > Monitor Temperature > Determine Temperature Status (SRS -009) > Processing):\nThe THEMAS system shall compare the reported temperature value to the temperature setting and detect when the temperature value exceeds the specified limits.",
+      "lean_predicate": "structure Input where\n  reportedTemp : Nat\n  setting      : Nat\n  upperLimit   : Nat\n  lowerLimit   : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  status : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.upperLimit > i.lowerLimit\n  post := fun i o => o.status = \"within limits\" ↔ i.reportedTemp ≤ i.upperLimit ∧ i.reportedTemp ≥ i.lowerLimit\n\nexample : Spec.pre { reportedTemp := 25, setting := 20, upperLimit := 30, lowerLimit := 15 } ∧\n          Spec.post { reportedTemp := 25, setting := 20, upperLimit := 30, lowerLimit := 15 }\n                    { status := \"within limits\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { reportedTemp := 101, setting := 100, upperLimit := 110, lowerLimit := 90 } ∧ ¬ Spec.post { reportedTemp := 101, setting := 100, upperLimit := 110, lowerLimit := 90 } { status := \"within limits\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { reportedTemp := 101, setting := 100, upperLimit := 110, lowerLimit := 90 } ∧ ¬ Spec.post { reportedTemp := 101, setting := 100, upperLimit := 110, lowerLimit := 90 } { status := \"within limits\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the system shall detect when the temperature value exceeds the specified limits. A buggy system would not change the status to \"within limits\" when the temperature is outside the limits.",
+          "outcome": "accepted"
+        }
+      ],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 55.5,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { reportedTemp := 101, setting := 100, upperLimit := 110, lowerLimit := 90 } { status := \"within limits\" }` holds, but the requirement forbids this output for this input (The requirement states that the system should detect when the temperature value exceeds the specified limits. A buggy system would fail to detect this and return \"within limits\".). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { reportedTemp := 101, setting := 100, upperLimit := 110, lowerLimit := 90 } ∧ ¬ Spec.post { reportedTemp := 101, setting := 100, upperLimit := 110, lowerLimit := 90 } { status := \"within limits\" } := by unfold Spec; decide"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.4.1.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "To clarify these conditions, the following definitions will be used: LO : Lower Overtemperature Value = TSET - OD UO : Upper Overtemperature Value = TSET + OD If T = LO or UO = T then the THEMAS system shall recognize this condition as the temperature limit has been exceeded.",
+      "text_predicate": "Requirement 3.1.4.1.3/S2 (Engineering Requirements > Functional Requirements > Monitor Temperature > Determine Temperature Status (SRS -009) > Processing):\nTo clarify these conditions, the following definitions will be used: LO : Lower Overtemperature Value = TSET - OD UO : Upper Overtemperature Value = TSET + OD If T = LO or UO = T then the THEMAS system shall recognize this condition as the temperature limit has been exceeded.",
+      "lean_predicate": "structure Input where\n  TSET : Nat\n  OD   : Nat\n  T    : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  exceeded : Bool\n  deriving DecidableEq, Repr\n\ndef LO (i : Input) : Nat := i.TSET - i.OD\ndef UO (i : Input) : Nat := i.TSET + i.OD\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.exceeded = true ↔ (i.T = LO i) ∨ (i.T = UO i)\n\nexample : Spec.pre { TSET := 100, OD := 10, T := 110 } ∧ Spec.post { TSET := 100, OD := 10, T := 110 } { exceeded := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { TSET := 100, OD := 10, T := 110 } ∧ ¬ Spec.post { TSET := 100, OD := 10, T := 110 } { exceeded := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { TSET := 100, OD := 10, T := 110 } ∧ ¬ Spec.post { TSET := 100, OD := 10, T := 110 } { exceeded := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that if T = LO or T = UO, then the system shall recognize this condition as the temperature limit has been exceeded. A buggy system might return `exceeded := false` in this case.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 16.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05_feedback": "\n\nA previous specification for this entry was rejected by the checks:\n- `post` accepts an output the requirement forbids: example : Spec.pre { TSET := 100, OD := 10, T := 100 } ∧ ¬ Spec.post { TSET := 100, OD := 10, T := 100 } { exceeded := false } := by unfold Spec; decide\n\nThe rejected specification:\n```lean\nstructure Input where\n  TSET : Nat\n  OD   : Nat\n  T    : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  exceeded : Bool\n  deriving DecidableEq, Repr\n\ndef LO (i : Input) : Nat := i.TSET - i.OD\ndef UO (i : Input) : Nat := i.TSET + i.OD\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.exceeded = true ↔ (i.T = LO i) ∨ (i.T = UO i)\n\nexample : Spec.pre { TSET := 100, OD := 10, T := 110 } ∧\n          Spec.post { TSET := 100, OD := 10, T := 110 }\n                    { exceeded := true } := by\n  unfold Spec; decide\n```\n\nWrite a new specification that fixes these problems.",
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)"
+        ],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.5.1.1/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The THEMAS system shall limit the number of heating or cooling units t hat may be running simultaneously.",
+      "text_predicate": "Requirement 3.1.5.1.1/S2 (Engineering Requirements > Functional Requirements > Determine utilizations > Determine Status of All H/C Units (SRS -011) > Introduction):\nThe THEMAS system shall limit the number of heating or cooling units t hat may be running simultaneously.\nIgnore these non-formal words: may.",
+      "lean_predicate": "structure Input where\n  runningUnits : Nat\n  maxUnits     : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  runningUnits : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.runningUnits ≤ i.maxUnits\n  post := fun i o => o.runningUnits = min i.runningUnits i.maxUnits\n\nexample : Spec.pre { runningUnits := 5, maxUnits := 10 } ∧\n          Spec.post { runningUnits := 5, maxUnits := 10 } { runningUnits := 5 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { runningUnits := 5, maxUnits := 4 } ∧ ¬ Spec.post { runningUnits := 5, maxUnits := 4 } { runningUnits := 6 } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { runningUnits := 5, maxUnits := 4 } ∧ ¬ Spec.post { runningUnits := 5, maxUnits := 4 } { runningUnits := 6 } := by\n  unfold Spec; decide",
+          "why": "The output would allow more units to run than the input specifies, which the requirement forbids.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 25.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ runningUnits := x.runningUnits }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.5.1.3/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When a request to turn on a heating or cooling unit is received, the system shall determine if the request can be honored.",
+      "text_predicate": "Requirement 3.1.5.1.3/S3 (Engineering Requirements > Functional Requirements > Determine utilizations > Determine Status of All H/C Units (SRS -011) > Processing):\nWhen a request to turn on a heating or cooling unit is received, the system shall determine if the request can be honored.",
+      "lean_predicate": "structure Input where\n  unitId : Nat\n  status : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  canHonor : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.status ∈ [\"off\", \"error\"]\n  post := fun i o => o.canHonor = true ↔ i.status = \"off\"\n\nexample : Spec.pre { unitId := 1, status := \"off\" } ∧\n          Spec.post { unitId := 1, status := \"off\" }\n                    { canHonor := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { unitId := 1, status := \"on\" } ∧ ¬ Spec.post { unitId := 1, status := \"on\" } { canHonor := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { unitId := 1, status := \"on\" } ∧ ¬ Spec.post { unitId := 1, status := \"on\" } { canHonor := true } := by\n  unfold Spec; decide",
+          "why": "The output says the request can be honored when the unit is not off, which is forbidden by the requirement.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 10.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.1.5.1.3/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the maximum number of heating or cooling units is already running, the request will be added to a LIFO queue.",
+      "text_predicate": "Requirement 3.1.5.1.3/S4 (Engineering Requirements > Functional Requirements > Determine utilizations > Determine Status of All H/C Units (SRS -011) > Processing):\nIf the maximum number of heating or cooling units is already running, the request will be added to a LIFO queue.",
+      "lean_predicate": "structure Input where\n  maxUnits : Nat\n  runningUnits : Nat\n  request : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  maxUnits : Nat\n  runningUnits : Nat\n  inQueue : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.runningUnits ≤ i.maxUnits\n  post := fun i o => (o.runningUnits = i.runningUnits + 1 ∧ o.inQueue = false) ↔\n                     (i.request = true ∧ i.runningUnits = i.maxUnits) ∧\n                     (o.runningUnits = i.runningUnits ∧ o.inQueue = true →\n                      i.request = true ∧ i.runningUnits < i.maxUnits)\n\nexample : Spec.pre { maxUnits := 5, runningUnits := 4, request := true } ∧\n          Spec.post { maxUnits := 5, runningUnits := 4, request := true }\n                    { maxUnits := 5, runningUnits := 4, inQueue := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 41.9,
+      "error": "L0.5: `post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output. `post` never mentions `o.maxUnits`. The requirement says: \"If the maximum number of heating or cooling units is already running, the request will be added to a LIFO queue.\" Add a condition on `o.maxUnits` that this requirement fixes. `post` mentions `o.runningUnits` but still holds when `o.runningUnits` is `5` instead of `4` for the example input. The requirement says: \"If the maximum number of heating or cooling units is already running, the request will be added to a LIFO queue.\" Add a condition on `o.runningUnits` that this requirement fixes. `post` mentions `o.inQueue` but still holds when `o.inQueue` is `false` instead of `true` for the example input. The requirement says: \"If the maximum number of heating or cooling units is already running, the request will be added to a LIFO queue.\" Add a condition on `o.inQueue` that this requirement fixes.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepted every changed output we tried (each field of the example output changed in turn), so it does not constrain the output"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.5.1.3/S5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the maximum number of heating or cooling units is not running, this process will generate a request to turn on the requested unit.",
+      "text_predicate": "Requirement 3.1.5.1.3/S5 (Engineering Requirements > Functional Requirements > Determine utilizations > Determine Status of All H/C Units (SRS -011) > Processing):\nIf the maximum number of heating or cooling units is not running, this process will generate a request to turn on the requested unit.",
+      "lean_predicate": "structure Input where\n  maxUnits : Nat\n  runningUnits : Nat\n  unitId : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  requestGenerated : Bool\n  unitId : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.runningUnits < i.maxUnits\n  post := fun i o => o.requestGenerated = true ∧\n                     o.unitId = i.unitId ∧\n                     (o.requestGenerated = true ↔ i.runningUnits + 1 ≤ i.maxUnits)\n\nexample : Spec.pre { maxUnits := 5, runningUnits := 4, unitId := 1 } ∧\n          Spec.post { maxUnits := 5, runningUnits := 4, unitId := 1 }\n                    { requestGenerated := true, unitId := 1 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { maxUnits := 5, runningUnits := 4, unitId := 1 } ∧ ¬ Spec.post { maxUnits := 5, runningUnits := 4, unitId := 1 } { requestGenerated := false, unitId := 1 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { maxUnits := 5, runningUnits := 4, unitId := 1 } ∧ ¬ Spec.post { maxUnits := 5, runningUnits := 4, unitId := 1 } { requestGenerated := false, unitId := 1 } := by\n  unfold Spec; decide",
+          "why": "The requirement states that if the maximum number of heating or cooling units is not running, a request to turn on the requested unit should be generated. The output does not generate a request, which is a violation of the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 16.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ requestGenerated := true, unitId := x.unitId }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.5.1.3/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When a request to turn off a heating or cooling unit is received, this process shall check the queue of waiting heating and cooling requests.",
+      "text_predicate": "Requirement 3.1.5.1.3/S6 (Engineering Requirements > Functional Requirements > Determine utilizations > Determine Status of All H/C Units (SRS -011) > Processing):\nWhen a request to turn off a heating or cooling unit is received, this process shall check the queue of waiting heating and cooling requests.",
+      "lean_predicate": "structure HeatingCoolingUnit where\n  id : Nat\n  status : String\n  deriving DecidableEq, Repr\n\nstructure Request where\n  unitId : Nat\n  action : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  units : List HeatingCoolingUnit\n  requests : List Request\n  deriving DecidableEq, Repr\n\nstructure Output where\n  units : List HeatingCoolingUnit\n  processed : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.requests.length > 0\n  post := fun i o => o.processed = true ∧\n                     (∀ u ∈ i.units, u.status = o.units.find (·.id = u.id).status) ∧\n                     (∃ r ∈ i.requests, r.action = \"turn off\" ∧\n                      o.units.find (·.id = r.unitId).status = \"off\")\n\nexample : Spec.pre { units := [{ id := 1, status := \"on\" }, { id := 2, status := \"on\" }],\n                     requests := [{ unitId := 1, action := \"turn off\" }] } ∧\n          Spec.post { units := [{ id := 1, status := \"off\" }, { id := 2, status := \"on\" }],\n                      requests := [{ unitId := 1, action := \"turn off\" }],\n                      processed := true }\n                    { units := [{ id := 1, status := \"off\" }, { id := 2, status := \"on\" }],\n                      processed := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 4,
+      "seconds": 37.5,
+      "error": "<generated>:27:56: error(lean.invalidField): Invalid field `find`: The environment does not contain `List.find`, so it is not possible to project the field `find` from an expression\n  o.units\nof type `List HeatingCoolingUnit`\n<generated>:29:30: error(lean.invalidField): Invalid field `find`: The environment does not contain `List.find`, so it is not possible to project the field `find` from an expression\n  o.units\nof type `List HeatingCoolingUnit`\n<generated>:35:22: error: `processed` is not a field of structure `Input`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": [],
+          "stopped": "the same check failed 4 times in a row"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same check failed 4 times in a row",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.5.1.3/S7",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the queue is not empty, this process shall remove one request from the LIFO queue and check the current state of the thermostat for which the queued request was made.",
+      "text_predicate": "Requirement 3.1.5.1.3/S7 (Engineering Requirements > Functional Requirements > Determine utilizations > Determine Status of All H/C Units (SRS -011) > Processing):\nIf the queue is not empty, this process shall remove one request from the LIFO queue and check the current state of the thermostat for which the queued request was made.",
+      "lean_predicate": "structure Request where\n  thermostatId : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  queue : List Request\n  thermostatStates : List (Nat × Bool)\n  deriving DecidableEq, Repr\n\nstructure Output where\n  thermostatId : Nat\n  thermostatState : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.queue.Nodup ∧ i.queue.length > 0\n  post := fun i o => \n    (o.thermostatId = i.queue.last.thermostatId ∧\n     o.thermostatState = i.thermostatStates.find? (fun (id, _) => id = o.thermostatId).get! false)\n\nexample : Spec.pre { queue := [{ thermostatId := 1 }], thermostatStates := [(1, true)] } ∧\n          Spec.post { queue := [{ thermostatId := 1 }], thermostatStates := [(1, true)] }\n                    { thermostatId := 1, thermostatState := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 33.4,
+      "error": "<generated>:21:30: error(lean.invalidField): Invalid field `last`: The environment does not contain `List.last`, so it is not possible to project the field `last` from an expression\n  i.queue\nof type `List Request`\n<generated>:22:87: error(lean.invalidField): Invalid field `get!`: The environment does not contain `Function.get!`, so it is not possible to project the field `get!` from an expression\n  fun x => ?m.17\nof type `(x : ?m.15) → ?m.18 x`\n<generated>:24:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.5.3.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "This request shall include the designation of the heating or cooling unit and a flag to indicate whether that unit is to be turned on or off.",
+      "text_predicate": "Requirement 3.1.5.3.3/S2 (Engineering Requirements > Functional Requirements > Determine utilizations > Processing):\nThis request shall include the designation of the heating or cooling unit and a flag to indicate whether that unit is to be turned on or off.",
+      "lean_predicate": "structure HeatingCoolingUnit where\n  designation : String\n  on          : Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  designation : String\n  on          : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  designation : String\n  on          : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.designation = i.designation ∧\n                     (o.on = i.on)\n\nexample : Spec.pre { designation := \"HVAC123\", on := true } ∧\n          Spec.post { designation := \"HVAC123\", on := true }\n                    { designation := \"HVAC123\", on := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { designation := \"HeatingUnit1\", on := true } ∧ ¬ Spec.post { designation := \"HeatingUnit1\", on := true } { designation := \"CoolingUnit2\", on := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { designation := \"HeatingUnit1\", on := true } ∧ ¬ Spec.post { designation := \"HeatingUnit1\", on := true } { designation := \"CoolingUnit2\", on := false } := by\n  unfold Spec; decide",
+          "why": "The output does not include the correct designation and on flag as required",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 19.6,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ designation := x.designation, on := x.on }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.6.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "This process shall recognize the values for the requested heating or cooling unit and the ON or OFF status that is being requested.",
+      "text_predicate": "Requirement 3.1.6.3/S1 (Engineering Requirements > Functional Requirements > Generate H/C Signal (SRS -014) > Processing):\nThis process shall recognize the values for the requested heating or cooling unit and the ON or OFF status that is being requested.",
+      "lean_predicate": "structure Input where\n  unitId : Nat\n  requestedStatus : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  unitId : Nat\n  status : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.requestedStatus = \"ON\" ∨ i.requestedStatus = \"OFF\"\n  post := fun i o => o.unitId = i.unitId ∧\n                     (o.status = \"ON\" ↔ i.requestedStatus = \"ON\") ∧\n                     (o.status = \"OFF\" ↔ i.requestedStatus = \"OFF\")\n\nexample : Spec.pre { unitId := 123, requestedStatus := \"ON\" } ∧\n          Spec.post { unitId := 123, requestedStatus := \"ON\" }\n                    { unitId := 123, status := \"ON\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { unitId := 123, requestedStatus := \"ON\" } ∧ ¬ Spec.post { unitId := 123, requestedStatus := \"ON\" } { unitId := 123, status := \"OFF\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { unitId := 123, requestedStatus := \"ON\" } ∧ ¬ Spec.post { unitId := 123, requestedStatus := \"ON\" } { unitId := 123, status := \"OFF\" } := by\n  unfold Spec; decide",
+          "why": "The output does not match the requested status, violating the requirement",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 18.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ unitId := x.unitId, status := x.requestedStatus }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.6.3/S5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In order to provide an operational history and statistical reports, this process shall generate an event each time a change is made to the status of a heating or cooling unit.",
+      "text_predicate": "Requirement 3.1.6.3/S5 (Engineering Requirements > Functional Requirements > Generate H/C Signal (SRS -014) > Processing):\nIn order to provide an operational history and statistical reports, this process shall generate an event each time a change is made to the status of a heating or cooling unit.",
+      "lean_predicate": "structure StatusChange where\n  unitId : Nat\n  status : String\n  timestamp : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  units : List StatusChange\n  deriving DecidableEq, Repr\n\nstructure Output where\n  events : List StatusChange\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.units.length > 0\n  post := fun i o => o.events.length = i.units.length ∧\n                     (∀ j ∈ i.units, ∃ e ∈ o.events, e.unitId = j.unitId ∧ e.status = j.status ∧ e.timestamp = j.timestamp) ∧\n                     (∀ e ∈ o.events, ∃ j ∈ i.units, e.unitId = j.unitId ∧ e.status = j.status ∧ e.timestamp = j.timestamp)\n\nexample : Spec.pre { units := [{ unitId := 1, status := \"on\", timestamp := 100 },\n                                { unitId := 2, status := \"off\", timestamp := 200 }] } ∧\n          Spec.post { units := [{ unitId := 1, status := \"on\", timestamp := 100 },\n                                 { unitId := 2, status := \"off\", timestamp := 200 }] }\n                    { events := [{ unitId := 1, status := \"on\", timestamp := 100 },\n                                 { unitId := 2, status := \"off\", timestamp := 200 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { units := [ { unitId := 1, status := \"on\", timestamp := 100 }, { unitId := 1, status := \"off\", timestamp := 200 } ] } ∧ ¬ Spec.post { units := [ { unitId := 1, status := \"on\", timestamp := 100 }, { unitId := 1, status := \"off\", timestamp := 200 } ] } { events := [] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { units := [ { unitId := 1, status := \"on\", timestamp := 100 }, { unitId := 1, status := \"off\", timestamp := 200 } ] } ∧ ¬ Spec.post { units := [ { unitId := 1, status := \"on\", timestamp := 100 }, { unitId := 1, status := \"off\", timestamp := 200 } ] } { events := [] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that an event should be generated each time a change is made to the status of a heating or cooling unit. The output does not generate an event for a status change, violating the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 21.9,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ events := x.units }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.6.3/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "This ev ent shall contain the identification of the heating or cooling unit whose status is being changed.",
+      "text_predicate": "Requirement 3.1.6.3/S6 (Engineering Requirements > Functional Requirements > Generate H/C Signal (SRS -014) > Processing):\nThis ev ent shall contain the identification of the heating or cooling unit whose status is being changed.",
+      "lean_predicate": "structure HeatingCoolingUnit where\n  id : Nat\n  status : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  units : List HeatingCoolingUnit\n  deriving DecidableEq, Repr\n\nstructure Output where\n  unitId : Nat\n  status : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.units.length > 0\n  post := fun i o => o.unitId = i.units.head.id ∧\n                     o.status = i.units.head.status\n\nexample : Spec.pre { units := [{ id := 1, status := \"on\" }] } ∧\n          Spec.post { units := [{ id := 1, status := \"on\" }] }\n                    { unitId := 1, status := \"on\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 4,
+      "seconds": 27.3,
+      "error": "<generated>:20:45: error(lean.invalidField): Invalid field `id`: The environment does not contain `Function.id`, so it is not possible to project the field `id` from an expression\n  i.units.head\nof type\n  i.units ≠ [] → HeatingCoolingUnit\n<generated>:21:45: error(lean.invalidField): Invalid field `status`: The environment does not contain `Function.status`, so it is not possible to project the field `status` from an expression\n  i.units.head\nof type\n  i.units ≠ [] → HeatingCoolingUnit\n<generated>:23:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": [],
+          "stopped": "the same failure 3 times"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same failure 3 times",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.7.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When the THEMAS system detects a request for an alarm, this process shall detect which of the two alarms are being requested.",
+      "text_predicate": "Requirement 3.1.7.3/S1 (Engineering Requirements > Functional Requirements > Generate Alarm Data (SRS -015) > Processing):\nWhen the THEMAS system detects a request for an alarm, this process shall detect which of the two alarms are being requested.",
+      "lean_predicate": "structure Input where\n  alarmType : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  selectedAlarm : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.alarmType ∈ [\"alarm1\", \"alarm2\"]\n  post := fun i o => o.selectedAlarm = i.alarmType ∧\n                     (o.selectedAlarm = \"alarm1\" ↔ i.alarmType = \"alarm1\") ∧\n                     (o.selectedAlarm = \"alarm2\" ↔ i.alarmType = \"alarm2\")\n\nexample : Spec.pre { alarmType := \"alarm1\" } ∧\n          Spec.post { alarmType := \"alarm1\" }\n                    { selectedAlarm := \"alarm1\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { alarmType := \"alarm1\" } ∧ ¬ Spec.post { alarmType := \"alarm1\" } { selectedAlarm := \"alarm3\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { alarmType := \"alarm1\" } ∧ ¬ Spec.post { alarmType := \"alarm1\" } { selectedAlarm := \"alarm3\" } := by\n  unfold Spec; decide",
+          "why": "The output does not match the input, which is forbidden by the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 23.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ selectedAlarm := x.alarmType }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.1.7.3/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the system detects an invalid temperature, this process shall output a continuous series of alternating 500 Hz and 700 Hz beeps on the supervisor's computer.",
+      "text_predicate": "Requirement 3.1.7.3/S2 (Engineering Requirements > Functional Requirements > Generate Alarm Data (SRS -015) > Processing):\nIf the system detects an invalid temperature, this process shall output a continuous series of alternating 500 Hz and 700 Hz beeps on the supervisor's computer.",
+      "lean_predicate": "structure Input where\n  invalidTemperature : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  beeps : List Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.invalidTemperature\n  post := fun i o => o.beeps.length ≥ 2 ∧\n                     (o.beeps.length % 2 = 0) ∧\n                     (o.beeps = [500, 700] ∨ o.beeps = [700, 500]) ∧\n                     (o.beeps.length > 2 →\n                      o.beeps = (o.beeps.take 2).repeat (o.beeps.length / 2))\n\nexample : Spec.pre { invalidTemperature := true } ∧\n          Spec.post { invalidTemperature := true }\n                    { beeps := [500, 700, 500, 700] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 182.7,
+      "error": "<generated>:18:49: error(lean.invalidField): Invalid field `repeat`: The environment does not contain `List.repeat`, so it is not possible to project the field `repeat` from an expression\n  List.take 2 o.beeps\nof type `List Nat`\n<generated>:20:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "truncated",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.7.3/S5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the system detects a temperature limit has been exceeded, this process shall output a continuous series of alternating 1000 Hz and 1500 Hz beeps on the supervisor's computer.",
+      "text_predicate": "Requirement 3.1.7.3/S5 (Engineering Requirements > Functional Requirements > Generate Alarm Data (SRS -015) > Processing):\nIf the system detects a temperature limit has been exceeded, this process shall output a continuous series of alternating 1000 Hz and 1500 Hz beeps on the supervisor's computer.",
+      "lean_predicate": "structure Input where\n  temperature : Nat\n  limit       : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  beepFrequency : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.temperature > i.limit\n  post := fun i o => (o.beepFrequency = 1000 ↔ i.temperature > i.limit) ∧\n                     (o.beepFrequency = 1500 ↔ i.temperature > i.limit) ∧\n                     (o.beepFrequency = 1000 → o.beepFrequency ≠ 1500) ∧\n                     (o.beepFrequency = 1500 → o.beepFrequency ≠ 1000)\n\nexample : Spec.pre { temperature := 101, limit := 100 } ∧\n          Spec.post { temperature := 101, limit := 100 }\n                    { beepFrequency := 1000 } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 3,
+      "seconds": 25.7,
+      "error": "<generated>:23:15: error: Tactic `decide` proved that the proposition\n  { pre := fun i => i.temperature > i.limit,\n          post := fun i o =>\n            (o.beepFrequency = 1000 ↔ i.temperature > i.limit) ∧\n              (o.beepFrequency = 1500 ↔ i.temperature > i.limit) ∧\n                (o.beepFrequency = 1000 → o.beepFrequency ≠ 1500) ∧\n                  (o.beepFrequency = 1500 → o.beepFrequency ≠ 1000) }.pre\n      { temperature := 101, limit := 100 } ∧\n    { pre := fun i => i.temperature > i.limit,\n          post := fun i o =>\n            (o.beepFrequency = 1000 ↔ i.temperature > i.limit) ∧\n              (o.beepFrequency = 1500 ↔ i.temperature > i.limit) ∧\n                (o.beepFrequency = 1000 → o.beepFrequency ≠ 1500) ∧\n                  (o.beepFrequency = 1500 → o.beepFrequency ≠ 1000) }.post\n      { temperature := 101, limit := 100 } { beepFrequency := 1000 }\nis false\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "stopped": "the same failure 3 times"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same failure 3 times",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.9.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The THEMAS system shall provide the supervisor a mechanism to change the temperature setting of any of the thermostats in the system.",
+      "text_predicate": "Requirement 3.1.9.1/S1 (Engineering Requirements > Functional Requirements > Change Thermostat Setting (SRS -017) > Introduction):\nThe THEMAS system shall provide the supervisor a mechanism to change the temperature setting of any of the thermostats in the system.",
+      "lean_predicate": "structure Thermostat where\n  id : Nat\n  setting : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  thermostats : List Thermostat\n  thermostatId : Nat\n  newSetting : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  thermostats : List Thermostat\n  succeeded : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.thermostatId < i.thermostats.length\n  post := fun i o => o.succeeded = true ↔\n    (∀ t ∈ i.thermostats, t.id = i.thermostatId → t.setting = i.newSetting) ∧\n    (∀ t ∈ i.thermostats, t.id ≠ i.thermostatId → t.setting = i.thermostats.find? (·.id = t.id).get.setting)\n\nexample : Spec.pre { thermostats := [{ id := 1, setting := 20 }, { id := 2, setting := 22 }],\n                     thermostatId := 1, newSetting := 21 } ∧\n          Spec.post { thermostats := [{ id := 1, setting := 20 }, { id := 2, setting := 22 }],\n                      thermostatId := 1, newSetting := 21 }\n                    { thermostats := [{ id := 1, setting := 21 }, { id := 2, setting := 22 }], succeeded := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 38.9,
+      "error": "<generated>:24:96: error(lean.invalidField): Invalid field `get`: The environment does not contain `Function.get`, so it is not possible to project the field `get` from an expression\n  fun x => ?m.24 = t.id\nof type `?m.22 → Prop`\n<generated>:24:83: error(lean.invalidField): Invalid field notation: Type of\n  x✝\nis not known; cannot resolve field `id`\n\nHint: Consider replacing the field projection with a call to one of the following:\n  • `id`\n  • `Thermostat.id`\n  • `Function.LeftInverse.id`\n  • `Function.RightInverse.id`\n  • `Std.Internal.LawfulMonadLiftBindFunction.id`\n<generated>:26:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.10.3/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "If the operational history report is selected, the THEMAS system shall select all the events from the event database, sort the events by date and time, and create the ASCII report file.",
+      "text_predicate": "Requirement 3.1.10.3/S3 (Engineering Requirements > Functional Requirements > Generate Reports (SRS-018) > Processing):\nIf the operational history report is selected, the THEMAS system shall select all the events from the event database, sort the events by date and time, and create the ASCII report file.",
+      "lean_predicate": "structure Event where\n  date : String\n  time : String\n  description : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  selectedReport : String\n  events : List Event\n  deriving DecidableEq, Repr\n\nstructure Output where\n  reportFile : String\n  events : List Event\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.selectedReport = \"operational history\"\n  post := fun i o => o.reportFile ≠ \"\" ∧\n                     List.Pairwise (fun a b => a.date ≤ b.date ∧ a.time ≤ b.time) o.events ∧\n                     o.events.length = i.events.length ∧\n                     ∀ e ∈ i.events, ∃ e' ∈ o.events, e' = e\n\nexample : Spec.pre { selectedReport := \"operational history\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" },\n                                                                         { date := \"2023-01-01\", time := \"11:00\", description := \"Event 2\" }] } ∧\n          Spec.post { selectedReport := \"operational history\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" },\n                                                                            { date := \"2023-01-01\", time := \"11:00\", description := \"Event 2\" }] }\n                    { reportFile := \"report.txt\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" },\n                                                              { date := \"2023-01-01\", time := \"11:00\", description := \"Event 2\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { selectedReport := \"operational history\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" }, { date := \"2023-01-02\", time := \"09:00\", description := \"Event 2\" }] } ∧ ¬ Spec.post { selectedReport := \"operational history\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" }, { date := \"2023-01-02\", time := \"09:00\", description := \"Event 2\" }] } { reportFile := \"report.txt\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" }, { date := \"2023-01-02\", time := \"09:00\", description := \"Event 2\" }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { selectedReport := \"operational history\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" }, { date := \"2023-01-02\", time := \"09:00\", description := \"Event 2\" }] } ∧ ¬ Spec.post { selectedReport := \"operational history\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" }, { date := \"2023-01-02\", time := \"09:00\", description := \"Event 2\" }] } { reportFile := \"report.txt\", events := [{ date := \"2023-01-01\", time := \"10:00\", description := \"Event 1\" }, { date := \"2023-01-02\", time := \"09:00\", description := \"Event 2\" }] } := by\n  unfold Spec; decide",
+          "why": "The output does not sort the events by date and time as required",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 18.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.1.10.3/I2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "For each thermometer, the ratio of the number of requests for a heating and cooling unit that was granted to the number of requests for a heating or cooling unit that was denied.",
+      "text_predicate": "Requirement 3.1.10.3/I2 (Engineering Requirements > Functional Requirements > Generate Reports (SRS-018) > Processing):\nFor each thermometer, the ratio of the number of requests for a heating and cooling unit that was granted to the number of requests for a heating or cooling unit that was denied.",
+      "lean_predicate": "structure Request where\n  unit : String\n  granted : Bool\n  deriving DecidableEq, Repr\n\nstructure Input where\n  thermometers : List String\n  requests : List Request\n  deriving DecidableEq, Repr\n\nstructure Output where\n  ratios : List (String × Nat × Nat)\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.requests.all (fun r => r.unit ∈ i.thermometers)\n  post := fun i o => \n    o.ratios.length = i.thermometers.length ∧\n    ∀ t ∈ i.thermometers, \n      ∃ (unit : String, grantedCount : Nat, deniedCount : Nat) ∈ o.ratios, \n      unit = t ∧\n      (grantedCount = i.requests.filter (fun r => r.unit = t && r.granted = true).length ∧\n       deniedCount = i.requests.filter (fun r => r.unit = t && r.granted = false).length)\n\nexample : Spec.pre { thermometers := [\"therm1\", \"therm2\"], \n                     requests := [{ unit := \"therm1\", granted := true },\n                                  { unit := \"therm1\", granted := false },\n                                  { unit := \"therm2\", granted := true },\n                                  { unit := \"therm2\", granted := true }] } ∧\n          Spec.post { thermometers := [\"therm1\", \"therm2\"], \n                      requests := [{ unit := \"therm1\", granted := true },\n                                   { unit := \"therm1\", granted := false },\n                                   { unit := \"therm2\", granted := true },\n                                   { unit := \"therm2\", granted := true }] }\n                    { ratios := [(\"therm1\", 1, 1), (\"therm2\", 2, 0)] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 56.4,
+      "error": "<generated>:23:22: error: unexpected token ','; expected ')'\n<generated>:28:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    }
+  ],
+  "l05_summary": {
+    "pass": 18,
+    "flag": 2,
+    "fail": 10
+  }
+}

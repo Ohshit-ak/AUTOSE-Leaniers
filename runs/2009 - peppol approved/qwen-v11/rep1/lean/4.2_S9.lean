@@ -1,0 +1,25 @@
+import ContractForge
+open ContractForge
+
+-- 4.2/S9: With a total of eight pilot implementations plus the European Service Provider implementation of the pre-VCD mapping tool, the WP 2 will reach a wide geographical spread as well as a profound proof of the overall VCD concept.
+-- compiles: True · rejects_bad_example: True · checked: True
+
+structure Input where
+  pilotImplementations : List String
+  europeanServiceProvider : Bool
+  deriving DecidableEq, Repr
+
+structure Output where
+  geographicalSpread : Bool
+  proofOfConcept : Bool
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.pilotImplementations.length = 8 ∧ i.europeanServiceProvider
+  post := fun i o => o.geographicalSpread = (i.pilotImplementations.length ≥ 8) ∧
+                     o.proofOfConcept = (i.europeanServiceProvider = true)
+
+example : Spec.pre { pilotImplementations := ["impl1", "impl2", "impl3", "impl4", "impl5", "impl6", "impl7", "impl8"], europeanServiceProvider := true } ∧
+          Spec.post { pilotImplementations := ["impl1", "impl2", "impl3", "impl4", "impl5", "impl6", "impl7", "impl8"], europeanServiceProvider := true }
+                    { geographicalSpread := true, proofOfConcept := true } := by
+  unfold Spec; decide

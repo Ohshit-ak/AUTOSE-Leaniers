@@ -1,0 +1,3872 @@
+[
+  {
+    "id": "2.3.4",
+    "kind": "requirement",
+    "requirement_text": "2.3.4 If the text message facility is implemented, it shall not interfere with the ability of users to make or receive high priority voice or data calls. (M) General data applications",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { callSuccessful := decide (x.priority = true),\n    messageSent := decide (¬ (x.message ≠ \"\" ∧ x.priority = true)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "callSuccessful",
+            "messageSent"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.4
+  },
+  {
+    "id": "2.4.5",
+    "kind": "requirement",
+    "requirement_text": "2.4.5 The network shall provide a mechanism whereby calls may be assigned one of a number of different priority levels. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.calls = i.calls`. Change the function so that they hold (the contract is locked). What to do: (1) set `calls := x.calls`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { calls := x.calls.filter fun c => 0 ≤ c.priority ∧ c.priority ≤ 10 }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 26.7
+  },
+  {
+    "id": "3.2.2",
+    "kind": "requirement",
+    "requirement_text": "3.2.2 The level of coverage should be at least 95% of the time over 95% of the designated coverage area for a radio installed in a vehicle with an external antenna. (O)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.levelOfCoverage = (i.coverageArea * i.time) / i.designatedArea`. Change the function so that they hold (the contract is locked). What to do: (1) set `levelOfCoverage := (x.coverageArea * x.time) / x.designatedArea`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { levelOfCoverage := max (x.coverageArea * x.time / x.designatedArea) 95 }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 33.2
+  },
+  {
+    "id": "3.4.4",
+    "kind": "requirement",
+    "requirement_text": "3.4.4 Set-up times shall include the time required for any translation of functional numbers internal to the EIRENE network. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { setUpTime := x.functionalNumbers.length }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "setUpTime"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.6
+  },
+  {
+    "id": "3.5.1",
+    "kind": "requirement",
+    "requirement_text": "3.5.1 Where fixed network users are involved in a group or broadcast call, fixed network users will be pre-defined and will not change during the course of the call. (I)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ callType := x.callType, participants := x.fixedUsers }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { callType := x.callType,\n    participants := x.fixedUsers }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "callType",
+            "participants"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.1
+  },
+  {
+    "id": "3.5.8",
+    "kind": "requirement",
+    "requirement_text": "3.5.8 Requirement 3.5.7 needs further technical specification changes before field implementation can be achieved. (I)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ valid := false, message := \"\" }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.valid = true ↔\n    (i.area.type = \"broadcast\" →\n      i.area.config = \"configured for broadcast\" ∧\n      o.message = \"Area is correctly configured for broadcast\")\n    ∧\n    (i.area.type = \"group\" →\n      i.area.config = \"configured for group call\" ∧\n      o.message = \"Area is correctly configured for group call\")`. Change the function so that they hold (the contract is locked). What to do: (1) change `valid`, `message` so that `o.valid = true ↔ (x.area.type = \"broadcast\" → x.area.config = \"configured for broadcast\" ∧ o.message = \"Area is correctly configured for broadcast\") ∧ (x.area.type = \"group\" → x.area.config = \"configured for group call\" ∧ o.message = \"Area is correctly configured for group call\")` holds.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { valid := x.area.type ∈ [\"broadcast\", \"group\"],\n    message := if x.area.type = \"broadcast\" then\n      if x.area.config = \"configured for broadcast\" then\n        \"Area is correctly configured for broadcast\"\n      else\n        \"Area is not configured for broadcast\"\n    else\n      if x.area.config = \"configured for group call\" then\n        \"Area is correctly configured for group call\"\n      else\n        \"Area is not configured for group call\" }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 36.9
+  },
+  {
+    "id": "4.1.2",
+    "kind": "requirement",
+    "requirement_text": "4.1.2 Three distinct mobile radio types are required, based on the type of role they will perform and the environment in which they will operate, as follows: (I) a) Cab radio for use by the driver of a train and/or by other on-train systems, eg ERTMS/ETCS; b) General purpose radio for general use by railway personnel; c) Operational radio for use by railway personnel involved in train operations such as shunting and trackside maintenance. Note: It is possible that the General purpose and Operational radios may have a number of variants to meet railway requirements (eg handheld and vehicle mounted).",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ cabRadio := x.cabRadio, generalRadio := x.generalRadio, operationalRadio := x.operationalRadio }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { cabRadio := x.cabRadio,\n    generalRadio := x.generalRadio,\n    operationalRadio := x.operationalRadio }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "cabRadio",
+            "generalRadio",
+            "operationalRadio"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.0
+  },
+  {
+    "id": "5.2.2ii",
+    "kind": "requirement",
+    "requirement_text": "5.2.2ii Picking up the handset shall transfer the communication to the handset and reduce the loudspeaker volume to its minimum level. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { communicationTransferred := true, loudspeakerVolumeReduced := x.loudspeakerVolume = 0 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "communicationTransferred",
+            "loudspeakerVolumeReduced"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.4
+  },
+  {
+    "id": "5.2.2.7",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.7 If the functional identity of the connected party contains an alphanumeric description, this shall also be displayed. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ displayed := x.description }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { displayed := x.description }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "displayed"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.9
+  },
+  {
+    "id": "5.2.2.17",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.17 If the system is not able to connect the call, an audible and visual indication shall be provided to the driver. (M) Send Railway emergency call",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ audibleIndication := true, visualIndication := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `(o.audibleIndication = true ∧ o.visualIndication = true) ↔ i.systemConnected = false`. Change the function so that they hold (the contract is locked). What to do: (1) change `audibleIndication`, `visualIndication` so that `(o.audibleIndication = true ∧ o.visualIndication = true) ↔ x.systemConnected = false` holds.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { audibleIndication := x.systemConnected, visualIndication := x.systemConnected }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 20.0
+  },
+  {
+    "id": "5.2.2.24",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.24 Once the call is terminated, the continuous visual alarm indication in the cab shall cease. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ cabAlarm := x.cabAlarm }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { cabAlarm := decide (x.cabAlarm ∧ x.callTerminated) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "cabAlarm"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.0
+  },
+  {
+    "id": "5.2.2.30",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.30 At any time during the call, the lead driver shall be able to remove a member of the group. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.members.length = i.members.length - 1`; `∃ m ∈ i.members, o.members = i.members.filter (fun x => x ≠ m)`. Change the function so that they hold (the contract is locked). What to do: (1) compute `members` from the input (count / compare / arithmetic) so that `o.members.length = x.members.length - 1` holds; do not copy it unchanged. (2) compute `members` from the input (count / compare / arithmetic) so that `∃ m ∈ x.members, o.members = x.members.filter (fun x => x ≠ m)` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "syntax",
+          "syntax",
+          "check",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { members := x.members.filter (fun m => m.name ≠ \"Alice\") }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 26.5
+  },
+  {
+    "id": "5.2.2.31",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.31 The lead driver shall be able to terminate the entire call. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ leadDriver := x.leadDriver, active := x.active, terminated := x.terminatingDriver }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { leadDriver := x.leadDriver,\n    active := x.active,\n    terminated := decide (x.leadDriver = true ∧ x.active = true ∧ x.terminatingDriver = true) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "leadDriver",
+            "active",
+            "terminated"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.4
+  },
+  {
+    "id": "5.2.2.37",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.37 For calls between a controller and the lead cab, it shall be possible to add the controller to the multi-driver call. Either the lead driver calls the controller or the controller calls the lead driver. In the latter case, the controller is automatically added into the multi- driver call. Functional identity of the controller shall be displayed in the leading cab. (M) Call train staff",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.multiCall.contains i.controllerId ↔\n      (i.multiCall.contains i.leadDriverId ∧ i.multiCall.count i.leadDriverId = 1) ∨\n      (i.multiCall.count i.leadDriverId = 0 ∧ i.callingLeadFirst = true)`. Change the function so that they hold (the contract is locked). What to do: (1) compute `multiCall` from the input (count / compare / arithmetic) so that `o.multiCall.contains x.controllerId ↔ (x.multiCall.contains x.leadDriverId ∧ x.multiCall.count x.leadDriverId = 1) ∨ (x.multiCall.count x.leadDriverId = 0 ∧ x.callingLeadFirst = true)` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "types",
+          "types",
+          "check",
+          "types",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { multiCall := x.multiCall }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 25.9
+  },
+  {
+    "id": "5.2.2.42",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.42 The Cab radio shall be capable of being used as a standard telephone, such that the driver is able to call any valid number subject to pre-defined call restrictions. The call may be initiated by: (M) selection from a pre-defined list (up to 99 entries); direct dialling a subscriber number; calling a functional number. Receive incoming point-to-point voice call",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { initiated := decide ((x.callList.contains x.subscriberNumber ∧ x.callList.count x.subscriberNumber ≤ 99) ∨\n    (x.subscriberNumber ≠ \"\" ∧ x.callList.count x.subscriberNumber = 0) ∨\n    (x.functionalNumber ≠ \"\" ∧ x.callList.count x.functionalNumber = 0)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "initiated"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.5
+  },
+  {
+    "id": "5.2.2.47",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.47 An audible and visual indication of the incoming call shall be provided when a Cab radio receives a group or broadcast call. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ audibleIndication := true, visualIndication := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { audibleIndication := true, visualIndication := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "audibleIndication",
+            "visualIndication"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.9
+  },
+  {
+    "id": "5.2.2.57",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.57 If a train-borne recorder is connected to the Cab radio, details of an incoming Railway emergency call shall be transmitted to the train-borne recorder for recording, see section 5.8. (M) Confirm receipt of Railway emergency call",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.confirmed = true`. Change the function so that they hold (the contract is locked). What to do: (1) set `confirmed := true`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { confirmed := decide (x.recorderConnected = true ∧ x.railwayEmergencyCall ≠ \"\") }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 28.2
+  },
+  {
+    "id": "5.2.2.58",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.58 An automatic confirmation shall be generated by the Cab radio at the end of the Railway emergency call as detailed in section 13. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ confirmationGenerated := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { confirmationGenerated := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "confirmationGenerated"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.8
+  },
+  {
+    "id": "5.2.2.60",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.60 The Cab radio shall provide a means for the driver to terminate calls which he is authorised to terminate (ie all calls except Railway emergency calls not initiated by the driver and shunting group calls). (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { terminated := decide (∃ c ∈ x.calls, c.initiatedByDriver ∧ ¬c.railwayEmergency ∧ ¬c.shuntingGroupCall) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "terminated"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.6
+  },
+  {
+    "id": "5.2.2.61",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.61 For group or broadcast calls, a means to leave the call without terminating the call shall be provided. (M) Receive text messages",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.message = \"Call terminated.\" ↔\n                      i.call.members.length = 1 ∧ i.leaving = true`. Change the function so that they hold (the contract is locked). What to do: (1) add a branch on `x.call.members.length = 1 ∧ x.leaving = true`: `message := if x.call.members.length = 1 ∧ x.leaving = true then \"Call terminated.\" else <value otherwise>`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { call := x.call,\n    message := if x.leaving = true then \"Left the call.\" else if x.call.members.length = 1 ∧ x.leaving = true then \"Call terminated.\" else if x.leaving = false then \"Text message received.\" else \"Unknown message\" }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 28.7
+  },
+  {
+    "id": "5.2.2.62",
+    "kind": "requirement",
+    "requirement_text": "5.2.2.62 The Cab radio system shall be able to receive incoming text messages (see section 12 for details). (M) Enter/leave shunting mode",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: `ComputeShuntingModeContract` computes nothing: for every input that satisfies its `pre`, `m.shuntingMode` always has the same value, so it is an identity with a constant added and `GenerateMessageContract` does all the work of `Spec`. The first component must produce a result that is different for different inputs (a filtered list, a computed value, a decision that can be true or false under `ComputeShuntingModeContract.pre`).",
+        "error_class": "identity",
+        "stages": [
+          "check",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  shuntingMode : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeShuntingModeContract : Contract Input Mid where\n  pre  := fun i => i.shuntingMode = true\n  post := fun i m => m.shuntingMode = false\n\ndef GenerateMessageContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.shuntingMode = m.shuntingMode ∧\n                     (o.message = \"Shunting mode exited.\" ↔ o.shuntingMode = false)"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { shuntingMode := false,\n    message := \"Shunting mode exited.\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "shuntingMode"
+          ],
+          "model": [
+            "message"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 15.2
+  },
+  {
+    "id": "5.2.3.9",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.9 Switch off shall be soft so that the Cab radio completes the following housekeeping functions before actually switching off: (M) controlled termination of a current call; deregister train number (where applicable); store required data; confirmation of Railway emergency calls (see section 13).",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ComputeMidContract` is an identity: its `post` only copies `Input` fields, so `FinalizeOutputContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ComputeMidContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  callActive : Bool\n  trainNumberRegistered : Bool\n  emergencyCallActive : Bool\n  dataToStore : List String\n  deriving DecidableEq, Repr\n\ndef ComputeMidContract : Contract Input Mid where\n  pre  := fun i => i.callActive = true ∨ ¬i.trainNumberRegistered ∨ ¬i.emergencyCallActive\n  post := fun i m => m.callActive = i.callActive ∧ m.trainNumberRegistered = i.trainNumberRegistered ∧\n                     m.emergencyCallActive = i.emergencyCallActive ∧ m.dataToStore = i.dataToStore\n\ndef FinalizeOutputContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.callActive = false ↔\n    (m.callActive = true → (m.callActive = o.callActive ∧ m.trainNumberRegistered = o.trainNumberRegistered ∧\n                            m.emergencyCallActive = o.emergencyCallActive ∧\n                            m.dataToStore = o.dataToStore)) ∧\n    (m.callActive = false → m.callActive = o.callActive ∧ m.trainNumberRegistered = o.trainNumberRegistered ∧\n                             m.emergencyCallActive = o.emergencyCallActive ∧\n                             m.dataToStore = o.dataToStore)) ∧\n    (m.emergencyCallActive = true → o.emergencyCallActive = true)"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.callActive = false ↔\n    (i.callActive = true → (i.callActive = o.callActive ∧ i.trainNumberRegistered = o.trainNumberRegistered ∧\n                            i.emergencyCallActive = o.emergencyCallActive ∧\n                            i.dataToStore = o.dataToStore)) ∧\n    (i.callActive = false → i.callActive = o.callActive ∧ i.trainNumberRegistered = o.trainNumberRegistered ∧\n                             i.emergencyCallActive = o.emergencyCallActive ∧\n                             i.dataToStore = o.dataToStore)`. Change the function so that they hold (the contract is locked). What to do: (1) change `callActive`, `trainNumberRegistered`, `emergencyCallActive`, `dataToStore` so that `o.callActive = false ↔ (x.callActive = true → (x.callActive = o.callActive ∧ x.trainNumberRegistered = o.trainNumberRegistered ∧ x.emergencyCallActive = o.emergencyCallActive ∧ x.dataToStore = o.dataToStore)) ∧ (x.callActive = false → x.callActive = o.callActive ∧ x.trainNumberRegistered = o.trainNumberRegistered ∧ x.emergencyCallActive = o.emergencyCallActive ∧ x.dataToStore = o.dataToStore)` holds.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { callActive := false,\n    trainNumberRegistered := false,\n    emergencyCallActive := if x.emergencyCallActive = true then true else false,\n    dataToStore := [] }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 48.9
+  },
+  {
+    "id": "5.2.3.12",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.12 It shall be possible to present radio related prompts and information in a number of different languages. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { prompt := \"Radio related prompt in \" ++ x.language,\n    language := x.language }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "prompt",
+            "language"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.4
+  },
+  {
+    "id": "5.2.3.13",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.13 By default, prompts and information shall be displayed in the language selected by the train owner (as stored within the system). (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ prompt := x.language, info := x.language }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { prompt := x.language,\n    info := x.language }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "prompt",
+            "info"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "5.2.3.17",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.17 By default, the loudspeaker volume shall be set to a pre-determined level suitable for the operating environment (as stored within the system). (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ volumeLevel := x.volumeLevel }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { volumeLevel := x.volumeLevel }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "volumeLevel"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.9
+  },
+  {
+    "id": "5.2.3.25i",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.25i Manual network selection is suitable for crossing international borders. (I) Directed network selection 5.2.3.25iv If directed network selection is implemented, input from the external device(s) shall initiate the network change regardless of the identity of the current network and how it was selected. (M) 5.2.3.25ix Automatic network selection is not suitable for use in areas where there is a risk that the Cab radio will change to a foreign network unpredictably. (I)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 4,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: `ComputeNewNetworkContract` computes nothing: for every input that satisfies its `pre`, `m.newNetwork` is a copy of an `Input` field, so it is an identity with a constant added and `SelectNetworkContract` does all the work of `Spec`. The first component must produce a result that is different for different inputs (a filtered list, a computed value, a decision that can be true or false under `ComputeNewNetworkContract.pre`).; PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.networkSelected = true ↔\n    (i.currentNetwork = \"foreign\" → o.newNetwork ≠ i.currentNetwork) ∧\n    (i.currentNetwork ≠ \"foreign\" → o.newNetwork = i.currentNetwork)`. Whatever `Spec.post` says about the input must pass through `Mid`: `ComputeNewNetworkContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `SelectNetworkContract.post` relates `Output` to `Mid`. A condition that is only in `SelectNetworkContract.pre` is not guaranteed by the chain.",
+        "error_class": "identity",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  newNetwork : String\n  currentNetwork : String\n  deriving DecidableEq, Repr\n\ndef ComputeNewNetworkContract : Contract Input Mid where\n  pre  := fun i => i.currentNetwork ≠ \"\" ∧ i.externalDevice ≠ \"\"\n  post := fun i m => (m.newNetwork = if i.currentNetwork = \"foreign\" then i.currentNetwork else i.currentNetwork) ∧ m.currentNetwork = i.currentNetwork\n\ndef SelectNetworkContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.networkSelected = true ↔ (m.newNetwork ≠ m.currentNetwork → o.newNetwork ≠ m.currentNetwork) ∧\n                     (m.newNetwork = m.currentNetwork → o.newNetwork = m.currentNetwork) ∧\n                     o.networkSelected = false → o.newNetwork = m.currentNetwork\n\n"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.networkSelected = true ↔\n    (i.currentNetwork = \"foreign\" → o.newNetwork ≠ i.currentNetwork) ∧\n    (i.currentNetwork ≠ \"foreign\" → o.newNetwork = i.currentNetwork)`; `o.networkSelected = false → o.newNetwork = i.currentNetwork`. Change the function so that they hold (the contract is locked). What to do: (1) change `networkSelected`, `newNetwork` so that `o.networkSelected = true ↔ (x.currentNetwork = \"foreign\" → o.newNetwork ≠ x.currentNetwork) ∧ (x.currentNetwork ≠ \"foreign\" → o.newNetwork = x.currentNetwork)` holds. (2) change `networkSelected`, `newNetwork` so that `o.networkSelected = false → o.newNetwork = x.currentNetwork` holds.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "names",
+          "check",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { networkSelected := decide (x.currentNetwork = \"foreign\"), newNetwork := if x.currentNetwork = \"foreign\" then x.currentNetwork else \"a\" }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 78.9
+  },
+  {
+    "id": "5.2.3.25iii",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.25iii If directed network selection is implemented and voice calls are ongoing at the time when the external device attempts to trigger a network change, an audible and visual indication shall be given to the driver and network change shall be deferred until the call is terminated or until coverage of the current network is lost. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ deferred := x.directedNetworkSelection, indication := x.directedNetworkSelection }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: `ComputeDeferredContract` computes nothing: for every input that satisfies its `pre`, `m.deferred` always has the same value, so it is an identity with a constant added and `PropagateIndicationContract` does all the work of `Spec`. The first component must produce a result that is different for different inputs (a filtered list, a computed value, a decision that can be true or false under `ComputeDeferredContract.pre`).",
+        "error_class": "identity",
+        "stages": [
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "structure Mid where\n  deferred : Bool\n  ongoingCalls : Nat\n  directedNetworkSelection : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeDeferredContract : Contract Input Mid where\n  pre  := fun i => i.directedNetworkSelection = true ∧ i.ongoingCalls > 0\n  post := fun i m => (m.deferred = true ↔ i.directedNetworkSelection = true ∧ i.ongoingCalls > 0) ∧ m.ongoingCalls = i.ongoingCalls ∧ m.directedNetworkSelection = i.directedNetworkSelection\n\ndef PropagateIndicationContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.indication = true ↔ m.deferred = true) ∧\n                     (o.deferred = true → o.indication = true) ∧\n                     (o.deferred = false → (m.ongoingCalls = 0 ∨ m.directedNetworkSelection = false))\n\n"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { deferred := decide (x.directedNetworkSelection = true ∧ x.ongoingCalls > 0),\n    indication := decide (x.directedNetworkSelection = true ∧ x.ongoingCalls > 0) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "deferred",
+            "indication"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 22.4
+  },
+  {
+    "id": "5.2.3.25ix",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.25ix Automatic network selection is not suitable for use in areas where there is a risk that the Cab radio will change to a foreign network unpredictably. (I)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 1,
+      "contracts": [
+        "ComputeSelectionContract",
+        "HandleAttemptsContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 5,
+        "of": 6,
+        "first_result_depends_on_input": true
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "ok"
+      ],
+      "carried_by_harness": [
+        "safeAreas"
+      ],
+      "code": "structure Mid where\n  selectedNetwork : String\n  failedAttempts  : Nat\n  safeAreas : List String\n  deriving DecidableEq, Repr\n\ndef ComputeSelectionContract : Contract Input Mid where\n  pre  := fun i => i.cabNetwork ≠ \"\" ∧ i.safeAreas.Nodup\n  post := fun i m => (m.selectedNetwork = i.cabNetwork ∧\n                     (m.failedAttempts = 0 ↔\n                       i.safeAreas.contains m.selectedNetwork) ∧\n                     (m.failedAttempts > 0 →\n                       i.safeAreas.contains m.selectedNetwork = false)) ∧ m.safeAreas = i.safeAreas\n\ndef HandleAttemptsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.failedAttempts = m.failedAttempts ∧\n                     (o.selectedNetwork = m.selectedNetwork ∧\n                      (o.failedAttempts = 0 ↔\n                        m.safeAreas.contains m.selectedNetwork) ∧\n                      (o.failedAttempts > 0 →\n                        m.safeAreas.contains m.selectedNetwork = false))\n\n\n\ntheorem po1 : Contract.Compatible ComputeSelectionContract HandleAttemptsContract := by\n  discharge_po1 [ComputeSelectionContract, HandleAttemptsContract, Spec]\n\ntheorem po2 : Contract.Refines (ComputeSelectionContract.seq HandleAttemptsContract) Spec := by\n  discharge_po2 [ComputeSelectionContract, HandleAttemptsContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "ComputeSelectionContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def ComputeSelectionContractImpl (x : Input) : Mid :=\n  { selectedNetwork := x.cabNetwork,\n    failedAttempts := if x.safeAreas.contains x.cabNetwork then 0 else 1,\n    safeAreas := x.safeAreas }\n\ntheorem ComputeSelectionContractImpl_ok : ComputeSelectionContract.Satisfies ComputeSelectionContractImpl := by\n  discharge_po3 [ComputeSelectionContract, ComputeSelectionContractImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "selectedNetwork",
+            "safeAreas"
+          ],
+          "model": [
+            "failedAttempts"
+          ]
+        }
+      },
+      {
+        "contract": "HandleAttemptsContract",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `HandleAttemptsContract.pre`, `HandleAttemptsContractImpl` does not establish these parts of `HandleAttemptsContract.post`: `o.failedAttempts = m.failedAttempts`. Change the function so that they hold (the contract is locked). What to do: (1) set `failedAttempts := x.failedAttempts`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def HandleAttemptsContractImpl (x : Mid) : Output :=\n  { selectedNetwork := x.selectedNetwork,\n    failedAttempts := if x.safeAreas.contains x.selectedNetwork then 0 else 1 }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 49.4
+  },
+  {
+    "id": "5.2.3.26",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.26 It shall be possible for the driver to register and deregister a train number in the following ways: 1) enter train number; (M) 2) initiate automated request (applicable only for leading driver). (O)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "<generated>:37:25: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  HAppend (List TrainNumber) (List (x.trainNumbers ≠ [] → TrainNumber)) ?m.10\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n",
+        "error_class": "type-error",
+        "stages": [
+          "types",
+          "types",
+          "types",
+          "types",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { registeredNumbers := x.trainNumbers ++ (if x.driver.isLeading then [x.trainNumbers.head] else []) }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 11.3
+  },
+  {
+    "id": "5.2.3.27",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.27 Where the driver is required to enter the train number information, the information entered shall be shown on the display and require confirmation by the driver before further actions are possible. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ displayed := x.trainNumber, confirmed := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ComputeDisplayedContract` is an identity: its `post` only copies `Input` fields, so `ConfirmOrderContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ComputeDisplayedContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  displayed : String\n  deriving DecidableEq, Repr\n\ndef ComputeDisplayedContract : Contract Input Mid where\n  pre  := fun i => i.trainNumber ≠ \"\"\n  post := fun i m => m.displayed = i.trainNumber\n\ndef ConfirmOrderContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.displayed = m.displayed ∧ (o.confirmed = true ↔ m.displayed = m.displayed)"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { displayed := x.trainNumber,\n    confirmed := decide (x.trainNumber = x.trainNumber) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "displayed"
+          ],
+          "model": [
+            "confirmed"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 10.5
+  },
+  {
+    "id": "5.2.3.28i",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.28i Where ERTMS/ETCS and radio systems are available and the driver is required to enter the train number as part of the initialisation procedure, this task shall be carried out only once on the ERTMS/ETCS system and the entered number transmitted to the radio system. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ trainNumber := \"\", transmitted := false }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.transmitted = true ↔\n    (i.trainNumber.length = 5 ∧\n     i.trainNumber.toList.all (fun r => Char.isDigit r)) ∧\n    o.trainNumber = i.trainNumber ∧\n    o.transmitted = i.transmitted`. Change the function so that they hold (the contract is locked). What to do: (1) compute `transmitted`, `trainNumber` from the input (count / compare / arithmetic) so that `o.transmitted = true ↔ (x.trainNumber.length = 5 ∧ x.trainNumber.toList.all (fun r => Char.isDigit r)) ∧ o.trainNumber = x.trainNumber ∧ o.transmitted = x.transmitted` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { trainNumber := x.trainNumber, transmitted := x.transmitted }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 24.7
+  },
+  {
+    "id": "5.2.3.29",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.29 The driver shall be warned (by audible and visual indications) if a train with the same train number is already registered on the same network. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { warned := decide (∃ t ∈ x.trains, t.number = x.number ∧ t.network = x.network) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "warned"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.3
+  },
+  {
+    "id": "5.2.3.32",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.32 Where a change of train number is required during the course of a trains journey, it shall be possible for the driver to initiate the change or override the automatic change. This shall be carried out by entering the train number (option 1 in 5.2.3.26). (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ trainNumber := x.trainNumber, accepted := x.override }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { trainNumber := if x.override then x.trainNumber else \"default\",\n    accepted := decide (x.override) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "accepted"
+          ],
+          "model": [
+            "trainNumber"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.2
+  },
+  {
+    "id": "5.2.3.38",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.38 It shall be possible to register and deregister a stock number in one or both of the following ways: (M) automatically using information from on-board systems; automatically via a fixed interface between the locomotive/coach and the radio. Store/retrieve numbers and their details",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { registered := decide ((x.number > 5 ∧ x.details ≠ \"\")) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "registered"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.1
+  },
+  {
+    "id": "5.2.3.41",
+    "kind": "requirement",
+    "requirement_text": "5.2.3.41 It should be possible for the driver to store and overwrite numbers and their details in the Cab radio. (O) Invoke supplementary services",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ number := x.number, details := x.details, existing := x.existing }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { number := x.number, details := x.details, existing := x.existing }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "number",
+            "details",
+            "existing"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.4
+  },
+  {
+    "id": "5.3.3",
+    "kind": "requirement",
+    "requirement_text": "5.3.3 Measures should be taken to reduce the risk of theft of radio equipment. Examples of such measures include physical protection, alarms and access control measures. (I)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { riskReduced := decide ((x.securityMeasures > 0 ∧\n     (x.alarms > 0 ∨\n      x.accessControls > 0))) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "riskReduced"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.3
+  },
+  {
+    "id": "5.3.5",
+    "kind": "requirement",
+    "requirement_text": "5.3.5 Cab radios should be able to continue to operate for a period of at least 1 hour in the event of failure of the trains power supply, based on the following cycle: (O) point-to-point calls 20%; group calls 5%; standby 75%. Electromagnetic Compatibility",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 3600000000 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.7
+  },
+  {
+    "id": "5.4.2",
+    "kind": "requirement",
+    "requirement_text": "5.4.2 Radio equipment installed in a drivers Cab shall not obstruct the drivers vision or otherwise hinder the safe driving of the train. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ safeToDrive := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { safeToDrive := decide (x.radioObstructsVision = false) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "safeToDrive"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.8
+  },
+  {
+    "id": "5.7.4",
+    "kind": "requirement",
+    "requirement_text": "5.7.4 DSD alarm information shall be transmitted to the primary controller. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ primaryController := x.alarmInfo }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { primaryController := x.alarmInfo }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "primaryController"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.9
+  },
+  {
+    "id": "7.2.2.9",
+    "kind": "requirement",
+    "requirement_text": "7.2.2.9 If the system is not able to connect the call, an audible and visual indication shall be provided to the user. (M) Send Railway emergency call",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ audibleIndication := true, visualIndication := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { audibleIndication := true, visualIndication := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "audibleIndication",
+            "visualIndication"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "7.2.2.12",
+    "kind": "requirement",
+    "requirement_text": "7.2.2.12 If the emergency call function is disabled, a visual indication and short audible indication shall be given when: the radio is switched on; (M) the emergency button is pushed (in this case nothing else will happen). (M) Receive incoming point to point voice call",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ visualIndication := x.emergencyButtonPushed, audibleIndication := x.emergencyButtonPushed }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { visualIndication := x.emergencyButtonPushed ∧ ¬x.emergencyCallEnabled,\n    audibleIndication := x.emergencyButtonPushed ∧ ¬x.emergencyCallEnabled }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "visualIndication",
+            "audibleIndication"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.0
+  },
+  {
+    "id": "7.2.2.14",
+    "kind": "requirement",
+    "requirement_text": "7.2.2.14 Where available, the functional identity of the calling party shall be displayed. (M) Receive incoming group or broadcast voice call",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ callerId := x.callerId, displayed := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { callerId := x.callerId,\n    displayed := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "callerId",
+            "displayed"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.0
+  },
+  {
+    "id": "7.2.2.22",
+    "kind": "requirement",
+    "requirement_text": "7.2.2.22 If the user moves out of the group or broadcast call area whilst the call is in progress, an audible and visual indication of the loss of call shall be provided to the user. (M) Receive incoming Railway emergency call",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { userPosition := x.userPosition,\n    callActive := x.callActive,\n    callArea := x.callArea,\n    alert := decide ((x.userPosition ≠ x.callArea ∧ x.callActive = true)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "userPosition",
+            "callActive",
+            "callArea",
+            "alert"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.7
+  },
+  {
+    "id": "7.2.3.1",
+    "kind": "requirement",
+    "requirement_text": "7.2.3.1 The radio shall have an on/off switch. Switching the radio on shall initiate the following: (M) transitory lighting of any display, controls or indicator lights; automatic self-testing; if the self-test fails a visible and audible indication shall be provided; connection to a mobile network (see section 3.3); if connection is successful, the name of the network shall be displayed and an audible confirmation of successful connection shall be given; if connection is not successful, an audible and visual indication shall be provided.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { displayLighted := decide (x.display ∨ x.controls ∨ x.indicatorLights),\n    selfTestFailed := decide (¬x.selfTestPassed),\n    networkNameDisplayed := decide (x.mobileNetworkConnected),\n    mobileNetworkConnected := decide (x.mobileNetworkConnected),\n    audibleConfirmation := decide (x.mobileNetworkConnected),\n    audibleIndication := decide (¬x.mobileNetworkConnected),\n    visualIndication := decide (¬x.mobileNetworkConnected) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "displayLighted",
+            "selfTestFailed",
+            "networkNameDisplayed",
+            "mobileNetworkConnected",
+            "audibleConfirmation",
+            "audibleIndication",
+            "visualIndication"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.9
+  },
+  {
+    "id": "7.2.3.9",
+    "kind": "requirement",
+    "requirement_text": "7.2.3.9 When the mobile changes network automatically, a visual and audible indication shall be given. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ networkChange := x.networkChange, visualIndication := x.networkChange, audibleIndication := x.networkChange }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { networkChange := x.networkChange,\n    visualIndication := x.networkChange,\n    audibleIndication := x.networkChange }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "networkChange"
+          ],
+          "model": [
+            "visualIndication",
+            "audibleIndication"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.5
+  },
+  {
+    "id": "7.2.3.9i",
+    "kind": "requirement",
+    "requirement_text": "7.2.3.9i It shall be possible for a user to override the automatic network selection manually. This function shall not be available during calls. (M) Register and deregister functional number",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ networkSelection := x.networkSelection, overridingPossible := x.userOverride }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ComputeOutputContract` is an identity: its `post` only copies `Mid` fields to `Output`, so `ComputeMidContract` does all the work of `Spec`. Leave part of the work to `ComputeOutputContract`: `ComputeMidContract` states an intermediate result in `Mid`, and `ComputeOutputContract` states `o` in terms of it.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  networkSelection : String\n  overridingPossible : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeMidContract : Contract Input Mid where\n  pre  := fun i => ¬i.ongoingCall\n  post := fun i m => (m.overridingPossible = true ↔ i.userOverride = true) ∧\n                     (m.networkSelection = i.networkSelection)\n\ndef ComputeOutputContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.overridingPossible = m.overridingPossible) ∧\n                     (o.networkSelection = m.networkSelection)"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { networkSelection := x.networkSelection,\n    overridingPossible := decide (x.userOverride = true) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "networkSelection",
+            "overridingPossible"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 9.4
+  },
+  {
+    "id": "7.2.3.11",
+    "kind": "requirement",
+    "requirement_text": "7.2.3.11 Where a change of functional number is required, it shall be possible for the user to initiate the change. (M) Store/retrieve numbers and their details",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.newDetails ≠ i.newDetails`; `o.numbers.Nodup`; `o.numbers.length > 0`. Change the function so that they hold (the contract is locked). What to do: (1) change `newDetails` so that `o.newDetails ≠ x.newDetails` holds. (2) change `numbers` so that `o.numbers.Nodup` holds. (3) compute `numbers` from the input (count / compare / arithmetic) so that `o.numbers.length > 0` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "types",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { numbers := x.numbers.filter (fun fn => decide (∃ fn' ∈ x.numbers, fn.number = fn'.number ∧\n      (fn.details = fn'.details ∧ fn'.newNumber = fn.newNumber ∧ fn'.newDetails = fn.newDetails) ∨\n      (fn.details ≠ fn'.details ∨ fn'.newNumber ≠ fn.newNumber ∨ fn'.newDetails ≠ fn.newDetails))),\n    newNumber := x.newNumber + 1,\n    newDetails := \"New Detail\" }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 56.0
+  },
+  {
+    "id": "7.2.3.13",
+    "kind": "requirement",
+    "requirement_text": "7.2.3.13 It shall be possible for the user to store and/or overwrite numbers and their details in the radio. (M) Computer interface",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ComputeRadioContract` is an identity: its `post` only copies `Input` fields and restates the precondition, so `DetermineSuccessContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ComputeRadioContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  radio    : String\n  number : Nat\n  overwrite : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeRadioContract : Contract Input Mid where\n  pre  := fun i => i.radio ≠ \"\" ∧ i.overwrite = true ∨ i.number > 0\n  post := fun i m => (m.radio = i.radio ∧ (i.number = 0 ∨ m.radio.length ≤ i.radio.length)) ∧ m.number = i.number ∧ m.overwrite = i.overwrite\n\ndef DetermineSuccessContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.success = true ↔ m.radio.length ≤ o.radio.length) ∧\n                     (o.success = false ↔ m.number > 0 ∧ m.radio.length ≤ o.radio.length ∧ m.overwrite = false)\n\n"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.success = false ↔\n      (i.number > 0 ∧ i.radio.length ≤ o.radio.length ∧ i.overwrite = false)`. Change the function so that they hold (the contract is locked). What to do: (1) compute `success`, `radio` from the input (count / compare / arithmetic) so that `o.success = false ↔ (x.number > 0 ∧ x.radio.length ≤ o.radio.length ∧ x.overwrite = false)` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "static",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { radio := x.radio, success := (x.radio ≠ \"\" ∧ x.overwrite = true ∨ x.number > 0) }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 79.7
+  },
+  {
+    "id": "7.4.4.1",
+    "kind": "requirement",
+    "requirement_text": "7.4.4.1 A visual and audible alarm shall be given when the remaining capacity of the battery is such as to enable only 10 minutes of full duplex call time. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 2,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "check",
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := min x.elapsedMicros 600000000,\n    visualAlarm := x.remainingCapacity ≤ 10 * 60000,\n    audibleAlarm := x.remainingCapacity ≤ 10 * 60000 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "elapsedMicros",
+            "visualAlarm",
+            "audibleAlarm"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 15.2
+  },
+  {
+    "id": "9.2.1.1",
+    "kind": "requirement",
+    "requirement_text": "9.2.1.1 The EIRENE system shall enable users to originate and receive calls by functional number. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { callOriginated := decide (x.functionalNumber = \"1234567890\"),\n    callReceived := decide (x.functionalNumber = \"1234567890\") }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "callOriginated",
+            "callReceived"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.1
+  },
+  {
+    "id": "9.2.1.2",
+    "kind": "requirement",
+    "requirement_text": "9.2.1.2 Each mobile shall be identified by a unique telephone number. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { valid := decide (x.telephoneNumber.toList.all Char.isDigit = true ∧\n    x.telephoneNumber.length = 10) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "valid"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "9.2.2.2",
+    "kind": "requirement",
+    "requirement_text": "9.2.2.2 Every on-train function shall be identified by a unique standard number. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.functions = i.functions`; `∀ f ∈ o.functions, 0 < f.number ∧\n                     ∃ f2 ∈ o.functions, f2.number ≠ f.number`. Change the function so that they hold (the contract is locked). What to do: (1) set `functions := x.functions`. (2) compute `functions` from the input (count / compare / arithmetic) so that `∀ f ∈ o.functions, 0 < f.number ∧ ∃ f2 ∈ o.functions, f2.number ≠ f.number` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "syntax",
+          "check",
+          "truncated",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { functions := x.functions.filter (fun f => 0 < f.number) }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 161.0
+  },
+  {
+    "id": "9.2.3.2",
+    "kind": "requirement",
+    "requirement_text": "9.2.3.2 Every on-engine/coach function shall be identified by a unique standard number. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ functionNumber := x.number }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { functionNumber := x.number }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "functionNumber"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.1
+  },
+  {
+    "id": "9.5.1",
+    "kind": "requirement",
+    "requirement_text": "9.5.1 Authorised users within the EIRENE network shall be able to receive calls from calling parties outside the EIRENE network. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { callAccepted := decide (x.callerNetwork ≠ x.calledNetwork ∧ x.callerAuthorised) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "callAccepted"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "10.2.1",
+    "kind": "requirement",
+    "requirement_text": "10.2.1 A number of levels of priority shall be required in order to offer different grades of service to different users and calls. Five levels of priority shall be defined: (M) Railway emergency; control-command (safety); public emergency and group calls between drivers in the same area; railway operation; railway information.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { valid := true,\n    priority := if x.priorityLevel = 1 then \"M\" else if x.priorityLevel = 2 then \"Control-command\" else if x.priorityLevel = 3 then \"Public emergency and group calls\" else if x.priorityLevel = 4 then \"Railway operation\" else if x.priorityLevel = 5 then \"Railway information\" else \"Unknown\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "valid"
+          ],
+          "model": [
+            "priority"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 8.0
+  },
+  {
+    "id": "10.4.1",
+    "kind": "requirement",
+    "requirement_text": "10.4.1 A mobile may be a member of a number of groups. It shall be possible to activate or deactivate the mobiles subscription to these groups. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `FinalizeOutputContract` is an identity: its `post` only copies `Mid` fields to `Output`, so `ComputeGroupsContract` does all the work of `Spec`. Leave part of the work to `FinalizeOutputContract`: `ComputeGroupsContract` states an intermediate result in `Mid`, and `FinalizeOutputContract` states `o` in terms of it.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  groups   : List Nat\n  active   : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeGroupsContract : Contract Input Mid where\n  pre  := fun i => i.groups.Nodup\n  post := fun i m => m.groups = i.groups ∧ m.active = true ↔ i.groups.Nodup ∧ 0 < i.groups.length\n\ndef FinalizeOutputContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.mobileId = m.groups.head ∧\n                     o.groups = m.groups ∧\n                     o.active = m.active"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { mobileId := x.mobileId,\n    groups := x.groups,\n    active := decide (x.groups.Nodup ∧ 0 < x.groups.length) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "mobileId",
+            "groups"
+          ],
+          "model": [
+            "active"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 12.7
+  },
+  {
+    "id": "10.4.2",
+    "kind": "requirement",
+    "requirement_text": "10.4.2 Activating a group on the mobile shall allow a user to receive a call from that group. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { userId := x.userId,\n    groups := x.groups,\n    calling := decide (∃ gid ∈ x.groupIds, ∃ g ∈ x.groups, g.id = gid) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "userId",
+            "groups",
+            "calling"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.7
+  },
+  {
+    "id": "10.4.4",
+    "kind": "requirement",
+    "requirement_text": "10.4.4 In order to provide interoperability, Cab radios will be members of a number of standard groups: Railway emergency call; (M) all train drivers; (M) shunting team; (M) trackside worker. (O)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { cabId := x.cabId,\n    groupMemberships := if x.groupMemberships.contains \"all train drivers\" then\n                            x.groupMemberships ++ [\"Railway emergency call\"]\n                         else if x.groupMemberships.contains \"shunting team\" then\n                            x.groupMemberships ++ [\"Railway emergency call\"]\n                         else if x.groupMemberships.contains \"trackside worker\" then\n                            x.groupMemberships ++ [\"Railway emergency call\"]\n                         else\n                            [\"Railway emergency call\"] }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "cabId"
+          ],
+          "model": [
+            "groupMemberships"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 8.7
+  },
+  {
+    "id": "11.2.1.2",
+    "kind": "requirement",
+    "requirement_text": "11.2.1.2 The primary usage of functional addressing will be for controllers to establish communications with train drivers by making use of the train number. The train number will vary between journeys although EIRENE equipment in the cab is unlikely to change. (I)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { communicationEstablished := decide (x.trainNumber.toList.all Char.isDigit ∧ x.trainNumber.length = 4 ∧ (x.trainNumber = \"1234\" ∨ x.trainNumber = \"5678\")) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "communicationEstablished"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.1
+  },
+  {
+    "id": "11.2.1.9",
+    "kind": "requirement",
+    "requirement_text": "11.2.1.9 The functional addressing scheme shall be independent of specific configurations of mobile and terminal equipment. For example, the functional number of a conductor on board a particular train shall be the same irrespective of whether the conductor accesses the network through the Cab radio or has a separate dedicated EIRENE mobile. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ functionalNumber := x.conductorFunctionalNumber }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { functionalNumber := x.conductorFunctionalNumber }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "functionalNumber"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.1
+  },
+  {
+    "id": "11.2.1.10",
+    "kind": "requirement",
+    "requirement_text": "11.2.1.10It shall be possible to call EIRENE users by functional numbers from a wide range of terminals (EIRENE and non-EIRENE). Examples include EIRENE mobiles, controller terminals, railway fixed network telephones and public telephones. (All such calls will be subject to any access restrictions see section 10.3.) (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.callSuccessful = true ↔\n    (i.terminalType = \"EIRENE\" ∨ i.terminalType = \"non-EIRENE\") ∧\n    (o.accessRestricted = true → o.callSuccessful = false) ∧\n    o.accessRestricted = (i.functionalNumber = \"restricted\")`. Change the function so that they hold (the contract is locked). What to do: (1) compute `callSuccessful`, `accessRestricted` from the input (count / compare / arithmetic) so that `o.callSuccessful = true ↔ (x.terminalType = \"EIRENE\" ∨ x.terminalType = \"non-EIRENE\") ∧ (o.accessRestricted = true → o.callSuccessful = false) ∧ o.accessRestricted = (x.functionalNumber = \"restricted\")` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "static",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { callSuccessful := (x.terminalType = \"EIRENE\" ∨ x.terminalType = \"non-EIRENE\"),\n    accessRestricted := (x.functionalNumber = \"restricted\") }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 31.3
+  },
+  {
+    "id": "11.2.2.1",
+    "kind": "requirement",
+    "requirement_text": "11.2.2.1 Functional numbers must be unique within the domain of operation. Since the number must be independent of networks, each number must be unique across all networks (including implementation of EIRENE facilities on public networks). (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ unique := x.isUnique }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { unique := decide (x.isUnique = true ∧\n    x.functionalNumber.length = 16 ∧\n    x.functionalNumber.toList.all (·.isDigit) = true) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "unique"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.3
+  },
+  {
+    "id": "11.3.2.3",
+    "kind": "requirement",
+    "requirement_text": "11.3.2.3 It shall be possible to register up to ten functional numbers to items of equipment physically connected to the Cab radio within 30 seconds. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { registered := x.functionalNumbers.length,\n    elapsedMicros := 30000000 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "registered"
+          ],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.4
+  },
+  {
+    "id": "11.3.3.3",
+    "kind": "requirement",
+    "requirement_text": "11.3.3.3 It shall be possible to deregister up to ten functional numbers to items of equipment physically connected to the Cab radio within 30 seconds. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { deregistered := x.functionalNumbers.length,\n    elapsedMicros := min (x.functionalNumbers.length * 3000000) 30000000 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "deregistered"
+          ],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.8
+  },
+  {
+    "id": "11.3.3.5",
+    "kind": "requirement",
+    "requirement_text": "11.3.3.5 An EIRENE mobile shall remove the displayed functional number and provide an indication to the user that deregistration has taken place. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { userIndication := if x.userIndication = \"Deregistration successful\" then \"Deregistration successful\" else \"Deregistration failed\",\n    succeeded := decide (x.userIndication = \"Deregistration successful\") }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "succeeded"
+          ],
+          "model": [
+            "userIndication"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.1
+  },
+  {
+    "id": "11.4.2",
+    "kind": "requirement",
+    "requirement_text": "11.4.2 The functions to which calls shall be routed based upon the location of the mobile shall include: (M) Primary controller; Secondary controller; Power supply controller; Train management centre (eg RBC, CTS).",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { controller := if x.location = \"\" then \"Invalid input\" else \"Primary controller\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "controller"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.1
+  },
+  {
+    "id": "11.4.4",
+    "kind": "requirement",
+    "requirement_text": "11.4.4 When operating with location dependent addressing, no manual action shall be required to update the system when a mobile moves between locations. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ updated := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { updated := decide (x.oldLocation ≠ x.newLocation →\n    (x.oldLocation = 0 → true) ∧\n    (x.newLocation = 0 → true)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "updated"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.5
+  },
+  {
+    "id": "12.2.1",
+    "kind": "requirement",
+    "requirement_text": "12.2.1 It should be possible to transfer text messages between ground and mobile(s) through the EIRENE system. (O)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 2,
+      "contracts": [
+        "SendMessagesContract",
+        "ProcessResultsContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 5,
+        "of": 6,
+        "first_result_depends_on_input": true
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "static",
+        "ok"
+      ],
+      "code": "structure Mid where\n  sentMessages : List String\n  failedNumbers : List String\n  deriving DecidableEq, Repr\n\ndef SendMessagesContract : Contract Input Mid where\n  pre  := fun i => i.groundMessage ≠ \"\" ∧ i.mobileNumbers.Nodup\n  post := fun i m => m.sentMessages.length = i.mobileNumbers.length - m.failedNumbers.length ∧\n                     (∀ n ∈ i.mobileNumbers, m.sentMessages.contains n ↔\n                      (n = i.groundMessage || m.failedNumbers.contains n))\n\ndef ProcessResultsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.sentMessages = m.sentMessages ∧\n                     o.failedNumbers = m.failedNumbers ∧\n                     (o.sentMessages.length = m.sentMessages.length - o.failedNumbers.length)\n\ntheorem po1 : Contract.Compatible SendMessagesContract ProcessResultsContract := by\n  discharge_po1 [SendMessagesContract, ProcessResultsContract, Spec]\n\ntheorem po2 : Contract.Refines (SendMessagesContract.seq ProcessResultsContract) Spec := by\n  discharge_po2 [SendMessagesContract, ProcessResultsContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "SendMessagesContract",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `SendMessagesContract.pre`, `SendMessagesContractImpl` does not establish these parts of `SendMessagesContract.post`: `∀ n ∈ i.mobileNumbers, m.sentMessages.contains n ↔\n                      (n = i.groundMessage || m.failedNumbers.contains n)`. Change the function so that they hold (the contract is locked). What to do: (1) build `sentMessages`, `failedNumbers` with `List.filter` / `List.map` over an input list so that `∀ n ∈ x.mobileNumbers, m.sentMessages.contains n ↔ (n = x.groundMessage || m.failedNumbers.contains n)` holds for every element.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "names",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SendMessagesContractImpl (x : Input) : Mid :=\n  { sentMessages := x.mobileNumbers,\n    failedNumbers := []\n  }",
+        "harness_only": false
+      },
+      {
+        "contract": "ProcessResultsContract",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `ProcessResultsContract.pre`, `ProcessResultsContractImpl` does not establish these parts of `ProcessResultsContract.post`: `o.sentMessages.length = m.sentMessages.length - o.failedNumbers.length`. Change the function so that they hold (the contract is locked). What to do: (1) compute `sentMessages`, `failedNumbers` from the input (count / compare / arithmetic) so that `o.sentMessages.length = x.sentMessages.length - o.failedNumbers.length` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "names",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def ProcessResultsContractImpl (x : Mid) : Output :=\n  { sentMessages := x.sentMessages,\n    failedNumbers := x.failedNumbers }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 91.5
+  },
+  {
+    "id": "12.2.3",
+    "kind": "requirement",
+    "requirement_text": "12.2.3 If a message is safety related, the safety mechanisms will be included at the application level and do not concern the EIRENE system. (I)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { safetyMechanismsIncluded := decide (x.safetyRelated = false) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "safetyMechanismsIncluded"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.0
+  },
+  {
+    "id": "12.3.2",
+    "kind": "requirement",
+    "requirement_text": "12.3.2 The transfer time for each message segment should be less then 30 seconds for 95% of messages. (O)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ elapsedMicros := 0 }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := 30000000 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.7
+  },
+  {
+    "id": "13.1.6",
+    "kind": "requirement",
+    "requirement_text": "13.1.6 The Train emergency call shall be sent to all drivers and controller(s) within an area, which is pre-defined to meet operational requirements. The predefined areas for emergency calls shall include, where necessary, parts of one or more network(s). (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `(o.driversNotified = true ∧ o.controllersNotified = true) ↔\n    (∃ a ∈ i.predefinedAreas, a.network = o.areaNotified.network ∧ a.part = o.areaNotified.part)`. Change the function so that they hold (the contract is locked). What to do: (1) build `driversNotified`, `controllersNotified`, `areaNotified` with `List.filter` / `List.map` over an input list so that `(o.driversNotified = true ∧ o.controllersNotified = true) ↔ (∃ a ∈ x.predefinedAreas, a.network = o.areaNotified.network ∧ a.part = o.areaNotified.part)` holds for every element.",
+        "error_class": "po3",
+        "stages": [
+          "names",
+          "check",
+          "check",
+          "syntax",
+          "syntax",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { driversNotified := true,\n    controllersNotified := true,\n    areaNotified := x.predefinedAreas.headD { network := \"network1\", part := \"part1\" } }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 23.8
+  },
+  {
+    "id": "13.1.7",
+    "kind": "requirement",
+    "requirement_text": "13.1.7 The Shunting emergency call shall be sent to all users involved in shunting operations in the shunting area. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ usersNotified := x.users }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { usersNotified := x.users }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "usersNotified"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.0
+  },
+  {
+    "id": "13.2.3.3",
+    "kind": "requirement",
+    "requirement_text": "13.2.3.3 The information shall be received by the same set of users who received the warning tone. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ informationUsers := x.warningUsers }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { informationUsers := x.warningUsers }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "informationUsers"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.9
+  },
+  {
+    "id": "13.3.1",
+    "kind": "requirement",
+    "requirement_text": "13.3.1 Authorised EIRENE mobiles shall be able to receive a Railway emergency call at any time while the mobile is powered up. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ received := x.poweredUp }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { received := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "received"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.9
+  },
+  {
+    "id": "13.4.2",
+    "kind": "requirement",
+    "requirement_text": "13.4.2 The confirmation shall be generated automatically without input from the user. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ confirmationGenerated := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { confirmationGenerated := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "confirmationGenerated"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.8
+  },
+  {
+    "id": "13.4.3",
+    "kind": "requirement",
+    "requirement_text": "13.4.3 The confirmation message shall commence at the end of the call or if the radio moves out of the call area. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { confirmationMessage := decide ((x.callStarted = true ∧ x.radioMoved = false) ∨\n    (x.callStarted = false ∧ x.radioMoved = true)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "confirmationMessage"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "13.4.7",
+    "kind": "requirement",
+    "requirement_text": "13.4.7 The confirmation message shall be received at the central location with a 99% probability of success within 5 minutes of call termination. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ elapsedMicros := 0, success := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := x.elapsedMicros, success := decide (x.elapsedMicros ≤ 300000000) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "elapsedMicros",
+            "success"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.3
+  },
+  {
+    "id": "13.4.8",
+    "kind": "requirement",
+    "requirement_text": "13.4.8 The performance of the confirmation procedure shall not be dependent upon the current use of the mobile and shall not overload the network. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { confirmationSent := true,\n    networkLoadAfter := x.networkLoad - 1 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "confirmationSent",
+            "networkLoadAfter"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.6
+  },
+  {
+    "id": "14.2.4",
+    "kind": "requirement",
+    "requirement_text": "14.2.4 It shall be possible for all mobile members of the shunting group (except the driver) to transmit a link assurance signal. (M)",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ transmitted := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { transmitted := decide (∃ m ∈ x.members, m.isDriver = false) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "transmitted"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.0
+  },
+  {
+    "id": "14.2.8",
+    "kind": "requirement",
+    "requirement_text": "14.2.8 Operational radios used for shunting shall be able to be switched between the following two operating modes by a maintenance function: (M) Mode 1: the member is required to continuously press the link assurance signal button in order to transmit the link assurance signal; Mode 2: the member is required to switch on the link assurance signal and then periodically press a button in order to transmit the link assurance signal (failure to do so shall result in the deactivation of the link assurance signal after a predefined period has elapsed).",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `i.mode = \"2\" →\n      (o.linkAssuranceSignalActive = i.linkAssuranceSignalPressed ∧\n       i.linkAssuranceSignalPressed →\n       o.linkAssuranceSignalActive = true) ∧\n      (¬i.linkAssuranceSignalPressed →\n       o.linkAssuranceSignalActive = false) ∧\n      (o.linkAssuranceSignalActive = true →\n       i.periodicButtonPressed = true)`. Change the function so that they hold (the contract is locked). What to do: (1) add a branch on `x.mode = \"2\"`: `linkAssuranceSignalActive := if x.mode = \"2\" then true →\n       x.periodicButtonPressed = true else <value otherwise>`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { linkAssuranceSignalActive := if x.mode = \"M\" then x.linkAssuranceSignalPressed else if x.mode = \"2\" then x.periodicButtonPressed else false }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 31.9
+  },
+  {
+    "id": "14.2.12",
+    "kind": "requirement",
+    "requirement_text": "14.2.12 It shall be possible for all shunting drivers and shunting group members to receive a shunting emergency call from any equipment capable of taking part in shunting communications. The shunting emergency call shall cause the audible link assurance signal to be interrupted. (M)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { audibleLinkAssuranceInterrupted := decide (x.shuntingDriver ∨ x.shuntingGroupMember) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "audibleLinkAssuranceInterrupted"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "14.2.13",
+    "kind": "requirement",
+    "requirement_text": "14.2.13 It should be possible for the system to record: (O) shunting group composition at a given instant; the source and time a shunting emergency call was transmitted; the recipients of a shunting emergency call.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ shuntingGroup := x.shuntingGroup, emergencyCall := x.emergencyCall }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { shuntingGroup := x.shuntingGroup,\n    emergencyCall := x.emergencyCall }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "shuntingGroup"
+          ],
+          "model": [
+            "emergencyCall"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 9.1
+  }
+]

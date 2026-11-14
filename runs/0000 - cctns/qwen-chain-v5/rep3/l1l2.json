@@ -1,0 +1,642 @@
+[
+  {
+    "id": "3/registration/S1",
+    "kind": "requirement",
+    "requirement_text": "Citizens can register their complaints with police and then based on the evidence, facts and following investigation, police shall take the complaint forward.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "ComputeComplaintContract",
+        "ProcessComplaintContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.accepted = true ↔\n      i.complaint.status = \"New\" ∧\n      i.evidence.all (fun e => e ∈ i.complaint.evidence)`; `o.complaintID = i.complaint.complaintID ∧\n     o.status = \"New\" ↔ o.accepted = true`; `o.accepted = false →\n      o.complaintID = i.complaint.complaintID ∧\n      o.status = \"Rejected\" ∧\n      i.evidence.all (fun e => e ∉ i.complaint.evidence)`. Whatever `Spec.post` says about the input must pass through `Mid`: `ComputeComplaintContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `ProcessComplaintContract.post` relates `Output` to `Mid`. A condition that is only in `ProcessComplaintContract.pre` is not guaranteed by the chain.",
+      "error_class": "po2",
+      "stages": [
+        "check",
+        "check",
+        "names",
+        "names",
+        "names",
+        "returned"
+      ],
+      "carried_by_harness": [
+        "evidence",
+        "complaint"
+      ],
+      "code": "structure Mid where\n  complaintID : Nat\n  status      : String\n  accepted    : Bool\n  evidence : List String\n  complaint : Complaint\n  deriving DecidableEq, Repr\n\ndef ComputeComplaintContract : Contract Input Mid where\n  pre  := fun i => i.citizenID ≠ 0 ∧ i.complaint.description ≠ \"\" ∧ i.evidence.Nodup\n  post := fun i m => (m.complaintID = i.complaint.complaintID ∧\n                     m.status = \"New\" ↔ m.accepted = true ∧\n                     m.accepted = true →\n                     i.evidence.all (fun e => e ∈ i.complaint.evidence)) ∧ m.evidence = i.evidence ∧ m.complaint = i.complaint\n\ndef ProcessComplaintContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.complaintID = m.complaintID ∧\n                     o.status = \"New\" ↔ m.accepted = true ∧\n                     o.accepted = false →\n                     o.complaintID = m.complaintID ∧\n                     o.status = \"Rejected\" ∧\n                     m.evidence.all (fun e => e ∉ m.complaint.evidence)\n\n"
+    },
+    "l2": [],
+    "seconds": 68.6
+  },
+  {
+    "id": "4/audit-module/R5",
+    "kind": "requirement",
+    "requirement_text": "The System must be able to export audit trails for specified cases (without affecting the audit trail stored by the System). This functionality can be used by external auditors who wish to examine or analyse system activity.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": true,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ExportRecordsContract` is `Spec` again (same `pre` and `post` up to variable names). A component must be a part of the work, not the whole spec.; `ProcessRecordsContract` is an identity: its `post` only copies `Mid` fields to `Output`, so `ExportRecordsContract` does all the work of `Spec`. Leave part of the work to `ProcessRecordsContract`: `ExportRecordsContract` states an intermediate result in `Mid`, and `ProcessRecordsContract` states `o` in terms of it.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  exportedRecords : List AuditRecord\n  remainingRecords : List AuditRecord\n  deriving DecidableEq, Repr\n\ndef ExportRecordsContract : Contract Input Mid where\n  pre  := fun i => i.cases.Nodup\n  post := fun i m => \n    m.exportedRecords.length + m.remainingRecords.length = i.cases.length ∧\n    ∀ cr ∈ m.exportedRecords, ∃ ac ∈ i.cases, cr.caseId = ac.caseId ∧\n    (m.exportedRecords = [] ↔ m.remainingRecords = i.cases.map (fun ac => { timestamp := 0, caseId := ac.caseId, event := \"\" })) ∧\n    (m.remainingRecords = [] ↔ m.exportedRecords = i.cases.map (fun ac => { timestamp := 0, caseId := ac.caseId, event := \"\" }))\n\ndef ProcessRecordsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => \n    o.exportedRecords = m.exportedRecords ∧\n    o.remainingRecords = m.remainingRecords"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { exportedRecords := x.cases.map (fun ac => { timestamp := 0, caseId := ac.caseId, event := \"\" }),\n    remainingRecords := [] }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "exportedRecords",
+            "remainingRecords"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 17.0
+  },
+  {
+    "id": "4/audit-module/R6",
+    "kind": "requirement",
+    "requirement_text": "The System must be able to capture and store violations (i.e. A user's attempts to access a case to which he is denied access), and (where violations can validly be attempted) attempted violations, of access control mechanisms.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ user := x.user, caseId := x.caseId, access := x.access, violation := true }",
+      "copy_ok": true,
+      "l05_class": "copy-ok"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "L1: `ComputeViolationContract` computes nothing: for every input that satisfies its `pre`, `m.violation` always has the same value, so it is an identity with a constant added and `ApplyViolationContract` does all the work of `Spec`. The first component must produce a result that is different for different inputs (a filtered list, a computed value, a decision that can be true or false under `ComputeViolationContract.pre`).",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "check",
+          "returned"
+        ],
+        "code": "structure Mid where\n  violation : Bool\n  access : Bool\n  user : String\n  caseId : Nat\n  deriving DecidableEq, Repr\n\ndef ComputeViolationContract : Contract Input Mid where\n  pre  := fun i => i.access = false\n  post := fun i m => (m.violation = true ↔ i.access = false) ∧ m.access = i.access ∧ m.user = i.user ∧ m.caseId = i.caseId\n\ndef ApplyViolationContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.violation = false → o.access = m.access) ∧ o.user = m.user ∧ o.caseId = m.caseId ∧ o.violation = m.violation"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { user := x.user,\n    caseId := x.caseId,\n    access := x.access,\n    violation := decide (x.access = false) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "user",
+            "caseId",
+            "violation"
+          ],
+          "model": [
+            "access"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 18.5
+  },
+  {
+    "id": "4/access-module/R6",
+    "kind": "requirement",
+    "requirement_text": "The System must allow changes to security attributes for groups or users (such as access rights, security level, privileges, password allocation and management) to be made only by super-user.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { success := decide ((x.isSuperUser = true ∧\n     (x.privilege = \"change_security_attributes\" ∨\n      x.privilege = \"super_user\"))) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "success"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.6
+  },
+  {
+    "id": "4/ease-of-use/R7",
+    "kind": "requirement",
+    "requirement_text": "The System must allow persistent defaults for data entry where desirable. These defaults should include: user-definable values; values same as previous item; values derived from context, e.g. date, file reference, user identifier;",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `(o.entries.zip i.defaults).all (fun p => p.2 = p.1 ∨ p.2 = \"previous\" ∨\n                     (p.2 = \"context\" ∧ p.1 = \"date\" ∨ p.1 = \"file\" ∨ p.1 = \"user\"))`. Change the function so that they hold (the contract is locked). What to do: (1) compute `entries` from the input (count / compare / arithmetic) so that `(o.entries.zip x.defaults).all (fun p => p.2 = p.1 ∨ p.2 = \"previous\" ∨ (p.2 = \"context\" ∧ p.1 = \"date\" ∨ p.1 = \"file\" ∨ p.1 = \"user\"))` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { entries := x.defaults }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 27.1
+  },
+  {
+    "id": "4/ease-of-use/R8",
+    "kind": "requirement",
+    "requirement_text": "Frequently-executed System transactions must be designed so that they can be completed with a small number of interactions (e.g. mouse clicks).",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ derivedInteractions := 0 }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { derivedInteractions := 0 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "derivedInteractions"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.8
+  },
+  {
+    "id": "4/ease-of-use/R9",
+    "kind": "requirement",
+    "requirement_text": "Where the System employs a graphical user interface, it must allow users to customise it. Customisation should include, but need not be limited to the following changes: menu contents; layout of screens; use of function keys; on-screen colours, fonts and font sizes;",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.menuContents = i.menuContents ↔ i.updateMenu = false`. Change the function so that they hold (the contract is locked). What to do: (1) add a branch on `x.updateMenu = false`: `menuContents := if x.updateMenu = false then x.menuContents else <value otherwise>`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { menuContents := if x.updateMenu = false then x.menuContents else [],\n    screenLayout := x.screenLayout,\n    functionKeys := x.functionKeys,\n    onScreenColors := x.onScreenColors,\n    fonts := x.fonts,\n    fontSizes := x.fontSizes }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 33.2
+  },
+  {
+    "id": "4/usability/R8",
+    "kind": "requirement",
+    "requirement_text": "Minimizing navigation effort: The number of navigation steps needed to reach a certain piece of content should be minimized as long as different mental models, navigation strategies and tasks of the user are taken into account.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ navigationSteps := x.navigationSteps, contentReached := true }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { navigationSteps := x.navigationSteps,\n    contentReached := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "navigationSteps",
+            "contentReached"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.1
+  },
+  {
+    "id": "4/system-availability/R4",
+    "kind": "requirement",
+    "requirement_text": "The number of incidents of unplanned downtime for the System must not exceed <x> per <rolling three month period>.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ downtimeCount := x.downtimeCount }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { downtimeCount := x.downtimeCount }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "downtimeCount"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "4/system-availability/R5",
+    "kind": "requirement",
+    "requirement_text": "In the event of any software or hardware failure, it must be possible to restore the System (with inline synchronization) within no more than <xx> hours.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ restored := false, systemState := x.systemState, failedAttempts := x.failedAttempts }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { restored := true,\n    systemState := \"normal\",\n    failedAttempts := x.failedAttempts + 1 }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "restored",
+            "systemState",
+            "failedAttempts"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.4
+  },
+  {
+    "id": "4/performance-and-scalability/R4",
+    "kind": "requirement",
+    "requirement_text": "The System must be able to retrieve and display within 20 seconds the case which has not been accessed within the previous 2 months, regardless of storage capacity or number of cases in the system. This requirement is intended to allow for cases where cases used infrequently are stored on slower media than more active records.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 2,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "names",
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { elapsedMicros := min 20000000 (x.cases.length + 1),\n    caseId := x.cases.getLastD \"C0\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "caseId"
+          ],
+          "model": [
+            "elapsedMicros"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 9.3
+  },
+  {
+    "id": "5/S6",
+    "kind": "requirement",
+    "requirement_text": "The core services, support layer and security and access control components can be deployed as standard components with necessary configuration changes.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { deployed := x.coreServices ++ x.supportLayer ++ x.securityAccess,\n    configApplied := x.configChanges }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "deployed",
+            "configApplied"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.6
+  },
+  {
+    "id": "5/S7",
+    "kind": "requirement",
+    "requirement_text": "The customization layer can override and add to the core services based on the specific state requirements and can be plugged with the core services.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { services := x.coreServices ++ x.customizationLayer.filter (fun y => x.stateRequirements.contains y) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "services"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 9.1
+  }
+]

@@ -2,7 +2,7 @@
 #SBATCH -p u22
 #SBATCH --gres=gpu:1
 #SBATCH -c 8
-#SBATCH --mem=16G
+#SBATCH --mem=32G
 #SBATCH --time=24:00:00
 # v11: the fixes for the failure patterns (docs/failure_patterns.pdf), on a list of SRS documents.
 #   1. L0 v11 (spec checks: output-mention / copy-satisfiable fed back; Lean doc lookup in repair
@@ -34,6 +34,9 @@ export CF_QWEN_BASE_URL="http://127.0.0.1:$CF_QWEN_PORT/v1"
 bash ../scripts/start_qwen_server.sh > ../runs/qwen_server_v11-$N.log 2>&1 & SRV=$!
 trap "kill $SRV" EXIT
 for i in $(seq 1 120); do curl -sf localhost:$CF_QWEN_PORT/v1/models >/dev/null && break; sleep 2; done
+# A node whose GPU fails to initialise runs the model on the CPU (~10x slower): stop instead.
+if grep -qE "failed to initialize CUDA|no usable GPU" ../runs/qwen_server_v11-$N.log; then
+  echo "no usable GPU on $(hostname): resubmit with --exclude=$(hostname)"; exit 1; fi
 
 # The doc index must be there (lean_docs.index() returns {} silently if building it fails).
 python -c "import lean_docs; n = len(lean_docs.index()); print('lean doc entries:', n); raise SystemExit(n == 0)" \

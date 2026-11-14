@@ -1,0 +1,85 @@
+{
+  "source": {
+    "file": "2008 - peering.xml",
+    "sha256": "c9eaf14536e9f68fcce363482956445177b3690b0ff9573d6d158162494488d6"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v11",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "ed18e9b",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 1,
+    "compiles": 1,
+    "rejects_bad_example": 1,
+    "checked": 1,
+    "failed": 0,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "4.2/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Messages can then be sent bi-directionally between the server and network elements.",
+      "text_predicate": "Requirement 4.2/S4 (External Interface Requirements > Communications Interfaces):\nMessages can then be sent bi-directionally between the server and network elements.",
+      "lean_predicate": "structure Message where\n  content : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  serverMessage : Message\n  networkElementMessage : Message\n  deriving DecidableEq, Repr\n\nstructure Output where\n  serverMessage : Message\n  networkElementMessage : Message\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.serverMessage.content = i.serverMessage.content ∧\n                     o.networkElementMessage.content = i.networkElementMessage.content ∧\n                     (o.serverMessage.content ≠ i.serverMessage.content ↔\n                      o.networkElementMessage.content ≠ i.networkElementMessage.content)\n\nexample : Spec.pre { serverMessage := { content := \"Hello\" },\n                     networkElementMessage := { content := \"World\" } } ∧\n          Spec.post { serverMessage := { content := \"Hello\" },\n                      networkElementMessage := { content := \"World\" } }\n                    { serverMessage := { content := \"Hello\" },\n                      networkElementMessage := { content := \"World\" } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { serverMessage := { content := \"Hello\" }, networkElementMessage := { content := \"World\" } } ∧ ¬ Spec.post { serverMessage := { content := \"Hello\" }, networkElementMessage := { content := \"World\" } } { serverMessage := { content := \"Hi\" }, networkElementMessage := { content := \"There\" } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { serverMessage := { content := \"Hello\" }, networkElementMessage := { content := \"World\" } } ∧ ¬ Spec.post { serverMessage := { content := \"Hello\" }, networkElementMessage := { content := \"World\" } } { serverMessage := { content := \"Hi\" }, networkElementMessage := { content := \"There\" } } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids any modification of the messages' content.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 20.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ serverMessage := x.serverMessage, networkElementMessage := x.networkElementMessage }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 0,
+    "flag": 1,
+    "fail": 0
+  }
+}

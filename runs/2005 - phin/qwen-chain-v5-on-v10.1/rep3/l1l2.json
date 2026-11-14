@@ -1,0 +1,1420 @@
+[
+  {
+    "id": "2/I5",
+    "kind": "requirement",
+    "requirement_text": "2.5 System Integration and Data Exchange: OM information must be exchangeable, based on established standards, between systems involved in the investigation, identification, confirmation, and reporting of a health event.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { exchanged := decide ((x.omData.length ≤ 1024 ∧ x.omData.toList.all Char.isAlphanum = true)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "exchanged"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.7
+  },
+  {
+    "id": "2/I8",
+    "kind": "requirement",
+    "requirement_text": "2.8 System Security and Availability: Security of OM data includes the protection of data from corruption and access by unauthorized individuals, as well as the protection of the actual systems supporting OM from sabotage or other failure. A plan must be established for continuing activities when systems supporting OM are unavailable.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ dataProtected := true, systemAvailable := true, contingencyPlan := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { dataProtected := true,\n    systemAvailable := true,\n    contingencyPlan := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "dataProtected",
+            "systemAvailable",
+            "contingencyPlan"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.7
+  },
+  {
+    "id": "2.1.1/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems designed to support OM must offer configuration flexibility so that new data fields, entities, entity types and relationship types may be added to capture information unique to each particular health event.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ dataFields := x.dataFields, entities := x.entities, entityTypes := x.entityTypes, relationshipTypes := x.relationshipTypes }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { dataFields := x.dataFields,\n    entities := x.entities,\n    entityTypes := x.entityTypes,\n    relationshipTypes := x.relationshipTypes }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "dataFields",
+            "entities",
+            "entityTypes",
+            "relationshipTypes"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.0
+  },
+  {
+    "id": "2.2.1.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must have the capability to capture data about locations involved in an OM investigation, including: name (if applicable), type (e.g., floor, building, room, store), street address, city, state, zip code, country, GPS coordinates, and other specific details (e.g., a specific building on a campus, a business branch location, a local chapter's meeting hall)",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `∀ l ∈ o.locations, l.name.isSome ∨ l.locationType ≠ \"\" ∨\n                     l.street.isSome ∨ l.city.isSome ∨ l.state.isSome ∨\n                     l.zipCode.isSome ∨ l.country.isSome ∨ l.gpsCoords.isSome ∨\n                     l.otherDetails.isSome`. Change the function so that they hold (the contract is locked). What to do: (1) set `locations := x.locations.filter (fun l => decide (l.name.isSome ∨ l.locationType ≠ \"\" ∨\n                     l.street.isSome ∨ l.city.isSome ∨ l.state.isSome ∨\n                     l.zipCode.isSome ∨ l.country.isSome ∨ l.gpsCoords.isSome ∨\n                     l.otherDetails.isSome))`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { locations := x.locations.map (fun l =>\n    { name := l.name,\n      locationType := l.locationType,\n      street := l.street,\n      city := l.city,\n      state := l.state,\n      zipCode := l.zipCode,\n      country := l.country,\n      gpsCoords := l.gpsCoords,\n      otherDetails := l.otherDetails })\n  }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 38.4
+  },
+  {
+    "id": "2.2.2.1/S1",
+    "kind": "requirement",
+    "requirement_text": "When a health event is investigated, it must be assigned an event identifier (i.e., Event ID) that is unique within the jurisdiction.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ComputeEventIdentifierContract` is an identity: its `post` only copies `Input` fields, so `FinalizeOutputContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ComputeEventIdentifierContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  eventIdentifier : String\n  jurisdiction : String\n  deriving DecidableEq, Repr\n\ndef ComputeEventIdentifierContract : Contract Input Mid where\n  pre  := fun i => i.eventIdentifier ≠ \"\"\n  post := fun i m => (m.eventIdentifier = i.eventIdentifier) ∧ m.jurisdiction = i.jurisdiction\n\ndef FinalizeOutputContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.eventIdentifier = m.eventIdentifier ∧\n                     (m.jurisdiction = o.jurisdiction → o.eventIdentifier ≠ m.eventIdentifier)\n\n"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `i.jurisdiction = o.jurisdiction →\n                      o.eventIdentifier ≠ i.eventIdentifier`. Change the function so that they hold (the contract is locked). What to do: (1) change `jurisdiction`, `eventIdentifier` so that `x.jurisdiction = o.jurisdiction → o.eventIdentifier ≠ x.eventIdentifier` holds.",
+        "error_class": "po3",
+        "stages": [
+          "types",
+          "types",
+          "types",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { eventIdentifier := x.eventIdentifier,\n    jurisdiction := \"\" }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 22.9
+  },
+  {
+    "id": "2.2.2.4/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM should have the ability to capture changes to the case definition that occur as the health event evolves.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ caseDefinitions := x.caseDefinitions }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { caseDefinitions := x.caseDefinitions }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "caseDefinitions"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.7
+  },
+  {
+    "id": "2.2.4.2b/S1",
+    "kind": "requirement",
+    "requirement_text": "There must be a means to update the case diagnosis either manually or automatically if the case definition changes during an event.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ diagnosis := x.newDiagnosis, eventId := x.eventId }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { diagnosis := x.newDiagnosis,\n    eventId := x.eventId }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "diagnosis",
+            "eventId"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.2
+  },
+  {
+    "id": "2.2.4.3a/S1",
+    "kind": "requirement",
+    "requirement_text": "Exposure investigation data to be captured must include information related to exposure levels, type of exposure (e.g., intimate, social, household, common conveyance), place of exposure, length of time the entity was exposed, frequency of exposure, and the entity's proximity to the source of exposure.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 2,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "check",
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { valid := x.exposures.Nodup ∧\n        x.exposures.length = x.exposures.length ∧\n        ∀ e ∈ x.exposures, x.exposures.contains e ∧\n        e.level ≠ \"\" ∧\n        e.type ∈ [\"intimate\", \"social\", \"household\", \"common conveyance\"] ∧\n        e.place ≠ \"\" ∧\n        0 < e.time ∧\n        0 < e.frequency ∧\n        0 < e.proximity,\n    exposures := x.exposures }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "valid",
+            "exposures"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 14.1
+  },
+  {
+    "id": "2.2.6.2/S1",
+    "kind": "requirement",
+    "requirement_text": "The subject of a specimen/sample collected for laboratory testing must be linked to the specimen/sample by an identifier (i.e., Subject ID) that is unique within the jurisdiction.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.specimens.length = i.specimens.length`; `∀ s ∈ o.specimens, s.subjectId = i.subjectId`; `o.specimens.Nodup`. Change the function so that they hold (the contract is locked). What to do: (1) compute `specimens` from the input (count / compare / arithmetic) so that `o.specimens.length = x.specimens.length` holds; do not copy it unchanged. (2) set `specimens := x.specimens.filter (fun s => decide (s.subjectId = x.subjectId))`. (3) change `specimens` so that `o.specimens.Nodup` holds.",
+        "error_class": "po3",
+        "stages": [
+          "syntax",
+          "syntax",
+          "syntax",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { specimens := x.specimens.filter (fun s => decide (s.subjectId = x.subjectId))\n    |>.map (fun s => s) -- ensure the list has the correct length\n    |>.dropWhile (fun s => s.subjectId = x.subjectId) -- remove duplicates while keeping the length\n    |>.take x.specimens.length -- ensure the list has the correct length\n    |>.dropWhile (fun s => s.subjectId = x.subjectId) -- remove duplicates again to ensure nodup\n  }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 30.8
+  },
+  {
+    "id": "2.2.6.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must be able to store data about the specimens/samples that are collected for laboratory testing.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.specimens = i.specimens`. Change the function so that they hold (the contract is locked). What to do: (1) set `specimens := x.specimens`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { specimens := x.specimens.filter (fun s => s.patientName ≠ \"\" ∧ s.collectionTime ≥ 0 ∧ s.sampleType ≠ \"\" ∧ s.status ∈ [\"pending\", \"processed\", \"invalid\"]) }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 28.8
+  },
+  {
+    "id": "2.2.6.3.a/S1",
+    "kind": "requirement",
+    "requirement_text": "Clinical specimen data should include information about the specimen source/site from which the specimen was taken, symptom date of onset, and whether the sample is acute or convalescent.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { source := x.specimen.source,\n    symptomDate := x.specimen.symptomDate,\n    acuteConvalescent := x.specimen.acuteConvalescent }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "source",
+            "symptomDate",
+            "acuteConvalescent"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.0
+  },
+  {
+    "id": "2.2.6.3.c/S1",
+    "kind": "requirement",
+    "requirement_text": "Food sample data should include information about the lot number, batch number, manufacturer name, shipping invoice, temperature, sample type (e.g., dairy - milk, red meat, spice), and product storage condition.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ lotNumber := x.lotNumber, batchNumber := x.batchNumber, manufacturer := x.manufacturer, shippingInvoice := x.shippingInvoice, temperature := x.temperature, sampleType := x.sampleType, storageCondition := x.storageCondition }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { lotNumber := x.lotNumber,\n    batchNumber := x.batchNumber,\n    manufacturer := x.manufacturer,\n    shippingInvoice := x.shippingInvoice,\n    temperature := x.temperature,\n    sampleType := x.sampleType,\n    storageCondition := x.storageCondition }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "lotNumber",
+            "batchNumber",
+            "manufacturer",
+            "shippingInvoice",
+            "temperature",
+            "sampleType",
+            "storageCondition"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.6
+  },
+  {
+    "id": "2.2.6.6/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must be able to create a laboratory test request for a specimen/sample or group of specimens/samples.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ requestCreated := false, testRequests := [] }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "<generated>:42:74: error(lean.invalidField): Invalid field `map`: The environment does not contain `Function.map`, so it is not possible to project the field `map` from an expression\n  fun s => ?m.4 = x.testType\nof type `?m.2 → Prop`\n<generated>:42:49: error(lean.invalidField): Invalid field notation: Type of\n  s\nis not known; cannot resolve field `testType`\n\nHint: Consider replacing the field projection with a call to one of the following:\n  • `Input.testType`\n  • `Specimen.testType`\n",
+        "error_class": "unknown-field",
+        "stages": [
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { requestCreated := true,\n    testRequests := x.specimens.filter (fun s => s.testType = x.testType).map (fun s => { s with status := \"requested\" }) }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 10.7
+  },
+  {
+    "id": "2.2.6.7/S1",
+    "kind": "requirement",
+    "requirement_text": "Information about batch shipments of specimens/samples that are transferred to test laboratories or other facilities must be collected, including the shipper (e.g., UPS, FedEx), shipment tracking number, and the sending organization's contact information.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.shipments = i.shipments`. Change the function so that they hold (the contract is locked). What to do: (1) set `shipments := x.shipments`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { shipments := x.shipments.filter (fun s => s.shipper ≠ \"\" ∧ s.tracking ≠ \"\" ∧ s.contact ≠ \"\") }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 29.8
+  },
+  {
+    "id": "2.2.6.9/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must be able to store laboratory result(s) and link the result(s) to the original laboratory test request.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ComputeResultsContract` is `Spec` again (same `pre` and `post` up to variable names). A component must be a part of the work, not the whole spec.; `ComputeResultsContract` is an identity: its `post` only copies `Input` fields and restates the precondition, so `ApplyResultsContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ComputeResultsContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.; `ApplyResultsContract` is an identity: its `post` only copies `Mid` fields to `Output`, so `ComputeResultsContract` does all the work of `Spec`. Leave part of the work to `ApplyResultsContract`: `ComputeResultsContract` states an intermediate result in `Mid`, and `ApplyResultsContract` states `o` in terms of it.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  testRequests : List TestRequest\n  results      : List LaboratoryResult\n  deriving DecidableEq, Repr\n\ndef ComputeResultsContract : Contract Input Mid where\n  pre  := fun i => i.testRequests.Nodup && i.results.Nodup\n  post := fun i m => m.testRequests = i.testRequests ∧\n                     m.results = i.results ∧\n                     ∀ r ∈ m.results, ∃ t ∈ m.testRequests, t.specimenId = r.specimenId ∧ t.testType = r.testType\n\ndef ApplyResultsContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => o.testRequests = m.testRequests ∧\n                     o.results = m.results"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.results = i.results`. Change the function so that they hold (the contract is locked). What to do: (1) set `results := x.results`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "names",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { testRequests := x.testRequests,\n    results := x.results.filter (fun r => x.testRequests.any (fun t => t.specimenId = r.specimenId ∧ t.testType = r.testType)) }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 41.1
+  },
+  {
+    "id": "2.2.6.10/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must store data about laboratory results.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.specimens = i.specimens`. Change the function so that they hold (the contract is locked). What to do: (1) set `specimens := x.specimens`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { specimens := x.specimens.filter fun s => s.testResult ≠ \"\" }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 32.6
+  },
+  {
+    "id": "2.2.9.1/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM should capture information such as the date and time of an activity, activity type, who initiated the activity, and contact information to generate activity logs for management purposes.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ logged := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { logged := decide ((x.date = x.date ∧ x.time = x.time ∧ x.activity = x.activity ∧\n     x.initiator = x.initiator ∧ x.contact = x.contact)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "logged"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.7
+  },
+  {
+    "id": "2.2.9.2/S1",
+    "kind": "requirement",
+    "requirement_text": "Activity logs, which are tools for investigators to track their actions during a case, should be supported.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ activities := x.activities }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { activities := x.activities }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "activities"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.8
+  },
+  {
+    "id": "2.3.1.1/S1",
+    "kind": "requirement",
+    "requirement_text": "Electronic questionnaires must be developed and validated.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `∀ q ∈ i.questions, q ∈ o.validatedQuestions ∧\n    (q.fields.length > 0 ∧ q.answers.length = q.fields.length)`. Change the function so that they hold (the contract is locked). What to do: (1) compute `validatedQuestions` from the input (count / compare / arithmetic) so that `∀ q ∈ x.questions, q ∈ o.validatedQuestions ∧ (q.fields.length > 0 ∧ q.answers.length = q.fields.length)` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { validatedQuestions := x.questions }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 28.4
+  },
+  {
+    "id": "2.3.1.5/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM should provide a manual or automatic means of updating the status of case records as the case definition changes.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { updatedRecords := x.records.map (fun cr => { cr with status := x.newStatus }) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "updatedRecords"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.7
+  },
+  {
+    "id": "2.3.3.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM should be able to create new contacts from existing case records, and should also identify the contact type.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `∀ c ∈ i.caseRecords, ∃ contact ∈ o.contacts, contact.name = c.name ∧ contact.contactType = c.contactType`; `o.contacts.Nodup`. Change the function so that they hold (the contract is locked). What to do: (1) build `contacts` with `List.filter` / `List.map` over an input list so that `∀ c ∈ x.caseRecords, ∃ contact ∈ o.contacts, contact.name = c.name ∧ contact.contactType = c.contactType` holds for every element. (2) change `contacts` so that `o.contacts.Nodup` holds.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "syntax",
+          "syntax",
+          "check",
+          "syntax",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { contacts := x.caseRecords.map (fun c => { name := c.name, contactType := c.contactType }) }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 22.4
+  },
+  {
+    "id": "2.4.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM should generate electronic data dictionaries for dynamic data (or other user-defined data descriptions to assist with effective data exchange), line lists, activity logs, aggregate data, and call-back lists to assist the emergency response group and investigators in responding to and containing a health event.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { dataDictionary := x.dynamicData,\n    lineList := x.lineLists,\n    activityLog := x.activityLogs,\n    aggregateData := x.aggregateData,\n    callbackList := x.callbackLists }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "dataDictionary",
+            "lineList",
+            "activityLog",
+            "aggregateData",
+            "callbackList"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 7.9
+  },
+  {
+    "id": "2.4.4/S1",
+    "kind": "requirement",
+    "requirement_text": "Reports generated by systems supporting OM should clearly indicate the number of cases, the number of contacts per case, the number of cases with no known epi-link at the time of diagnosis, the laboratory results, and the number of vaccinations and/or treatments administered.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.reports.length = i.cases.length`; `∀ c ∈ i.cases, o.reports.contains s!\"Case {c.id}:`. Change the function so that they hold (the contract is locked). What to do: (1) compute `reports` from the input (count / compare / arithmetic) so that `o.reports.length = x.cases.length` holds; do not copy it unchanged. (2) build `reports` with `List.filter` / `List.map` over an input list so that `∀ c ∈ x.cases, o.reports.contains s!\"Case {c.id}:` holds for every element.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "names",
+          "names",
+          "names",
+          "names",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { reports := x.cases.map fun c =>\n    s!\"Case {c.id}:\n- Number of contacts: {c.contacts}\n- Number of cases with no known epi-link at the time of diagnosis: {c.epiLinks}\n- Laboratory results: {c.labResults}\n- Number of vaccinations: {c.vaccinations}\n- Number of treatments: {c.treatments}\" }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 41.0
+  },
+  {
+    "id": "2.4.11/S1",
+    "kind": "requirement",
+    "requirement_text": "Health event data should be aggregated into a centralized data store (i.e., data warehouse) designed specifically to support analysis of events over time.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ aggregated := x.events }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { aggregated := x.events }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "aggregated"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.2
+  },
+  {
+    "id": "2.5/S1",
+    "kind": "requirement",
+    "requirement_text": "SYSTEM INTEGRATION AND DATA EXCHANGE Systems integration requirements specific to systems supporting OM are included in the section below and describe the types of data that OM should be able to send and receive.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ receivedData := \"\", status := \"\" }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single-not-decomposable",
+      "attempts": 2,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "not decomposable (every split was an identity)",
+      "code": "-- not split (not decomposable (every split was an identity)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩",
+      "failed_split": {
+        "error": "static: `ReceiveDataContract` is an identity: its `post` only copies `Input` fields, so `UpdateStatusContract` does all the work of `Spec`. The first component must compute a result that is different for different inputs: give `Mid` a field for it and state it in the `post` of `ReceiveDataContract` in terms of `i`. A field that is always the same (`m.ok = true`) does not count.",
+        "error_class": "identity",
+        "stages": [
+          "static",
+          "static",
+          "returned"
+        ],
+        "code": "structure Mid where\n  receivedData : String\n  deriving DecidableEq, Repr\n\ndef ReceiveDataContract : Contract Input Mid where\n  pre  := fun i => i.outbreakData ≠ \"\"\n  post := fun i m => m.receivedData = i.outbreakData\n\ndef UpdateStatusContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (o.status = \"Data received successfully\" ↔\n    o.receivedData = m.receivedData) ∧\n    (o.status = \"Data not received\" → o.receivedData = \"\")"
+      }
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { receivedData := x.outbreakData, status := \"Data received successfully\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "receivedData",
+            "status"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 11.1
+  },
+  {
+    "id": "2.5.1/S1",
+    "kind": "requirement",
+    "requirement_text": "Contact information for key response partner organizations should be stored in a local instance of a public health directory for associating to a health event, as described in section 2.2.2 Health event Data of this document.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.events = i.events`; `∀ e ∈ o.events, e.contacts.Nodup ∧\n                      ∀ c ∈ e.contacts, c.organization ≠ \"\" ∧ c.phone ≠ \"\" ∧ c.email ≠ \"\" ∧ c.address ≠ \"\"`. Change the function so that they hold (the contract is locked). What to do: (1) set `events := x.events`. (2) set `events := x.events.filter (fun e => decide (e.contacts.Nodup ∧\n                      ∀ c ∈ e.contacts, c.organization ≠ \"\" ∧ c.phone ≠ \"\" ∧ c.email ≠ \"\" ∧ c.address ≠ \"\"))`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { events := x.events.map (fun e => \n    { id := e.id, \n      description := e.description, \n      contacts := e.contacts.filter (fun c => \n        c.organization ≠ \"\" ∧ \n        c.phone ≠ \"\" ∧ \n        c.email ≠ \"\" ∧ \n        c.address ≠ \"\")\n    })\n  }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 38.6
+  },
+  {
+    "id": "2.5.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must be able to create and send messages for laboratory test requests.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ sent := true, patientID := x.patientID, testCode := x.testCode, priority := x.priority }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { sent := true,\n    patientID := x.patientID,\n    testCode := x.testCode,\n    priority := x.priority }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "sent",
+            "patientID",
+            "testCode",
+            "priority"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.3
+  },
+  {
+    "id": "2.5.7/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must be able to exchange messages for confirmed, probable and suspect cases, and the other case classifications that are noted in the PHIN message implementation guide, with systems supporting surveillance, early event detection (EED), and other preparedness areas.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `∀ c ∈ i.cases, c ∈ o.cases ∧\n                     (c.classification = \"confirmed\" ∨\n                      c.classification = \"probable\" ∨\n                      c.classification = \"suspect\" ∨\n                      c.classification = \"other\" ∨\n                      c.classification = \"unclassified\")`. Change the function so that they hold (the contract is locked). What to do: (1) build `cases` with `List.filter` / `List.map` over an input list so that `∀ c ∈ x.cases, c ∈ o.cases ∧ (c.classification = \"confirmed\" ∨ c.classification = \"probable\" ∨ c.classification = \"suspect\" ∨ c.classification = \"other\" ∨ c.classification = \"unclassified\")` holds for every element.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { cases := x.cases }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 30.0
+  },
+  {
+    "id": "2.5.9/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must be able to receive, parse and process messages for countermeasures that have been administered.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ processed := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { processed := decide (x.countermeasures.all (fun cm => \n      ∃ cm' ∈ x.countermeasures, cm.id = cm'.id ∧\n      cm.patient = cm'.patient ∧\n      cm.dose = cm'.dose ∧\n      cm.adminDate = cm'.adminDate)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "processed"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.6
+  },
+  {
+    "id": "2.5.10/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM must be able to create and send messages for countermeasure administration requests.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ sent := true, messageID := \"x\" }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.sent = true ↔\n    (o.messageID ≠ \"\" ∧\n     o.messageID.length ≤ 100 ∧\n     o.messageID.toList.all (fun c => c.isAlphanum) = true)`. Change the function so that they hold (the contract is locked). What to do: (1) compute `sent`, `messageID` from the input (count / compare / arithmetic) so that `o.sent = true ↔ (o.messageID ≠ \"\" ∧ o.messageID.length ≤ 100 ∧ o.messageID.toList.all (fun c => c.isAlphanum) = true)` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "names",
+          "names",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { sent := true, messageID := \"MSG\" ++ x.patientID.take 10 }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 24.6
+  },
+  {
+    "id": "2.5.12/S1",
+    "kind": "requirement",
+    "requirement_text": "Systems supporting OM should be able to provide the aggregate data necessary for health event monitoring to systems that support response tracking, such as the number of suspect cases, number of persons under isolation or quarantine, and the number of patients receiving countermeasures.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.suspectCasesCount = i.suspectCases.length ↔ i.suspectCases.length > 0`; `o.isolationQuarantinesCount = i.isolationQuarantines.length ↔ i.isolationQuarantines.length > 0`; `o.countermeasuresCount = i.countermeasures.length ↔ i.countermeasures.length > 0`. Change the function so that they hold (the contract is locked). What to do: (1) add a branch on `x.suspectCases.length > 0`: `suspectCasesCount := if x.suspectCases.length > 0 then x.suspectCases.length else <value otherwise>`. (2) add a branch on `x.isolationQuarantines.length > 0`: `isolationQuarantinesCount := if x.isolationQuarantines.length > 0 then x.isolationQuarantines.length else <value otherwise>`. (3) add a branch on `x.countermeasures.length > 0`: `countermeasuresCount := if x.countermeasures.length > 0 then x.countermeasures.length else <value otherwise>`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { suspectCasesCount := if x.suspectCases.length > 0 then x.suspectCases.length else 0,\n    isolationQuarantinesCount := if x.isolationQuarantines.length > 0 then x.isolationQuarantines.length else 0,\n    countermeasuresCount := if x.countermeasures.length > 0 then x.countermeasures.length else 0 }",
+        "harness_only": false,
+        "stopped": "the same failure 3 times"
+      }
+    ],
+    "seconds": 34.9
+  }
+]

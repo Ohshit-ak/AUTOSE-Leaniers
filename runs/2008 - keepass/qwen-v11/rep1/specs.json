@@ -1,0 +1,1570 @@
+{
+  "source": {
+    "file": "2008 - keepass.xml",
+    "sha256": "5a7398d7ef867454e8e3316db4b6d5a24c8edb7f1201158b9aaeb62dc92aa7c8"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v11",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "ed18e9b",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 28,
+    "compiles": 23,
+    "rejects_bad_example": 14,
+    "checked": 21,
+    "failed": 7,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "2.5/I4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When the KeePass is active, all passwords are stored encrypted in process memory so in order for them to be completely safe the ARC4 encryption algorithm is used, using a random 12 bytes long key.",
+      "text_predicate": "Requirement 2.5/I4 (Design and Implementation Constraints):\nWhen the KeePass is active, all passwords are stored encrypted in process memory so in order for them to be completely safe the ARC4 encryption algorithm is used, using a random 12 bytes long key.\nThis requirement prescribes HOW to build something (a method, algorithm or\ntechnology). Record that in a `-- IMPL:` comment above `def Spec`, and specify\nonly the observable result in `pre`/`post`.",
+      "lean_predicate": "structure Input where\n  passwords : List String\n  active    : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  passwords : List String\n  active    : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.active\n  post := fun i o => o.active = i.active ∧\n                     (o.passwords.length = i.passwords.length ∧\n                      ∀ p ∈ o.passwords, p ≠ \"\")\n\n-- IMPL: ARC4 encryption algorithm is used with a random 12 bytes long key\nexample : Spec.pre { passwords := [\"pass1\", \"pass2\"], active := true } ∧\n          Spec.post { passwords := [\"pass1\", \"pass2\"], active := true }\n                    { passwords := [\"encrypted1\", \"encrypted2\"], active := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": false,
+      "bad_example": "example : Spec.pre { passwords := [\"password1\", \"password2\"], active := true } ∧ ¬ Spec.post { passwords := [\"password1\", \"password2\"], active := true } { passwords := [\"password1\", \"password2\"], active := true } := by\n  unfold Spec; decide",
+      "negative_verdict": "accepts_forbidden",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 54.0,
+      "error": "L0.5: your spec accepts a forbidden behaviour: `Spec.post { passwords := [\"password1\", \"password2\"], active := true } { passwords := [\"password1\", \"password2\"], active := true }` holds, but the requirement forbids this output for this input (The requirement states that passwords must be stored encrypted using ARC4 with a random 12-byte key. A wrong output would be if the passwords were not encrypted at all.). Make `post` say when the failure outcome happens (with `↔` or `if … then … else`), and put the state that decides it in `Input`. Do not weaken `pre` to exclude this input.",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": [],
+          "stopped": "the same failure 3 times"
+        },
+        {
+          "attempt": 3,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same failure 3 times",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "`post` accepts an output the requirement forbids: example : Spec.pre { passwords := [\"password1\", \"password2\"], active := true } ∧ ¬ Spec.post { passwords := [\"password1\", \"password2\"], active := true } { passwords := [\"password1\", \"password2\"], active := true } := by unfold Spec; decide"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.1.3/R1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "REQ-1: KeePass must be downloaded and installed",
+      "text_predicate": "Requirement 3.1.3/R1 (System Features > New Database > Functional Requirements):\nREQ-1: KeePass must be downloaded and installed",
+      "lean_predicate": "structure Input where\n  version : String\n  versionInstalled : String\n  downloaded : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  installed : Bool\n  versionInstalled : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.version ≠ \"\" ∧ i.downloaded\n  post := fun i o => o.installed = true ↔ i.downloaded ∧\n                     (o.versionInstalled = i.version ↔ i.downloaded ∧ i.versionInstalled = i.version)\n\nexample : Spec.pre { version := \"2.48\", versionInstalled := \"2.48\", downloaded := true } ∧ Spec.post { version := \"2.48\", versionInstalled := \"2.48\", downloaded := true } { installed := true, versionInstalled := \"2.48\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { version := \"1.0\", versionInstalled := \"1.0\", downloaded := false } ∧ ¬ Spec.post { version := \"1.0\", versionInstalled := \"1.0\", downloaded := false } { installed := true, versionInstalled := \"1.0\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { version := \"1.0\", versionInstalled := \"1.0\", downloaded := false } ∧ ¬ Spec.post { version := \"1.0\", versionInstalled := \"1.0\", downloaded := false } { installed := true, versionInstalled := \"1.0\" } := by\n  unfold Spec; decide",
+          "why": "The output claims the system is installed when it was not downloaded",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 35.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ installed := x.downloaded, versionInstalled := x.versionInstalled }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.3.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When a database is opened, the user can access his passwords, organize them into new groups and subgroups, delete and add entries and so much more.",
+      "text_predicate": "Requirement 3.3.1/S1 (System Features > Save Database > Description):\nWhen a database is opened, the user can access his passwords, organize them into new groups and subgroups, delete and add entries and so much more.",
+      "lean_predicate": "structure Entry where\n  name   : String\n  password: String\n  group  : String\n  subgroups : List String\n  deriving DecidableEq, Repr\n\nstructure Group where\n  name : String\n  subgroups : List String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entries : List Entry\n  groups  : List Group\n  deriving DecidableEq, Repr\n\nstructure Output where\n  entries : List Entry\n  groups  : List Group\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.entries.Nodup ∧ i.groups.Nodup\n  post := fun i o => o.entries = i.entries ∧\n                     o.groups = i.groups ∧\n                     (o.entries.length = i.entries.length ∧\n                      o.groups.length = i.groups.length)\n\nexample : Spec.pre { entries := [{ name := \"a\", password := \"p1\", group := \"g1\", subgroups := [] },\n                                  { name := \"b\", password := \"p2\", group := \"g2\", subgroups := [] }],\n                     groups := [{ name := \"g1\", subgroups := [] },\n                                { name := \"g2\", subgroups := [] }] } ∧\n          Spec.post { entries := [{ name := \"a\", password := \"p1\", group := \"g1\", subgroups := [] },\n                                   { name := \"b\", password := \"p2\", group := \"g2\", subgroups := [] }],\n                      groups := [{ name := \"g1\", subgroups := [] },\n                                 { name := \"g2\", subgroups := [] }] }\n                    { entries := [{ name := \"a\", password := \"p1\", group := \"g1\", subgroups := [] },\n                                  { name := \"b\", password := \"p2\", group := \"g2\", subgroups := [] }],\n                      groups := [{ name := \"g1\", subgroups := [] },\n                                 { name := \"g2\", subgroups := [] }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { entries := [{ name := \"Test\", password := \"pass\", group := \"Group1\", subgroups := #[\"Subgroup1\"] }], groups := [{ name := \"Group1\", subgroups := #[\"Subgroup1\"] }] } ∧ ¬ Spec.post { entries := [{ name := \"Test\", password := \"pass\", group := \"Group1\", subgroups := #[\"Subgroup1\"] }], groups := [{ name := \"Group1\", subgroups := #[\"Subgroup1\"] }] } { entries := [{ name := \"Test\", password := \"newpass\", group := \"NewGroup\", subgroups := #[\"NewSubgroup\"] }], groups := [{ name := \"NewGroup\", subgroups := #[\"NewSubgroup\"] }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { entries := [{ name := \"Test\", password := \"pass\", group := \"Group1\", subgroups := #[\"Subgroup1\"] }], groups := [{ name := \"Group1\", subgroups := #[\"Subgroup1\"] }] } ∧ ¬ Spec.post { entries := [{ name := \"Test\", password := \"pass\", group := \"Group1\", subgroups := #[\"Subgroup1\"] }], groups := [{ name := \"Group1\", subgroups := #[\"Subgroup1\"] }] } { entries := [{ name := \"Test\", password := \"newpass\", group := \"NewGroup\", subgroups := #[\"NewSubgroup\"] }], groups := [{ name := \"NewGroup\", subgroups := #[\"NewSubgroup\"] }] } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow any changes to the entries or groups when the database is opened.",
+          "outcome": "not usable: Type mismatch\n  #[\"Subgroup1\"]\nhas type\n  Array String\nbut is expected to have type\n  List String"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 82.6,
+      "error": "L0.5: `post` is too weak: the implementation `{ entries := x.entries, groups := x.groups }` (only copied input fields and fixed values) satisfies it, so code verified against this spec need not do anything the requirement asks. Add the conditions that tie each output field to the rule in the requirement (what it must be computed from, and when it differs from the input).",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "syntax",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": [
+            "accepted after a once-only finding"
+          ]
+        }
+      ],
+      "weak_fallback": true,
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ entries := x.entries, groups := x.groups }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.3.1/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "But when it is time for the database to close or during his working on the database, he can save the changes made.",
+      "text_predicate": "Requirement 3.3.1/S2 (System Features > Save Database > Description):\nBut when it is time for the database to close or during his working on the database, he can save the changes made.",
+      "lean_predicate": "structure Input where\n  changes : List String\n  saving  : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  saved   : Bool\n  changes : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.saving\n  post := fun i o => (o.saved = true ↔ i.saving) ∧\n                     (o.changes = i.changes)\n\nexample : Spec.pre { changes := [\"change1\", \"change2\"], saving := true } ∧\n          Spec.post { changes := [\"change1\", \"change2\"], saving := true }\n                    { saved := true, changes := [\"change1\", \"change2\"] } := by\n  unfold Spec; decide\n\n-- IMPL: Save changes when saving is true\ndef saveDatabase (i : Input) : Output :=\n  { saved := i.saving, changes := i.changes }",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { changes := [\"change1\", \"change2\"], saving := true } ∧ ¬ Spec.post { changes := [\"change1\", \"change2\"], saving := true } { saved := false, changes := [\"change1\", \"change2\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { changes := [\"change1\", \"change2\"], saving := true } ∧ ¬ Spec.post { changes := [\"change1\", \"change2\"], saving := true } { saved := false, changes := [\"change1\", \"change2\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement states that when the database is saving changes, the changes must be saved. A buggy system might not save the changes but still return that the changes were saved.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 17.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ saved := x.saving, changes := x.changes }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.4.1/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "More specifically fields that can be selected for printing are: Backup entries, which contain entries in the back up group, password groups, group tree, title, username, password, URL, notes, creation time, last access, last modification, expires, icon, UUID and attachment.",
+      "text_predicate": "Requirement 3.4.1/S4 (System Features > Print Database > Description):\nMore specifically fields that can be selected for printing are: Backup entries, which contain entries in the back up group, password groups, group tree, title, username, password, URL, notes, creation time, last access, last modification, expires, icon, UUID and attachment.",
+      "lean_predicate": "structure BackupEntry where\n  passwordGroup : String\n  groupTree     : String\n  title         : String\n  username      : String\n  password      : String\n  url           : String\n  notes         : String\n  creationTime  : Nat\n  lastAccess    : Nat\n  lastModification : Nat\n  expires       : Nat\n  icon          : String\n  uuid          : String\n  attachment    : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entries : List BackupEntry\n  deriving DecidableEq, Repr\n\nstructure Output where\n  selectedEntries : List BackupEntry\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => o.selectedEntries = i.entries.filter (fun e => \n    e.passwordGroup ≠ \"\" ∨ e.groupTree ≠ \"\" ∨ e.title ≠ \"\" ∨ e.username ≠ \"\" ∨\n    e.password ≠ \"\" ∨ e.url ≠ \"\" ∨ e.notes ≠ \"\" ∨ 0 < e.creationTime ∨\n    0 < e.lastAccess ∨ 0 < e.lastModification ∨ 0 < e.expires ∨\n    e.icon ≠ \"\" ∨ e.uuid ≠ \"\" ∨ e.attachment ≠ \"\")\n\nexample : Spec.pre { entries := [{ passwordGroup := \"grp1\", groupTree := \"tree1\", title := \"title1\", username := \"user1\", password := \"pass1\", url := \"url1\", notes := \"notes1\", creationTime := 1, lastAccess := 2, lastModification := 3, expires := 4, icon := \"icon1\", uuid := \"uuid1\", attachment := \"att1\" }] } ∧\n          Spec.post { entries := [{ passwordGroup := \"grp1\", groupTree := \"tree1\", title := \"title1\", username := \"user1\", password := \"pass1\", url := \"url1\", notes := \"notes1\", creationTime := 1, lastAccess := 2, lastModification := 3, expires := 4, icon := \"icon1\", uuid := \"uuid1\", attachment := \"att1\" }] }\n                    { selectedEntries := [{ passwordGroup := \"grp1\", groupTree := \"tree1\", title := \"title1\", username := \"user1\", password := \"pass1\", url := \"url1\", notes := \"notes1\", creationTime := 1, lastAccess := 2, lastModification := 3, expires := 4, icon := \"icon1\", uuid := \"uuid1\", attachment := \"att1\" }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 212.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.5.1/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "By writing just one character the database will present all data which contains it or are related with it.",
+      "text_predicate": "Requirement 3.5.1/S4 (System Features > Search Database > Description):\nBy writing just one character the database will present all data which contains it or are related with it.",
+      "lean_predicate": "structure Input where\n  query : String\n  items : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o =>\n    (∀ it ∈ o.results, it ∈ i.items ∧ it.toList.any (fun c => c == i.query.toList.head)) ∧\n    (o.results.length ≤ 100)\n\nexample : Spec.pre { query := \"a\", items := [\"apple\", \"banana\", \"apricot\", \"orange\"] } ∧\n          Spec.post { query := \"a\", items := [\"apple\", \"banana\", \"apricot\", \"orange\"] }\n                    { results := [\"apple\", \"apricot\"] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 3,
+      "seconds": 31.2,
+      "error": "<generated>:16:67: error: Type mismatch\n  i.query.toList.head\nhas type\n  i.query.toList ≠ [] → Char\nbut is expected to have type\n  Char\n<generated>:19:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": [],
+          "stopped": "the same failure 3 times"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same failure 3 times",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.6.1/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user can create a new group or subgroups into an existing group.",
+      "text_predicate": "Requirement 3.6.1/S2 (System Features > Add Group/Subgroup > Description):\nThe user can create a new group or subgroups into an existing group.",
+      "lean_predicate": "structure Group where\n  name   : String\n  parent : Option Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  name   : String\n  parent : Option Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  name   : String\n  parent : Option Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.name ≠ \"\"\n  post := fun i o => o.name = i.name ∧\n                     (o.parent = i.parent ∨ (o.parent = none ∧ i.parent.isSome))\n\nexample : Spec.pre { name := \"New Group\", parent := none } ∧\n          Spec.post { name := \"New Group\", parent := none }\n                    { name := \"New Group\", parent := none } := by\n  unfold Spec; decide\n\nexample : Spec.pre { name := \"Subgroup\", parent := some 123 } ∧\n          Spec.post { name := \"Subgroup\", parent := some 123 }\n                    { name := \"Subgroup\", parent := some 123 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { name := \"NewGroup\", parent := some 100 } ∧ ¬ Spec.post { name := \"NewGroup\", parent := some 100 } { name := \"NewGroup\", parent := some 50 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { name := \"NewGroup\", parent := some 100 } ∧ ¬ Spec.post { name := \"NewGroup\", parent := some 100 } { name := \"NewGroup\", parent := some 50 } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow setting a non-existent parent as the parent of a new group",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 16.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ name := x.name, parent := x.parent }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.6.1/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When creating a group/subgroup the user must select a name and then he can add entries into it.",
+      "text_predicate": "Requirement 3.6.1/S3 (System Features > Add Group/Subgroup > Description):\nWhen creating a group/subgroup the user must select a name and then he can add entries into it.",
+      "lean_predicate": "structure Group where\n  name   : String\n  entries : List String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  name   : String\n  entries : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  name   : String\n  entries : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.name ≠ \"\"\n  post := fun i o => o.name = i.name ∧\n                     (o.entries.length = i.entries.length ∧\n                      ∀ j ∈ o.entries, ∃ k ∈ i.entries, j = k)\n\nexample : Spec.pre { name := \"New Group\", entries := [\"Entry1\", \"Entry2\"] } ∧\n          Spec.post { name := \"New Group\", entries := [\"Entry1\", \"Entry2\"] }\n                    { name := \"New Group\", entries := [\"Entry1\", \"Entry2\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { name := \"TestGroup\", entries := [\"entry1\", \"entry2\"] } ∧ ¬ Spec.post { name := \"TestGroup\", entries := [\"entry1\", \"entry2\"] } { name := \"TestGroup\", entries := [\"entry1\", \"entry3\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { name := \"TestGroup\", entries := [\"entry1\", \"entry2\"] } ∧ ¬ Spec.post { name := \"TestGroup\", entries := [\"entry1\", \"entry2\"] } { name := \"TestGroup\", entries := [\"entry1\", \"entry3\"] } := by\n  unfold Spec; decide",
+          "why": "The output does not match the input's entries, violating the requirement that the output's entries must be the same as the input's.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 18.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ name := x.name, entries := x.entries }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.8.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When a user wants to delete an existing group/subgroup he can do this by selecting Delete group/subgroup from the edit menu.",
+      "text_predicate": "Requirement 3.8.1/S1 (System Features > Delete Group/Subgroup > Description):\nWhen a user wants to delete an existing group/subgroup he can do this by selecting Delete group/subgroup from the edit menu.",
+      "lean_predicate": "structure Group where\n  id : Nat\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  groups : List Group\n  selectedId : Option Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  groups : List Group\n  deleted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.selectedId.isSome ∧ ∃ g ∈ i.groups, g.id = i.selectedId.get\n  post := fun i o => (o.deleted = true ↔ i.selectedId.isSome) ∧\n                     (o.deleted = true → o.groups = i.groups.filter (fun g => g.id ≠ i.selectedId.get))\n\nexample : Spec.pre { groups := [{ id := 1, name := \"Group1\" }, { id := 2, name := \"Group2\" }],\n                     selectedId := some 1 } ∧\n          Spec.post { groups := [{ id := 1, name := \"Group1\" }, { id := 2, name := \"Group2\" }],\n                      selectedId := some 1 }\n                    { groups := [{ id := 2, name := \"Group2\" }], deleted := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 46.9,
+      "error": "<generated>:20:64: error: Type mismatch\n  i.selectedId.get\nhas type\n  i.selectedId.isSome = true → Nat\nbut is expected to have type\n  Nat\n<generated>:22:78: error: Type mismatch\n  ?m.19 ≠ i.selectedId.get\nhas type\n  Prop\nbut is expected to have type\n  Bool\n<generated>:22:78: error: Type mismatch\n  g.id\nhas type\n  Nat\nbut is expected to have type\n  i.selectedId.isSome = true → Nat\n<generated>:24:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.9.1/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "After that a menu of options to choose from appears and the user can select to search for: title, user name, password, URL, notes, group name.",
+      "text_predicate": "Requirement 3.9.1/S3 (System Features > Find Group/Subgroup > Description):\nAfter that a menu of options to choose from appears and the user can select to search for: title, user name, password, URL, notes, group name.",
+      "lean_predicate": "structure Input where\n  title     : Option String\n  username  : Option String\n  password  : Option String\n  url      : Option String\n  notes    : Option String\n  groupName : Option String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o => \n    (∀ r ∈ o.results, \n      (i.title.isSome → r = \"title\") ∧\n      (i.username.isSome → r = \"username\") ∧\n      (i.password.isSome → r = \"password\") ∧\n      (i.url.isSome → r = \"url\") ∧\n      (i.notes.isSome → r = \"notes\") ∧\n      (i.groupName.isSome → r = \"group name\")) ∧\n    (o.results = [] ↔ i.title.isNone ∧ i.username.isNone ∧ i.password.isNone ∧ i.url.isNone ∧ i.notes.isNone ∧ i.groupName.isNone)\n\nexample : Spec.pre { title := none, username := none, password := none, url := none, notes := none, groupName := none } ∧\n          Spec.post { title := none, username := none, password := none, url := none, notes := none, groupName := none }\n                    { results := [] } := by\n  unfold Spec; decide\n\nexample : Spec.pre { title := some \"title\", username := none, password := none, url := none, notes := none, groupName := none } ∧\n          Spec.post { title := some \"title\", username := none, password := none, url := none, notes := none, groupName := none }\n                    { results := [\"title\"] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { title := none, username := none, password := none, url := none, notes := none, groupName := none } ∧ ¬ Spec.post { title := none, username := none, password := none, url := none, notes := none, groupName := none } { results := [\"title\", \"username\", \"password\", \"url\", \"notes\", \"group name\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { title := none, username := none, password := none, url := none, notes := none, groupName := none } ∧ ¬ Spec.post { title := none, username := none, password := none, url := none, notes := none, groupName := none } { results := [\"title\", \"username\", \"password\", \"url\", \"notes\", \"group name\"] } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow any results if all fields are None",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 38.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.10.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user can add a new entry on the database by clicking add entry on the main menu.",
+      "text_predicate": "Requirement 3.10.1/S1 (System Features > Add Entry > Description):\nThe user can add a new entry on the database by clicking add entry on the main menu.",
+      "lean_predicate": "structure Entry where\n  description : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  description : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  added : Bool\n  description : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.description ≠ \"\"\n  post := fun i o => o.added = true ∧\n                     (o.description = i.description ↔ i.description ≠ \"\")\n\nexample : Spec.pre { description := \"New entry description\" } ∧\n          Spec.post { description := \"New entry description\" }\n                    { added := true, description := \"New entry description\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { description := \"Valid description\" } ∧ ¬ Spec.post { description := \"Valid description\" } { added := false, description := \"Valid description\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { description := \"Valid description\" } ∧ ¬ Spec.post { description := \"Valid description\" } { added := false, description := \"Valid description\" } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow the system to return `added = false` for a non-empty description.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 18.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ added := true, description := x.description }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.10.1/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "He can fill in fields like: group where the entry will be added, title, user name, password, repeat password, URL, notes, expiration date and attachment file.",
+      "text_predicate": "Requirement 3.10.1/S4 (System Features > Add Entry > Description):\nHe can fill in fields like: group where the entry will be added, title, user name, password, repeat password, URL, notes, expiration date and attachment file.",
+      "lean_predicate": "structure Input where\n  group      : String\n  title      : String\n  username   : String\n  password   : String\n  repeatPassword : String\n  url       : String\n  notes     : String\n  expirationDate : String\n  attachmentFile : Option String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  group      : String\n  title      : String\n  username   : String\n  password   : String\n  url       : String\n  notes     : String\n  expirationDate : String\n  attachmentFile : Option String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.group ≠ \"\" ∧ i.title ≠ \"\" ∧ i.username ≠ \"\" ∧ i.password ≠ \"\" ∧\n                 i.repeatPassword = i.password ∧ i.url ≠ \"\" ∧ i.notes ≠ \"\" ∧\n                 i.expirationDate ≠ \"\"\n  post := fun i o => o.group = i.group ∧ o.title = i.title ∧ o.username = i.username ∧\n                     o.password = i.password ∧ o.url = i.url ∧ o.notes = i.notes ∧\n                     o.expirationDate = i.expirationDate ∧\n                     o.attachmentFile = i.attachmentFile\n\nexample : Spec.pre { group := \"General\", title := \"Test Entry\", username := \"user123\",\n                     password := \"pass456\", repeatPassword := \"pass456\", url := \"http://example.com\",\n                     notes := \"Some notes\", expirationDate := \"2023-12-31\", attachmentFile := some \"file.txt\" } ∧\n          Spec.post { group := \"General\", title := \"Test Entry\", username := \"user123\",\n                      password := \"pass456\", url := \"http://example.com\", notes := \"Some notes\",\n                      expirationDate := \"2023-12-31\", attachmentFile := some \"file.txt\" }\n                    { group := \"General\", title := \"Test Entry\", username := \"user123\",\n                      password := \"pass456\", url := \"http://example.com\", notes := \"Some notes\",\n                      expirationDate := \"2023-12-31\", attachmentFile := some \"file.txt\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 67.1,
+      "error": "<generated>:39:20: error: Fields missing: `repeatPassword`\n\nHint: Add missing fields:\n  ,̲\n  ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲ ̲r̲e̲p̲e̲a̲t̲P̲a̲s̲s̲w̲o̲r̲d̲ ̲:̲=̲ ̲_̲\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "names",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.10.1/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In fact an entry can be added with no fields at all.",
+      "text_predicate": "Requirement 3.10.1/S6 (System Features > Add Entry > Description):\nIn fact an entry can be added with no fields at all.",
+      "lean_predicate": "structure Input where\n  description : Option String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  accepted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => o.accepted = true ↔ i.description = none\n\nexample : Spec.pre { description := none } ∧\n          Spec.post { description := none } { accepted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { description := none } ∧ ¬ Spec.post { description := none } { accepted := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { description := none } ∧ ¬ Spec.post { description := none } { accepted := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that an entry can be added with no fields at all, meaning description can be `none`.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 8.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.10.3/R11",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "An entry must belong to a group to be created",
+      "text_predicate": "Requirement 3.10.3/R11 (System Features > Add Entry > Functional Requirements):\nAn entry must belong to a group to be created",
+      "lean_predicate": "structure Group where\n  id : Nat\n  name : String\n  deriving DecidableEq, Repr\n\nstructure Entry where\n  id : Nat\n  name : String\n  groupId : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  name : String\n  groupId : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  id : Nat\n  name : String\n  groupId : Nat\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.groupId ≠ 0\n  post := fun i o => o.groupId = i.groupId ∧\n                     o.name = i.name ∧\n                     o.id ≠ 0\n\nexample : Spec.pre { name := \"New Entry\", groupId := 1 } ∧\n          Spec.post { name := \"New Entry\", groupId := 1 }\n                    { id := 1, name := \"New Entry\", groupId := 1 } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { name := \"Test Entry\", groupId := 1 } ∧ ¬ Spec.post { name := \"Test Entry\", groupId := 1 } { id := 0, name := \"Test Entry\", groupId := 0 } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { name := \"Test Entry\", groupId := 1 } ∧ ¬ Spec.post { name := \"Test Entry\", groupId := 1 } { id := 0, name := \"Test Entry\", groupId := 0 } := by\n  unfold Spec; decide",
+          "why": "The output does not specify a valid group ID, breaking the requirement that an entry must belong to a group.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 21.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ id := x.groupId, name := x.name, groupId := x.groupId }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.11.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user can modify the context of an entry he already has added.",
+      "text_predicate": "Requirement 3.11.1/S1 (System Features > View/Edit Entry > Description):\nThe user can modify the context of an entry he already has added.",
+      "lean_predicate": "structure Entry where\n  description : String\n  context     : String\n  index       : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entries : List Entry\n  index   : Nat\n  newContext : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  entries : List Entry\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.index < i.entries.length\n  post := fun i o => o.entries = i.entries.map (fun e => if e.index = i.index then { e with context := i.newContext } else e)\n\nexample : Spec.pre { entries := [{ description := \"test\", context := \"old\", index := 0 }],\n                     index := 0, newContext := \"new\" } ∧\n          Spec.post { entries := [{ description := \"test\", context := \"old\", index := 0 }],\n                      index := 0, newContext := \"new\" }\n                    { entries := [{ description := \"test\", context := \"new\", index := 0 }] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { entries := [{ description := \"test\", context := \"old\", index := 0 }], index := 1, newContext := \"new\" } ∧ ¬ Spec.post { entries := [{ description := \"test\", context := \"old\", index := 0 }], index := 1, newContext := \"new\" } { entries := [{ description := \"test\", context := \"old\", index := 0 }] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { entries := [{ description := \"test\", context := \"old\", index := 0 }], index := 1, newContext := \"new\" } ∧ ¬ Spec.post { entries := [{ description := \"test\", context := \"old\", index := 0 }], index := 1, newContext := \"new\" } { entries := [{ description := \"test\", context := \"old\", index := 0 }] } := by\n  unfold Spec; decide",
+          "why": "The requirement forbids modifying an entry's context if the index is out of bounds.",
+          "outcome": "not usable: the input does not satisfy `Spec.pre`"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 21.5,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.11.1/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "This can be done by selecting view/edit entry.",
+      "text_predicate": "Requirement 3.11.1/S2 (System Features > View/Edit Entry > Description):\nThis can be done by selecting view/edit entry.",
+      "lean_predicate": "structure Input where\n  entryId : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  description : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.entryId ≠ 0\n  post := fun i o => o.description = \"This can be done by selecting view/edit entry.\"\n\nexample : Spec.pre { entryId := 1 } ∧ Spec.post { entryId := 1 } { description := \"This can be done by selecting view/edit entry.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { entryId := 1 } ∧ ¬ Spec.post { entryId := 1 } { description := \"Some other description\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { entryId := 1 } ∧ ¬ Spec.post { entryId := 1 } { description := \"Some other description\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the output description should be \"This can be done by selecting view/edit entry.\",",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.11.1/S5",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Then the user can change the group, title, user name, password, URL, notes, expiration date and attachment file.",
+      "text_predicate": "Requirement 3.11.1/S5 (System Features > View/Edit Entry > Description):\nThen the user can change the group, title, user name, password, URL, notes, expiration date and attachment file.",
+      "lean_predicate": "structure Input where\n  group    : String\n  title    : String\n  username : String\n  password : String\n  url      : String\n  notes    : String\n  expirationDate : String\n  attachmentFile : Option String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  group    : String\n  title    : String\n  username : String\n  password : String\n  url      : String\n  notes    : String\n  expirationDate : String\n  attachmentFile : Option String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun i o =>\n    i.group    = o.group    ∧\n    i.title    = o.title    ∧\n    i.username = o.username ∧\n    i.password = o.password ∧\n    i.url      = o.url      ∧\n    i.notes    = o.notes    ∧\n    i.expirationDate = o.expirationDate ∧\n    i.attachmentFile = o.attachmentFile\n\nexample : Spec.pre { group := \"G1\", title := \"T1\", username := \"u1\", password := \"p1\", url := \"http://url1\", notes := \"notes1\", expirationDate := \"2023-12-31\", attachmentFile := some \"file1.txt\" } ∧\n          Spec.post { group := \"G1\", title := \"T1\", username := \"u1\", password := \"p1\", url := \"http://url1\", notes := \"notes1\", expirationDate := \"2023-12-31\", attachmentFile := some \"file1.txt\" }\n                    { group := \"G1\", title := \"T1\", username := \"u1\", password := \"p1\", url := \"http://url1\", notes := \"notes1\", expirationDate := \"2023-12-31\", attachmentFile := some \"file1.txt\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { group := \"NewGroup\", title := \"NewTitle\", username := \"NewUser\", password := \"NewPass\", url := \"NewURL\", notes := \"NewNotes\", expirationDate := \"NewDate\", attachmentFile := none } ∧ ¬ Spec.post { group := \"NewGroup\", title := \"NewTitle\", username := \"NewUser\", password := \"NewPass\", url := \"NewURL\", notes := \"NewNotes\", expirationDate := \"NewDate\", attachmentFile := none } { group := \"OldGroup\", title := \"OldTitle\", username := \"OldUser\", password := \"OldPass\", url := \"OldURL\", notes := \"OldNotes\", expirationDate := \"OldDate\", attachmentFile := none } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { group := \"NewGroup\", title := \"NewTitle\", username := \"NewUser\", password := \"NewPass\", url := \"NewURL\", notes := \"NewNotes\", expirationDate := \"NewDate\", attachmentFile := none } ∧ ¬ Spec.post { group := \"NewGroup\", title := \"NewTitle\", username := \"NewUser\", password := \"NewPass\", url := \"NewURL\", notes := \"NewNotes\", expirationDate := \"NewDate\", attachmentFile := none } { group := \"OldGroup\", title := \"OldTitle\", username := \"OldUser\", password := \"OldPass\", url := \"OldURL\", notes := \"OldNotes\", expirationDate := \"OldDate\", attachmentFile := none } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow changing the group, title, user name, password, URL, notes, expiration date and attachment file simultaneously.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 67.4,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "none found"
+        },
+        {
+          "attempt": 3,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ group := x.group, title := x.title, username := x.username, password := x.password, url := x.url, notes := x.notes, expirationDate := x.expirationDate, attachmentFile := x.attachmentFile }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.11.3/R15",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "ìWhen the password field is changed the repeat password field must be Changed and be identical with password field",
+      "text_predicate": "Requirement 3.11.3/R15 (System Features > View/Edit Entry > Functional Requirements):\nìWhen the password field is changed the repeat password field must be Changed and be identical with password field",
+      "lean_predicate": "structure Input where\n  password  : String\n  repeatPassword : String\n  changeRepeatPassword : Bool\n  deriving DecidableEq, Repr\n\nstructure Output where\n  password  : String\n  repeatPassword : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => True\n  post := fun i o => o.password = i.password ∧\n                     (if i.changeRepeatPassword then\n                        o.repeatPassword = i.password\n                      else\n                        o.repeatPassword = i.repeatPassword)\n\nexample : Spec.pre { password := \"newpass\", repeatPassword := \"newpass\", changeRepeatPassword := true } ∧\n          Spec.post { password := \"newpass\", repeatPassword := \"newpass\", changeRepeatPassword := true }\n                    { password := \"newpass\", repeatPassword := \"newpass\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { password := \"newPassword\", repeatPassword := \"oldPassword\", changeRepeatPassword := true } ∧ ¬ Spec.post { password := \"newPassword\", repeatPassword := \"oldPassword\", changeRepeatPassword := true } { password := \"newPassword\", repeatPassword := \"oldPassword\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { password := \"newPassword\", repeatPassword := \"oldPassword\", changeRepeatPassword := true } ∧ ¬ Spec.post { password := \"newPassword\", repeatPassword := \"oldPassword\", changeRepeatPassword := true } { password := \"newPassword\", repeatPassword := \"oldPassword\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that when the password field is changed, the repeat password field must be changed and be identical with the password field. The output does not change the repeat password field, thus breaking the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 28.3,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    },
+    {
+      "id": "3.12.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user can create an exact copy of an entry.",
+      "text_predicate": "Requirement 3.12.1/S1 (System Features > Duplicate Entry > Description):\nThe user can create an exact copy of an entry.",
+      "lean_predicate": "structure Entry where\n  id    : Nat\n  name  : String\n  value : Nat\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entries : List Entry\n  deriving DecidableEq, Repr\n\nstructure Output where\n  entries : List Entry\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.entries.Nodup\n  post := fun i o => o.entries = i.entries ++ [i.entries.head] ∧\n                     o.entries.length = i.entries.length + 1\n\nexample : Spec.pre { entries := [{ id := 1, name := \"A\", value := 10 }] } ∧\n          Spec.post { entries := [{ id := 1, name := \"A\", value := 10 }] }\n                    { entries := [{ id := 1, name := \"A\", value := 10 }, { id := 2, name := \"A\", value := 10 }] } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 45.3,
+      "error": "<generated>:20:33: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  HAppend (List Entry) (List (i.entries ≠ [] → Entry)) ?m.12\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:23:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.13.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user can delete an existing entry by selecting it and then by clicking delete entry.",
+      "text_predicate": "Requirement 3.13.1/S1 (System Features > Delete Entry > Description):\nThe user can delete an existing entry by selecting it and then by clicking delete entry.",
+      "lean_predicate": "structure Entry where\n  id    : Nat\n  title : String\n  content : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entries : List Entry\n  selected : Option Entry\n  deriving DecidableEq, Repr\n\nstructure Output where\n  entries : List Entry\n  deleted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.selected.isSome\n  post := fun i o => o.deleted = true ↔\n    ∃ e ∈ i.entries, i.selected.getD e = e ∧\n    o.entries = i.entries.filter (fun e' => e' ≠ e)\n\nexample : Spec.pre { entries := [{ id := 1, title := \"entry1\", content := \"content1\" }],\n                     selected := some { id := 1, title := \"entry1\", content := \"content1\" } } ∧\n          Spec.post { entries := [{ id := 1, title := \"entry1\", content := \"content1\" }],\n                      selected := some { id := 1, title := \"entry1\", content := \"content1\" } }\n                    { entries := [], deleted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { entries := [Entry.id 1 title \"test\" content \"content\"], selected := some (Entry.id 1 title \"test\" content \"content\") } ∧ ¬ Spec.post { entries := [Entry.id 1 title \"test\" content \"content\"], selected := some (Entry.id 1 title \"test\" content \"content\") } { entries := [Entry.id 1 title \"test\" content \"content\"], deleted := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { entries := [Entry.id 1 title \"test\" content \"content\"], selected := some (Entry.id 1 title \"test\" content \"content\") } ∧ ¬ Spec.post { entries := [Entry.id 1 title \"test\" content \"content\"], selected := some (Entry.id 1 title \"test\" content \"content\") } { entries := [Entry.id 1 title \"test\" content \"content\"], deleted := false } := by\n  unfold Spec; decide",
+          "why": "The requirement does not allow the system to return `deleted = false` when an entry is deleted.",
+          "outcome": "not usable: failed to synthesize instance of type class\n  OfNat Entry 1\nnumerals are polymorphic in Lean, but the numeral `1` cannot be used in a context where the expected type is\n  Entry\ndue to the absence of the instance above\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command."
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 61.9,
+      "error": "L0.5: `post` is too weak: the implementation `{ entries := x.entries, deleted := false }` (only copied input fields and fixed values) satisfies it, so code verified against this spec need not do anything the requirement asks. Add the conditions that tie each output field to the rule in the requirement (what it must be computed from, and when it differs from the input).",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "types",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "returned"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": [
+            "accepted after a once-only finding"
+          ]
+        }
+      ],
+      "weak_fallback": true,
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ entries := x.entries, deleted := false }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.13.3/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "REQ-17: An entry must be selected to be deleted",
+      "text_predicate": "Requirement 3.13.3/S1 (System Features > Delete Entry > Functional Requirements):\nREQ-17: An entry must be selected to be deleted",
+      "lean_predicate": "structure Entry where\n  id   : Nat\n  data : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entries   : List Entry\n  selectedId: Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deleted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.selectedId ≠ 0 ∧ ∃ e ∈ i.entries, e.id = i.selectedId\n  post := fun i o => o.deleted = true ↔ i.selectedId ≠ 0 ∧ ∃ e ∈ i.entries, e.id = i.selectedId\n\nexample : Spec.pre { entries := [{ id := 1, data := \"entry1\" }, { id := 2, data := \"entry2\" }], selectedId := 2 } ∧ Spec.post { entries := [{ id := 1, data := \"entry1\" }, { id := 2, data := \"entry2\" }], selectedId := 2 } { deleted := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { entries := [ Entry.mk 1 \"data1\", Entry.mk 2 \"data2\" ], selectedId := 2 } ∧ ¬ Spec.post { entries := [ Entry.mk 1 \"data1\", Entry.mk 2 \"data2\" ], selectedId := 2 } { deleted := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { entries := [ Entry.mk 1 \"data1\", Entry.mk 2 \"data2\" ], selectedId := 2 } ∧ ¬ Spec.post { entries := [ Entry.mk 1 \"data1\", Entry.mk 2 \"data2\" ], selectedId := 2 } { deleted := false } := by\n  unfold Spec; decide",
+          "why": "The output does not require the selected entry to be deleted if it is selected",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 3,
+      "seconds": 27.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 3,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05_feedback": "\n\nA previous specification for this entry was rejected by the checks:\n- `post` accepts an output the requirement forbids: example : Spec.pre { entries := [ Entry.mk 1 \"data1\", Entry.mk 2 \"data2\" ], selectedId := 1 } ∧ ¬ Spec.post { entries := [ Entry.mk 1 \"data1\", Entry.mk 2 \"data2\" ], selectedId := 1 } { deleted := true } := by unfold Spec; decide\n\nThe rejected specification:\n```lean\nstructure Entry where\n  id   : Nat\n  data : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entries   : List Entry\n  selectedId: Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deleted : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.selectedId ≠ 0 ∧ ∃ e ∈ i.entries, e.id = i.selectedId\n  post := fun i o => o.deleted = true ↔ ∃ e ∈ i.entries, e.id = i.selectedId\n\nexample : Spec.pre { entries := [{ id := 1, data := \"entry1\" }, { id := 2, data := \"entry2\" }],\n                     selectedId := 2 } ∧\n          Spec.post { entries := [{ id := 1, data := \"entry1\" }, { id := 2, data := \"entry2\" }],\n                      selectedId := 2 }\n                    { deleted := true } := by\n  unfold Spec; decide\n```\n\nWrite a new specification that fixes these problems.",
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ deleted := true }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      },
+      "l05_rounds": 1
+    },
+    {
+      "id": "3.14.1/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The user can select between a number of translations that are available at KeePass website.",
+      "text_predicate": "Requirement 3.14.1/S1 (System Features > Change Language > Description):\nThe user can select between a number of translations that are available at KeePass website.",
+      "lean_predicate": "structure Input where\n  translations : List String\n  selected     : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  selected     : String\n  available    : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.selected ∈ i.translations\n  post := fun i o => o.selected = i.selected ∧\n                     (o.available = true ↔ i.translations.length > 0)\n\nexample : Spec.pre { translations := [\"en\", \"fr\", \"de\"], selected := \"en\" } ∧\n          Spec.post { translations := [\"en\", \"fr\", \"de\"], selected := \"en\" }\n                    { selected := \"en\", available := true } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { translations := [\"en\", \"fr\"], selected := \"fr\" } ∧ ¬ Spec.post { translations := [\"en\", \"fr\"], selected := \"fr\" } { selected := \"fr\", available := false } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { translations := [\"en\", \"fr\"], selected := \"fr\" } ∧ ¬ Spec.post { translations := [\"en\", \"fr\"], selected := \"fr\" } { selected := \"fr\", available := false } := by\n  unfold Spec; decide",
+          "why": "The requirement states that `o.available` should be true if there are translations available, but a buggy system might return false even if translations are available.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 15.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ selected := x.selected, available := true }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.14.1/S6",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "Doing this he will be transferred at KeePass website and choose the language he wants for downloading.",
+      "text_predicate": "Requirement 3.14.1/S6 (System Features > Change Language > Description):\nDoing this he will be transferred at KeePass website and choose the language he wants for downloading.",
+      "lean_predicate": "structure Input where\n  language : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  transferred : Bool\n  message     : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.language ≠ \"\"\n  post := fun i o => (o.transferred = true ↔\n    i.language = \"en\" → o.message = \"You have been transferred to the English version of the KeePass website.\"\n    ∨ i.language = \"fr\" → o.message = \"Vous avez été redirigé vers la version française du site web KeePass.\"\n    ∨ i.language = \"de\" → o.message = \"Sie wurden zur deutschen Version der KeePass-Website umgeleitet.\"\n    ∨ i.language = \"es\" → o.message = \"Se ha redirigido a la versión española del sitio web KeePass.\"\n    ∨ i.language = \"it\" → o.message = \"Hai been trasferito alla versione italiana del sito web KeePass.\"\n    ∨ i.language = \"ru\" → o.message = \"Вы были перенаправлены на русскую версию сайта KeePass.\"\n    ∨ i.language = \"ja\" → o.message = \"あなたはKeePassウェブサイトの日本語版に転送されました。\"\n    ∨ i.language = \"zh\" → o.message = \"您已被转到KeePass网站的中文版本。\"\n    ∨ o.message = \"Unsupported language. Please choose a valid language.\"\n  )\n\nexample : Spec.pre { language := \"en\" } ∧\n          Spec.post { language := \"en\" }\n                    { transferred := true, message := \"You have been transferred to the English version of the KeePass website.\" } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { language := \"en\" } ∧ ¬ Spec.post { language := \"en\" } { transferred := false, message := \"You have been transferred to the English version of the KeePass website.\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { language := \"en\" } ∧ ¬ Spec.post { language := \"en\" } { transferred := false, message := \"You have been transferred to the English version of the KeePass website.\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the user will be transferred to the KeePass website and choose the language for downloading. An incorrect output would be one where the user is not transferred to the website.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 15.1,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ transferred := true, message := x.language }",
+          "copy_ok": true,
+          "class": "copy-ok"
+        }
+      }
+    },
+    {
+      "id": "3.15.1/I3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The third method is to use the system-wide auto-type hot key so that KeePass can search all entries in the database for matching sequences.",
+      "text_predicate": "Requirement 3.15.1/I3 (System Features > Auto-type > Description):\nThe third method is to use the system-wide auto-type hot key so that KeePass can search all entries in the database for matching sequences.",
+      "lean_predicate": "structure Input where\n  database : List String\n  query    : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  results : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => \n    (∀ r ∈ o.results, r ∈ i.database ∧ r.toList.any (fun c => i.query.contains c)) ∧\n    o.results.length ≤ i.database.length ∧\n    (∀ r ∈ i.database, r.toList.any (fun c => i.query.contains c) → r ∈ o.results) ∧\n    (o.results = [] ↔ i.database.all (fun r => ¬(r.toList.any (fun c => i.query.contains c))))\n\nexample : Spec.pre { database := [], query := \"exa\" } ∧ Spec.post { database := [], query := \"exa\" } { results := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { database := [\"example1\", \"example2\", \"example3\"], query := \"exa\" } ∧ ¬ Spec.post { database := [\"example1\", \"example2\", \"example3\"], query := \"exa\" } { results := [\"example1\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { database := [\"example1\", \"example2\", \"example3\"], query := \"exa\" } ∧ ¬ Spec.post { database := [\"example1\", \"example2\", \"example3\"], query := \"exa\" } { results := [\"example1\"] } := by\n  unfold Spec; decide",
+          "why": "The output does not satisfy the requirement that all matching entries must be included in the results.",
+          "outcome": "not usable: Tactic `decide` failed for proposition\n  ¬{ pre := fun i => i.query ≠ \"\",\n          post := fun i o =>\n            (∀ (r : String), r ∈ o.results → r ∈ i.database ∧ (r.toList.any fun c => i.query.contains c) = true) ∧\n              o.results.length ≤ i.database.length ∧\n                (∀ (r : String), r ∈ i.database → (r.toList.any fun c => i.query.contains c) = true → r ∈ o.results) ∧\n                  (o.results = [] ↔\n                    (i.database.all fun r => decide ¬(r.toList.any fun c => i.query.contains c) = true) = true) }.post\n      { database := [\"example1\", \"example2\", \"example3\"], query := \"exa\" } { results := [\"example1\"] }\nbecause its `Decidable` instance\n  instDecidableNot\ndid not reduce to `isTrue` or `isFalse`.\n\nAfter unfolding the instances `decEq`, `decidable_of_decidable_of_iff`, `instDecidableAnd`, `instDecidableEqBitVec`, `instDecidableEqBool`, `instDecidableEqFin`, `instDecidableEqList`, `instDecidableEqNat`, `instDecidableEqString`, `instDecidableEqUInt8`, `instDecidableNot`, `instDecidableOr`, `BitVec.decEq`, `Bool.decEq`, `Classical.propDecidable`, `List.decidableBAll`, `List.hasDecEq`, `List.instDecidableMemOfLawfulBEq`, `Nat.decEq`, `Nat.decLe`, `Nat.decLt`, `String.decEq`, `UInt32.decLe`, and `UInt8.decEq`, reduction got stuck at the `Decidable` instance\n  match\n    \"example1\".toList.any fun c =>\n      { database := [\"example1\", \"example2\", \"example3\"], query := \"exa\" }.query.contains c,\n    true with\n  | false, false => isTrue ⋯\n  | false, true => isFalse ⋯\n  | true, false => isFalse ⋯\n  | true, true => isTrue ⋯"
+        }
+      ],
+      "checked": true,
+      "attempts": 4,
+      "seconds": 29.7,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 4,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05_feedback": "\n\nA previous specification for this entry was rejected by the checks:\n- does not compile\n- Lean / check error: <generated>:10:2: error: unexpected token 'matches'; expected command\n<generated>:11:10: error: unexpected identifier; expected 'instance'\n<generated>:16:13: error(lean.invalidField): Invalid field `matches`: The environment does not contain `Output.matches`, so it is not possible to project the field `matches` from an expression\n  o\nof type `Output`\n<generated>:17:6: error(lean.invalidField): Invalid field `matches`: The environment does not contain `Output.matches`, so it is not possible to project the field `matches` from an expression\n  o\nof type `Output`\n<generated>:21:21: error: unexpected token 'matches'; expected '}', identifier or term\n\n\nThe rejected specification:\n```lean\nstructure Input where\n  database : List String\n  query    : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  matches : List String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.query ≠ \"\"\n  post := fun i o => \n    (∀ m ∈ o.matches, m ∈ i.database ∧ m.toList.any (fun c => i.query.contains c)) ∧\n    o.matches.length ≤ i.database.length\n\nexample : Spec.pre { database := [\"example1\", \"example2\", \"example3\"], query := \"exa\" } ∧\n          Spec.post { database := [\"example1\", \"example2\", \"example3\"], query := \"exa\" }\n                    { matches := [\"example1\", \"example2\"] } := by\n  unfold Spec; decide\n```\n\nWrite a new specification that fixes these problems.",
+      "l05": {
+        "status": "pass",
+        "problems": [],
+        "flags": [],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.20.1/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The generation can be based on character sets, patterns or can be created according by rules.",
+      "text_predicate": "Requirement 3.20.1/S4 (System Features > Password Generator > Description):\nThe generation can be based on character sets, patterns or can be created according by rules.",
+      "lean_predicate": "structure CharacterSet where\n  digits   : Bool\n  lower    : Bool\n  upper    : Bool\n  symbols  : Bool\n  deriving DecidableEq, Repr\n\nstructure Pattern where\n  sequence : String\n  repeat   : Nat\n  deriving DecidableEq, Repr\n\nstructure Rule where\n  condition : String\n  replacement : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  length    : Nat\n  characterSet : Option CharacterSet\n  pattern   : Option Pattern\n  rules     : List Rule\n  deriving DecidableEq, Repr\n\nstructure Output where\n  password : String\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.length > 0\n  post := fun i o => o.password.length = i.length ∧\n                     (i.characterSet.isNone →\n                      o.password.toList.all (fun c => c.isDigit ∨ c.isLower ∨ c.isUpper ∨ c.isSymbol)) ∧\n                     (i.pattern.isSome →\n                      o.password = (i.pattern.getD { sequence := \"\", repeat := 1 }).sequence.repeat i.pattern.getD.repeat) ∧\n                     (i.rules.Nodup →\n                      o.password.toList.all (fun c => ∃ r ∈ i.rules, c = r.condition → r.replacement = c))\n\nexample : Spec.pre { length := 10, characterSet := some { digits := true, lower := true, upper := false, symbols := false },\n                     pattern := none, rules := [{ condition := \"a\", replacement := \"A\" }, { condition := \"b\", replacement := \"B\" }] } ∧\n          Spec.post { length := 10, characterSet := some { digits := true, lower := true, upper := false, symbols := false },\n                      pattern := none, rules := [{ condition := \"a\", replacement := \"A\" }, { condition := \"b\", replacement := \"B\" }] }\n                    { password := \"AAbcd12345\" } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 4,
+      "seconds": 60.6,
+      "error": "<generated>:13:2: error: unexpected token 'repeat'; expected command\n<generated>:14:10: error: unexpected identifier; expected 'instance'\n<generated>:26:11: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  Decidable (a✝¹ = b✝¹)\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:26:24: error(lean.synthInstanceFailed): failed to synthesize instance of type class\n  Repr (Option Pattern)\n\nHint: Type class instance resolution failures can be inspected with the `set_option trace.Meta.synthInstance true` command.\n<generated>:38:68: error: unexpected token 'repeat'; expected '}'\n<generated>:42:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "syntax",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "syntax",
+          "fixups": [],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 3,
+          "stage": "syntax",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ],
+          "strategy": "fresh"
+        },
+        {
+          "attempt": 4,
+          "stage": "syntax",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ],
+          "stopped": "the same check failed 4 times in a row"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same check failed 4 times in a row",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.21.1/S2",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "They can be added to user's database by using TAN wizard and can contain all letters and numbers.",
+      "text_predicate": "Requirement 3.21.1/S2 (System Features > TAN Support > Description):\nThey can be added to user's database by using TAN wizard and can contain all letters and numbers.",
+      "lean_predicate": "structure TAN where\n  value : String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  lettersAndNumbers : String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  tanAdded : Bool\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => i.lettersAndNumbers.toList.all (·.isDigit ∨ ·.isAlpha) = true\n  post := fun i o => o.tanAdded = true ↔\n    (i.lettersAndNumbers.length ≤ 16 ∧\n     i.lettersAndNumbers.length ≥ 8)\n\nexample : Spec.pre { lettersAndNumbers := \"AB1234567890CD\" } ∧\n          Spec.post { lettersAndNumbers := \"AB1234567890CD\" }\n                    { tanAdded := true } := by\n  unfold Spec; decide",
+      "compiles": false,
+      "rejects_bad_example": null,
+      "bad_example": null,
+      "negative_verdict": "unknown",
+      "negative_examples": [],
+      "checked": false,
+      "attempts": 5,
+      "seconds": 41.7,
+      "error": "<generated>:17:50: error: Application type mismatch: The argument\n  fun x1 x2 => x1.isDigit = true ∨ ?m.7\nhas type\n  (x1 : Char) → ?m.8 x1 → Prop\nbut is expected to have type\n  Char → Bool\nin the application\n  i.lettersAndNumbers.toList.all fun x1 x2 => x1.isDigit = true ∨ ?m.7\n<generated>:17:63: error(lean.invalidField): Invalid field notation: Type of\n  x2✝\nis not known; cannot resolve field `isAlpha`\n\nHint: Consider replacing the field projection `.isAlpha` with a call to the function `Char.isAlpha`.\n<generated>:22:0: warning: declaration uses `sorry`\n",
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "names",
+          "fixups": [
+            "rewrote `s.all`/`s.any` on a String field to `s.toList.all`/`s.toList.any`"
+          ]
+        },
+        {
+          "attempt": 2,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "types",
+          "fixups": []
+        },
+        {
+          "attempt": 5,
+          "stage": "types",
+          "fixups": [],
+          "stopped": "the same failure 3 times"
+        },
+        {
+          "attempt": 1,
+          "stage": "returned"
+        }
+      ],
+      "stopped": "the same failure 3 times",
+      "l05": {
+        "status": "fail",
+        "problems": [
+          "does not compile"
+        ],
+        "flags": []
+      },
+      "l05_rounds": 2
+    },
+    {
+      "id": "3.21.1/S3",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "When TAN are created, they appear as typical entries which in the field title contain \"TAN\" so that KeePass will know it's a TAN.",
+      "text_predicate": "Requirement 3.21.1/S3 (System Features > TAN Support > Description):\nWhen TAN are created, they appear as typical entries which in the field title contain \"TAN\" so that KeePass will know it's a TAN.",
+      "lean_predicate": "structure TANEntry where\n  title  : String\n  content: String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  title  : String\n  entries : List TANEntry\n  deriving DecidableEq, Repr\n\nstructure Output where\n  entries : List TANEntry\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o => \n    ∀ e ∈ o.entries, \n      (e.title.contains \"TAN\" = true) ∧\n      (e.title = i.title ∨ e.title.contains \"TAN\" = true)\n\nexample : Spec.pre { title := \"TAN-123\", entries := [{ title := \"TAN-123\", content := \"Some TAN\" }, { title := \"Not-TAN-123\", content := \"Not a TAN\" }] } ∧ Spec.post { title := \"TAN-123\", entries := [{ title := \"TAN-123\", content := \"Some TAN\" }, { title := \"Not-TAN-123\", content := \"Not a TAN\" }] } { entries := [] } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { title := \"My TAN Entry\", entries := [TANEntry.title \"TAN Entry\" content \"\"] } ∧ ¬ Spec.post { title := \"My TAN Entry\", entries := [TANEntry.title \"TAN Entry\" content \"\"] } { entries := [TANEntry.title \"Entry Without TAN\" content \"\"] } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { title := \"My TAN Entry\", entries := [TANEntry.title \"TAN Entry\" content \"\"] } ∧ ¬ Spec.post { title := \"My TAN Entry\", entries := [TANEntry.title \"TAN Entry\" content \"\"] } { entries := [TANEntry.title \"Entry Without TAN\" content \"\"] } := by\n  unfold Spec; decide",
+          "why": "The output does not ensure that every entry title contains \"TAN\" as required.",
+          "outcome": "not usable: Application type mismatch: The argument\n  \"TAN Entry\"\nhas type\n  String\nbut is expected to have type\n  TANEntry\nin the application\n  TANEntry.title \"TAN Entry\""
+        }
+      ],
+      "checked": true,
+      "attempts": 5,
+      "seconds": 33.8,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "check",
+          "fixups": []
+        },
+        {
+          "attempt": 3,
+          "stage": "names",
+          "fixups": []
+        },
+        {
+          "attempt": 4,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 5,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "`pre` is `True`, but the requirement states a condition (if / when / only / unless / logged in …)",
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": true,
+          "witness": "{ entries := [] }",
+          "copy_ok": false,
+          "class": "weak"
+        }
+      }
+    },
+    {
+      "id": "3.21.1/S4",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "In TAN entries, user cannot change the title, user name or URL but notes can be added.",
+      "text_predicate": "Requirement 3.21.1/S4 (System Features > TAN Support > Description):\nIn TAN entries, user cannot change the title, user name or URL but notes can be added.",
+      "lean_predicate": "structure TANEntry where\n  title   : String\n  username: String\n  url     : String\n  notes   : List String\n  deriving DecidableEq, Repr\n\nstructure Input where\n  entry : TANEntry\n  newNotes : List String\n  deriving DecidableEq, Repr\n\nstructure Output where\n  entry : TANEntry\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun i => true\n  post := fun i o =>\n    o.entry.title   = i.entry.title   ∧\n    o.entry.username= i.entry.username∧\n    o.entry.url     = i.entry.url     ∧\n    o.entry.notes   = i.entry.notes ++ i.newNotes\n\nexample : Spec.pre { entry := { title := \"Example\", username := \"user\", url := \"http://example.com\", notes := [\"note1\", \"note2\"] }, newNotes := [] } ∧ Spec.post { entry := { title := \"Example\", username := \"user\", url := \"http://example.com\", notes := [\"note1\", \"note2\"] }, newNotes := [] } { entry := { title := \"Example\", username := \"user\", url := \"http://example.com\", notes := [\"note1\", \"note2\"] } } := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": true,
+      "bad_example": "example : Spec.pre { entry := { title := \"Original Title\", username := \"user1\", url := \"http://example.com\", notes := [\"note1\"] }, newNotes := [\"note2\", \"note3\"] } ∧ ¬ Spec.post { entry := { title := \"Original Title\", username := \"user1\", url := \"http://example.com\", notes := [\"note1\"] }, newNotes := [\"note2\", \"note3\"] } { entry := { title := \"New Title\", username := \"user1\", url := \"http://example.com\", notes := [\"note1\", \"note2\", \"note3\"] } } := by\n  unfold Spec; decide",
+      "negative_verdict": "rejects",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { entry := { title := \"Original Title\", username := \"user1\", url := \"http://example.com\", notes := [\"note1\"] }, newNotes := [\"note2\", \"note3\"] } ∧ ¬ Spec.post { entry := { title := \"Original Title\", username := \"user1\", url := \"http://example.com\", notes := [\"note1\"] }, newNotes := [\"note2\", \"note3\"] } { entry := { title := \"New Title\", username := \"user1\", url := \"http://example.com\", notes := [\"note1\", \"note2\", \"note3\"] } } := by\n  unfold Spec; decide",
+          "why": "The output changes the title, which is forbidden by the requirement.",
+          "outcome": "rejected"
+        }
+      ],
+      "checked": true,
+      "attempts": 2,
+      "seconds": 16.0,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "proof",
+          "fixups": [],
+          "witness": "found by search"
+        },
+        {
+          "attempt": 2,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (no field types to vary)"
+        ],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 19,
+    "flag": 2,
+    "fail": 7
+  }
+}

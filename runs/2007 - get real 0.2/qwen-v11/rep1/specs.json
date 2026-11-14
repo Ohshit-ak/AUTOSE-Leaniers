@@ -1,0 +1,80 @@
+{
+  "source": {
+    "file": "2007 - get real 0.2.xml",
+    "sha256": "00dd628f7588e42db778475d3cc73d9ad52b355dad2e0399c72a9a21f1adcb58"
+  },
+  "model": "qwen",
+  "meta": {
+    "harness_version": "v11",
+    "model": "qwen",
+    "model_id": "qwen2.5-7b-instruct",
+    "temperature": 0.2,
+    "restart_temperature": 0.7,
+    "seed": 42,
+    "repetition": 1,
+    "prompt_hash": "08c8321aa2dd",
+    "git_commit": "ed18e9b",
+    "git_dirty": false
+  },
+  "lean_checked": true,
+  "summary": {
+    "total": 1,
+    "compiles": 1,
+    "rejects_bad_example": 0,
+    "checked": 1,
+    "failed": 0,
+    "unchecked": 0
+  },
+  "results": [
+    {
+      "id": "2.4/S1",
+      "kind": "requirement",
+      "verification": "lean",
+      "requirement_text": "The Get Real site runs as an extension of the OUS site e.g. ~getreal.ous.edu~ Being part of the OUS domain will maximize Google and other search engine hits.",
+      "text_predicate": "Requirement 2.4/S1 (Overall Description > Operating Environment):\nThe Get Real site runs as an extension of the OUS site e.g. ~getreal.ous.edu~ Being part of the OUS domain will maximize Google and other search engine hits.",
+      "lean_predicate": "structure Input where\n  deriving DecidableEq, Repr\n\nstructure Output where\n  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre  := fun _ => True\n  post := fun _ o => o = {}\n\nexample : Spec.pre {} ∧ Spec.post {} {} := by\n  unfold Spec; decide",
+      "compiles": true,
+      "rejects_bad_example": null,
+      "bad_example": "example : Spec.pre { field := \"http://getreal.ous.edu\" } ∧ ¬ Spec.post { field := \"http://getreal.ous.edu\" } { field := \"http://example.com\" } := by\n  unfold Spec; decide",
+      "negative_verdict": "unknown",
+      "negative_examples": [
+        {
+          "example": "example : Spec.pre { field := \"http://getreal.ous.edu\" } ∧ ¬ Spec.post { field := \"http://getreal.ous.edu\" } { field := \"http://example.com\" } := by\n  unfold Spec; decide",
+          "why": "The requirement states that the Get Real site runs as an extension of the OUS site, but the output does not reflect this.",
+          "outcome": "not usable: `field` is not a field of structure `Input`"
+        }
+      ],
+      "checked": true,
+      "attempts": 1,
+      "seconds": 9.2,
+      "log": [
+        {
+          "attempt": 1,
+          "stage": "ok",
+          "fixups": []
+        }
+      ],
+      "l05": {
+        "status": "flag",
+        "problems": [],
+        "flags": [
+          "could not test whether `post` rejects anything (example not in `Spec.post {…} {…}` form)"
+        ],
+        "strength": {
+          "output_free": [],
+          "output_problems": [],
+          "unrealizable_inputs": [],
+          "trivial": false,
+          "witness": null,
+          "copy_ok": false,
+          "class": "strong"
+        }
+      }
+    }
+  ],
+  "l05_summary": {
+    "pass": 0,
+    "flag": 1,
+    "fail": 0
+  }
+}

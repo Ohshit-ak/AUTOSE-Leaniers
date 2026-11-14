@@ -1,0 +1,32 @@
+import ContractForge
+open ContractForge
+
+-- 4.3.2.1b: Based on all relevant data, the ETCS shall calculate an emergency braking curve and a service braking curve
+-- compiles: False · rejects_bad_example: None · checked: False
+
+structure Input where
+  speedProfile : List Nat
+  emergencyBrakeThreshold : Nat
+  serviceBrakeThreshold : Nat
+  deriving DecidableEq, Repr
+
+structure Output where
+  emergencyBrakingCurve : List Nat
+  serviceBrakingCurve : List Nat
+  deriving DecidableEq, Repr
+
+def Spec : Contract Input Output where
+  pre  := fun i => i.speedProfile.Nodup ∧
+                 0 < i.emergencyBrakeThreshold ∧
+                 0 < i.serviceBrakeThreshold
+  post := fun i o => o.emergencyBrakingCurve.length = i.speedProfile.length ∧
+                     o.serviceBrakingCurve.length = i.speedProfile.length ∧
+                     ∀ n ∈ i.speedProfile, o.emergencyBrakingCurve.contains n ↔
+                     n ≥ i.emergencyBrakeThreshold ∧
+                     o.serviceBrakingCurve.contains n ↔
+                     n ≥ i.serviceBrakeThreshold
+
+example : Spec.pre { speedProfile := [10, 20, 30], emergencyBrakeThreshold := 25, serviceBrakeThreshold := 15 } ∧
+          Spec.post { speedProfile := [10, 20, 30], emergencyBrakeThreshold := 25, serviceBrakeThreshold := 15 }
+                    { emergencyBrakingCurve := [20, 30], serviceBrakingCurve := [20, 30] } := by
+  unfold Spec; decide

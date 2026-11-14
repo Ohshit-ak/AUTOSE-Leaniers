@@ -1,0 +1,936 @@
+[
+  {
+    "id": "2.4/S4",
+    "kind": "requirement",
+    "requirement_text": "When a signal is sent to a heating or cooling unit, no signal shall be available to allow the THEMAS system to determine if the signal sent to the unit was realized by the unit.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ signalAvailable := false, unitResponseDetected := x.unitResponse }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { signalAvailable := false,\n    unitResponseDetected := decide (x.unitResponse = true) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "signalAvailable",
+            "unitResponseDetected"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.9
+  },
+  {
+    "id": "3.1.1.1.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The THEMAS system shall use the information contained in the initialization data file to determine which heating and cooling units are part of the THEMAS system.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { units := x.initializationData.filter (fun u => u.type = \"heating\" ∨ u.type = \"cooling\") }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "units"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.9
+  },
+  {
+    "id": "3.1.1.2.1/S1",
+    "kind": "requirement",
+    "requirement_text": "Each thermostat shall have a unique identifier by which that thermostat is identified in the THEMAS system.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.thermostats = i.thermostats`. Change the function so that they hold (the contract is locked). What to do: (1) set `thermostats := x.thermostats`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "syntax",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { thermostats := x.thermostats.filter (fun t => t.id ≠ 0) }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 34.5
+  },
+  {
+    "id": "3.1.1.2.3/S2",
+    "kind": "requirement",
+    "requirement_text": "The initialization file shall contain a unique identifier for each thermostat that the system is to monitor.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.initialized = true`; `∀ t ∈ i.thermostats, t.id ≠ 0`. Change the function so that they hold (the contract is locked). What to do: (1) set `initialized := true`. (2) build the result with `List.filter` / `List.map` over an input list so that `∀ t ∈ x.thermostats, t.id ≠ 0` holds for every element.",
+        "error_class": "po3",
+        "stages": [
+          "static",
+          "names",
+          "check",
+          "static",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { initialized := decide (List.all x.thermostats (fun t => t.id ≠ 0)) }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 22.3
+  },
+  {
+    "id": "3.1.1.3.1/S1",
+    "kind": "requirement",
+    "requirement_text": "There shall be a maximum number of heating or cooling u nits that can be on at any given time.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ currentUnits := x.currentUnits }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { currentUnits := x.currentUnits }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "currentUnits"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.6
+  },
+  {
+    "id": "3.1.1.3.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The maximum number of heating or cooling units that can run concurrently shall reside in an initialization file.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ maxConcurrent := x.maxConcurrent, heatingUnits := x.heatingUnits, coolingUnits := x.coolingUnits }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { maxConcurrent := x.maxConcurrent,\n    heatingUnits := x.heatingUnits,\n    coolingUnits := x.coolingUnits }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "maxConcurrent",
+            "heatingUnits",
+            "coolingUnits"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.8
+  },
+  {
+    "id": "3.1.3.3/S1",
+    "kind": "requirement",
+    "requirement_text": "Two types of temperature data shall be recognized from the thermostats: 1) the temperature setting and 2) the current temperature.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ settingValid := true, currentValid := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { settingValid := true,\n    currentValid := true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "settingValid",
+            "currentValid"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.5
+  },
+  {
+    "id": "3.1.3.3/S3",
+    "kind": "requirement",
+    "requirement_text": "A current temperature value that is received from an individual thermostat shall be compared to the valid temperature range values.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 1,
+      "contracts": [
+        "TemperatureCheckContract",
+        "ErrorHandlingContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 5,
+        "of": 6,
+        "first_result_depends_on_input": true
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "ok"
+      ],
+      "code": "structure Mid where\n  valid         : Bool\n  error_message : String\n  deriving DecidableEq, Repr\n\ndef TemperatureCheckContract : Contract Input Mid where\n  pre  := fun i => i.temperature < 10000 && i.valid_min < 10000 && i.valid_max < 10000\n  post := fun i m => m.valid = (i.temperature ≥ i.valid_min ∧ i.temperature ≤ i.valid_max) ∧\n                     m.error_message = \"\"\n\ndef ErrorHandlingContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => (m.valid = true ↔ o.valid = true) ∧\n                     (m.valid = false → o.error_message ≠ \"\")\n\ntheorem po1 : Contract.Compatible TemperatureCheckContract ErrorHandlingContract := by\n  discharge_po1 [TemperatureCheckContract, ErrorHandlingContract, Spec]\n\ntheorem po2 : Contract.Refines (TemperatureCheckContract.seq ErrorHandlingContract) Spec := by\n  discharge_po2 [TemperatureCheckContract, ErrorHandlingContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "TemperatureCheckContract",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def TemperatureCheckContractImpl (x : Input) : Mid :=\n  { valid := x.temperature ≥ x.valid_min ∧ x.temperature ≤ x.valid_max,\n    error_message := \"\" }\n\ntheorem TemperatureCheckContractImpl_ok : TemperatureCheckContract.Satisfies TemperatureCheckContractImpl := by\n  discharge_po3 [TemperatureCheckContract, TemperatureCheckContractImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "valid",
+            "error_message"
+          ],
+          "model": []
+        }
+      },
+      {
+        "contract": "ErrorHandlingContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def ErrorHandlingContractImpl (x : Mid) : Output :=\n  { valid := decide (x.valid = true),\n    error_message := if x.valid = true then \"\" else \"Invalid temperature\" }\n\ntheorem ErrorHandlingContractImpl_ok : ErrorHandlingContract.Satisfies ErrorHandlingContractImpl := by\n  discharge_po3 [ErrorHandlingContract, ErrorHandlingContractImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "valid"
+          ],
+          "model": [
+            "error_message"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies (ErrorHandlingContractImpl ∘ TemperatureCheckContractImpl) :=\n  Contract.system_sound po1 po2 TemperatureCheckContractImpl_ok ErrorHandlingContractImpl_ok",
+    "full_check": true,
+    "seconds": 15.1
+  },
+  {
+    "id": "3.1.4.1.1/S1",
+    "kind": "requirement",
+    "requirement_text": "The THEMAS system shall determine wh en a reported temperature or a changed temperature setting exceeds the limits set by the overtemperature values.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { status := decide ((x.temperature > x.overtemp ∨ x.temperature > x.setting)) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "status"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.6
+  },
+  {
+    "id": "3.1.5.1.1/S2",
+    "kind": "requirement",
+    "requirement_text": "The THEMAS system shall limit the number of heating or cooling units t hat may be running simultaneously.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ runningUnits := x.runningUnits }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { runningUnits := x.runningUnits }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "runningUnits"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.5
+  },
+  {
+    "id": "3.1.5.1.3/S3",
+    "kind": "requirement",
+    "requirement_text": "When a request to turn on a heating or cooling unit is received, the system shall determine if the request can be honored.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "ComputeCanHonorContract",
+        "UpdateStatusContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 5,
+        "of": 6,
+        "first_result_depends_on_input": true
+      },
+      "error": "",
+      "error_class": null,
+      "stages": [
+        "check",
+        "check",
+        "check",
+        "check",
+        "ok"
+      ],
+      "carried_by_harness": [
+        "status"
+      ],
+      "code": "structure Mid where\n  canHonor : Bool\n  status : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeCanHonorContract : Contract Input Mid where\n  pre  := fun i => i.request = true\n  post := fun i m => (m.canHonor = true ↔ i.status = false) ∧ m.status = i.status\n\ndef UpdateStatusContract : Contract Mid Output where\n  pre  := fun m => True\n  post := fun m o => o.canHonor = m.canHonor ∧\n                     (o.canHonor = true → o.newStatus = true) ∧\n                     (o.canHonor = false → o.newStatus = m.status)\n\ntheorem po1 : Contract.Compatible ComputeCanHonorContract UpdateStatusContract := by\n  discharge_po1 [ComputeCanHonorContract, UpdateStatusContract, Spec]\n\ntheorem po2 : Contract.Refines (ComputeCanHonorContract.seq UpdateStatusContract) Spec := by\n  discharge_po2 [ComputeCanHonorContract, UpdateStatusContract, Spec]"
+    },
+    "l2": [
+      {
+        "contract": "ComputeCanHonorContract",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def ComputeCanHonorContractImpl (x : Input) : Mid :=\n  { canHonor := decide (x.status = false),\n    status := x.status }\n\ntheorem ComputeCanHonorContractImpl_ok : ComputeCanHonorContract.Satisfies ComputeCanHonorContractImpl := by\n  discharge_po3 [ComputeCanHonorContract, ComputeCanHonorContractImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "canHonor",
+            "status"
+          ],
+          "model": []
+        }
+      },
+      {
+        "contract": "UpdateStatusContract",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def UpdateStatusContractImpl (x : Mid) : Output :=\n  { canHonor := x.canHonor,\n    newStatus := if x.canHonor then true else x.status }\n\ntheorem UpdateStatusContractImpl_ok : UpdateStatusContract.Satisfies UpdateStatusContractImpl := by\n  discharge_po3 [UpdateStatusContract, UpdateStatusContractImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "canHonor"
+          ],
+          "model": [
+            "newStatus"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies (UpdateStatusContractImpl ∘ ComputeCanHonorContractImpl) :=\n  Contract.system_sound po1 po2 ComputeCanHonorContractImpl_ok UpdateStatusContractImpl_ok",
+    "full_check": true,
+    "seconds": 59.7
+  },
+  {
+    "id": "3.1.5.1.3/S4",
+    "kind": "requirement",
+    "requirement_text": "If the maximum number of heating or cooling units is already running, the request will be added to a LIFO queue.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ maxUnits := x.maxUnits, runningUnits := x.runningUnits, inQueue := x.request }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { maxUnits := x.maxUnits,\n    runningUnits := if x.request = true ∧ x.runningUnits = x.maxUnits then x.runningUnits + 1 else x.runningUnits,\n    inQueue := if x.request = true ∧ x.runningUnits = x.maxUnits then false else true }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "maxUnits"
+          ],
+          "model": [
+            "runningUnits",
+            "inQueue"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 9.4
+  },
+  {
+    "id": "3.1.5.1.3/S5",
+    "kind": "requirement",
+    "requirement_text": "If the maximum number of heating or cooling units is not running, this process will generate a request to turn on the requested unit.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ requestGenerated := true }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "`post` is a single condition",
+      "code": "-- not split (`post` is a single condition): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { requestGenerated := decide (x.runningUnits + 1 ≤ x.maxUnits) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "requestGenerated"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.5
+  },
+  {
+    "id": "3.1.5.1.3/S6",
+    "kind": "requirement",
+    "requirement_text": "When a request to turn off a heating or cooling unit is received, this process shall check the queue of waiting heating and cooling requests.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { queue := x.queue,\n    status := if ∃ r ∈ x.queue, r.unitId = x.unitId ∧ r.status = \"ON\" then \"OFF\" else \"ON\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "queue"
+          ],
+          "model": [
+            "status"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 6.3
+  },
+  {
+    "id": "3.1.5.3.3/S2",
+    "kind": "requirement",
+    "requirement_text": "This request shall include the designation of the heating or cooling unit and a flag to indicate whether that unit is to be turned on or off.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ designation := x.designation, on := x.on }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { designation := x.designation,\n    on := x.on }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "designation",
+            "on"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.7
+  },
+  {
+    "id": "3.1.6.3/S1",
+    "kind": "requirement",
+    "requirement_text": "This process shall recognize the values for the requested heating or cooling unit and the ON or OFF status that is being requested.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ unitId := x.unitId, status := x.requestedStatus }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { unitId := x.unitId,\n    status := if x.requestedStatus = \"ON\" then \"ON\" else if x.requestedStatus = \"OFF\" then \"OFF\" else \"UNKNOWN\" }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "unitId"
+          ],
+          "model": [
+            "status"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.6
+  },
+  {
+    "id": "3.1.6.3/S5",
+    "kind": "requirement",
+    "requirement_text": "In order to provide an operational history and statistical reports, this process shall generate an event each time a change is made to the status of a heating or cooling unit.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ events := x.units }"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { events := x.units }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [],
+          "model": [
+            "events"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 4.9
+  },
+  {
+    "id": "3.1.7.3/S1",
+    "kind": "requirement",
+    "requirement_text": "When the THEMAS system detects a request for an alarm, this process shall detect which of the two alarms are being requested.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ isFireAlarm := true, isSmokeAlarm := false }"
+    },
+    "l1": {
+      "success": false,
+      "mode": "chain",
+      "attempts": 5,
+      "contracts": [
+        "ComputeFireAlarmContract",
+        "DetermineAlarmTypeContract"
+      ],
+      "strength": {
+        "first_does_work": true,
+        "second_does_work": true,
+        "second_uses_first": true,
+        "not_a_copy_of_spec": true,
+        "interface_assumption": false,
+        "score": 4,
+        "of": 5
+      },
+      "error": "L1: PO2 fails: the two contracts together do not give these parts of `Spec.post`: `o.isFireAlarm = true ↔ i.alarmType = \"fire\"`; `o.isSmokeAlarm = true ↔ i.alarmType = \"smoke\"`. Whatever `Spec.post` says about the input must pass through `Mid`: `ComputeFireAlarmContract.post` relates `Mid` to `Input` (copy a field with `m.f = i.f`, or state a result with `↔`), and `DetermineAlarmTypeContract.post` relates `Output` to `Mid`. A condition that is only in `DetermineAlarmTypeContract.pre` is not guaranteed by the chain.",
+      "error_class": "po2",
+      "stages": [
+        "static",
+        "check",
+        "check",
+        "static",
+        "check",
+        "returned"
+      ],
+      "code": "structure Mid where\n  isFireAlarm : Bool\n  isSmokeAlarm : Bool\n  deriving DecidableEq, Repr\n\ndef ComputeFireAlarmContract : Contract Input Mid where\n  pre  := fun i => i.alarmType ≠ \"\"\n  post := fun i m => m.isFireAlarm = true ↔ i.alarmType = \"fire\" ∧ m.isSmokeAlarm = false\n\ndef DetermineAlarmTypeContract : Contract Mid Output where\n  pre  := fun _ => True\n  post := fun m o => \n    (o.isFireAlarm = true ↔ m.isFireAlarm) ∧\n    (o.isSmokeAlarm = true ↔ m.isFireAlarm = false)"
+    },
+    "l2": [],
+    "seconds": 36.9
+  },
+  {
+    "id": "3.1.10.3/S3",
+    "kind": "requirement",
+    "requirement_text": "If the operational history report is selected, the THEMAS system shall select all the events from the event database, sort the events by date and time, and create the ASCII report file.",
+    "spec_check": {
+      "trivial": false
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 5,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `List.Pairwise (fun a b => a.date ≤ b.date ∧ a.time ≤ b.time) i.events`. Change the function so that they hold (the contract is locked). What to do: (1) compute the result from the input (count / compare / arithmetic) so that `List.Pairwise (fun a b => a.date ≤ b.date ∧ a.time ≤ b.time) x.events` holds; do not copy it unchanged.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "static",
+          "check",
+          "static",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { reportFile := \"operational_history_report.txt\" }",
+        "harness_only": false
+      }
+    ],
+    "seconds": 30.4
+  }
+]

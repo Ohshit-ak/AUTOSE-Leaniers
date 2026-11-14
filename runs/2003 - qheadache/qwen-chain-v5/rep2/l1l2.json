@@ -1,0 +1,192 @@
+[
+  {
+    "id": "2.2.3/S1",
+    "kind": "requirement",
+    "requirement_text": "The product must count and display the number of the user' asction.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { actionCount := x.actionCount,\n    displaying := decide (x.actionCount > 0) }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "actionCount",
+            "displaying"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 2.8
+  },
+  {
+    "id": "2.2.4/S1",
+    "kind": "requirement",
+    "requirement_text": "The product must record the score (time and number of counts) of a play associated with the name of a user.",
+    "spec_check": {
+      "trivial": true,
+      "witness": "{ user := x.user, play := x.play }",
+      "copy_ok": false,
+      "l05_class": "weak"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 1,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { user := x.user,\n    play := { name := x.play.name, time := x.play.time, counts := x.play.counts } }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": false,
+        "fields": {
+          "harness": [
+            "user"
+          ],
+          "model": [
+            "play"
+          ]
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 5.4
+  },
+  {
+    "id": "3.2.1.4.3/S2",
+    "kind": "requirement",
+    "requirement_text": "The selected block can' mt ove near other blocks at least 0.05x from the others blocks.",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": false,
+        "attempts": 4,
+        "error": "L2: PO3 fails: for an input that satisfies `Spec.pre`, `SpecImpl` does not establish these parts of `Spec.post`: `o.accepted = true ↔\n    ∀ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≤ other.position - 1 ∨\n    other.position + 5 ≤ i.selectedBlock.position - 1`; `o.accepted = false ↔\n    ∃ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≥ other.position ∨\n    other.position + 5 ≥ i.selectedBlock.position`. Change the function so that they hold (the contract is locked). What to do: (1) set `accepted := decide (∀ other ∈ x.otherBlocks, x.selectedBlock.position + 5 ≤ other.position - 1 ∨\n    other.position + 5 ≤ x.selectedBlock.position - 1)`. (2) set `accepted := decide (¬ (∃ other ∈ x.otherBlocks, x.selectedBlock.position + 5 ≥ other.position ∨\n    other.position + 5 ≥ x.selectedBlock.position))`.",
+        "error_class": "po3",
+        "stages": [
+          "check",
+          "check",
+          "check",
+          "check",
+          "returned"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { selectedBlock := x.selectedBlock,\n    otherBlocks := x.otherBlocks,\n    accepted := decide (∃ other ∈ x.otherBlocks, x.selectedBlock.position + 5 ≥ other.position ∨ other.position + 5 ≥ x.selectedBlock.position) }",
+        "harness_only": false,
+        "stopped": "the same check failed 4 times in a row"
+      }
+    ],
+    "seconds": 38.4
+  },
+  {
+    "id": "3.2.2.2.1/S2",
+    "kind": "requirement",
+    "requirement_text": "Enter your name : \", an Edit Box that can contain 20 characters and a pushbutton with the label \"OK\".",
+    "spec_check": {
+      "trivial": false,
+      "copy_ok": false,
+      "l05_class": "strong"
+    },
+    "l1": {
+      "success": true,
+      "mode": "single",
+      "attempts": 0,
+      "contracts": [
+        "Spec"
+      ],
+      "strength": null,
+      "error": "",
+      "error_class": null,
+      "stages": [],
+      "why_single": "no intermediate result (no output field of `post` is stated in terms of another)",
+      "code": "-- not split (no intermediate result (no output field of `post` is stated in terms of another)): the one component is `Spec` itself\ntheorem po2 : Contract.Refines Spec Spec :=\n  ⟨fun _ h => h, fun _ _ _ h => h⟩"
+    },
+    "l2": [
+      {
+        "contract": "Spec",
+        "success": true,
+        "attempts": 0,
+        "error": "",
+        "error_class": null,
+        "stages": [
+          "ok"
+        ],
+        "code": "def SpecImpl (x : Input) : Output :=\n  { name := x.name,\n    statistics := \"Game finished. Your name: \" ++ x.name }\n\ntheorem SpecImpl_ok : Spec.Satisfies SpecImpl := by\n  discharge_po3 [Spec, SpecImpl]",
+        "harness_only": true,
+        "fields": {
+          "harness": [
+            "name",
+            "statistics"
+          ],
+          "model": []
+        }
+      }
+    ],
+    "system_theorem": "theorem system_ok : Spec.Satisfies SpecImpl :=\n  Contract.refines_sound po2 SpecImpl_ok",
+    "full_check": true,
+    "seconds": 3.0
+  }
+]
