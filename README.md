@@ -25,40 +25,33 @@ the verified Lean implementation into Python, is not built yet.
 
 > Current status, design decisions and next steps are in **[MEMORY.md](MEMORY.md)**. Read it first.
 
-**Status (2026-11-13).** All three layers run end to end with an open-weight model
-(Qwen 2.5 7B, local), on the L0 specs that passed every L0 check. Per-spec L1/L2 (chain-v3, `--until chain`),
-mean (min–max) over 3 seeds (42–44):
+**Status (2026-11-15).** All three layers run end to end with an open-weight model (Qwen 2.5 7B, local) on
+**18 SRS documents**. Current versions: L0 **v11**, per-spec L1/L2 **chain-v5** (`--until chain`). Specs verified
+end to end, sum over the 18 SRS of the mean over 3 seeds (42–44):
 
-| SRS | L0 specs into L1 | single-step (not split) → verified | need a split → real L1 architecture → verified | **Fully verified end to end** | with `--fallback-single` | v2 (2026-11-06, 1 run) |
-|-----|---|---|---|---|---|---|
-| `0000 - gamma j` | 61 of 74 | 38 → 34.67 | 23 → 6.33 → 4.00 | **38.67** (37–40) | **50.67** (50–51) | 19 |
-| `2009 - video search` | 15 of 21 | 5 → 5.00 | 10 → 3.67 → 1.67 | **6.67** (6–7) | **9.33** (7–11) | 7 (of 14) |
+| Run | L0 specs | **end to end** | rate | non-trivial specs end to end |
+|-----|---|---|---|---|
+| chain-v4 strict (L0 v10.1) | 483 | 343.3 | 71.1 % | 149.7 (58 %) |
+| chain-v5 strict on L0 v10.1 (ablation) | 483 | 372.0 | 77.0 % | 163.7 (64 %) |
+| L0 v11 + chain-v5 strict | 517 | 390.3 | 75.5 % | 193.3 (64 %) |
+| **L0 v11 + chain-v5 `--fallback-single`** | 517 | **400.7** | **77.5 %** | **200.0 (66 %)** |
 
-"Fully verified" means that Lean re-checks the spec, the architecture, PO1, PO2, the implementations
-and their PO3 proofs together in one file, ending in `theorem system_ok : Spec.Satisfies (…)`. Single-step
-specs (all 17 data constraints: 17/17, v2 0/17) keep `Spec` as their one component. Real two-component
-decompositions are still rare with a 7B model, but the accepted ones are genuine (no identity or copy-of-`Spec`
-splits; v2's 19 were mostly such splits). Splits fail mostly on PO1 and visibility (gamma j) or PO2 (video search);
-in L2 the second component fails. Full write-up: **[results.md](results.md)**; per-run tables in
-`runs/<doc>/qwen-chain-v3/summary.md`; details in [MEMORY.md](MEMORY.md), *chain-v3 → Qwen results*.
+"End to end" means that Lean re-checks the spec, the architecture, PO1, PO2, the implementations and their PO3
+proofs together in one file, ending in `theorem system_ok : Spec.Satisfies (…)`. "Non-trivial" leaves out weak specs
+(satisfiable by copied inputs and constants). The L1/L2 changes are a clear gain (same specs, 71 % → 77 %, no SRS
+worse); L0 v11 adds specs but not pass rate, and loses some on gamma j, ertms and dii (not yet investigated).
+Real two-component decompositions remain rare with a 7B model; most specs are verified as one component.
+Full write-up and per-SRS table: **[results.md](results.md)**; per-run tables in `runs/<doc>/qwen-chain-v5/summary.md`;
+design and history in [MEMORY.md](MEMORY.md) (*chain-v4*, *v11 / chain-v5*) and `docs/design/contractforge_design.pdf`.
 
-> **chain-v4 (2026-11-13, not yet run with Qwen).** Reading the v3 records showed that the table above overstates
-> decomposition: in 11 of the 12 verified gamma j chains the first component only copies fields and sets a constant
-> (`m.ok = true`), and the only real chains (video search `REQ-5`, `REQ-7#2`) repeat the prompt example. chain-v4
-> changes the harness: a spec is split only when its `post` states one output in terms of another (8 of the 76 specs);
-> a first component whose result is constant or a disguised copy is rejected (Lean-checked); the harness removes from
-> the second `pre` what the first `post` does not give; the coder is told the exact fields of its result type; and
-> every spec is flagged when copies and constants satisfy it (30 of 76: weak L0 specs, where verified code can be a
-> stub). Evidence so far is a replay of the v3 records; run `sbatch runs/qwen-chain-v4.sbatch` for numbers.
-> See [MEMORY.md](MEMORY.md), *chain-v4*.
-
-> **v11 / chain-v5 (2026-11-13, not yet run with Qwen).** Fixes for the failure patterns in
-> `docs/failure_patterns.pdf`, all harness-side and SRS-independent: L0.5 rejects `post` conditions that only
-> constrain the input (also after substituting outputs `post` fixes) and feeds weak (copy-satisfiable) specs back
-> once; repair feedback quotes the real Lean entries (`lean_docs.py`); L1 carries `Input` fields into `Mid` and
-> turns identity splits into "not decomposable"; L2 starts from a skeleton derived from `post` (`skeleton.py`);
-> the repair loop changes strategy instead of repeating and stops early. Replay on the 18-SRS records and the
-> numbers: [MEMORY.md](MEMORY.md), *v11*. Run `sbatch runs/qwen-v11.sbatch`.
+What changed in the last two versions, briefly:
+- **chain-v4:** split a spec only when its `post` states one output in terms of another; reject a first component
+  whose result is constant or a disguised copy (Lean-checked); the harness removes from the second `pre` what the
+  first `post` does not give; the coder is told the exact fields of its result type; weak specs are flagged.
+- **L0 v11 / chain-v5:** L0.5 rejects `post` conditions that only constrain the input and feeds weak specs back once;
+  repair feedback quotes the real Lean entries (`lean_docs.py`); L1 carries `Input` fields into `Mid` and turns
+  identity splits into "not decomposable"; L2 starts from a skeleton derived from `post` (`skeleton.py`); the repair
+  loop changes strategy instead of repeating and stops early. Job file: `runs/qwen-v11.sbatch`.
 
 ---
 
@@ -91,7 +84,7 @@ git restore --source origin/l0-v10 -- harness/e2e_l1l2.py   # or take one file f
 git diff origin/backup/main-pre-merge main -- harness/      # see what the merge changed
 ```
 
-After the merge, `lake build` succeeds and all tests in `harness/tests` pass on `main` (162 as of 2026-11-13, none skipped once `requirements.txt` is installed).
+After the merge, `lake build` succeeds and all tests in `harness/tests` pass on `main` (194 as of 2026-11-15, none skipped once `requirements.txt` is installed).
 `harness/tests/` is a package (`__init__.py`) and `harness/pytest.ini` pins `testpaths`/`pythonpath`,
 so an unrelated top-level `tests` package installed elsewhere in your Python can no longer
 shadow ours. Run `python -m pytest` (or `python -m unittest discover -s tests`) from `harness/`.
@@ -104,7 +97,7 @@ shadow ours. Run `python -m pytest` (or `python -m unittest discover -s tests`) 
 AUTOSE-Leaniers/
 ├── README.md               # this file: what it is, how to navigate, how to use
 ├── MEMORY.md               # project state, decisions, gotchas, next steps
-├── results.md              # latest Qwen results (chain-v3, 3 seeds, both SRSs)
+├── results.md              # latest Qwen results (L0 v11 + chain-v5, 18 SRS, 3 seeds)
 ├── .env.example            # API key names (copy to .env)
 ├── requirements.txt        # Python dependencies (pip install -r requirements.txt)
 ├── .env                    # your API keys (gitignored)
@@ -165,7 +158,7 @@ AUTOSE-Leaniers/
 │   └── parsed/             # parser output, one JSON per document
 │
 └── runs/                   # pipeline outputs: runs/<document>/<run-name>/
-    │                       #   SRSs run so far: `0000 - gamma j`, `2009 - video search`
+    │                       #   all 18 SRS in Requirements/ (L0 v11, chain-v5)
     └── logs/               # sbatch files of the e2e runs (logs themselves are not committed)
 ```
 
@@ -476,11 +469,11 @@ The second L1/L2 path. It reads the **frozen** L0 run (default `runs/<doc>/qwen-
 cd harness
 python main.py "../Requirements/0000 - gamma j.xml" --until chain --repeat 3     # seeds 42, 43, 44
 python main.py … --until chain --only 5.3/R4 UC-customer-login-customer          # some specs
-python main.py … --until chain --repeat 3 --fallback-single --run-name qwen-chain-v4-fallback
-cd .. && python evaluation/summarize_e2e.py "runs/0000 - gamma j/qwen-chain-v4"  # results, failure classes, spread
+python main.py … --until chain --repeat 3 --fallback-single --run-name qwen-chain-v5-fallback
+cd .. && python evaluation/summarize_e2e.py "runs/0000 - gamma j/qwen-chain-v5"  # results, failure classes, spread
 ```
 
-On ada: `sbatch runs/qwen-chain-v4.sbatch` (both SRSs, 3 seeds, with and without fallback, summary).
+On ada: `sbatch runs/qwen-v11.sbatch N "<doc stem>" …` (L0 v11, then chain-v5 ×3 strict and fallback, the ablation on L0 v10.1, and the summary; see its header for splitting the 18 SRS over jobs).
 `e2e_l1l2.py <run_dir> [--start A --end B]` is the older CLI of the same pipeline (one folder, shards).
 
 | Step | Who writes what | Checks |
@@ -495,7 +488,7 @@ On ada: `sbatch runs/qwen-chain-v4.sbatch` (both SRSs, 3 seeds, with and without
 (`mode: single-fallback`, reported separately; keep these runs in their own `--run-name`).
 `--split always|never` overrides the routing.
 
-Outputs in `runs/<doc>/<model>-chain-v4/rep<k>/`:
+Outputs in `runs/<doc>/<model>-chain-v5/rep<k>/`:
 
 | File | Contents |
 |------|----------|

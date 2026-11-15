@@ -4,7 +4,7 @@ A running log of where ContractForge stands, why things are the way they are,
 and what comes next. Update it whenever you finish a piece of work or make a
 decision someone else would need to know.
 
-## Status (2026-11-13)
+## Status (2026-11-15)
 
 | Part | State |
 |------|-------|
@@ -14,17 +14,17 @@ decision someone else would need to know.
 | `harness/lean_runner.py` | Done. `sorry` detection fixed 2026-10-31 (see *v7*). |
 | Repo-root Lake workspace | Added 2026-10-31 (committed in c77afe4): `lakefile.lean` (`require contractforge from "framework"`), `lean-toolchain`, `lake-manifest.json`, so editors resolve `import ContractForge` for files under `runs/`. |
 | `harness/req_parser.py` | Done (2026-10-28). SRS XML → requirements JSON, deterministic, no LLM. Tests in `harness/tests/`. |
-| `harness/agents/spec_agent.py` (L0) | Done. Prompt hardened 2026-10-30 (see *Decisions*). Builds prompts from parser JSON (`spec_prompts`, `run_spec_from_json`). |
-| `harness/agents/` L1 (`architect_agent.py`, `arch_tools.py`) | **Done, L1-v1 (2026-11-04)**, branch `l1-graph-contracts`. Pipeline mode (default) and agent mode; graph and `--no-graph`. Tested on a toy and with a copy-the-L0 fake model on gamma j; **not yet run with Qwen** (`runs/qwen-L1-v1.sbatch`). See *L1*. |
+| `harness/agents/spec_agent.py` (L0) | **v11** (2026-11-13; run with Qwen on 18 SRS 2026-11-14). v10.1 kept as the frozen baseline. Builds prompts from parser JSON (`spec_prompts`, `run_spec_from_json`). |
+| `harness/agents/` L1 (`architect_agent.py`, `arch_tools.py`) | **Done, L1-v1 (2026-11-04)**, branch `l1-graph-contracts`. Pipeline mode (default) and agent mode; graph and `--no-graph`. Run with Qwen 2026-11-06 on gamma j, 3 seeds (`runs/qwen-L1-v1.sbatch`; PO2 proved in no run). Not rerun since graph v2 and degrading. See *L1*. |
 | `harness/req_graph.py` | Graph version 2 (2026-11-12, see *Graph v2*). Deterministic, no LLM; spaCy `en_core_web_sm` 3.8. The committed `runs/0000 - gamma j/graph/` is still version 1: rebuild with `--until graph`. |
 | `harness/arch_lean.py` | Done (L1-v1). All L1 Lean the harness writes (message type, SystemSpec, contracts, statements, auto-proofs). |
 | `framework/ContractForge/Chain.lean` | Done (L1-v1). `compat_seq`, `chain3_sound`; existing definitions unchanged. |
 | `framework/ContractForge/Tactics.lean` | `discharge_po1`, `discharge_po2`, `discharge_po3` added 2026-11-12 (`discharge_po` unchanged). Run `lake build` in `framework/` after pulling. |
 | `harness/agents/coding_agent.py` (L2) | Merged from `feat/l2-coding-agent` (PR #1): `code` stage in `main.py`, `code_lean.py`, tests. Not run through `main.py` yet. |
 | `harness/main.py` | Single entry point. Stages `parse` → `spec` → `check` (L0) → `graph` → `arch` (L1); `--until graph/arch` read the frozen L0 run and never rerun L0. `code` (L2) reads the accepted L1 architectures. Auto-starts the Qwen server. |
-| `harness/agents/chain_architect.py`, `chain_coder.py` (per-spec L1/L2) | **chain-v3 (2026-11-12), run with Qwen 2026-11-13** (3 seeds × both SRSs, strict + fallback; see *chain-v3 → Qwen results* and `results.md`). The model writes definitions only; the harness states and proves PO1/PO2/PO3. v2 was run end to end 2026-11-06 (see *L1/L2 end-to-end*). |
-| `harness/chain_checks.py`, `chain_failures.py`, `po.py` | Done (chain-v3; **chain-v4 2026-11-13**: routing by intermediate result, constant-result check, PO1 repair, weak-spec flag, see *chain-v4*). Static checks + strength record + PO diagnosis; failure classes; PO code shared by both L1/L2 paths. |
-| `harness/chain_pipeline.py`, `main.py --until chain` | Done (chain-v3). The chain path is a `main.py` stage with `--repeat`; `e2e_l1l2.py` is a thin CLI over the same code (shards). Job files: `runs/qwen-chain-v3.sbatch` (run), `runs/qwen-chain-v4.sbatch` (to run). |
+| `harness/agents/chain_architect.py`, `chain_coder.py` (per-spec L1/L2) | **chain-v5 (2026-11-13), run with Qwen 2026-11-14 on all 18 SRS** (3 seeds, strict + fallback + ablation on L0 v10.1; see *v11 / chain-v5 → Qwen results* and `results.md`). chain-v3 and chain-v4 were run on 2026-11-13. The model writes definitions only; the harness states and proves PO1/PO2/PO3. v2 was run end to end 2026-11-06 (see *L1/L2 end-to-end*). |
+| `harness/chain_checks.py`, `chain_failures.py`, `po.py`, `skeleton.py` | Done (chain-v3; chain-v4: routing by intermediate result, constant-result check, PO1 repair, weak-spec flag; chain-v5: `Mid` carrying, not-decomposable mode, spec-directed L2 skeleton; see *chain-v4*, *v11*). Static checks + strength record + PO diagnosis; failure classes; PO code shared by both L1/L2 paths. |
+| `harness/chain_pipeline.py`, `main.py --until chain` | Done (chain-v3). The chain path is a `main.py` stage with `--repeat`; `e2e_l1l2.py` is a thin CLI over the same code (shards). Job files: `runs/qwen-chain-v3.sbatch`, `runs/qwen-chain-v4.sbatch`, `runs/qwen-v11.sbatch` (L0 v11 + chain-v5; all run). |
 | `harness/reverify.py` | Not started. |
 | `benchmark/gammaj/` | `GammaJ_L0.lean`: hand-written gold L0 (25 specs `Spec_<id>` (16 data dictionary, 3 cart, 4 use case, 1 business rule, 1 security), all with `_sat` witnesses, ambiguities marked), compiles. `Domain.lean`: **DRAFT, needs human review**, extracted from it (`Product`, `CartLine`, `Cart`, `Account`, `Order`, `qtyOf`, `itemCount`, `totalCost`; adds `deriving DecidableEq, Repr`). |
 | `evaluation/compare_runs.py` | Done (v10; arch mode L1-v1). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. L1 folders get the arch report (now with `accepted-degraded` and degraded operations). |
@@ -333,7 +333,7 @@ write-up in `results.md` at the repo root.
   real decompositions with the new prompt and feedback is not known. If it cannot, most specs end
   as `single` / `single-fallback`, which is the honest result.
 
-## chain-v4 (2026-11-13): what the v3 Qwen run showed, and the fixes. **Not yet run with Qwen**
+## chain-v4 (2026-11-13): what the v3 Qwen run showed, and the fixes. **Run with Qwen 2026-11-13 on 18 SRS** (numbers in *v11 / chain-v5 → Qwen results*)
 
 Read from `runs/*/qwen-chain-v3*/rep*/l1l2.json` (job 74718). `results.md` reports the counts; these are the causes.
 
@@ -581,9 +581,9 @@ numbers. Run `sbatch runs/qwen-v11.sbatch` (see its header; build the doc index 
   Fixed in `runs/qwen-chain-v3.sbatch`; copy the `-f` into any new sbatch.
 - **Default `lake` on ada is Lean 4.35.0**; inside `framework/`, elan switches to 4.29.1 from `lean-toolchain`.
 
-## Tests (2026-11-13)
+## Tests (2026-11-15)
 
-`cd harness && python -m pytest`: **162 pass, 0 skipped** (about 4 min with Lean; `test_chain.py` is now 26: plus routing by intermediate result, constant result, PO1 repair, weak-spec witness, coder field feedback). If you see
+`cd harness && python -m pytest`: **194 pass, 0 skipped** (4 min with Lean; v11/chain-v5 added `test_v11_fixes.py` (28) and `test_l05_loop.py` (4). Earlier: `test_chain.py` is now 26: plus routing by intermediate result, constant result, PO1 repair, weak-spec witness, coder field feedback). If you see
 skips, `networkx`/spaCy are missing (`pip install -r requirements.txt`): the graph tests skip silently. New: `tests/test_chain.py` (21: static
 checks, PO diagnosis, single-step routing, coder, pipeline with a scripted model, repetition summary);
 `test_arch.py` 15 (degrading); `test_req_graph.py` 15 (state entities, split rule, broken cycles).
@@ -610,29 +610,38 @@ flagged at L0.5, so 0 specs reach the chain (their summary step exits 1). Per SR
   kept in `runs/2005 - microcare/qwen-chain-v5.oom-damaged`); microcare strict rerun as 78269 with 32G. The sbatch now
   asks for 32G and exits at startup when the server has no usable GPU.
 
-## Next steps
+## Next steps (2026-11-15)
 
-000. **Run chain-v4 with Qwen**: `sbatch runs/qwen-chain-v4.sbatch` (see *chain-v4*). Then decide whether L0 should
-     reject specs with a trivial witness.
-00. ~~Run chain-v3 with Qwen~~ done 2026-11-13 (see *chain-v3 → Qwen results*). Next for the chain path (most now addressed by chain-v4): the
-    second-component L2 failures (`unknown-field` on `Mid`, PO3 on the output `post`), PO1/visibility on gamma j and
-    PO2 on video search for splits. Rebuild the gamma j graph
-    (`--until graph`) and rerun graph L1 ×3 to measure degrading and graph v2 with the model.
-    Then: review the state entities by hand; decide whether `--fallback-single` should be the
-    default; Lean implementation → Python (the last step of the intended pipeline, not started).
+Done and removed from this list: chain-v3, chain-v4 and L0 v11 + chain-v5 Qwen runs; mid-submission; wiring L1/L2 into
+`main.py`; `requirements.txt`. Older items are in git history.
 
-0. **Mid-submission 2026-11-06 23:59** (4-page progress report + repo link). After it: L1 semantic validator (reject identity / copy-of-`Spec` components), wire L1/L2 into `main.py`, ×3 reps of the e2e runs, then L2 results.
+**Results / L0 v11**
+1. Find why L0 v11 lost end-to-end specs on gamma j (≈53 → 49), ertms (33 → 28–29) and dii (5 → 3): compare
+   `qwen-v10.1/rep1` and `qwen-v11/rep1` for those SRS (the failures are mostly PO3).
+2. peering and get real 0.2 parse to 1 requirement that is flagged at L0.5, so 0 specs reach L1 (peering's spec
+   verified under chain-v4).
+3. Every chain repetition reads `qwen-v11/rep1`; run L0 ×3 if the spread should include L0.
+4. Decide whether `--fallback-single` becomes the default (best setting: 400.7 / 517).
 
-0. **L1:** Qwen runs done (see *L1 → Results*; PO2 proved in no run). Left: run Gemma once (`--model gemma --run-name gemma-L1-v1`,
-   needs `.env`), look into the one failing `trace_post` (`3.5.3/S2`, `3.1.3/S1`), optionally an agent-mode run. Nothing is committed yet.
+**L1/L2 (chain path)**
+5. Real two-component decompositions are rare; most splits fail PO3 on the second component (consumer of `Mid`).
+6. Video search PO2: list properties (sorted, permutation, every wanted item in the results) do not survive `Mid`.
+7. Specs that fail PO3 even as one component (`UC-administrator-add-user` looks contradictory; `…-remove-user`,
+   `3.1.3/S1`, `3.1.3/S3`, `SI-1.2`, `REQ-1`, `REQ-4`, `REQ-6` not checked).
 
+**L0 / spec quality**
+8. Weak specs still reach L1/L2 and verify with stub implementations (fed back once in v11, then accepted).
+9. Recurring L0 compile failures: `5.5/R1`, `DD-shipping-date`, `DD-credit-card-expiry-date`, `DD-location`,
+   `UC-customer-checkout-an-order`.
+10. Review the checked specs for meaning, not just compilation (see *Gotchas*).
 
-1. **L0 is frozen at v10.1.** Open L0 issues, for after the freeze or a v11: the run-to-run compile failures (`5.5/R1` Decidable on a structure, `DD-shipping-date` and `DD-credit-card-expiry-date` date formats, `DD-location`, `UC-customer-checkout-an-order` writing `Spec.post {…}` with one record that mixes input and output fields — the `_field_of_other` hint misreads that as `i.x` vs `o.x`). Get a truly held-out SRS (video search was seen during v9). Compare runs only with `evaluation/compare_runs.py` over ≥3 reps.
-1. (old) v9 is done on both SRSs (`qwen-v9`; compare with `scripts/compare_runs.py <before> <after>`, reports in each `qwen-v9/comparison.md`). Next: the sort / filter / "display N results" requirements of video search (all 5 new ones fail L0.5: look at their Lean files); the gamma j ✅ → ⚠️ regressions (`pre := True`, "no field types to vary"); the 4 new compile failures. Still open from v8: check the model's forbidden example against the parser's rules before trusting it (DD-item-name, DD-city, DD-order-no). Commit the v8/v9 runs and the v9 code.
-2. Commit `runs/0000 - gamma j/qwen/` (prompt v2) and `qwen-baseline/` (v1). Next for L0: add the APIs Qwen still invents (`List.nodup`, `String.last`, `String.toInt`, `Char.isAlphabetic`) to the "don't exist" list and repair hints; look at the 7 entries that regressed.
-3. Review the checked specs for meaning, not just compilation (see *Gotchas*).
-4. Run Gemma (and DeepSeek/Groq if keys are available) on all 75 entries with `--resume` to get comparable L0 pass rates.
-5. ~~Wire L1 (architect) and L2 (coding) stages into `main.py`~~ done: graph path `--until arch`/`code` (2026-11-06), chain path `--until chain` (2026-11-12).
-6. ~~Add `requirements.txt`~~ done 2026-11-12.
-7. First benchmark system: `benchmark/bank_ledger/`.
-8. `evaluation/metrics.py` with the `RunResult` dataclass from the kickoff guide.
+**Graph path**
+11. Rebuild the gamma j graph (`--until graph`, still version 1 in the tree) and rerun graph L1 ×3 with Qwen to measure
+    degrading and graph v2.
+12. Why `3.5.3/S2` and `3.1.3/S1` break the harness's own trace proof ("Expected type must not contain free variables").
+13. Review the state entities by hand. Optional: Gemma run of L1 (`--model gemma`, needs `.env`), agent mode.
+
+**Not built**
+14. Lean implementation → Python (last step of the pipeline).
+15. `harness/reverify.py`, a benchmark system (`benchmark/bank_ledger/`), `evaluation/metrics.py`.
+16. A truly held-out SRS for L0 (video search was seen during v9; the other 16 were not used for design).

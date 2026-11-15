@@ -1,4 +1,80 @@
-# Results: chain-v3 (L1 + L2 per spec), Qwen 2.5 7B
+# Results: L0 v11 + chain-v5, Qwen 2.5 7B, 18 SRS
+
+Run on 2026-11-13/14. Slurm jobs 76822–76826, 76932, 78269 (`runs/qwen-v11.sbatch`), commit `ed18e9b`
+(`git_dirty: false` in every `chain_meta.json`). Model `qwen2.5-7b-instruct` (Q4_K_M, llama.cpp), temperature 0.2
+(restart 0.7). L1/L2 run three times per setting, seeds 42, 43, 44; **every repetition reads the same L0 run**
+(`qwen-v11/rep1`, or `qwen-v10.1/rep1` for the ablation), so the spread covers L1/L2 only.
+
+Numbers are **mean (min–max) over the 3 repetitions** of specs verified end to end (`system_ok` checked by Lean).
+Per-SRS summaries: `runs/<doc>/qwen-chain-v5/summary.md` (all chain-v5 settings, compared with chain-v4).
+
+Settings:
+- **chain-v4 strict**: previous harness, on the frozen L0 v10.1 specs.
+- **chain-v5 on v10.1 L0**: ablation, new L1/L2 on the same specs as chain-v4.
+- **v11 + chain-v5 strict / fallback**: new L0 (v11) and new L1/L2; fallback = `--fallback-single`.
+
+## Headline (sum over the 18 SRS)
+
+| Run | L0 specs | end to end | rate | non-trivial end to end | non-trivial rate | non-trivial, model wrote code |
+|---|---|---|---|---|---|---|
+| chain-v4 strict | 483 | 343.3 | 71.1 % | 149.7 | 58 % | – |
+| chain-v4 fallback | 483 | 365.0 | 75.6 % | 157.3 | 61 % | – |
+| chain-v5 on v10.1 L0 (ablation) | 483 | 372.0 | 77.0 % | 163.7 | 64 % | 56.3 |
+| L0 v11 + chain-v5 strict | 517 | 390.3 | 75.5 % | 193.3 | 64 % | 64.0 |
+| **L0 v11 + chain-v5 fallback** | 517 | **400.7** | **77.5 %** | **200.0** | **66 %** | 70.6 |
+
+"Non-trivial" excludes weak specs (Lean accepts an implementation made only of copied inputs and constants).
+peering is left out of the chain-v4 row here (1 spec, verified); the per-SRS table below includes it.
+
+## Per SRS (end to end)
+
+| SRS | specs (v10.1 / v11 L0) | chain-v4 strict | chain-v5 on v10.1 L0 | v11 + chain-v5 strict | v11 + chain-v5 fallback |
+|---|---|---|---|---|---|
+| 0000 - cctns | 10 / 13 | 6.00 | 6.00 | 9.67 (9–10) | 9.33 (9–10) |
+| 0000 - gamma j | 61 / 59 | 52.67 (52–53) | 53.00 | 49.33 (48–51) | 49.67 (49–50) |
+| 1995 - gemini | 37 / 37 | 26.00 (25–27) | 29.00 | 27.33 (26–28) | 29.33 (29–30) |
+| 1998 - themas | 19 / 18 | 12.67 (12–14) | 14.67 (14–15) | 16.00 | 16.00 |
+| 1999 - dii | 5 / 6 | 5.00 | 5.00 | 3.00 | 3.00 |
+| 1999 - tcs | 43 / 46 | 33.33 (33–34) | 35.33 (35–36) | 34.00 (32–35) | 36.33 (36–37) |
+| 2003 - qheadache | 4 / 4 | 3.00 | 3.00 | 3.00 | 3.00 |
+| 2005 - microcare | 21 / 24 | 13.67 (13–14) | 13.33 (13–14) | 15.67 (15–16) | 16.67 (15–18) |
+| 2005 - phin | 31 / 34 | 14.00 | 16.00 | 24.67 (24–25) | 25.33 (25–26) |
+| 2006 - eirene sys 15 | 55 / 58 | 36.33 (36–37) | 42.67 (42–43) | 45.33 (44–46) | 48.33 (48–49) |
+| 2007 - get real 0.2 | 0 / 0 | – | – | – | – |
+| 2007-eirene_fun_7-2 | 82 / 92 | 56.33 (55–58) | 62.67 (62–63) | 70.00 (68–72) | 71.33 (70–73) |
+| 2007-ertms | 36 / 36 | 31.00 | 33.00 | 28.33 (28–29) | 29.00 |
+| 2008 - keepass | 15 / 19 | 9.67 (9–10) | 12.33 (12–13) | 16.00 | 15.67 (15–16) |
+| 2008 - peering | 1 / 0 | 1.00 | – | – | – |
+| 2009 - peppol approved | 42 / 44 | 27.00 (26–28) | 29.67 (29–30) | 30.00 | 30.00 (29–31) |
+| 2009 - video search | 15 / 20 | 10.67 (10–11) | 10.33 (9–11) | 12.33 (12–13) | 11.67 (11–12) |
+| 2010-blitdraft | 7 / 7 | 6.00 | 6.00 | 5.67 (5–6) | 6.00 |
+| **total** | 484 / 517 | **344.3** | **372.0** | **390.3** | **400.7** |
+
+## Takeaways
+
+1. **chain-v5 (L1/L2) is a clear gain.** On the same specs, 71 % → 77 % end to end; better or equal on every SRS,
+   beyond the seed spread on eirene_fun_7-2, eirene sys 15, gemini, keepass, phin and tcs.
+2. **L0 v11 adds specs but not pass rate.** It produces 34 more specs; the share verified is flat (77.0 % → 75.5 %
+   strict, non-trivial 64 % → 64 %). Most of the gain over chain-v4 in absolute numbers comes from chain-v5 and the
+   extra specs.
+3. **L0 v11 regressions** on gamma j (≈53 → 49), ertms (33 → 28–29) and dii (5 → 3). The ablation does not show them,
+   so they come from L0 v11. Mostly PO3 failures. Not yet investigated.
+4. **`--fallback-single` is the best setting** (400.7, 66 % of non-trivial specs).
+5. **No specs from peering and get real 0.2**: both parse to one requirement that is flagged at L0.5.
+6. **Harness and model share.** Of the 193.3 non-trivial strict results, 64.0 contain model-written code; the rest
+   are completed by the spec-directed skeleton. Reported separately, by design.
+
+## Incidents (handled)
+
+- Job 76825 landed on gnode042 (CUDA init failed, Qwen ran on CPU at 4 tok/s); cancelled and rerun excluding that node.
+- Job 76932 hit the 16 GB limit; the OOM killer took the Qwen server during microcare strict (21 CRASH spec-runs,
+  kept in `runs/2005 - microcare/qwen-chain-v5.oom-damaged`). Microcare strict was rerun as job 78269 with 32 GB.
+  The sbatch now asks for 32 GB and exits at startup when the server has no usable GPU.
+
+---
+
+# Earlier results: chain-v3 (L1 + L2 per spec), gamma j and video search
+
 
 Run on 2026-11-12/13. Slurm job 74718, `runs/qwen-chain-v3.sbatch`, GTX 1080 Ti (gnode006), 2 h 36 min total.
 Commit `372bda4` (`git_dirty: false` in every `chain_meta.json`). Model `qwen2.5-7b-instruct` (Q4_K_M, llama.cpp),
