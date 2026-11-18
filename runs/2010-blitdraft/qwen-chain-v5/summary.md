@@ -16,7 +16,7 @@
 | end to end, chain | 0.33 (0–1) |
 | end to end, single | 5.33 (5–6) |
 | L1 attempts per split spec | 2.33 (0.00–4.00) |
-| minutes | 1.26 (1.05–1.43) |
+| minutes | 1.26 (1.06–1.43) |
 | weak specs (satisfied by copies and constants) | 3.00 (3–3) |
 | end to end, non-trivial spec | 2.67 (2–3) |
 | weak specs that only pass data through (copy-ok) | 0.00 (0–0) |
@@ -28,6 +28,7 @@
 | end to end, non-trivial spec, model wrote code | 1.67 (1–2) |
 | repair loops stopped early (L1 + L2) | 1.33 (1–2) |
 | L1 chain with a repaired second `pre` | 0.00 (0–0) |
+| strength of chain architectures (of 6) | 5 (in 1 of 3 repetitions) |
 | end to end, requirement | 5.67 (5–6) |
 | specs, requirement | 7.00 (7–7) |
 
@@ -85,6 +86,7 @@ Not end to end in every repetition (1): 2.1.1.2.1.11/S1
 | end to end, non-trivial spec, model wrote code | 2.00 (2–2) |
 | repair loops stopped early (L1 + L2) | 1.00 (1–1) |
 | L1 chain with a repaired second `pre` | 0.00 (0–0) |
+| strength of chain architectures (of 6) | 5 (in 1 of 3 repetitions) |
 | end to end, requirement | 6.00 (6–6) |
 | specs, requirement | 7.00 (7–7) |
 

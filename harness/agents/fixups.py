@@ -18,8 +18,9 @@ _LAMBDA3 = re.compile(r"λ\s*([^,=>]+?)\s*,")
 # `xs.take 2.all f` parses as the decimal `2.all`; it needs `(xs.take 2).all f`.
 _NUM_DOT = re.compile(r"(?<=\s)\d+\.(?=[A-Za-z_])")
 _DOT_SPACE = re.compile(r"·\s+\.(?=[\w])")  # `(· .1)` → `(·.1)`
-# `{ a := 1, a := 1, b := 2 }`: the same field with the same value twice.
-_DUP_FIELD = re.compile(r"(\b\w+\s*:=\s*[^,{}]+?)\s*,\s*\1(?=\s*[,}])")
+# `{ a := 1, a := 1, b := 2 }`: the same field with the same value twice (or more: all
+# repeats are absorbed in one match, so one pass is enough and the fixups are idempotent).
+_DUP_FIELD = re.compile(r"(\b\w+\s*:=\s*[^,{}]+?)(?:\s*,\s*\1(?=\s*[,}]))+")
 _DEBUG_CMD = re.compile(r"^\s*#(eval|check|print|reduce)\b.*$\n?", re.MULTILINE)
 # A C-style `// comment` at the end of a line (Lean comments are `--`). Lines with `{`
 # before the `//` are left alone: `{ x // p x }` is Lean's subtype notation.
@@ -132,7 +133,8 @@ def _always_derive(code: str) -> str:
         if re.search(rf"→|->|\bFloat\b|\bProp\b|\bType\b|\b{re.escape(name)}\b", types):
             return block
         lines = body.splitlines(keepends=True)
-        idx = next((k for k, ln in enumerate(lines) if ln.strip().startswith("deriving")), None)
+        # the `deriving` clause, not a field such as `deriving_ : Nat` (a renamed keyword field)
+        idx = next((k for k, ln in enumerate(lines) if re.match(r"deriving(?![\w'])", ln.strip())), None)
         if idx is None and tail:  # `deriving` at column 0 after the fields
             have = [c.strip() for c in tail.strip()[len("deriving"):].split(",") if c.strip()]
             missing = [c for c in _DERIVE if c not in have]

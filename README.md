@@ -84,7 +84,7 @@ git restore --source origin/l0-v10 -- harness/e2e_l1l2.py   # or take one file f
 git diff origin/backup/main-pre-merge main -- harness/      # see what the merge changed
 ```
 
-After the merge, `lake build` succeeds and all tests in `harness/tests` pass on `main` (194 as of 2026-11-15, none skipped once `requirements.txt` is installed).
+After the merge, `lake build` succeeds and all tests in `harness/tests` pass on `main` (1447 as of 2026-11-18, none skipped or xfailed once `requirements.txt` is installed; ~11 min with Lean).
 `harness/tests/` is a package (`__init__.py`) and `harness/pytest.ini` pins `testpaths`/`pythonpath`,
 so an unrelated top-level `tests` package installed elsewhere in your Python can no longer
 shadow ours. Run `python -m pytest` (or `python -m unittest discover -s tests`) from `harness/`.
@@ -152,7 +152,8 @@ AUTOSE-Leaniers/
 │
 ├── evaluation/
 │   ├── compare_runs.py       # compare two runs over repetitions (rep1..N): mean (min–max), verdict only beyond the spread
-│   └── summarize_e2e.py      # chain runs: results by mode, failure classes, 1-of-2 causes, spread over repetitions
+│   ├── summarize_e2e.py      # chain runs: results by mode, failure classes, 1-of-2 causes, spread over repetitions
+│   └── funnel.py             # L0 → end-to-end funnel over all L0 entries (P6) → docs/analysis/funnel.md
 │
 ├── Requirements/           # input SRS documents (.xml, .pdf)
 │   └── parsed/             # parser output, one JSON per document
@@ -420,7 +421,8 @@ Per entry in `specs.json`:
 
 None of these mean the spec matches the requirement, so read the generated specs as well.
 
-Tests: `python -m unittest discover -s tests` (from `harness/`). They cover the parser,
+Tests: `python -m pytest` (from `harness/`; 1447 tests, including property-based (Hypothesis), metamorphic and
+golden tests over the stored runs; after a parser change regenerate `Requirements/parsed/*.json`). They cover the parser,
 the negative check, and harness regressions (`test_harness_fixes.py`: Lean extraction,
 locked-example repair, `sorry` detection, best-attempt selection, the always-false-equation
 and example-input checks, one-line witnesses for the vacuity check, the negative check's

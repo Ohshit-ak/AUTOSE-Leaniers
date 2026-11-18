@@ -28,7 +28,7 @@
 | end to end, non-trivial spec, model wrote code | 8.00 (6–9) |
 | repair loops stopped early (L1 + L2) | 5.33 (4–6) |
 | L1 chain with a repaired second `pre` | 0.00 (0–0) |
-| strength of chain architectures (of 6) | 3.33 (0–5) |
+| strength of chain architectures (of 6) | 5.00 (5–5) (in 2 of 3 repetitions) |
 | end to end, requirement | 34.00 (32–35) |
 | specs, requirement | 46.00 (46–46) |
 
@@ -90,7 +90,7 @@ Not end to end in every repetition (10): 3.1.1/S2, 3.11.3/S1, 3.14/S3, 3.2.2.1/S
 | end to end, non-trivial spec, model wrote code | 10.33 (10–11) |
 | repair loops stopped early (L1 + L2) | 4.33 (3–6) |
 | L1 chain with a repaired second `pre` | 0.00 (0–0) |
-| strength of chain architectures (of 6) | 3.67 (0–6) |
+| strength of chain architectures (of 6) | 5.50 (5–6) (in 2 of 3 repetitions) |
 | end to end, requirement | 36.33 (36–37) |
 | specs, requirement | 46.00 (46–46) |
 
@@ -150,7 +150,7 @@ Not end to end in every repetition (7): 3.11.3/S1, 3.14/S3, 3.2.2.2.1/S1, 3.2.2.
 | end to end, non-trivial spec, model wrote code | 7.33 (7–8) |
 | repair loops stopped early (L1 + L2) | 2.67 (2–3) |
 | L1 chain with a repaired second `pre` | 0.00 (0–0) |
-| strength of chain architectures (of 6) | 3.33 (0–5) |
+| strength of chain architectures (of 6) | 5.00 (5–5) (in 2 of 3 repetitions) |
 | end to end, requirement | 35.33 (35–36) |
 | specs, requirement | 43.00 (43–43) |
 
@@ -166,8 +166,8 @@ Not end to end in every repetition (7): 3.11.3/S1, 3.14/S3, 3.2.2.2.1/S1, 3.2.2.
 | class | mean (min–max) |
 |---|---|
 | po3 | 5.00 (4–6) |
-| unknown-name | 0.67 (0–1) |
 | unknown-field | 0.67 (0–1) |
+| unknown-name | 0.67 (0–1) |
 | type-error | 0.33 (0–1) |
 | syntax | 0.33 (0–1) |
 
@@ -215,8 +215,8 @@ Not end to end in every repetition (7): 3.2.1.1.1/S2, 3.2.1/S6, 3.2.2.1.1.1/S1, 
 | class | mean (min–max) |
 |---|---|
 | identity | 1.67 (1–2) |
-| po2 | 1.00 (1–1) |
 | unknown-field | 1.00 (1–1) |
+| po2 | 1.00 (1–1) |
 | type-error | 0.33 (0–1) |
 
 ### L2 component failures by class

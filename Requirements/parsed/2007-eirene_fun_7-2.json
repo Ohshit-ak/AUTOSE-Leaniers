@@ -9,10 +9,10 @@
     "Functional Requirements Specification"
   ],
   "stats": {
-    "requirements": 126,
+    "requirements": 129,
     "data_constraints": 0,
     "use_cases": 0,
-    "dropped": 530
+    "dropped": 527
   },
   "glossary": [
     {
@@ -348,6 +348,67 @@
       ],
       "quantities": [],
       "has_precondition": false
+    },
+    {
+      "id": "5.2.2iii",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "5.2.2",
+      "section_path": [
+        "5 Cab radio",
+        "5.2 Functional requirements",
+        "5.2.2 Driver call related functions"
+      ],
+      "text": "5.2.2iii Replacing the handset either: (M) cancels the call; or transfers the call to the loudspeaker at the initial volume.",
+      "signals": [
+        "transfers"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "5.2.2v",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "5.2.2",
+      "section_path": [
+        "5 Cab radio",
+        "5.2 Functional requirements",
+        "5.2.2 Driver call related functions"
+      ],
+      "text": "5.2.2v The use of Push-To-Talk for all types of communications is acceptable if needed for ergonomic reasons or to avoid the noise of the cab being transmitted to the other party. (I)",
+      "signals": [
+        "transmitted"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "5.2.2.3i",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "5.2.2",
+      "section_path": [
+        "5 Cab radio",
+        "5.2 Functional requirements",
+        "5.2.2 Driver call related functions"
+      ],
+      "text": "5.2.2.3i The functional identity includes the following: the train number, if available; (M) the engine number, if no train number is available; (M) the coach number of the leading cab, if neither a train number nor an engine number is available. (O)",
+      "signals": [
+        "includes",
+        "number of"
+      ],
+      "quantities": [],
+      "has_precondition": true,
+      "glossary_refs": [
+        "Coach number",
+        "Engine number",
+        "Functional identity",
+        "Train number"
+      ]
     },
     {
       "id": "5.2.2.7",
@@ -3408,7 +3469,7 @@
       "source": "requirement",
       "section": "2.1",
       "text": "2.1.1 The network services necessary to meet the range of UIC requirements are detailed below. These services are to be considered as a minimum set for implementation within each UIC standard network. Railways may implement additional network services as desired. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "2.2.1",
@@ -3450,7 +3511,7 @@
       "source": "requirement",
       "section": "2.2",
       "text": "2.2.6 Such emergency calls include 112 calls and may not be used for railway emergencies. (I) Broadcast voice calls",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "2.2.7",
@@ -3562,7 +3623,7 @@
       "source": "requirement",
       "section": "2.3",
       "text": "2.3.5 Support is required for a range of data communications between the ground and mobile users. Such applications may include: (I) timetable information; maintenance and diagnostic applications; e-mail; remote database access.",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "2.3.6",
@@ -3597,7 +3658,7 @@
       "source": "requirement",
       "section": "2.3",
       "text": "2.3.10 The priority scheme for calls described in section 10.2 is also valid for data applications. (I) Automatic fax",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "2.3.11",
@@ -3632,7 +3693,7 @@
       "source": "requirement",
       "section": "2.3",
       "text": "2.3.16 The priority scheme for calls described in section 10.2 is also valid for train control applications. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "2.4.1",
@@ -3772,7 +3833,7 @@
       "source": "requirement",
       "section": "3.2",
       "text": "3.2.1 For network planning, the coverage level is defined in terms of time and area where the minimum signal criteria are achieved. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.2.3",
@@ -3793,7 +3854,7 @@
       "source": "requirement",
       "section": "3.3",
       "text": "3.3.1 (Network selection requirements for mobiles have been moved to sections 5, 6 and 7).",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.3.2",
@@ -3821,7 +3882,7 @@
       "source": "requirement",
       "section": "3.4",
       "text": "3.4.1 Call set-up time requirements are dependent mainly upon priority (see section 10.2). (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.4.2",
@@ -3842,7 +3903,7 @@
       "source": "requirement",
       "section": "3.4",
       "text": "3.4.2i The requirements for end-to-end call set-up performance are indicated in table 3-1. (I) Call type Call set-up time Railway emergency calls <2s* (M) Group calls between drivers in the same area <5s (M) All operational mobile-to-fixed calls not <5s (O) covered by the above All operational fixed-to-mobile calls not <7s (O) covered by the above All operational mobile-to-mobile calls not <10s (O) covered by the above All low priority calls <10s (O) Table 3-1: Call set-up time requirements * This call set-up time refers to the beginning of the audible indication as part of Stage 1: Warning, specified in 13.2.2.",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.5.2",
@@ -3870,7 +3931,7 @@
       "source": "requirement",
       "section": "3.5",
       "text": "3.5.5 It is acceptable that mobiles which move out of the call area during the call be dropped from the call. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.5.6",
@@ -3891,7 +3952,7 @@
       "source": "requirement",
       "section": "4.1",
       "text": "4.1.1 All EIRENE mobiles are specified with a common level of basic services, facilities and features. This section of the specification gives details of these core requirements, while sections 5, 6 and 7 detail requirements specific to each of the radio types. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: basic"
     },
     {
       "id": "4.1.3",
@@ -3919,42 +3980,42 @@
       "source": "requirement",
       "section": "4.2",
       "text": "4.2.1 The following voice telephony services, identified in section 2, are to be supported for each type of mobile radio: Cab radio General purpose Operational radio radio Point-to-point voice calls M M M Public emergency voice calls M M M Broadcast voice calls M M M Group voice calls M M M Multi-party voice calls M O O Table 4-1: Voice telephony services to be supported",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "4.2.2",
       "source": "requirement",
       "section": "4.2",
       "text": "4.2.2 The following data applications, identified in section 2, are to be supported for each type of mobile radio: Cab radio General purpose Operational radio radio Text message service M M M General data applications M O O Automatic fax O O O Train control applications O O O Table 4-2: Data applications to be supported",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "4.2.3",
       "source": "requirement",
       "section": "4.2",
       "text": "4.2.3 The following call related services are to be supported for each type of mobile radio: Cab radio General purpose Operational radio radio Display of calling user identity M M M Display of called user identity M M M Restriction of display of user identity O O O EIRENE closed user group M O M Call forwarding: - unconditional M O O - if user busy O O O - if no reply O O O - if not reachable O O O Call hold M O O Call waiting M M M Display of call charging information O O O Call barring M O M Auto answer service M O M Call supervisory information M O O Table 4-3: Call related features to be supported",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "4.2.4",
       "source": "requirement",
       "section": "4.2",
       "text": "4.2.4 The following EIRENE features are to be supported for each type of mobile radio: Cab radio General purpose Operational radio radio Functional addressing (section 11) M M M Location dependent addressing M O O (section 11) Direct mode (section 15) O N/A O Shunting mode (section 14) M N/A O Multiple driver communications within the M N/A N/A same train (section 5) Railway emergency calls M O M (section 13) Table 4-4: EIRENE specific features to be supported",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "4.3.1",
       "source": "requirement",
       "section": "4.3",
       "text": "4.3.1 This sub-section defines the core environmental and physical requirements for all EIRENE mobile equipment. The requirements provided in this section are augmented by those provided in later sections for each individual radio type, with each radio type being specified by the superset of the core plus specific requirements. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "4.3.2",
       "source": "requirement",
       "section": "4.3",
       "text": "4.3.2 The categories of requirements defined for each type of mobile equipment are as follows: (I) climatic conditions (temperature, humidity, solar radiation, altitude, etc); physical conditions (flammability, contamination, physical protection, etc); mechanical conditions (shock and vibration); electrical conditions (power supply variation, battery life, overloading, etc); EMC (both emissions and immunity).",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: etc"
     },
     {
       "id": "4.3.3",
@@ -4031,14 +4092,14 @@
       "source": "requirement",
       "section": "5.1",
       "text": "5.1.2 Moreover, a driver may be provided with a handheld portable to allow communications whilst the driver is outside the train. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may, portable"
     },
     {
       "id": "5.2.1.1",
       "source": "requirement",
       "section": "5.2.1",
       "text": "5.2.1.1 In this subsection, the functions to be provided by the Cab radio are described. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "5.2.1.2",
@@ -4055,25 +4116,11 @@
       "reason": "no state change, data relation or quantity to formalise"
     },
     {
-      "id": "5.2.2iii",
-      "source": "requirement",
-      "section": "5.2.2",
-      "text": "5.2.2iii Replacing the handset either: (M) cancels the call; or transfers the call to the loudspeaker at the initial volume.",
-      "reason": "no normative modal (shall/must/will/should/can)"
-    },
-    {
       "id": "5.2.2iv",
       "source": "requirement",
       "section": "5.2.2",
       "text": "5.2.2iv A Push-To-Talk function shall be provided for use during group calls. (M)",
       "reason": "no state change, data relation or quantity to formalise"
-    },
-    {
-      "id": "5.2.2v",
-      "source": "requirement",
-      "section": "5.2.2",
-      "text": "5.2.2v The use of Push-To-Talk for all types of communications is acceptable if needed for ergonomic reasons or to avoid the noise of the cab being transmitted to the other party. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
     },
     {
       "id": "5.2.2.1",
@@ -4095,13 +4142,6 @@
       "section": "5.2.2",
       "text": "5.2.2.3 Once an appropriate destination has been obtained, the radio shall attempt to establish a call to this destination. The functional identity shall be displayed to the controller. (M)",
       "reason": "vague: appropriate"
-    },
-    {
-      "id": "5.2.2.3i",
-      "source": "requirement",
-      "section": "5.2.2",
-      "text": "5.2.2.3i The functional identity includes the following: the train number, if available; (M) the engine number, if no train number is available; (M) the coach number of the leading cab, if neither a train number nor an engine number is available. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
     },
     {
       "id": "5.2.2.4",
@@ -4353,7 +4393,7 @@
       "source": "requirement",
       "section": "5.2.2",
       "text": "5.2.2.50i It is not possible for the driver to speak as part of the call when receiving a broadcast call. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "5.2.2.51",
@@ -4423,7 +4463,7 @@
       "source": "requirement",
       "section": "5.2.2",
       "text": "5.2.2.67 If the Cab radio is equipped with an additional security device, this audible indication may be muted for the drivers convenience. In this case, the security device alerts the driver if the link has failed or if it is cancelled. (I) Enter/leave direct mode",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "5.2.2.68",
@@ -4626,7 +4666,7 @@
       "source": "requirement",
       "section": "5.2.3",
       "text": "5.2.3.25v Directed network selection is suitable for crossing international borders. (I) Automatic network selection",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "5.2.3.25vi",
@@ -4661,7 +4701,7 @@
       "source": "requirement",
       "section": "5.2.3",
       "text": "5.2.3.28ii Data entry may be from either system depending on the operating procedures agreed between the train operator and the railway infrastructure operator. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "5.2.3.33",
@@ -4724,7 +4764,7 @@
       "source": "requirement",
       "section": "5.2.4",
       "text": "5.2.4.1 The Cab radio system may be required to be able to handle incoming and outgoing calls not only to and from the driver, but also to and from other on-train users and devices (conductor, public address system, data systems, etc) via appropriate interfaces and ports. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may, etc, appropriate"
     },
     {
       "id": "5.2.4.2",
@@ -4738,7 +4778,7 @@
       "source": "requirement",
       "section": "5.2.4",
       "text": "5.2.4.3 The Cab radio may need to conserve battery power when the radio is powered up but the MMI is switched off. (I) Handling of call priorities",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "5.2.4.5",
@@ -4766,7 +4806,7 @@
       "source": "requirement",
       "section": "5.2.4",
       "text": "5.2.4.8 Where pre-emption occurs, an advisory indication may be provided to the pre-empted parties. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "5.2.4.9",
@@ -4836,7 +4876,7 @@
       "source": "requirement",
       "section": "5.3",
       "text": "5.3.6 Requirements on electromagnetic emissions for the Cab radio are to be more stringent than those defined for other radio types due to close proximity to other train-mounted control and protection equipment, and higher transmission power. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "5.4.1",
@@ -4857,7 +4897,7 @@
       "source": "requirement",
       "section": "5.4",
       "text": "5.4.4 Note: there is no requirement for hands free operation. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "5.4.5",
@@ -4920,7 +4960,7 @@
       "source": "requirement",
       "section": "5.4",
       "text": "5.4.13 Some Cab radios may need to be operated by staff wearing gloves and controls may need to be suitable for use in a wide range of conditions, eg splash proof and suitable for viewing in direct sunlight and in darkness. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "5.4.14",
@@ -4983,7 +5023,7 @@
       "source": "requirement",
       "section": "5.7",
       "text": "5.7.5 Additional information may also be provided if available from external systems. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "5.9.1",
@@ -4997,14 +5037,14 @@
       "source": "requirement",
       "section": "5.9",
       "text": "5.9.2 In addition, individual railways may have requirements to interface to national control/command systems. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "5.10.1",
       "source": "requirement",
       "section": "5.10",
       "text": "5.10.1 Other interfaces may be provided in the Cab radio system. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "6.1.1",
@@ -5403,7 +5443,7 @@
       "source": "requirement",
       "section": "7.2.1",
       "text": "7.2.1.1 In this section, the functions to be provided by the Operational radio are described. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "7.2.2/S1",
@@ -5501,7 +5541,7 @@
       "source": "requirement",
       "section": "7.2.2",
       "text": "7.2.2.18 If the call is a group call, the user has to request permission to speak during the call by using the Push-To-Talk (PTT) function. (M)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "7.2.2.19",
@@ -5515,7 +5555,7 @@
       "source": "requirement",
       "section": "7.2.2",
       "text": "7.2.2.20 The user may not speak in a group call until permission is granted by the network after using the PTT function. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "7.2.2.21",
@@ -5746,28 +5786,28 @@
       "source": "requirement",
       "section": "8.1",
       "text": "8.1.1 Within a railway operational structure there may be several different controller types such as primary, power, secondary, etc. These may be physically separate or co- located; however, the majority of interaction is with the primary controller. This section addresses the following: (I) primary controllers MMI; other controllers MMIs; controller terminal interface; environmental specifications.",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may, etc"
     },
     {
       "id": "8.1.2",
       "source": "requirement",
       "section": "8.1",
       "text": "8.1.2 Detailed specification of controller equipment and the interface between such equipment and the EIRENE network is at the discretion of the railway operator. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "8.1.3",
       "source": "requirement",
       "section": "8.1",
       "text": "8.1.3 Within a control centres equipment, the radio control functions and presentation may be integrated within a set of equipment used for other control operations. The following description is based on dedicated equipment but does not preclude integration. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "8.1.4",
       "source": "requirement",
       "section": "8.1",
       "text": "8.1.4 Details concerning controller equipment requirements for Railway emergency calls are given in section 13. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "8.2.1",
@@ -5886,7 +5926,7 @@
       "source": "requirement",
       "section": "9.2.6",
       "text": "9.2.6.1 In some countries, train numbers are alphanumeric. Support for such numbers is not required for interoperability. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "9.3.1",
@@ -5949,14 +5989,14 @@
       "source": "requirement",
       "section": "10.2",
       "text": "10.2.4 In the case where an EIRENE mobile attempts to make a Railway emergency call over a public network, the ability to pre-empt lower priority calls (particularly public emergency calls) may be inhibited, unless a special agreement is in place. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "10.3.1",
       "source": "requirement",
       "section": "10.3",
       "text": "10.3.1 Various types of call restriction may be employed by the railways as an additional security measure. Such facilities may be particularly important if public network access to the radio system is provided (eg to prevent members of the public calling drivers and drivers calling members of the public). (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: various, may"
     },
     {
       "id": "10.3.2",
@@ -5998,7 +6038,7 @@
       "source": "requirement",
       "section": "10.6",
       "text": "10.6.1 The access matrix defines which subscribers are able to contact which other subscribers within the EIRENE network. (M)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "10.6.2",
@@ -6012,7 +6052,7 @@
       "source": "requirement",
       "section": "10.6",
       "text": "10.6.3 If required, a railway may make additional restrictions to the access matrix. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "11/S1",
@@ -6257,7 +6297,7 @@
       "source": "requirement",
       "section": "11.4",
       "text": "11.4.7 Where greater accuracy for location dependent addressing is required, additional location information may be provided by systems external to EIRENE. Sources of such information may include: (O) a) ground-based signalling systems; b) on-train systems (eg ERTMS/ETCS equipment, balise readers, GPS etc).",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may, etc"
     },
     {
       "id": "12.1.1",
@@ -6271,7 +6311,7 @@
       "source": "requirement",
       "section": "12.1",
       "text": "12.1.2 The aim of this section is to define the features and level of performance required for this service in order to ensure interoperability. (I)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "12.1.3",
@@ -6285,7 +6325,7 @@
       "source": "requirement",
       "section": "12.2",
       "text": "12.2.2 In order to ensure interoperability, the service is optional for the ground and mandatory for the Cab radio. (M)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "12.3.3",
@@ -6355,7 +6395,7 @@
       "source": "requirement",
       "section": "13.2.1",
       "text": "13.2.1.1 A Railway emergency call may be defined in three distinct phases. These are: (I) Stage 1: Warning; Stage 2: Information; Stage 3: Terminate Railway emergency call.",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "13.2.2.1",
@@ -6383,7 +6423,7 @@
       "source": "requirement",
       "section": "13.2.2",
       "text": "13.2.2.5 Different indications at the originating and receiving terminal may be provided. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "13.2.2.6",
@@ -6425,7 +6465,7 @@
       "source": "requirement",
       "section": "13.2.4",
       "text": "13.2.4.1 A Railway emergency call may only be terminated by: (M) the originator of the call; a controller participating in the call; the network following a (nationally determined) period of no speech.",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "vague: may"
     },
     {
       "id": "13.2.4.2",
@@ -6642,7 +6682,7 @@
       "source": "requirement",
       "section": "15.2",
       "text": "15.2.1 Implementation of direct mode is optional. Where the facility is provided, the following requirements are mandatory. (O)",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "15.2.2",

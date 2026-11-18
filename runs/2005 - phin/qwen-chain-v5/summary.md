@@ -16,7 +16,7 @@
 | end to end, chain | 0.67 (0–1) |
 | end to end, single | 24.00 (24–24) |
 | L1 attempts per split spec | 2.83 (2.50–3.50) |
-| minutes | 7.06 (6.66–7.41) |
+| minutes | 7.06 (6.65–7.41) |
 | weak specs (satisfied by copies and constants) | 11.00 (11–11) |
 | end to end, non-trivial spec | 13.67 (13–14) |
 | weak specs that only pass data through (copy-ok) | 3.00 (3–3) |
@@ -142,7 +142,7 @@ Not end to end in every repetition (8): 1/S5, 2.2.6.1/S1, 2.2.6.2/S1, 2.2.6.6/S1
 | end to end, chain | 0.00 (0–0) |
 | end to end, single | 16.00 (16–16) |
 | L1 attempts per split spec | 0.00 (0.00–0.00) |
-| minutes | 9.19 (8.79–9.84) |
+| minutes | 9.19 (8.79–9.83) |
 | weak specs (satisfied by copies and constants) | 13.00 (13–13) |
 | end to end, non-trivial spec | 5.00 (5–5) |
 | L2 implemented by the harness skeleton alone | 13.00 (13–13) |

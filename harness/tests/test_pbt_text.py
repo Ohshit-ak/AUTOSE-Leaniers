@@ -260,9 +260,6 @@ def test_one_line_only_touches_whitespace_outside_strings(fields, width):
     assert one == lit                                # string contents (with their spaces) survive
 
 
-@pytest.mark.xfail(strict=True, reason='FINDING: literal_fields toggles "in string" on an escaped quote, so '
-                                       '`{ name := "a\\",b", qty := 1 }` is split inside the string (one_line and '
-                                       '_balanced do handle the escape)')
 @given(st.text(alphabet='ab ,"\\', min_size=0, max_size=6), st.integers(0, 9))
 @example('a",b', 1)
 def test_literal_fields_reads_strings_that_contain_escaped_quotes(s, n):
@@ -282,9 +279,6 @@ def test_the_three_structure_parsers_agree(m):
     assert R.structure_fields(code) == {k: list(v) for k, v in types.items()}
 
 
-@pytest.mark.xfail(strict=True, reason="FINDING: validate.field_types keeps a trailing `-- comment` in the type "
-                                       "(`Nat  -- in cents`), so the type is no longer recognised as `Nat` by the "
-                                       "mutant / witness / skeleton code; req_graph.structures strips it")
 @given(S.spec_models(), st.sampled_from(["-- in cents", "-- level requested by the operator"]))
 def test_a_comment_after_a_field_is_not_part_of_its_type(m, note):
     """Differential: req_graph.structures drops a trailing comment, validate.field_types must too
@@ -348,8 +342,6 @@ def test_self_equation_is_flagged_only_when_both_sides_are_the_same_term(t, u, k
     assert not V.check_contradictions(spec(f"{t} + {k} = {t} + {k}"))
 
 
-@pytest.mark.xfail(strict=True, reason="FINDING: `o.total = o.total + 1 - 1` (true for every value) is reported as "
-                                       "'can never be true'; the second _SELF_EQ pattern has no look-ahead for a following operator")
 @given(_TERMS, st.integers(1, 9), st.integers(0, 9))
 def test_contradiction_check_is_sound_against_arithmetic(t, a, b):
     """Oracle: `t = t + a - b` on `Nat` (truncated subtraction) is satisfiable iff a ≤ b for some t."""
@@ -434,8 +426,6 @@ def test_fixups_are_idempotent(parts):
     assert apply_fixups(fixed) == (fixed, [])
 
 
-@pytest.mark.xfail(strict=True, reason="FINDING: `{ a := 1, a := 1, a := 1 }` needs two passes: one `re.sub` removes "
-                                       "only every other repeat, so apply_fixups is not idempotent on a field written 3+ times")
 @given(st.integers(2, 6))
 def test_a_field_repeated_n_times_is_reduced_in_one_pass(n):
     fixed, _ = apply_fixups("{ " + ", ".join(["a := 1"] * n) + ", b := 2 }")
@@ -453,9 +443,6 @@ def _with_keyword_field(m, kw):
               f"  post := fun i o => o.{kw} = 1\n\nexample : Spec.post x {{ {kw} := 1 }} := by decide\n")
 
 
-@pytest.mark.xfail(strict=True, reason="FINDING: a field named `deriving` (it is in KEYWORD_FIELDS) is renamed to "
-                                       "`deriving_`, and _always_derive then takes that field line for the `deriving` "
-                                       "clause and rewrites it to `deriving _ : Nat, DecidableEq, Repr`")
 @given(S.spec_models())
 def test_a_field_named_deriving_is_renamed_like_the_other_keywords(m):
     fixed, _ = apply_fixups(_with_keyword_field(m, "deriving"))

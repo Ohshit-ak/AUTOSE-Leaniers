@@ -140,8 +140,18 @@ _CMP = (r"(?:(less than|fewer than|under|within|at most|no more than|up to|"
         r"more than|greater than|at least|no less than)\s+)?")
 TIME_RE = re.compile(_CMP + _NUM + r"\s*(ms|milliseconds?|seconds?|secs?|minutes?|mins?|hours?)\b", re.I)
 RATE_RE = re.compile(_NUM + r"\s+([a-z]+)\s+per\s+(second|minute|hour)\b", re.I)
-COUNT_RE = re.compile(_CMP + _NUM + r"\s+(customers|users|products|items|records|requests|orders|sessions|results|entries|"
+# Up to two qualifiers may sit between the number and the noun ("100 concurrent users",
+# "1,000 simultaneous active sessions"); the noun stays the unit.
+_COUNT_ADJ = r"(?:(?:concurrent|simultaneous|active|parallel)\s+){0,2}"
+COUNT_RE = re.compile(_CMP + _NUM + r"\s+" + _COUNT_ADJ + r"(customers|users|products|items|records|requests|orders|sessions|results|entries|"
                       r"rows|pages|files|messages|documents|accounts|transactions|attempts)\b", re.I)
+# A <req> element without a modal verb still counts as normative, unless its text only
+# describes, defers or is a placeholder ("Deleted.", "This section covers …", "There are …",
+# "X might be used", "it is important that …", "Y is a means to …").
+DESCRIPTIVE_RE = re.compile(
+    r"^\s*[\d.]*[a-z]{0,4}\s*(?:deleted\b|this (?:section|document|chapter|clause)\b|there (?:is|are)\b)"
+    r"|\b(?:might|could)\b|\bit is important\b|\bis a means\b|\bfor the purposes? of\b"
+    r"|\b(?:are|is) included in\b|\b(?:provide|provides|covers|describes)\b", re.I)
 PERCENT_RE = re.compile(_NUM + r"\s*%")
 
 CMP_SYMBOL = {
@@ -431,7 +441,12 @@ class _Parser:
                 bodies = children(ch, "text_body")
                 text = " ".join(text_of(b) for b in bodies) if bodies else text_of(ch)
                 base = f"{sec_id}/R{rid}" if rid.isdigit() or not rid else rid
-                self._assess(self._uid(base), path, text, excluded, inherited_modal=False)
+                # A <req> element is marked as a requirement by the document itself, so it
+                # counts as normative without a modal verb ("Malicious requests are detected
+                # and rejected", "A subgroup cannot be created when …"). The other filters
+                # (vague, UI, technology, no state change) still apply.
+                self._assess(self._uid(base), path, text, excluded,
+                             inherited_modal=not DESCRIPTIVE_RE.search(text))
             elif tag(ch) == "text_body":
                 intro_modal = False
                 for kind, text in segments(ch):

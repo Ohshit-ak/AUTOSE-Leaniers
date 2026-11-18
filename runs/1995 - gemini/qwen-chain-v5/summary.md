@@ -139,7 +139,7 @@ Not end to end in every repetition (7): 2.10/S4, 2.7.1/S6, 3.2.3/S1, 3.2.5/S6, 3
 | end to end, chain | 0.67 (0–1) |
 | end to end, single | 28.33 (28–29) |
 | L1 attempts per split spec | 2.50 (2.00–3.00) |
-| minutes | 7.23 (6.31–8.20) |
+| minutes | 7.23 (6.31–8.19) |
 | weak specs (satisfied by copies and constants) | 21.00 (21–21) |
 | end to end, non-trivial spec | 11.00 (11–11) |
 | L2 implemented by the harness skeleton alone | 23.00 (22–24) |
@@ -209,8 +209,8 @@ Not end to end in every repetition (8): 2.6.3/I6, 3.2.5/S6, 3.3.4.1/I1, 3.4.1/S8
 | class | mean (min–max) |
 |---|---|
 | identity | 1.33 (1–2) |
-| visibility | 0.67 (0–2) |
 | po2 | 0.67 (0–1) |
+| visibility | 0.67 (0–2) |
 
 ### L2 component failures by class
 

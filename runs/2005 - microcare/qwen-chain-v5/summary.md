@@ -78,7 +78,7 @@ Not end to end in every repetition (7): 1./S2, 2.1.1/I11, 2.1.1/I9, 3./S2, Desig
 | end to end, chain | 1.00 (0–2) |
 | end to end, single | 15.67 (14–18) |
 | L1 attempts per split spec | 3.17 (2.00–4.00) |
-| minutes | 15.39 (10.35–22.39) |
+| minutes | 15.39 (10.35–22.40) |
 | weak specs (satisfied by copies and constants) | 10.00 (10–10) |
 | end to end, non-trivial spec | 8.67 (7–10) |
 | weak specs that only pass data through (copy-ok) | 0.00 (0–0) |

@@ -52,6 +52,12 @@ def _none(bad, what):
 # Parser → everything downstream
 # ---------------------------------------------------------------------------
 
+# Stored specs that passed when they were checked but that the H4 fix (field types with a
+# trailing `-- comment`) now correctly flags: `0 ≤ i.trainLocation` where the type was
+# `Nat -- location …`, so the trivial-Nat-bound check could not see the `Nat` before.
+_CAUGHT_AFTER_H4 = {("2007-ertms", "4.3.4.2")}
+
+
 @pytest.mark.parametrize("xml", corpus.srs_documents(), ids=lambda p: p.stem)
 def test_parsed_json_is_what_the_parser_writes_today(xml):
     """Golden: the committed parse is byte-identical to a fresh parse (same XML bytes → same JSON bytes)."""
@@ -163,7 +169,7 @@ def test_every_checked_spec_has_the_shape_l1_expects(rep):
         types = V.field_types(code)
         if s is None or (s.dom, s.cod) != ("Input", "Output") or "Input" not in types or "Output" not in types:
             bad.append((r["id"], "shape"))
-        elif V.check_housekeeping(code) or po.forbidden_words(code):
+        elif (V.check_housekeeping(code) or po.forbidden_words(code)) and (rep.parts[-3], r["id"]) not in _CAUGHT_AFTER_H4:
             bad.append((r["id"], "housekeeping"))
         elif not V.example_witness(code):
             bad.append((r["id"], "no example witness"))
@@ -182,6 +188,12 @@ CHAIN_REPS = corpus.chain_reps()
 # harness skeleton alone implemented the component (CI-1 of gamma j: "… with tracking number …").
 KNOWN_HARNESS_ONLY_CREDITED_TO_MODEL = {
     (f"runs/0000 - gamma j/{run}/rep{k}", "CI-1") for run in ("qwen-chain-v5", "qwen-chain-v5-fallback") for k in (1, 2, 3)}
+
+# Stored before the H1 fix (a string literal containing " with " was read as `{ x with … }`):
+# their stored `fields` credit skeleton fields to the model. Recomputed today: CI-1's two fields
+# are the harness's; in peppol 1.1/S4 GenerateNoticeContract, `included` is the harness's.
+STORED_BEFORE_H1_FIX = KNOWN_HARNESS_ONLY_CREDITED_TO_MODEL | {
+    (f"runs/2009 - peppol approved/{run}/rep3", "1.1/S4") for run in ("qwen-chain-v5", "qwen-chain-v5-fallback")}
 
 
 def test_chain_corpus_is_present():
@@ -274,7 +286,7 @@ def _v5(rep) -> bool:
 def test_field_provenance_replay(rep):
     """`fields` says who wrote each result field. It must name exactly the fields of the
     contract's result structure, and equal skeleton.provenance of the stored code today."""
-    specs, bad, credited = corpus.l0_specs(rep), [], set()
+    specs, bad, credited, changed = corpus.l0_specs(rep), [], set(), set()
     for e in corpus.records(rep):
         locked = specs[e["id"]]["lean_predicate"] + "\n\n" + e["l1"]["code"]
         types = V.field_types(locked)
@@ -285,20 +297,21 @@ def test_field_provenance_replay(rep):
                 continue
             if sorted(f["harness"] + f["model"]) != sorted(types.get(c.cod, {})) or set(f["harness"]) & set(f["model"]):
                 bad.append((e["id"], "fields are not the result structure's", f))
-            if x["success"] and SK.provenance(x["code"], SK.build(c, types, f"{c.name}Impl")) != f:
-                bad.append((e["id"], "provenance differs", f))
+            now = SK.provenance(x["code"], SK.build(c, types, f"{c.name}Impl")) if x["success"] else f
+            if now != f:
+                changed.add((corpus.rel(rep), e["id"]))
+                if (corpus.rel(rep), e["id"]) not in STORED_BEFORE_H1_FIX:
+                    bad.append((e["id"], "provenance differs", f))
             if x.get("harness_only"):
                 if x["attempts"] != 0 or not x["success"]:
                     bad.append((e["id"], "harness_only with model attempts", x["attempts"]))
                 if f["model"]:
                     credited.add((corpus.rel(rep), e["id"]))
     _none(bad, corpus.rel(rep))
+    assert changed == {k for k in STORED_BEFORE_H1_FIX if k[0] == corpus.rel(rep)}, "H1 corrections changed"
     assert credited == {k for k in KNOWN_HARNESS_ONLY_CREDITED_TO_MODEL if k[0] == corpus.rel(rep)}
 
 
-@pytest.mark.xfail(strict=True, reason="FINDING: skeleton._impl_record looks for ` with ` in the record body with only "
-                                       "brackets masked, so a string literal containing ' with ' is taken for "
-                                       "`{ x with … }` and every field is credited to the model (6 stored records)")
 def test_provenance_ignores_the_word_with_inside_a_string_literal():
     spec = ("structure Input where\n  n : Nat\n  deriving DecidableEq, Repr\n\nstructure Output where\n  msg : String\n"
             "  deriving DecidableEq, Repr\n\ndef Spec : Contract Input Output where\n  pre := fun i => True\n"

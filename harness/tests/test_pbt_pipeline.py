@@ -25,7 +25,7 @@ import summarize_e2e as E
 from . import strategies as S
 
 CONCURRENT = "The system shall support at least 100 concurrent users."
-KEEPABLE = set(S.SENTENCES[:10]) - {CONCURRENT}   # modal + a state change, data relation or quantity
+KEEPABLE = set(S.SENTENCES[:10])   # modal + a state change, data relation or quantity (CONCURRENT too since the H3 fix)
 # an overview section keeps only statements with a quantity or a data relation (total, unique, …)
 QUANTIFIED = {s for s in KEEPABLE if re.search(r"\d", s) or P.DATA_RELATION.search(s)}
 
@@ -95,10 +95,6 @@ def test_keep_or_drop_depends_only_on_the_text_and_the_kind_of_section(secs):
             assert d["reason"].startswith(("non-normative section", "overview section"))
 
 
-@pytest.mark.xfail(strict=True, reason="FINDING: `100 concurrent users` / `500 simultaneous users` is not read as a "
-                                       "quantity (COUNT_RE wants the noun right after the number), so the usual "
-                                       "wording of a concurrency requirement is dropped as 'no … quantity to formalise'; "
-                                       "only `100 users concurrently` reaches the `concurrency` runtime check")
 @pytest.mark.parametrize("sentence", [CONCURRENT, "The system shall support up to 500 simultaneous users.",
                                       "The system shall handle 1,000 simultaneous requests."])
 def test_a_concurrency_requirement_is_kept_whatever_the_word_order(sentence):

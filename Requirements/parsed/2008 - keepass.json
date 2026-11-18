@@ -6,10 +6,10 @@
   },
   "titles": [],
   "stats": {
-    "requirements": 28,
+    "requirements": 33,
     "data_constraints": 0,
     "use_cases": 0,
-    "dropped": 380
+    "dropped": 375
   },
   "glossary": [],
   "requirements": [
@@ -153,6 +153,42 @@
       "text": "When creating a group/subgroup the user must select a name and then he can add entries into it.",
       "signals": [
         "add"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "3.6.3/R7",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "3.6.3",
+      "section_path": [
+        "System Features",
+        "Add Group/Subgroup",
+        "Functional Requirements"
+      ],
+      "text": "A name is required in order for the new group/subgroup to be created",
+      "signals": [
+        "created"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "3.6.3/R8",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "3.6.3",
+      "section_path": [
+        "System Features",
+        "Add Group/Subgroup",
+        "Functional Requirements"
+      ],
+      "text": "A subgroup cannot be created when no group is selected",
+      "signals": [
+        "created"
       ],
       "quantities": [],
       "has_precondition": true
@@ -447,6 +483,42 @@
       "has_precondition": false
     },
     {
+      "id": "3.18.2/R30",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "3.18.2",
+      "section_path": [
+        "System Features",
+        "Import/Export",
+        "Functional Requirements"
+      ],
+      "text": "REQ-30: File formats only specify a low-level layout of stored data",
+      "signals": [
+        "stored"
+      ],
+      "quantities": [],
+      "has_precondition": true
+    },
+    {
+      "id": "3.19.2/R31",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "3.19.2",
+      "section_path": [
+        "System Features",
+        "Integration",
+        "Functional Requirements"
+      ],
+      "text": "Global hot key cannot be changed",
+      "signals": [
+        "changed"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
       "id": "3.20.1/S4",
       "kind": "requirement",
       "category": "functional",
@@ -517,6 +589,24 @@
       "signals": [
         "change",
         "added"
+      ],
+      "quantities": [],
+      "has_precondition": false
+    },
+    {
+      "id": "3.21.2/R32",
+      "kind": "requirement",
+      "category": "functional",
+      "verification": "lean",
+      "section": "3.21.2",
+      "section_path": [
+        "System Features",
+        "TAN Support",
+        "Functional Requirements"
+      ],
+      "text": "Title, username or URL cannot be changed in a TAN entry.",
+      "signals": [
+        "changed"
       ],
       "quantities": [],
       "has_precondition": false
@@ -1758,20 +1848,6 @@
       "reason": "non-normative section: Stimulus/Response Sequences"
     },
     {
-      "id": "3.6.3/R7",
-      "source": "requirement",
-      "section": "3.6.3",
-      "text": "A name is required in order for the new group/subgroup to be created",
-      "reason": "no normative modal (shall/must/will/should/can)"
-    },
-    {
-      "id": "3.6.3/R8",
-      "source": "requirement",
-      "section": "3.6.3",
-      "text": "A subgroup cannot be created when no group is selected",
-      "reason": "no normative modal (shall/must/will/should/can)"
-    },
-    {
       "id": "3.7/S1",
       "source": "requirement",
       "section": "3.7",
@@ -1867,7 +1943,7 @@
       "source": "requirement",
       "section": "3.7.3",
       "text": "A name is required in order for the group/subgroup to be renamed",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.8/S1",
@@ -2644,7 +2720,7 @@
       "source": "requirement",
       "section": "3.14.3",
       "text": "REQ-18: An internet connection and a browser are required in order to download new language translations For the following features, use cases are not included",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "platform/technology choice: browser"
     },
     {
       "id": "3.15/S1",
@@ -2714,7 +2790,7 @@
       "source": "requirement",
       "section": "3.15.2",
       "text": "The prefix \"Auto-Type:\" is required in front of each sequence",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.15.2/R20",
@@ -2728,7 +2804,7 @@
       "source": "requirement",
       "section": "3.15.2",
       "text": "If two auto-types are referred in one note field, only the first is used",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "ui: only about UI elements or actions (note field), no data or state condition"
     },
     {
       "id": "3.16/S1",
@@ -2756,7 +2832,7 @@
       "source": "requirement",
       "section": "3.16.2",
       "text": "Only one database file is allowed in command line options",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.16.2/R23",
@@ -2854,7 +2930,7 @@
       "source": "requirement",
       "section": "3.17.2",
       "text": "In case of lost master password or key file, the database never unlocks again. There is no recovery",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.17.2/R28",
@@ -2903,14 +2979,7 @@
       "source": "requirement",
       "section": "3.18.2",
       "text": "REQ-29: File formats are not specialized password database formats",
-      "reason": "no normative modal (shall/must/will/should/can)"
-    },
-    {
-      "id": "3.18.2/R30",
-      "source": "requirement",
-      "section": "3.18.2",
-      "text": "REQ-30: File formats only specify a low-level layout of stored data",
-      "reason": "no normative modal (shall/must/will/should/can)"
+      "reason": "no state change, data relation or quantity to formalise"
     },
     {
       "id": "3.19/S1",
@@ -2938,13 +3007,6 @@
       "source": "requirement",
       "section": "3.19.1",
       "text": "The global hot key is Ctrl+Alt+K",
-      "reason": "no normative modal (shall/must/will/should/can)"
-    },
-    {
-      "id": "3.19.2/R31",
-      "source": "requirement",
-      "section": "3.19.2",
-      "text": "Global hot key cannot be changed",
       "reason": "no normative modal (shall/must/will/should/can)"
     },
     {
@@ -3015,13 +3077,6 @@
       "source": "requirement",
       "section": "3.21.1",
       "text": "When a TAN is used, its expiration time is set to that current time and the entry expires automatically.",
-      "reason": "no normative modal (shall/must/will/should/can)"
-    },
-    {
-      "id": "3.21.2/R32",
-      "source": "requirement",
-      "section": "3.21.2",
-      "text": "Title, username or URL cannot be changed in a TAN entry.",
       "reason": "no normative modal (shall/must/will/should/can)"
     },
     {

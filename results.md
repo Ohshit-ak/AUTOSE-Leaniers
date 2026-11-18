@@ -20,8 +20,25 @@ Settings:
 | chain-v4 strict | 483 | 343.3 | 71.1 % | 149.7 | 58 % | – |
 | chain-v4 fallback | 483 | 365.0 | 75.6 % | 157.3 | 61 % | – |
 | chain-v5 on v10.1 L0 (ablation) | 483 | 372.0 | 77.0 % | 163.7 | 64 % | 56.3 |
-| L0 v11 + chain-v5 strict | 517 | 390.3 | 75.5 % | 193.3 | 64 % | 64.0 |
-| **L0 v11 + chain-v5 fallback** | 517 | **400.7** | **77.5 %** | **200.0** | **66 %** | 70.6 |
+| L0 v11 + chain-v5 strict | 517 | 390.3 | 75.5 % | 193.3 | 64 % | 63.0 |
+| **L0 v11 + chain-v5 fallback** | 517 | **400.7** | **77.5 %** | **200.0** | **66 %** | 69.6 |
+
+"Model wrote code" is corrected for harness defect H1 (2026-11-18): gamma j CI-1 is harness-only but was credited
+to the model in all 6 repetitions (64.0 → 63.0 strict, 70.6 → 69.6 fallback). Strict and fallback are both reported;
+neither is the default, so pick the one that fits your use.
+
+### Funnel over all 718 L0 entries (P6; `python evaluation/funnel.py`, full table in `docs/analysis/funnel.md`)
+
+| stage | count | % of 718 | % of the 517 that pass L0.5 |
+|---|---|---|---|
+| L0 entries | 718 | 100 % | |
+| compile | 609 | 85 % | |
+| pass L0.5 | 517 | 72 % | 100 % |
+| end to end, strict / fallback | 390.3 / 400.7 | 54 % / 56 % | 75 % / 77 % |
+| end to end, non-trivial, strict / fallback | 193.3 / 200.0 | 27 % / 28 % | 37 % / 39 % |
+
+The 75.5 % / 77.5 % rates above are "of specs that pass L0.5". Per entry, 609 compile; the `summary.compiles`
+stored in `specs.json` says 615 because it is not recomputed after the `--on-l0-fail loop` reruns (8 SRS disagree).
 
 "Non-trivial" excludes weak specs (Lean accepts an implementation made only of copied inputs and constants).
 peering is left out of the chain-v4 row here (1 spec, verified); the per-SRS table below includes it.

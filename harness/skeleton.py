@@ -263,6 +263,28 @@ def action_for(conj: str, c: "C.Contract", fields: Dict[str, Dict[str, str]]) ->
 # Provenance: which fields of the final implementation the harness wrote
 # ---------------------------------------------------------------------------
 
+def _mask_strings(text: str) -> str:
+    """`text` with the contents of string literals replaced by spaces (positions kept,
+    backslash escapes honoured), so a word inside a string is not read as syntax."""
+    out, in_str, esc = [], False, False
+    for c in text:
+        if in_str:
+            if esc:
+                esc = False
+            elif c == "\\":
+                esc = True
+            elif c == '"':
+                in_str = False
+                out.append(c)
+                continue
+            out.append(" ")
+        else:
+            if c == '"':
+                in_str = True
+            out.append(c)
+    return "".join(out)
+
+
 def _impl_record(code: str, impl: str) -> Optional[Dict[str, str]]:
     from validate import literal_fields
     m = re.search(rf"^def\s+{re.escape(impl)}\b[^\n]*?:=\s*(.*?)(?=^\S|\Z)", C.strip_comments(code),
@@ -270,7 +292,7 @@ def _impl_record(code: str, impl: str) -> Optional[Dict[str, str]]:
     if not m:
         return None
     body = m.group(1).strip()
-    if not (body.startswith("{") and body.endswith("}")) or " with " in C._mask(body[1:-1]):
+    if not (body.startswith("{") and body.endswith("}")) or " with " in C._mask(_mask_strings(body[1:-1])):
         return None
     return literal_fields(body)
 

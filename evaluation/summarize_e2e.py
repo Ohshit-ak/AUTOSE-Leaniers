@@ -180,6 +180,24 @@ def spread(values: list) -> str:
     return f"{mean:.2f} ({fmt(min(values))}–{fmt(max(values))})"
 
 
+# Metrics that are a mean over items, not a count: a repetition without such items has no value
+# (not 0). The key may carry a suffix such as `(of 6)`.
+_MEAN_METRICS = ("strength of chain architectures",)
+
+
+def _metric_keys(ms: list) -> list:
+    """Union of the metric keys of all repetitions, in metrics() order: a key missing from the
+    first repetition is placed after the key that precedes it where it does occur."""
+    keys: list = []
+    for m in ms:
+        prev = None
+        for k in m:
+            if k not in keys:
+                keys.insert(keys.index(prev) + 1 if prev is not None else 0, k)
+            prev = k
+    return keys
+
+
 def report(run: Path) -> str:
     reps = load_run(run)
     specs = {}
@@ -199,8 +217,15 @@ def report(run: Path) -> str:
              + ("" if len(reps) > 1 else " — a single run, so there is no spread and no difference to "
                                          "another run can be called real"), "",
              "| metric | " + ("mean (min–max)" if len(reps) > 1 else "value") + " |", "|---|---|"]
-    for key in ms[0]:
-        lines.append(f"| {key} | {spread([m.get(key, 0) for m in ms])} |")
+    for key in _metric_keys(ms):
+        if key.startswith(_MEAN_METRICS):
+            # a mean over items that only some repetitions have (e.g. accepted chains):
+            # averaged over the repetitions that have it, never filled with 0
+            vals = [m[key] for m in ms if key in m]
+            note = f" (in {len(vals)} of {len(ms)} repetitions)" if len(vals) < len(ms) else ""
+            lines.append(f"| {key} | {spread(vals)}{note} |")
+        else:  # a count: absent in a repetition means none there
+            lines.append(f"| {key} | {spread([m.get(key, 0) for m in ms])} |")
     fs = [failures(d) for _, d in reps]
     for title, key in (("L1 failures by class", "l1"), ("L2 component failures by class", "l2")):
         classes = sorted({c for f in fs for c in f[key]}, key=lambda c: -sum(f[key][c] for f in fs))

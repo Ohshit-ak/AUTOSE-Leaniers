@@ -36,8 +36,8 @@
 
 | class | mean (min–max) |
 |---|---|
-| unknown-field | 0.33 (0–1) |
 | po2 | 0.33 (0–1) |
+| unknown-field | 0.33 (0–1) |
 
 ### L2 component failures by class
 

@@ -36,7 +36,7 @@ from agents.repair import parse_errors, structure_fields
 from lean_runner import HEADER, check_lean
 
 _STRUCT_BLOCK = re.compile(r"^structure\s+(\w+)[^\n]*\bwhere\s*\n((?:[ \t]+.*\n?)*)", re.MULTILINE)
-_FIELD_TYPE = re.compile(r"^[ \t]+(\w+)\s*:\s*(.+?)\s*$", re.MULTILINE)
+_FIELD_TYPE = re.compile(r"^[ \t]+(\w+)\s*:\s*(.+?)\s*(?:--.*)?$", re.MULTILINE)  # trailing `-- note` dropped
 _TRIVIAL_PRE = re.compile(r"\bpre\s*:=\s*fun\s+[\w_]+\s*=>\s*[Tt]rue\s*$", re.MULTILINE)
 BIG = 1_000_000_000
 # v11 spec checks (output-mention, realizability, copy-satisfiability); CF_SPEC_CHECKS=0 = v10.1.
@@ -117,8 +117,13 @@ def literal_fields(lit: str) -> dict:
     """{field: value text} for a record literal `{ a := 1, b := "x" }`."""
     body, out, depth, in_str, cur = lit.strip()[1:-1], {}, 0, False, ""
     parts = []
+    esc = False
     for c in body:
-        if c == '"':
+        if in_str and esc:
+            esc = False
+        elif in_str and c == "\\":
+            esc = True
+        elif c == '"':
             in_str = not in_str
         if not in_str and c in "([{":
             depth += 1
@@ -594,7 +599,7 @@ def check_data_tests(code: str, entry: dict) -> List[str]:
 _TERM = r"(?<![\w.])([A-Za-z_][\w.]*)"   # a name or field path such as `a.failedAttempts`
 _SELF_EQ = [
     re.compile(_TERM + r"\s*\+\s*[1-9]\d*\s*\)?\s*=\s*\(?\s*\1(?![\w.])(?!\s*[+\-*/])"),  # x + 1 = x
-    re.compile(_TERM + r"\s*=\s*\(?\s*\1\s*\+\s*[1-9]\d*"),                              # x = x + 1
+    re.compile(_TERM + r"\s*=\s*\(?\s*\1\s*\+\s*[1-9]\d*(?![\d.])(?!\s*[+\-*/])"),       # x = x + 1
 ]
 
 

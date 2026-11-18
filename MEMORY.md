@@ -4,7 +4,13 @@ A running log of where ContractForge stands, why things are the way they are,
 and what comes next. Update it whenever you finish a piece of work or make a
 decision someone else would need to know.
 
-## Status (2026-11-15)
+## Status (2026-11-18)
+
+**2026-11-18 (no model run):** harness defects H1–H7 from the property-based/metamorphic suite fixed (see
+`docs/issues.tex`, section "Fixed on 18 November"); parser P7 change; P6 funnel (`evaluation/funnel.py`);
+H1-corrected "model wrote code" 63.0 / 69.6; per-SRS `summary.md` regenerated (H2). All open issues: `docs/issues.tex`.
+GPU follow-up (P9 L0 ×3 paired, CF_SKELETON=0 ablation, counterexample feedback, graph L1, escalation) not run yet.
+
 
 | Part | State |
 |------|-------|
@@ -28,7 +34,8 @@ decision someone else would need to know.
 | `harness/reverify.py` | Not started. |
 | `benchmark/gammaj/` | `GammaJ_L0.lean`: hand-written gold L0 (25 specs `Spec_<id>` (16 data dictionary, 3 cart, 4 use case, 1 business rule, 1 security), all with `_sat` witnesses, ambiguities marked), compiles. `Domain.lean`: **DRAFT, needs human review**, extracted from it (`Product`, `CartLine`, `Cart`, `Account`, `Order`, `qtyOf`, `itemCount`, `totalCost`; adds `deriving DecidableEq, Repr`). |
 | `evaluation/compare_runs.py` | Done (v10; arch mode L1-v1). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. L1 folders get the arch report (now with `accepted-degraded` and degraded operations). |
-| `evaluation/summarize_e2e.py` | Rewritten 2026-11-12. Chain runs: results by mode, failure classes for L1 and L2, the cause of every "one of two components" spec, mean (min–max) over `rep*/`. Works on the v2 runs too. |
+| `evaluation/summarize_e2e.py` | Rewritten 2026-11-12. Chain runs: results by mode, failure classes for L1 and L2, the cause of every "one of two components" spec, mean (min–max) over `rep*/`. Works on the v2 runs too. 2026-11-18 (H2): rows are the union over repetitions; "strength of chain architectures" is averaged only over repetitions that have chains ("in k of 3 repetitions"), never filled with 0. |
+| `evaluation/funnel.py` | Added 2026-11-18 (P6). L0 → end-to-end funnel with all L0 entries as denominator, per SRS → `docs/analysis/funnel.md`. |
 | `framework/ContractForge/Strings.lean` | Done (v10), frozen. String-format helpers over `List Char`. |
 | `requirements.txt` | Created 2026-11-12 (`pip install -r requirements.txt`). |
 
@@ -581,9 +588,16 @@ numbers. Run `sbatch runs/qwen-v11.sbatch` (see its header; build the doc index 
   Fixed in `runs/qwen-chain-v3.sbatch`; copy the `-f` into any new sbatch.
 - **Default `lake` on ada is Lean 4.35.0**; inside `framework/`, elan switches to 4.29.1 from `lean-toolchain`.
 
-## Tests (2026-11-15)
+## Tests (2026-11-18)
 
-`cd harness && python -m pytest`: **194 pass, 0 skipped** (4 min with Lean; v11/chain-v5 added `test_v11_fixes.py` (28) and `test_l05_loop.py` (4). Earlier: `test_chain.py` is now 26: plus routing by intermediate result, constant result, PO1 repair, weak-spec witness, coder field feedback). If you see
+`cd harness && python -m pytest`: **1447 pass, 0 failed, 0 xfail** (~11 min with Lean). d7d12df added property-based
+(Hypothesis), metamorphic and contract-output tests (`test_pbt_text.py`, `test_pbt_pipeline.py`, `test_metamorphic.py`,
+`test_contract_outputs.py`); their 10 xfails (H1–H7) were fixed 2026-11-18. Golden tests read stored data:
+`Requirements/parsed/*.json` must equal a fresh parse (regenerate after a parser change);
+`test_field_provenance_replay` knows the 8 records whose stored `fields` predate H1 (`STORED_BEFORE_H1_FIX`);
+the shape test knows ertms `4.3.4.2`, which H4 now correctly flags (`_CAUGHT_AFTER_H4`).
+
+Before 2026-11-18: **194 pass, 0 skipped** (4 min with Lean; v11/chain-v5 added `test_v11_fixes.py` (28) and `test_l05_loop.py` (4). Earlier: `test_chain.py` is now 26: plus routing by intermediate result, constant result, PO1 repair, weak-spec witness, coder field feedback). If you see
 skips, `networkx`/spaCy are missing (`pip install -r requirements.txt`): the graph tests skip silently. New: `tests/test_chain.py` (21: static
 checks, PO diagnosis, single-step routing, coder, pipeline with a scripted model, repetition summary);
 `test_arch.py` 15 (degrading); `test_req_graph.py` 15 (state entities, split rule, broken cycles).
@@ -597,8 +611,12 @@ flagged at L0.5, so 0 specs reach the chain (their summary step exits 1). Per SR
 | chain-v4 strict (v10.1 L0) | 483 | 343.3 | 149.7 | – |
 | chain-v4 fallback | 483 | 365.0 | 157.3 | – |
 | chain-v5 strict on v10.1 L0 (ablation) | 483 | 372.0 | 163.7 | 56.3 |
-| **L0 v11 + chain-v5 strict** | 517 | **390.3** | **193.3** | 64.0 |
-| **L0 v11 + chain-v5 fallback** | 517 | **400.7** | **200.0** | 70.6 |
+| **L0 v11 + chain-v5 strict** | 517 | **390.3** | **193.3** | 63.0 (64.0 before the H1 fix) |
+| **L0 v11 + chain-v5 fallback** | 517 | **400.7** | **200.0** | 69.6 (70.6 before the H1 fix) |
+
+Funnel over all 718 L0 entries (P6): 609 compile (the stored `summary.compiles` = 615 is stale after
+`--on-l0-fail loop` reruns), 517 pass L0.5, end to end 54 % / 56 % of 718 (75 % / 77 % of the 517),
+non-trivial 27 % / 28 % of 718.
 
 - L1/L2 alone (ablation vs chain-v4, same specs): better or equal on every SRS; beyond the seed spread on eirene_fun_7-2,
   eirene sys 15, gemini, keepass, phin, tcs. No regression.
@@ -610,7 +628,10 @@ flagged at L0.5, so 0 specs reach the chain (their summary step exits 1). Per SR
   kept in `runs/2005 - microcare/qwen-chain-v5.oom-damaged`); microcare strict rerun as 78269 with 32G. The sbatch now
   asks for 32G and exits at startup when the server has no usable GPU.
 
-## Next steps (2026-11-15)
+## Next steps (2026-11-18; full list with fixes in `docs/issues.tex`)
+
+Done 2026-11-18: H1–H7; item 2 (parser: peering +1 spec-able requirement, get real 0.2 out of scope: no formalizable
+requirements); item 4 (no default: strict and fallback are both reported, the user picks).
 
 Done and removed from this list: chain-v3, chain-v4 and L0 v11 + chain-v5 Qwen runs; mid-submission; wiring L1/L2 into
 `main.py`; `requirements.txt`. Older items are in git history.
@@ -618,10 +639,10 @@ Done and removed from this list: chain-v3, chain-v4 and L0 v11 + chain-v5 Qwen r
 **Results / L0 v11**
 1. Find why L0 v11 lost end-to-end specs on gamma j (≈53 → 49), ertms (33 → 28–29) and dii (5 → 3): compare
    `qwen-v10.1/rep1` and `qwen-v11/rep1` for those SRS (the failures are mostly PO3).
-2. peering and get real 0.2 parse to 1 requirement that is flagged at L0.5, so 0 specs reach L1 (peering's spec
-   verified under chain-v4).
+2. ~~peering and get real 0.2~~ done (parser `<req>` rule; get real 0.2 out of scope). Rerun L0 on peering, keepass,
+   ertms, eirene_fun_7-2 to pick up the 10 new entries.
 3. Every chain repetition reads `qwen-v11/rep1`; run L0 ×3 if the spread should include L0.
-4. Decide whether `--fallback-single` becomes the default (best setting: 400.7 / 517).
+4. ~~Default setting~~ decided: report strict and `--fallback-single` side by side.
 
 **L1/L2 (chain path)**
 5. Real two-component decompositions are rare; most splits fail PO3 on the second component (consumer of `Mid`).

@@ -81,7 +81,7 @@ Not end to end in every repetition (8): 3.1.3/S1, 3.1.3/S2, 3.4.3/S2, 5.3/R1, 5.
 | end to end, chain | 1.33 (1–2) |
 | end to end, single | 48.33 (48–49) |
 | L1 attempts per split spec | 2.73 (2.00–3.20) |
-| minutes | 14.71 (13.06–15.88) |
+| minutes | 14.70 (13.06–15.88) |
 | weak specs (satisfied by copies and constants) | 18.00 (18–18) |
 | end to end, non-trivial spec | 33.00 (33–33) |
 | weak specs that only pass data through (copy-ok) | 2.00 (2–2) |

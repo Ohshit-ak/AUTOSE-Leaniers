@@ -425,10 +425,6 @@ def _chain_rep(with_chain: bool) -> list:
     return [single, chain if with_chain else other]
 
 
-@pytest.mark.xfail(strict=True, reason="FINDING: report() takes its rows from the first repetition and fills a missing "
-                                       "metric with 0. `strength of chain architectures` exists only in repetitions "
-                                       "that accepted a chain: with (chain, none) it is reported as 2.50 (0–5) instead "
-                                       "of 5.00, with (none, chain) the row disappears. 10 of 89 recorded runs are affected")
 def test_mr_e3_the_strength_row_does_not_depend_on_which_repetition_has_a_chain(tmp_path):
     with_first = _rows(E.report(_write_run(tmp_path / "a", [_chain_rep(True), _chain_rep(False)])))
     with_last = _rows(E.report(_write_run(tmp_path / "b", [_chain_rep(False), _chain_rep(True)])))

@@ -114,7 +114,7 @@ Not end to end in every repetition (2): 3.1.10.3/S3, 3.1.6.3/S5
 | end to end, chain | 0.67 (0–2) |
 | end to end, single | 14.00 (13–15) |
 | L1 attempts per split spec | 4.22 (3.67–5.00) |
-| minutes | 4.78 (3.92–6.25) |
+| minutes | 4.78 (3.93–6.25) |
 | weak specs (satisfied by copies and constants) | 11.00 (11–11) |
 | end to end, non-trivial spec | 4.67 (4–5) |
 | L2 implemented by the harness skeleton alone | 9.67 (9–11) |
@@ -124,6 +124,7 @@ Not end to end in every repetition (2): 3.1.10.3/S3, 3.1.6.3/S5
 | end to end, non-trivial spec, model wrote code | 2.67 (2–3) |
 | repair loops stopped early (L1 + L2) | 0.67 (0–2) |
 | L1 chain with a repaired second `pre` | 0.00 (0–0) |
+| strength of chain architectures (of 6) | 5 (in 1 of 3 repetitions) |
 | end to end, requirement | 14.67 (14–15) |
 | specs, requirement | 19.00 (19–19) |
 
@@ -173,6 +174,7 @@ Not end to end in every repetition (4): 3.1.1.2.1/S1, 3.1.1.2.3/S2, 3.1.10.3/S3,
 | weak specs (satisfied by copies and constants) | 11.00 (11–11) |
 | end to end, non-trivial spec | 2.67 (2–4) |
 | L1 chain with a repaired second `pre` | 0.00 (0–0) |
+| strength of chain architectures (of 6) | 5 (in 1 of 3 repetitions) |
 | end to end, requirement | 12.67 (12–14) |
 | specs, requirement | 19.00 (19–19) |
 

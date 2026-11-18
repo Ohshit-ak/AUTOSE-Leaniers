@@ -1,0 +1,288 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage[hyphens]{url}
+\usepackage[colorlinks=true,linkcolor=blue!50!black,urlcolor=blue!50!black]{hyperref}
+
+\setlist{itemsep=2pt,topsep=4pt}
+\setlength{\emergencystretch}{3em}
+\newcolumntype{L}{>{\raggedright\arraybackslash}X}
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\file}[1]{\texttt{#1}}
+\newcommand{\issue}[1]{\subsection*{#1}\addcontentsline{toc}{subsection}{#1}}
+\newcommand{\fix}{\par\smallskip\noindent\textbf{What to do.} }
+\newcommand{\evidence}{\par\smallskip\noindent\textbf{Evidence.} }
+
+\title{\textbf{ContractForge: Open Issues after L0 v11 + chain-v5}\\[4pt]
+\large Every known problem in the pipeline, the harness and the evaluation}
+\author{Bavya Sri Kilari (2025701029), Akshith K (2024111004), Vivek R (2019112020)\\[2pt]
+\small Autonomous Software Engineering, Monsoon 2026, IIIT Hyderabad}
+\date{18 November 2026\\[4pt]\small Repository: \url{https://github.com/Ohshit-ak/AUTOSE-Leaniers}}
+
+\begin{document}
+\maketitle
+
+\section{Summary}
+
+This report collects every open issue as of commit \code{d7d12df}. The pipeline results come from
+the L0 v11 + chain-v5 runs (Qwen~2.5~7B, 18 SRS, seeds 42--44; see \file{results.md}). The harness
+defects come from the new property-based and metamorphic test suite. All numbers are sums over the
+18 SRS of the per-SRS mean over the three repetitions, in the \emph{strict} setting unless stated.
+\file{results.pdf} (13 November) listed Issues 1--7 for chain-v4; Section~\ref{sec:status} shows
+which of them are still open.
+
+\begin{itemize}
+  \item \textbf{PO3 is the main failure.} 101.0 of 113.3 L2 component failures (89\,\%) are PO3.
+        PO3 is proved for 408.7 of 522 components (78\,\%), the same rate as chain-v4 (P1).
+  \item \textbf{The results overstate what the model does.} 215 of 517 specs (42\,\%) are weak. Among
+        the components that pass PO3, the harness skeleton alone wrote 281.7 and the model 127. Only
+        64 non-trivial specs are verified with code the model wrote (P2, P3).
+  \item \textbf{Decomposition is barely exercised.} 20 two-component chains are accepted out of 502
+        specs, and 12.7 are verified end to end (P4).
+  \item \textbf{L0 v11 regressed on three SRS} (gamma j, ertms, dii). This is not yet investigated (P5).
+  \item \textbf{28\,\% of L0 entries never reach L1}: 718 entries, 615 compile, 517 pass L0.5 (P6).
+  \item \textbf{The test suite found 7 harness defects} (10 xfail tests). Two of them change reported
+        numbers (H1, H2) and one drops requirements in the parser (H3).
+\end{itemize}
+
+\tableofcontents
+
+%=====================================================================
+\section{Fixed on 18 November (no model run)}
+%=====================================================================
+
+\begin{itemize}
+  \item \textbf{H1--H7 fixed}; their xfail marks are removed and the tests pass. H1 changes 8 stored records:
+        gamma j \code{CI-1} (6 repetitions, harness only but credited to the model) and peppol \code{1.1/S4}
+        (2). Corrected ``non-trivial, model wrote code'': 64.0 $\to$ 63.0 strict, 70.6 $\to$ 69.6 fallback.
+        H2 changes the summaries of tcs (strength of chain architectures 3.33 $\to$ 5.00, in 2 of 3
+        repetitions), themas and blitdraft (the row now appears). H4 now flags ertms \code{4.3.4.2}
+        (\code{0 $\le$ i.trainLocation} on a \code{Nat -{}- comment} field), a correct catch.
+  \item \textbf{P7.} A \code{<req>} element counts as normative without a modal verb, unless its text is
+        descriptive (\code{Deleted.}, \code{This section \ldots}, \code{There are \ldots}, \code{might},
+        \code{provide(s)}, \ldots). On all 18 SRS only four documents change, all additions:
+        peering $+1$ (\code{3.2.7/R1} ``Malicious requests are detected and rejected''), keepass $+5$,
+        ertms $+1$, eirene\_fun\_7-2 $+3$ (all marked (M)). get real 0.2 has no formalizable functional
+        requirements (website content plan); report it as out of scope.
+  \item \textbf{P6.} \file{evaluation/funnel.py}: every L0 entry is in the denominator (table in
+        \file{results.md}). Per entry, 609 of 718 compile; the stored \code{summary.compiles} (615) is stale.
+  \item \textbf{P12.} Strict and fallback are both reported; no default is chosen.
+\end{itemize}
+
+%=====================================================================
+\section{Pipeline and results issues}
+%=====================================================================
+
+\issue{P1. PO3 fails on about 1 in 5 components}
+PO3 (\code{Contract.Satisfies c f}) is the obligation that the implementation meets its contract.
+It is by far the largest L2 failure class, and chain-v5 did not change its rate.
+
+\begin{center}
+\begin{tabular}{lrrrr}
+\toprule
+Run & components & PO3 proved & PO3 failed & other L2 failures \\
+\midrule
+chain-v4 strict           & 456.7 & 352.0 (77\,\%) &  95.0 &  9.7 \\
+v11 + chain-v5 strict     & 522.0 & 408.7 (78\,\%) & 101.0 & 12.3 \\
+v11 + chain-v5 fallback   & 536.3 & 417.7 (78\,\%) & 105.0 & 13.6 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The other L2 failures are syntax (4.3), unknown field (4.0), type error (2.7) and unknown name (1.3).
+
+\evidence PO3 failures per SRS (strict): eirene\_fun\_7-2 20.3, peppol 11.0, gamma j 9.7, tcs 8.0,
+gemini 7.3, microcare 7.3, video search 7.3, eirene sys 15 6.7, ertms 6.7, phin 6.3, dii 3.0,
+cctns 2.3, themas 2.0, qheadache 1.0, keepass 1.0, blitdraft 1.0. In two-component chains the
+failing component is almost always the second one, which consumes \code{Mid}: for example
+\code{ApplyRoleAndPrivilegesContract} in \code{UC-administrator-add-user}, and
+\code{ShowResults…}/\code{FormatResults…} in video search. Some specs also fail PO3 as a single
+component. \code{UC-administrator-add-user} looks contradictory. \code{…-remove-user},
+\code{3.1.3/S1}, \code{3.1.3/S3}, \code{SI-1.2}, \code{REQ-1}, \code{REQ-4} and \code{REQ-6} are not
+yet checked.
+
+\fix Split the PO3 failures into two groups, using the stored \file{l1l2.json} records and Lean only
+(no model run). (a) Unsatisfiable specs, for which no implementation exists: this is an L0 problem.
+(b) Satisfiable specs where Qwen's code is wrong: this is an L2 problem. Treat the second component
+of a chain separately.
+
+\issue{P2. Weak specs still count as verified}
+215 of 517 specs (42\,\%) are weak: Lean accepts an implementation made only of copied inputs and
+constants. 12 of them only pass data through (copy-ok). v11 sends a weak spec back once, then accepts
+it. Counting only non-trivial specs, 193.3 of 302 (64\,\%) are verified end to end (strict), and
+200.0 (66\,\%) with fallback.
+
+\fix Report the non-trivial rate as the headline number. Add an L0.5 check that rejects or repairs a
+spec whose witness is trivial, instead of accepting it after one round of feedback.
+
+\issue{P3. Most verified code is the harness skeleton}
+Of the 408.7 components that pass PO3, the spec-directed skeleton alone produced 281.7 and the model
+contributed to 127. Of the 193.3 non-trivial specs verified end to end, 64.0 contain code the model
+wrote (70.6 with fallback). This split is by design and is reported separately. However, defect H1
+credits some skeleton fields to the model, so the model share is slightly too high.
+
+\fix Fix H1, then regenerate the model/skeleton columns in \file{results.md}.
+
+\issue{P4. Decomposition is rarely exercised}
+Of 502 L1-accepted specs, 441 are single (not split), 41 are not decomposable (identity split), and
+only 20 are two-component chains. 12.7 chains are verified end to end. 15 specs fail at L1: PO2 10.3,
+visibility 2.0, unknown field 1.3, type error 0.7, syntax 0.7. In video search, list properties
+(sorted, permutation, every wanted item in the results) do not survive \code{Mid}, so PO2 fails.
+
+\fix Real architecture work belongs to the graph path (P10). For the chain path, require \code{Mid} to
+carry every property the second component needs, and check this statically before L2.
+
+\issue{P5. L0 v11 regressions on gamma j, ertms and dii}
+End to end, gamma j drops from about 53 to 49.3, ertms from 33 to 28--29, and dii from 5 to 3. The
+ablation (chain-v5 on the v10.1 specs) does not show these drops, so they come from L0 v11. Most of
+the new failures are PO3. This is not yet investigated.
+
+\fix Compare \file{qwen-v10.1/rep1} and \file{qwen-v11/rep1} spec by spec for these three SRS.
+
+\issue{P6. L0 loses 28\,\% of entries, and the rate hides it}
+Over the 18 SRS, L0 v11 produced 718 entries. 615 compile, 446 reject the bad example, 517 pass
+L0.5, 64 are flagged and 137 fail. The 201 entries that never reach L1 do not appear in the
+``end to end'' rate, which is computed over the 517. These L0 compile failures recur in every run:
+\code{5.5/R1}, \code{DD-shipping-date}, \code{DD-credit-card-expiry-date}, \code{DD-location} and
+\code{UC-customer-checkout-an-order}.
+
+\fix Report the end-to-end rate over parsed requirements as well as over L0 specs. Look at the
+recurring compile failures one by one.
+
+\issue{P7. Parser coverage}
+peering and get real 0.2 each parse to a single requirement, and that requirement is flagged at L0.5,
+so 0 specs reach L1. Under chain-v4, peering's one spec was verified. More generally, the parser keeps
+few SRS items: the modal-verb rule drops most of them (Issue~4 in \file{results.pdf}). The parser also
+drops common concurrency wording (H3).
+
+\fix Fix H3. Relax the modal-verb rule for these two documents, or report them as out of scope.
+
+\issue{P8. Specs are not checked against the requirement's meaning}
+Compiling, rejecting a bad example and passing L0.5 do not show that a spec says what the requirement
+says. A verified spec can add conditions the text never states, or leave some out. No checked spec
+has been reviewed by hand for meaning.
+
+\fix Review a sample of checked specs by hand (for example 2 per SRS) and report how many are
+faithful to the requirement.
+
+\issue{P9. Run-to-run variance is understated}
+Every L1/L2 repetition reads the same L0 run (\file{qwen-v11/rep1}), so the min--max ranges cover
+L1/L2 only. L0 has never been repeated.
+
+\fix Run L0 three times (seeds 42--44) and chain each L1/L2 repetition to its own L0 run.
+
+\issue{P10. The graph path is out of date}
+The committed gamma j graph (\file{runs/0000 - gamma j/graph/}) is still graph version 1. L1-v1 (the
+graph architect) has not been rerun since graph v2 and degrading were added, and PO2 was proved in
+none of its runs. \code{3.5.3/S2} and \code{3.1.3/S1} break the harness's own trace proof with
+``Expected type must not contain free variables''; the same error appears in the peppol v10.1 specs.
+Its cause is not known. The state entities produced by graph v2 have not been reviewed by hand.
+
+\fix Rebuild the graph (\code{-{}-until graph}), rerun graph L1 three times with Qwen, and find the
+cause of the free-variable error.
+
+\issue{P11. Nothing rewards a stronger contract}
+A contract equal to the L0 conditions makes all obligations easy. Nothing yet rewards a contract that
+says more than the requirement or relates operations to each other. With degrading, PO2 is only as
+strong as the contracts that were not degraded, so a run must report how many operations were
+degraded.
+
+\issue{P12. Open decision: default setting}
+\code{-{}-fallback-single} is the best setting (400.7 of 517 end to end; 200.0 non-trivial). Whether it
+becomes the default is not decided.
+
+\issue{P13. Not built}
+Not built yet: the last pipeline step (Lean implementation to Python), \file{harness/reverify.py},
+\file{evaluation/metrics.py}, and a benchmark system in \file{benchmark/bank\_ledger/}.
+There is also no truly held-out SRS for L0: video search was seen during v9, and the other 16 were not
+used for design but have now been run.
+
+%=====================================================================
+\section{Harness defects found by the test suite}
+%=====================================================================
+
+Commit \code{d7d12df} added property-based (Hypothesis), metamorphic and contract-output tests.
+\code{cd harness \&\& python -m pytest} gives \textbf{1437 passed, 0 failed, 10 xfailed}
+(7\,min 12\,s with Lean, run on 18 November). Each xfail test is marked \code{strict=True} and
+documents one real defect. When the defect is fixed, the test reports XPASS and fails, and the mark
+must be removed.
+
+\begin{small}
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.6cm}>{\raggedright\arraybackslash}p{3.4cm}>{\raggedright\arraybackslash}p{7.6cm}>{\raggedright\arraybackslash}p{3.0cm}@{}}
+\toprule
+& Where & Defect & Effect \\
+\midrule
+\endhead
+H1 & \code{skeleton.} \code{\_impl\_record} &
+  Looks for \code{ with } in the record body with only brackets masked, so a string literal such as
+  \code{"sent with care"} is taken for \code{\{ x with … \}} and every field is credited to the model. &
+  \textbf{Wrong model/skeleton split}; 6 stored records. \\
+H2 & \code{report()} (run summary) &
+  Takes its rows from the first repetition and fills a missing metric with 0. ``Strength of chain
+  architectures'' shows 2.50 instead of 5.00 with (chain, none), and disappears with (none, chain). &
+  \textbf{Wrong reported numbers}; 10 of 89 recorded runs. \\
+H3 & parser, \code{COUNT\_RE} &
+  ``100 concurrent users'', ``500 simultaneous users'' and ``1,000 simultaneous requests'' are not
+  read as quantities (the regex wants the noun right after the number), so they are dropped as having
+  no quantity to formalise. Only ``100 users concurrently'' reaches the \code{concurrency} check. &
+  \textbf{Requirements silently dropped}; 3 xfails. \\
+H4 & \code{validate.} \code{field\_types} &
+  Keeps a trailing \code{-{}- comment} in the type (\code{Nat -{}- in cents}), so the mutant, witness and
+  skeleton code no longer see \code{Nat}. \code{req\_graph.structures} already strips the comment. &
+  7 of 576 accepted v11 specs. \\
+H5 & \code{validate.} \code{literal\_fields} &
+  Toggles ``in string'' on an escaped quote, so \code{\{ name := "a\textbackslash",b", qty := 1 \}} is
+  split inside the string. \code{one\_line} and \code{\_balanced} handle the escape. &
+  Wrong fields for such literals. \\
+H6 & \code{validate.} \code{check\_}\allowbreak\code{contradictions} &
+  \code{o.total = o.total + 1 - 1}, which holds for every value, is reported as ``can never be true'':
+  the second \code{\_SELF\_EQ} pattern has no look-ahead for a following operator. &
+  False contradiction; a correct spec is sent back. \\
+H7 & \code{apply\_fixups} &
+  (a) A field written 3 or more times needs two passes, because one \code{re.sub} removes only every
+  other repeat, so the fixups are not idempotent. (b) A field named \code{deriving} is renamed to
+  \code{deriving\_}, and \code{\_always\_derive} then rewrites that line to
+  \code{deriving \_ : Nat,} \code{DecidableEq, Repr}. &
+  Broken Lean after fixups; 2 xfails. \\
+\bottomrule
+\end{longtable}
+\end{small}
+
+\noindent Fix order: H1 and H2 first, because they change numbers in \file{results.md} (then
+regenerate the summaries), then H3, then H4--H7. Each fix is a small regex or parsing change, and its
+xfail test confirms it.
+
+\smallskip\noindent\textbf{Housekeeping.} \file{MEMORY.md} still says 194 tests pass. It should say
+1437 passed, 10 xfailed.
+
+%=====================================================================
+\section{Status of the issues in \file{results.pdf} (chain-v4)}\label{sec:status}
+%=====================================================================
+
+\begin{center}
+\begin{tabularx}{\textwidth}{@{}p{5.2cm}p{2.0cm}L@{}}
+\toprule
+Issue in \file{results.pdf} & Status & Now \\
+\midrule
+1. Almost half of the specs are weak & Partly fixed & 47\,\% $\to$ 42\,\%; non-trivial e2e
+  149.7 $\to$ 193.3. Still accepted after one feedback round (P2). \\
+2. Decomposition almost never exercised & Open & 20 chains of 502; 12.7 e2e (P4). \\
+3. L2 failures are almost all PO3 & Open & 89\,\% of L2 failures; rate unchanged at 78\,\% (P1). \\
+4. Parser keeps 9\,\% of SRS items & Open & peering and get real 0.2 now reach 0 specs (P7); H3. \\
+5. L0 loses entries before L1 & Open & 201 of 718 (28\,\%) (P6). \\
+6. Specs not checked against the text & Open & No meaning review yet (P8). \\
+7. Little spread; L0 ran once & Open & Still one L0 run per SRS (P9). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\end{document}
