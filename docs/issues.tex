@@ -26,14 +26,15 @@
 \large Every known problem in the pipeline, the harness and the evaluation}
 \author{Bavya Sri Kilari (2025701029), Akshith K (2024111004), Vivek R (2019112020)\\[2pt]
 \small Autonomous Software Engineering, Monsoon 2026, IIIT Hyderabad}
-\date{18 November 2026\\[4pt]\small Repository: \url{https://github.com/Ohshit-ak/AUTOSE-Leaniers}}
+\date{19 November 2026 (first version 18 November)\\[4pt]\small Repository: \url{https://github.com/Ohshit-ak/AUTOSE-Leaniers}}
 
 \begin{document}
 \maketitle
 
 \section{Summary}
 
-This report collects every open issue as of commit \code{d7d12df}. The pipeline results come from
+This report collects every open issue as of commit \code{40b97a4} plus the uncommitted changes of
+19 November (Section~\ref{sec:nov19}). The pipeline results come from
 the L0 v11 + chain-v5 runs (Qwen~2.5~7B, 18 SRS, seeds 42--44; see \file{results.md}). The harness
 defects come from the new property-based and metamorphic test suite. All numbers are sums over the
 18 SRS of the per-SRS mean over the three repetitions, in the \emph{strict} setting unless stated.
@@ -43,18 +44,99 @@ which of them are still open.
 \begin{itemize}
   \item \textbf{PO3 is the main failure.} 101.0 of 113.3 L2 component failures (89\,\%) are PO3.
         PO3 is proved for 408.7 of 522 components (78\,\%), the same rate as chain-v4 (P1).
+        \emph{New (19 Nov):} the Lean-only triage of the 214 distinct failures finds 80 wrong code,
+        77 apparently unsatisfiable specs and only 55 where tactics may be the problem (12 of them proved
+        by stronger tactics). Most PO3 failures are not a proof-search problem.
   \item \textbf{The results overstate what the model does.} 215 of 517 specs (42\,\%) are weak. Among
         the components that pass PO3, the harness skeleton alone wrote 281.7 and the model 127. Only
         64 non-trivial specs are verified with code the model wrote (P2, P3).
   \item \textbf{Decomposition is barely exercised.} 20 two-component chains are accepted out of 502
         specs, and 12.7 are verified end to end (P4).
-  \item \textbf{L0 v11 regressed on three SRS} (gamma j, ertms, dii). This is not yet investigated (P5).
+  \item \textbf{L0 v11 regressed on three SRS} (gamma j, ertms, dii). Investigated 19 Nov: 19 specs lost,
+        9 because v11 no longer accepts them at L0, 9 at L2 PO3, 1 at L1 PO2 (P5).
+  \item \textbf{Code changes for P1, P2 and P10 are written but not run with a model}, and the working
+        tree is uncommitted, so a run started now records \code{git\_dirty: true} (N2).
   \item \textbf{28\,\% of L0 entries never reach L1}: 718 entries, 615 compile, 517 pass L0.5 (P6).
   \item \textbf{The test suite found 7 harness defects} (10 xfail tests). Two of them change reported
         numbers (H1, H2) and one drops requirements in the parser (H3).
 \end{itemize}
 
 \tableofcontents
+
+%=====================================================================
+\section{Done on 19 November (no model run)}\label{sec:nov19}
+%=====================================================================
+
+All of this uses stored runs and Lean only. Nothing here has been run with a model yet.
+
+\paragraph{P1 triage of the stored PO3 failures} (\file{evaluation/po3\_triage.py} $\to$
+\file{docs/analysis/po3\_triage.md} and \file{.json}; job \code{92324}, 6\,min on 14 CPUs).
+618 failing components in \file{qwen-chain-v5} and \file{qwen-chain-v5-fallback} (3 reps each),
+214 distinct contract + implementation pairs.
+
+\begin{center}
+\begin{tabular}{lrrr}
+\toprule
+class & distinct & occurrences (strict) & occurrences (fallback) \\
+\midrule
+wrong-code: Lean finds an input in \code{pre} whose output \code{post} rejects & 80 & 114 & 119 \\
+unsatisfiable-spec: for such an input no output satisfies \code{post} (search) & 77 & 116 & 116 \\
+tactics: no counterexample found & 55 & 72 & 79 \\
+\quad of which proved by \code{CF\_PO3\_TACTICS=2} & 12 & & \\
+unevaluable & 2 & 1 & 1 \\
+\midrule
+total & 214 & 303 & 315 \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent Strict occurrences are 303 over 3 reps = 101.0 per rep, which matches P1. By position: single
+components 561 (213 / 203 / 145 / 0), first of a chain 26, second of a chain 31 (19 of them
+unsatisfiable: the second component does not get what it needs through \code{Mid}, P4). Per SRS,
+eirene\_fun\_7-2 (119), peppol (72) and gamma j (60) have the most; themas's 12 are all tactics.
+\textbf{Conclusion:} about three quarters of PO3 failures are wrong code (an L2 problem, target of
+counterexample feedback) or a \code{post} that cannot be met (an L0 problem); better tactics can fix
+at most 55 distinct pairs, and only 12 are confirmed.
+
+\paragraph{Other analyses (stored data).}
+\begin{itemize}
+  \item \textbf{P3/P4} \file{docs/analysis/p4\_p3\_split.md}: 76 specs routed to a split, 20.0 accepted
+        chains, 12.7 end to end. Of 193.3 non-trivial e2e specs, 129.3 are harness-only, 34.3 model-completed,
+        29.7 written fully by the model.
+  \item \textbf{P5} \file{docs/analysis/p5\_l0\_regression.md}: see P5 below.
+  \item \textbf{P6} \file{docs/analysis/p6\_l0\_losses.md}: 109 compile failures, mostly unknown fields
+        (29), invented Lean API (24), type mismatch (13), \code{decide} (12), missing instances (11),
+        syntax (11). 28 compiling specs fail L0.5 (negative check 12, vacuous \code{post} 11).
+  \item \textbf{P8} \file{docs/analysis/p8\_fidelity.md}, \file{p8\_gold.md}: 125 of 517 accepted specs
+        (24\,\%) contain constants not in the requirement; 33\,\% of the ``strong'' specs do. Gold
+        comparison on gamma j (25 specs): 13 equivalent, 4 different, 2 weaker, 1 missing, 5 not accepted.
+        A 60-spec human-review sample is ready; both rater columns are still empty.
+  \item \textbf{P11} \file{docs/design/p11\_mechanism.md}, \file{docs/analysis/strength\_scores.md}:
+        a model-free payoff (gates + mutant-kill rate). Mean payoff 0.42 over all 718 entries, 0.78 over
+        the 384 scored. The L0.5 ``strong'' label does not predict it (payoff $r = -0.26$).
+\end{itemize}
+
+\paragraph{Harness changes (uncommitted, all off by default, not yet run with a model).}
+\begin{itemize}
+  \item \code{CF\_CEX\_FEEDBACK=1}: on a PO3 failure, Lean evaluates the function on small inputs and
+        the repair prompt gets a concrete counterexample (\file{harness/counterexample.py}). Targets the 80
+        wrong-code pairs.
+  \item \code{CF\_PO3\_TACTICS=2}: Bool case splits, repeated \code{split}, \code{grind}/\code{decide}
+        closers. Proves 12 of the stored failures.
+  \item \code{CF\_WEAK\_ROUNDS=n}: send a weak spec back $n$ times (P2), with the Lean-accepted trivial
+        implementation and the requirement text in the feedback.
+  \item P10: graph-path trace proofs also unfold the L0 spec's helper definitions. This fixes the
+        ``Expected type must not contain free variables'' error on gamma j \code{3.5.3/S2}; \code{3.1.3/S1}
+        now reports its real unsolved goal, a correct rejection. The graph is rebuilt on every L1 run
+        (\code{graph\_version} recorded), and \code{--until chain --with-graph} also runs graph L1.
+  \item Every run's metadata records the \code{CF\_*} behaviour switches that were set.
+\end{itemize}
+
+\paragraph{Fixed.} \file{evaluation/po3\_triage.py} changed directory to \file{harness/} on import, so
+the relative \code{-o docs/analysis/po3\_triage.md} in \file{runs/po3-triage.sbatch} pointed to a
+directory that does not exist. The first job crashed after all the Lean work, while writing its
+results. Output paths now resolve against the caller's working directory, and the output directory is
+created.
 
 %=====================================================================
 \section{Fixed on 18 November (no model run)}
@@ -110,10 +192,15 @@ component. \code{UC-administrator-add-user} looks contradictory. \code{…-remov
 \code{3.1.3/S1}, \code{3.1.3/S3}, \code{SI-1.2}, \code{REQ-1}, \code{REQ-4} and \code{REQ-6} are not
 yet checked.
 
-\fix Split the PO3 failures into two groups, using the stored \file{l1l2.json} records and Lean only
-(no model run). (a) Unsatisfiable specs, for which no implementation exists: this is an L0 problem.
-(b) Satisfiable specs where Qwen's code is wrong: this is an L2 problem. Treat the second component
-of a chain separately.
+\textbf{Status (19 Nov).} The split is done (Section~\ref{sec:nov19}): 80 wrong-code, 77
+unsatisfiable-spec, 55 tactics (12 proved by \code{CF\_PO3\_TACTICS=2}), 2 unevaluable.
+
+\fix (a) For the 80 wrong-code pairs, run chain-v5 with \code{CF\_CEX\_FEEDBACK=1} (and
+\code{CF\_PO3\_TACTICS=2}), 3 seeds, and compare against the stored runs. (b) For the 77 unsatisfiable
+specs, add a realizability check at L0.5, so that L0 rejects a \code{post} that no output can meet
+for an input in \code{pre}. ``Unsatisfiable'' is a search result: confirm a sample by hand first.
+(c) For the 43 tactics cases with no counterexample, inspect a sample. A larger input search may turn
+some into wrong-code.
 
 \issue{P2. Weak specs still count as verified}
 215 of 517 specs (42\,\%) are weak: Lean accepts an implementation made only of copied inputs and
@@ -130,7 +217,13 @@ contributed to 127. Of the 193.3 non-trivial specs verified end to end, 64.0 con
 wrote (70.6 with fallback). This split is by design and is reported separately. However, defect H1
 credits some skeleton fields to the model, so the model share is slightly too high.
 
-\fix Fix H1, then regenerate the model/skeleton columns in \file{results.md}.
+\textbf{Correction (19 Nov).} H1 is fixed, but the ``64.0 $\to$ 63.0 / 70.6 $\to$ 69.6'' correction
+written in \file{results.md}, MEMORY.md and above is itself wrong. \code{CI-1} was already stored
+as \code{harness\_only}, so the correction subtracted it a second time. Recomputing from the records
+(\file{docs/analysis/p4\_p3\_split.md}) gives \textbf{64.0 strict and 70.7 fallback}: 34.3 model-completed
++ 29.7 model-fully, and 129.3 harness-only, out of 193.3.
+
+\fix Replace 63.0 / 69.6 with 64.0 / 70.7 in \file{results.md}.
 
 \issue{P4. Decomposition is rarely exercised}
 Of 502 L1-accepted specs, 441 are single (not split), 41 are not decomposable (identity split), and
@@ -143,10 +236,17 @@ carry every property the second component needs, and check this statically befor
 
 \issue{P5. L0 v11 regressions on gamma j, ertms and dii}
 End to end, gamma j drops from about 53 to 49.3, ertms from 33 to 28--29, and dii from 5 to 3. The
-ablation (chain-v5 on the v10.1 specs) does not show these drops, so they come from L0 v11. Most of
-the new failures are PO3. This is not yet investigated.
+ablation (chain-v5 on the v10.1 specs) does not show these drops, so they come from L0 v11.
 
-\fix Compare \file{qwen-v10.1/rep1} and \file{qwen-v11/rep1} spec by spec for these three SRS.
+\textbf{Investigated (19 Nov,} \file{docs/analysis/p5\_l0\_regression.md}\textbf{).} Over the three
+SRS, end to end drops from 91.0 to 80.7, but non-trivial end to end rises from 39.7 to 40.7. So
+v11 loses mostly weak specs. 19 specs are lost: 9 are no longer accepted at L0 (they no longer compile,
+or now fail or are flagged at L0.5), 9 fail PO3 at L2 and 1 fails PO2 at L1. 11 of the 19 were weak
+under v10.1.
+
+\fix Treat this as an expected side effect of the stricter L0 unless the 9 L0 losses are wrong
+rejections. Check those 9 by hand (for example gamma j \code{DD-password}, flagged only because the
+data test does not apply to its shape).
 
 \issue{P6. L0 loses 28\,\% of entries, and the rate hides it}
 Over the 18 SRS, L0 v11 produced 718 entries. 615 compile, 446 reject the bad example, 517 pass
@@ -164,15 +264,29 @@ so 0 specs reach L1. Under chain-v4, peering's one spec was verified. More gener
 few SRS items: the modal-verb rule drops most of them (Issue~4 in \file{results.pdf}). The parser also
 drops common concurrency wording (H3).
 
-\fix Fix H3. Relax the modal-verb rule for these two documents, or report them as out of scope.
+\textbf{Confirmed 19 Nov.} Because of this, the PO3 triage and the P8 sample cover only 16 SRS: all
+12 chain reps of these two documents have empty \file{l1l2/} folders (``0 of 0 accepted specs''), and
+L0 has only \file{rep1} for them. The stored runs are from before the P7 parser change (peering
+$+1$), so peering's L0 should be rerun with the current parser.
+
+\fix Fix H3. Rerun L0 on peering with the P7 parser. Report get real 0.2 as out of scope, with the
+reason. Do not add a rule specific to one document: the parser must work for any SRS.
 
 \issue{P8. Specs are not checked against the requirement's meaning}
 Compiling, rejecting a bad example and passing L0.5 do not show that a spec says what the requirement
 says. A verified spec can add conditions the text never states, or leave some out. No checked spec
 has been reviewed by hand for meaning.
 
-\fix Review a sample of checked specs by hand (for example 2 per SRS) and report how many are
-faithful to the requirement.
+\textbf{Status (19 Nov).} Grounding: 125 of 517 accepted specs (24\,\%) use constants the requirement
+does not contain (hard-coded messages, credentials, thresholds), and 33\,\% of ``strong'' specs do.
+So L0.5 ``strong'' partly means ``strong because of invented constants''. Against the gamma j gold
+file: 13 equivalent, 4 different, 2 weaker, 1 missing, 5 not accepted. One ``different'' verdict
+(\code{DD-quantity}) was made by Claude and needs a human check. The gold file's authorship is not
+recorded. Under the open-weight-only rule, the team must confirm it was hand-written before it is
+used as a reference.
+
+\fix Two team members fill \code{rater1}/\code{rater2} in \file{docs/analysis/p8\_fidelity.csv}
+(60 specs, independently), then run \code{python evaluation/kappa.py}. No model fills these columns.
 
 \issue{P9. Run-to-run variance is understated}
 Every L1/L2 repetition reads the same L0 run (\file{qwen-v11/rep1}), so the min--max ranges cover
@@ -196,6 +310,12 @@ says more than the requirement or relates operations to each other. With degradi
 strong as the contracts that were not degraded, so a run must report how many operations were
 degraded.
 
+\textbf{Status (19 Nov).} A model-free payoff is defined and measured
+(\file{docs/design/p11\_mechanism.md}). It is 0 if the spec is unsatisfiable, vacuous, ungrounded or
+untestable, and the mutant-kill rate otherwise. Mean 0.42 over all 718 L0 entries, 0.78 over the 384
+that pass every gate. It is a measurement only: nothing in the pipeline selects or rewards with it yet.
+See N1: gamma j's scores look wrong.
+
 \issue{P12. Open decision: default setting}
 \code{-{}-fallback-single} is the best setting (400.7 of 517 end to end; 200.0 non-trivial). Whether it
 becomes the default is not decided.
@@ -205,6 +325,38 @@ Not built yet: the last pipeline step (Lean implementation to Python), \file{har
 \file{evaluation/metrics.py}, and a benchmark system in \file{benchmark/bank\_ledger/}.
 There is also no truly held-out SRS for L0: video search was seen during v9, and the other 16 were not
 used for design but have now been run.
+
+\issue{N1. Suspected defect: strength scores on gamma j}
+\file{evaluation/strength\_score.py} marks 60 of 74 gamma j entries as vacuous (0 mutants killed),
+with a kill rate of 0.02. On every other SRS, 0--3 entries are vacuous and the kill rate is 0.58--0.80.
+L0.5's own vacuity check passes 59 of these gamma j specs. The scorer probably fails to build or
+compile the mutants for gamma j's spec layout, and counts that as ``not killed''. Until this is
+checked, the overall P11 numbers (mean 0.42, 74 vacuous) include this error.
+
+\fix Run the scorer on one gamma j spec (for example \code{1.4/S2}) and look at the mutant Lean output.
+Count a mutant that does not compile as untested, not as surviving.
+
+\issue{N2. Uncommitted, unrun harness changes}
+\file{chain\_coder.py}, \file{spec\_checks.py}, \file{arch\_lean.py}, \file{arch\_tools.py},
+\file{main.py} and \file{chain\_pipeline.py} contain the P1/P2/P10 changes of 19 November, and
+\file{harness/counterexample.py} is untracked. They are off by default, except the P10 trace-proof
+and graph-rebuild changes, which change graph-path behaviour. No model run has used them. A run
+started now records \code{git\_dirty: true} and is not reproducible from a commit.
+
+\fix Run the test suite, commit, then run the GPU follow-ups from the commit: chain-v5 with
+\code{CF\_CEX\_FEEDBACK=1 CF\_PO3\_TACTICS=2}, \code{CF\_WEAK\_ROUNDS=2}, graph L1 (\code{--with-graph}),
+and L0 $\times$3 (P9).
+
+\issue{N3. Job scripts and output paths}
+The first PO3 triage job lost 6 minutes of Lean work to a relative output path (fixed,
+Section~\ref{sec:nov19}). Other \file{evaluation/} scripts that change directory on import may have
+the same problem. \file{runs/po3-triage.sbatch} has no \code{\#SBATCH -o}, so its log goes to
+\file{slurm-<id>.out} in the repository root.
+
+\fix Give every sbatch file an explicit \code{-o}. Resolve CLI paths before any \code{chdir}.
+
+\issue{N4. \file{docs/issues.pdf} is out of date}
+No LaTeX installation on the cluster login node: this file was updated, but the PDF was not rebuilt.
 
 %=====================================================================
 \section{Harness defects found by the test suite}
@@ -261,8 +413,9 @@ H7 & \code{apply\_fixups} &
 regenerate the summaries), then H3, then H4--H7. Each fix is a small regex or parsing change, and its
 xfail test confirms it.
 
-\smallskip\noindent\textbf{Housekeeping.} \file{MEMORY.md} still says 194 tests pass. It should say
-1437 passed, 10 xfailed.
+\smallskip\noindent\textbf{Housekeeping.} The suite was 1437 passed, 10 xfailed on 18 November.
+H1--H7 have since been fixed, so the xfails should now pass. It has not been rerun with the 19 November
+changes or with the new \file{harness/tests/test\_strength\_score.py} (N2).
 
 %=====================================================================
 \section{Status of the issues in \file{results.pdf} (chain-v4)}\label{sec:status}
@@ -276,10 +429,12 @@ Issue in \file{results.pdf} & Status & Now \\
 1. Almost half of the specs are weak & Partly fixed & 47\,\% $\to$ 42\,\%; non-trivial e2e
   149.7 $\to$ 193.3. Still accepted after one feedback round (P2). \\
 2. Decomposition almost never exercised & Open & 20 chains of 502; 12.7 e2e (P4). \\
-3. L2 failures are almost all PO3 & Open & 89\,\% of L2 failures; rate unchanged at 78\,\% (P1). \\
+3. L2 failures are almost all PO3 & Open, triaged & 89\,\% of L2 failures; rate unchanged at 78\,\%.
+  Triage: 80 wrong code, 77 unsatisfiable, 55 tactics (P1). \\
 4. Parser keeps 9\,\% of SRS items & Open & peering and get real 0.2 now reach 0 specs (P7); H3. \\
 5. L0 loses entries before L1 & Open & 201 of 718 (28\,\%) (P6). \\
-6. Specs not checked against the text & Open & No meaning review yet (P8). \\
+6. Specs not checked against the text & Partly & Grounding and gold done; human review sample
+  ready, not rated (P8). \\
 7. Little spread; L0 ran once & Open & Still one L0 run per SRS (P9). \\
 \bottomrule
 \end{tabularx}

@@ -21,7 +21,9 @@ A record:
          repair loop gave up early), error + error_class (chain_failures), stages, code
     l2   per contract: success, attempts, error + error_class, stages, code; (v11) harness_only
          (the harness skeleton was complete and PO3 proved it, no model call), fields
-         ({"harness": [...], "model": [...]}: who wrote each result field), stopped
+         ({"harness": [...], "model": [...]}: who wrote each result field), stopped;
+         (P1, CF_CEX_FEEDBACK=1) counterexamples (up to 3 sentences put in the repair prompt),
+         cex_found / cex_tried (PO3 failures with / looked for a counterexample)
     full_check   Lean accepts the whole file including
                  `theorem system_ok : Spec.Satisfies (<B>Impl ∘ <A>Impl)`   (chain)
                  `theorem system_ok : Spec.Satisfies SpecImpl`              (single)
@@ -108,7 +110,8 @@ def run_entry(r: dict, model: str, split: str = "auto", fallback_single: bool = 
                                 "stages": stages, "code": res.get("code") or "",
                                 "harness_only": bool(res.get("harness_only")),
                                 **({"fields": res["fields"]} if res.get("fields") else {}),
-                                **({"stopped": res["stopped"]} if res.get("stopped") else {})})
+                                **({"stopped": res["stopped"]} if res.get("stopped") else {}),
+                                **({k: res[k] for k in ("counterexamples", "cex_found", "cex_tried") if k in res})})
             if e["l2"] and all(x["success"] for x in e["l2"]):
                 e["system_theorem"] = system_theorem(l1["contracts"])
                 full = "\n\n".join([locked] + [x["code"] for x in e["l2"]] + [e["system_theorem"]])

@@ -179,7 +179,14 @@ def run_meta(args) -> dict:
     return {"harness_version": HARNESS_VERSION, "model": args.model, "model_id": MODELS.get(args.model),
             "temperature": TEMPERATURE, "restart_temperature": RESTART_TEMPERATURE,
             "seed": current_seed(args.model), "repetition": args.rep if args.repeat else None,
-            "prompt_hash": prompt_hash(), "git_commit": commit, "git_dirty": dirty}
+            "prompt_hash": prompt_hash(), "git_commit": commit, "git_dirty": dirty,
+            "switches": {k: v for k, v in sorted(os.environ.items()) if k in SWITCHES}}
+
+
+# Behaviour switches recorded with every run (unset = the default).
+SWITCHES = ("CF_SKELETON", "CF_CEX_FEEDBACK", "CF_PO3_TACTICS", "CF_WEAK_ROUNDS", "CF_SPEC_CHECKS",
+            "CF_LEAN_DOCS", "CF_CARRY_FIELDS", "CF_IDENTITY_STOP", "CF_NOT_DECOMPOSABLE_FALLBACK",
+            "CF_ARCH_DEGRADE", "CF_GRAPH_CYCLES", "CF_REALIZABILITY", "CF_L05_ROUNDS")
 
 
 def _write_json(path: Path, data) -> None:
@@ -459,6 +466,8 @@ def arch_meta(stem: str, args, graph_path: Path) -> dict:
     meta = run_meta(args)
     meta.update(harness_version=L1_VERSION, prompt_hash=prompt_hash(),
                 l0_prompt_hash=meta.get("prompt_hash"), graph_sha=_sha(graph_path),
+                graph_version=json.loads(graph_path.read_text(encoding="utf-8")).get("graph_version")
+                if graph_path.exists() else None,
                 l0_run=str(l0_run_dir(stem, args).relative_to(ROOT)),
                 graph_mode="no-graph" if args.no_graph else "graph", arch_mode=args.arch_mode)
     return meta
@@ -727,6 +736,9 @@ def main(argv=None) -> int:
                          "they exist (default); srs = only the SRS and the L0 specs")
     ap.add_argument("--split", choices=["auto", "always", "never"], default="auto",
                     help="chain: split specs into two components (auto: not the single-step ones)")
+    ap.add_argument("--with-graph", action="store_true",
+                    help="chain: afterwards build the graph from the same L0 run and run graph L1 "
+                         "(run name <chain run name>-graphL1)")
     ap.add_argument("--fallback-single", action="store_true",
                     help="chain: when the two-component split fails, implement `Spec` as one component "
                          "(reported separately as single-fallback)")
@@ -753,21 +765,26 @@ def main(argv=None) -> int:
                 if args.repeat:
                     print(f"[repeat] {path.stem}: chain repetition {k}/{args.repeat}, seed {SEED + k - 1}")
                 stage_chain(path.stem, args)
+            if args.with_graph:
+                # P10: the graph path on the same L0 run, under its own run name.
+                from chain_pipeline import CHAIN_VERSION
+                if not (PARSED_DIR / f"{path.stem}.json").exists():
+                    stage_parse(path)
+                stage_graph(path.stem, args)
+                g_args = argparse.Namespace(**{**vars(args), "run_name": (args.run_name or f"{args.model}-{CHAIN_VERSION}")
+                                               + "-graphL1", "only": None})
+                for k in range(1, (args.repeat or 1) + 1):
+                    g_args.rep = k
+                    set_seed(SEED + k - 1)
+                    print(f"[repeat] {path.stem}: graph L1 repetition {k}/{args.repeat or 1}, seed {SEED + k - 1}")
+                    stage_arch(path.stem, g_args)
             continue
         if l1:  # L0 is frozen: read the parsed JSON and the L0 run, never regenerate them
             if not (PARSED_DIR / f"{path.stem}.json").exists():
                 stage_parse(path)
-            graph_path = RUNS_DIR / path.stem / "graph" / "graph.json"
-            # `--until graph` always rebuilds (deterministic, no model); later stages reuse the
-            # graph on disk so a run stays comparable with the graph it was started with.
-            if args.until == "graph" or not graph_path.exists():
-                stage_graph(path.stem, args)
-            else:
-                import req_graph
-                have = json.loads(graph_path.read_text(encoding="utf-8")).get("graph_version")
-                if have != req_graph.GRAPH_VERSION:
-                    print(f"[graph] warning: {graph_path.relative_to(ROOT)} was built by graph version {have}, "
-                          f"the code is version {req_graph.GRAPH_VERSION}; rebuild it with --until graph")
+            # P10: the graph is deterministic (no model) and cheap, so it is rebuilt from the L0 run
+            # whenever a run uses it; arch.json records graph_version and graph_sha.
+            stage_graph(path.stem, args)
             if args.until == "graph":
                 continue
             for k in range(1, (args.repeat or 1) + 1):

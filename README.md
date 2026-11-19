@@ -44,6 +44,18 @@ Real two-component decompositions remain rare with a 7B model; most specs are ve
 Full write-up and per-SRS table: **[results.md](results.md)**; per-run tables in `runs/<doc>/qwen-chain-v5/summary.md`;
 design and history in [MEMORY.md](MEMORY.md) (*chain-v4*, *v11 / chain-v5*) and `docs/design/contractforge_design.pdf`.
 
+**Open issues (2026-11-19): [docs/issues.tex](docs/issues.tex)** (the PDF is not yet rebuilt). Headlines:
+- **PO3 is ~89 % of L2 failures, and mostly not a tactics problem.** Lean-only triage of the 214 distinct stored
+  failures (`docs/analysis/po3_triage.md`): 80 wrong code, 77 apparently unsatisfiable specs, 55 tactics (12 proved
+  by stronger tactics), 2 unevaluable.
+- **The headline overstates the model:** 42 % of specs are weak; of 193.3 non-trivial e2e specs, 129.3 are verified
+  with the harness skeleton alone and 64.0 with model code (the "63.0" correction in `results.md` is wrong, P3).
+- **24 % of accepted specs use constants the requirement does not contain** (P8); the human fidelity review is
+  ready but unrated.
+- **peering and get real 0.2 reach no L1 at all** (parser keeps 1 requirement each), so all chain analyses cover 16 SRS.
+- **New switches `CF_CEX_FEEDBACK`, `CF_PO3_TACTICS`, `CF_WEAK_ROUNDS` and the P10 graph fixes are not committed
+  and not yet run with a model.**
+
 What changed in the last two versions, briefly:
 - **chain-v4:** split a spec only when its `post` states one output in terms of another; reject a first component
   whose result is constant or a disguised copy (Lean-checked); the harness removes from the second `pre` what the
@@ -153,7 +165,18 @@ AUTOSE-Leaniers/
 ├── evaluation/
 │   ├── compare_runs.py       # compare two runs over repetitions (rep1..N): mean (min–max), verdict only beyond the spread
 │   ├── summarize_e2e.py      # chain runs: results by mode, failure classes, 1-of-2 causes, spread over repetitions
-│   └── funnel.py             # L0 → end-to-end funnel over all L0 entries (P6) → docs/analysis/funnel.md
+│   ├── funnel.py             # L0 → end-to-end funnel over all L0 entries (P6) → docs/analysis/funnel.md
+│   ├── po3_triage.py         # P1: classify stored PO3 failures (wrong code / unsatisfiable / tactics), Lean only
+│   ├── analyze_p3_p4_p5_p6.py # P3–P6 tables from stored l1l2.json → docs/analysis/p4_p3_split.md, p5_*, p6_*
+│   ├── p8_grounding.py       # P8: constants not taken from the requirement; builds the fidelity review CSV
+│   ├── p8_gold_compare.py    # P8: gamma j generated specs vs benchmark/gammaj/GammaJ_L0.lean
+│   ├── kappa.py              # P8: agreement of the two human raters
+│   └── strength_score.py     # P11: model-free strength payoff per spec → docs/analysis/strength_scores.md
+│
+├── docs/
+│   ├── issues.tex / .pdf     # every open issue (P1–P13, N1–N4, harness defects H1–H7)
+│   ├── analysis/             # generated analysis tables (P1, P3–P6, P8, P11); regenerate, don't hand-edit
+│   └── design/               # design write-ups (contractforge_design, p11_mechanism.md)
 │
 ├── Requirements/           # input SRS documents (.xml, .pdf)
 │   └── parsed/             # parser output, one JSON per document
@@ -187,6 +210,9 @@ contents of `benchmark/` and the rest of `evaluation/` (see [MEMORY.md](MEMORY.m
 | Change how PO statements are written or checked in batches (both paths) | [harness/po.py](harness/po.py) |
 | Change how failures are classified, or the run summary | [harness/chain_failures.py](harness/chain_failures.py), [evaluation/summarize_e2e.py](evaluation/summarize_e2e.py) |
 | Change the generic proof scripts for model-written theorems | [harness/agents/autoprove.py](harness/agents/autoprove.py) |
+| See every known problem and what to do about it | [docs/issues.tex](docs/issues.tex) |
+| Find out why PO3 failed for a stored component | `python evaluation/po3_triage.py "runs/*/qwen-chain-v5" -o docs/analysis/po3_triage.md` (CPU only; job file `runs/po3-triage.sbatch`) → [docs/analysis/po3_triage.md](docs/analysis/po3_triage.md) |
+| Turn on counterexample feedback / stronger PO3 tactics / more weak-spec rounds | `CF_CEX_FEEDBACK=1`, `CF_PO3_TACTICS=2`, `CF_WEAK_ROUNDS=n` ([harness/agents/chain_coder.py](harness/agents/chain_coder.py), [harness/spec_checks.py](harness/spec_checks.py)); every run records the `CF_*` switches it used in its metadata |
 
 ### Proof obligations
 

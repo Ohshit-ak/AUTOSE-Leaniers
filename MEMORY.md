@@ -4,6 +4,22 @@ A running log of where ContractForge stands, why things are the way they are,
 and what comes next. Update it whenever you finish a piece of work or make a
 decision someone else would need to know.
 
+## Status (2026-11-19)
+
+**2026-11-19 (no model run, uncommitted):** P1 PO3 triage done (`evaluation/po3_triage.py`, job 92324 →
+`docs/analysis/po3_triage.md/.json`): 618 failures / 214 distinct = **80 wrong-code, 77 unsatisfiable-spec, 55 tactics
+(12 proved by `CF_PO3_TACTICS=2`), 2 unevaluable**. Only 16 SRS have data (peering, get real 0.2: 0 accepted specs).
+Also P3–P6, P8 (grounding, gold, 60-spec rater CSV, raters blank) and P11 (strength payoff) analyses in
+`docs/analysis/`. Harness switches added, default off, **not yet run with a model**: `CF_CEX_FEEDBACK=1`
+(`harness/counterexample.py`), `CF_PO3_TACTICS=2`, `CF_WEAK_ROUNDS=n`; P10 trace proof unfolds L0 helpers
+(fixes the free-variables error), graph rebuilt on every L1 run, `--with-graph`; run meta records `CF_*` switches.
+**Corrections:** the H1 "63.0 / 69.6" figure is wrong. The right value is 64.0 / 70.7 (P3 in `docs/issues.tex`).
+gamma j strength scores look broken (N1). `docs/issues.tex` is updated but `issues.pdf` is not rebuilt (no LaTeX on the node).
+**Gotcha:** `evaluation/*` scripts that `os.chdir(harness/)` must resolve CLI paths first (fixed in po3_triage.py
+after the first triage job crashed writing its output).
+Next: commit, run tests, then GPU: chain-v5 with `CF_CEX_FEEDBACK=1 CF_PO3_TACTICS=2` ×3, `CF_WEAK_ROUNDS=2`,
+graph L1, L0 ×3 (P9); fill P8 rater columns (humans only).
+
 ## Status (2026-11-18)
 
 **2026-11-18 (no model run):** harness defects H1–H7 from the property-based/metamorphic suite fixed (see
@@ -36,6 +52,8 @@ GPU follow-up (P9 L0 ×3 paired, CF_SKELETON=0 ablation, counterexample feedback
 | `evaluation/compare_runs.py` | Done (v10; arch mode L1-v1). Compares two runs over repetitions, mean (min–max), verdict only beyond the spread. L1 folders get the arch report (now with `accepted-degraded` and degraded operations). |
 | `evaluation/summarize_e2e.py` | Rewritten 2026-11-12. Chain runs: results by mode, failure classes for L1 and L2, the cause of every "one of two components" spec, mean (min–max) over `rep*/`. Works on the v2 runs too. 2026-11-18 (H2): rows are the union over repetitions; "strength of chain architectures" is averaged only over repetitions that have chains ("in k of 3 repetitions"), never filled with 0. |
 | `evaluation/funnel.py` | Added 2026-11-18 (P6). L0 → end-to-end funnel with all L0 entries as denominator, per SRS → `docs/analysis/funnel.md`. |
+| `evaluation/po3_triage.py` | Added 2026-11-19 (P1). Stored PO3 failures → wrong-code / unsatisfiable-spec / tactics / unevaluable, Lean only (`harness/counterexample.py`). CPU job `runs/po3-triage.sbatch`. |
+| `evaluation/analyze_p3_p4_p5_p6.py`, `p8_grounding.py`, `p8_gold_compare.py`, `kappa.py`, `strength_score.py` | Added 2026-11-19. P3–P6, P8, P11 analyses over stored runs → `docs/analysis/`. `strength_score.py` gamma j output is suspect (N1). |
 | `framework/ContractForge/Strings.lean` | Done (v10), frozen. String-format helpers over `List Char`. |
 | `requirements.txt` | Created 2026-11-12 (`pip install -r requirements.txt`). |
 

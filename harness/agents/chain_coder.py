@@ -19,6 +19,12 @@ from agents.base import generate_verified
 # implementation when nothing is left to fill, gives the rest to the model as a skeleton, and
 # turns PO3 failures into actions. CF_SKELETON=0 = chain-v4 behaviour.
 SKELETON = os.getenv("CF_SKELETON", "1") == "1"
+# P1: on a PO3 failure, evaluate the function on small inputs and put a concrete counterexample
+# ("for input X your function returns Y, but post needs Z") in the repair prompt.
+CEX_FEEDBACK = os.getenv("CF_CEX_FEEDBACK", "0") == "1"
+# P1: PO3 proof scripts. 1 = discharge_po3 / discharge_po (chain-v5); 2 = also case splits on
+# the Bool fields of the argument, repeated `split` and `decide` closers.
+PO3_TACTICS = int(os.getenv("CF_PO3_TACTICS", "1"))
 
 SYSTEM_PROMPT_CODER = """\
 You are a coding agent for ContractForge (Lean 4).
@@ -141,6 +147,37 @@ def diagnose_po3(prefix: str, c: C.Contract, impl: str, unfold: str) -> list:
     return [p for p, (ok, _) in zip(parts, po.run_theorems(prefix, thms)) if not ok]
 
 
+def po3_proofs(unfold: str, contract=None, fields=None) -> list:
+    """Proof scripts tried for PO3, in order (CF_PO3_TACTICS)."""
+    proofs = [f"discharge_po3 [{unfold}]", f"discharge_po [{unfold}]"]
+    if PO3_TACTICS < 2:
+        return proofs
+    head = f"simp only [Contract.Satisfies, {unfold}]; intro x hpre; (try simp only [{unfold}] at hpre ⊢); "
+    close = "(first | done | (simp_all; done) | omega | grind | decide)"
+    alts = [head + f"(repeat' split) <;> simp_all <;> {close}"]
+    bools = [f for f, t in ((fields or {}).get(contract.dom, {}) if contract else {}).items() if t.strip() == "Bool"]
+    for f in bools[:3]:
+        alts.append(head + f"cases hb : x.{f} <;> simp_all <;> (repeat' split) <;> simp_all <;> {close}")
+    if len(bools) >= 2:
+        alts.append(head + " <;> ".join(f"cases hb{k} : x.{f}" for k, f in enumerate(bools[:3]))
+                    + f" <;> simp_all <;> {close}")
+    alts.append(head + f"cases x <;> simp_all <;> (repeat' split) <;> {close}")
+    # one Lean run for all of them
+    proofs.append("first\n" + "\n".join(f"  | ({a})" for a in alts))
+    return proofs
+
+
+def counterexample_text(prefix: str, contract, impl: str, seed_code: str):
+    """The P1 counterexample sentence, or None (never raises: the feedback is optional)."""
+    try:
+        import counterexample
+        cex = counterexample.find(prefix, contract, impl, seed_code=seed_code,
+                                  limit=int(os.getenv("CF_CEX_INPUTS", "24")))
+    except Exception:
+        return None
+    return cex.message(impl, contract.name) if cex else None
+
+
 def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
     impl, ok_name = f"{contract_name}Impl", f"{contract_name}Impl_ok"
     contract = next((c for c in C.parse_contracts(locked_code) if c.name == contract_name), None)
@@ -170,7 +207,7 @@ def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
     def validate(code: str) -> list:
         prefix = locked_defs + "\n\n" + code
         unfold = ", ".join(dict.fromkeys([contract_name] + _DEF.findall(code)))
-        proofs = [f"discharge_po3 [{unfold}]", f"discharge_po [{unfold}]"]
+        proofs = po3_proofs(unfold, contract, fields)
         if state["model_proof"]:
             proofs.append(state["model_proof"])
         proof, errors = po.prove(prefix, statement, proofs)
@@ -186,8 +223,15 @@ def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
             if SKELETON:
                 msg += " What to do: " + " ".join(
                     f"({k}) {S.action_for(c, contract, fields)}." for k, c in enumerate(bad[:3], 1))
-            return [msg]
-        return ["PO3 could not be proved: " + "; ".join(errors[:2])]
+        else:
+            msg = "PO3 could not be proved: " + "; ".join(errors[:2])
+        if CEX_FEEDBACK and contract:
+            cex = counterexample_text(C.strip_theorems(locked_defs) + "\n\n" + C.strip_theorems(code),
+                                      contract, impl, locked_code)
+            state.setdefault("cex", []).append(cex)
+            if cex:
+                msg += " Counterexample (evaluated by Lean): " + cex
+        return [msg]
 
     sk = S.build(contract, fields, impl) if (SKELETON and contract) else None
 
@@ -225,4 +269,8 @@ def run_coder(contract_name: str, locked_code: str, model: str) -> dict:
         result["code"] = code + "\n\n" + thm
         result["fields"] = S.provenance(code, sk)
     result["harness_only"] = False
+    if state.get("cex"):
+        result["counterexamples"] = [c for c in state["cex"] if c][:3]
+        result["cex_found"] = sum(bool(c) for c in state["cex"])
+        result["cex_tried"] = len(state["cex"])
     return {"name": contract_name, "impl": impl, **result}

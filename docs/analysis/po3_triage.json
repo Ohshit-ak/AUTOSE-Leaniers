@@ -1,0 +1,3565 @@
+[
+ {
+  "doc": "0000 - cctns",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4/ease-of-use/R7",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 6,
+  "with_pre": 5,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "0000 - cctns",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4/ease-of-use/R9",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ menuContents := [], screenLayout := [\"Home\", \"Settings\", \"Help\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\", \"red\"], fonts := [\"Arial\", \"Times New Roman\", \"Courier New\"], fontSizes := [12, 14, 16], updateMenu := true }",
+  "output": "{ menuContents := [], screenLayout := [\"Home\", \"Settings\", \"Help\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\", \"red\"], fonts := [\"Arial\", \"Times New Roman\", \"Courier New\"], fontSizes := [12, 14, 16] }",
+  "needed": "{ menuContents := [\"Home\", \"Settings\", \"Help\"], screenLayout := [\"Home\", \"Settings\", \"Help\"], functionKeys := [\"F1\", \"F2\", \"F3\"], onScreenColors := [\"blue\", \"green\", \"red\"], fonts := [\"Arial\", \"Times New Roman\", \"Courier New\"], fontSizes := [12, 14, 16] }",
+  "failing": [
+   "o.menuContents = i.menuContents ↔ i.updateMenu = false"
+  ],
+  "inputs": 40,
+  "with_pre": 33
+ },
+ {
+  "doc": "0000 - cctns",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3/registration/S1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 18,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.1.3/S1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ name := \"a\", email := \"alice@example.com\", phone := \"1234567890\", purchaseHistory := [], confirmedOrders := [] }",
+  "output": "{ profileCreated := true, profile := { name := \"a\", email := \"alice@example.com\", phone := \"1234567890\", purchaseHistory := [], confirmedOrders := [] } }",
+  "needed": "{ profileCreated := false, profile := { name := \"\", email := \"\", phone := \"\", purchaseHistory := [], confirmedOrders := [] } }",
+  "failing": [
+   "o.profileCreated = false ↔\n      (o.profile.purchaseHistory = [] ∧ o.profile.confirmedOrders = [])"
+  ],
+  "inputs": 40,
+  "with_pre": 14
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.1.3/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 19,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.4.3/S2",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ currentOrder := { items := [\"item1\"], quantity := 3 }, revisedOrder := some { items := [\"item2\"], quantity := 5 } }",
+  "output": "{ currentOrder := { items := [\"item1\"], quantity := 3 }, revisedOrder := some { items := [\"item2\"], quantity := 5 }, confirmed := false }",
+  "needed": "{ currentOrder := { items := [], quantity := 0 }, revisedOrder := some { items := [\"item2\"], quantity := 5 }, confirmed := false }",
+  "failing": [
+   "o.confirmed = true ↔\n    (o.currentOrder = i.currentOrder ∧ o.revisedOrder = i.revisedOrder) ∨\n    (o.currentOrder = i.revisedOrder.getD i.currentOrder ∧ o.revisedOrder = none)"
+  ],
+  "inputs": 6,
+  "with_pre": 4
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.3/R1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 2,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.3/R5",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ accounts := [], username := \"user1\", password := \"pw1\" }",
+  "output": "{ accounts := [], accepted := false }",
+  "failing": [
+   "o.accepted = false →\n      ∃ a ∈ i.accounts, a.username = i.username ∧\n      (a.failedAttempts = 3 ∨ a.failedAttempts > 3 ∧ a.password ≠ i.password)"
+  ],
+  "inputs": 40,
+  "with_pre": 34,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "UC-customer-edit-customer-details",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ signedIn := true, changes := { username := \"\", email := \"\", phone := \"\" } }",
+  "output": "{ signedIn := true, changes := { username := \"\", email := \"\", phone := \"\" } }",
+  "failing": [
+   "o.changes.username = i.changes.username ↔ i.changes.username ≠ \"\"",
+   "o.changes.email = i.changes.email ↔ i.changes.email ≠ \"\"",
+   "o.changes.phone = i.changes.phone ↔ i.changes.phone ≠ \"\""
+  ],
+  "inputs": 4,
+  "with_pre": 2,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "UC-sales-person-remove-product",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ products := [], name := \"Laptop\", price := 1000 }",
+  "output": "{ products := [] }",
+  "failing": [
+   "∃ p ∈ i.products, p.name = i.name ∧ p.price = i.price ∧\n                     ∀ p ∈ o.products, p.name ≠ i.name ∨ p.price ≠ i.price"
+  ],
+  "inputs": 40,
+  "with_pre": 40,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.4.3/S2",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ currentOrder := { items := [\"item1\"], quantity := 3 }, revisedOrder := some { items := [\"item2\"], quantity := 5 } }",
+  "output": "{ currentOrder := { items := [\"item1\"], quantity := 3 }, revisedOrder := some { items := [\"item2\"], quantity := 5 }, confirmed := true }",
+  "needed": "{ currentOrder := { items := [], quantity := 0 }, revisedOrder := some { items := [\"item2\"], quantity := 5 }, confirmed := false }",
+  "failing": [
+   "o.revisedOrder = i.revisedOrder → o.confirmed = false"
+  ],
+  "inputs": 6,
+  "with_pre": 4
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "5.1/R1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 6,
+  "with_pre": 6,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "UC-administrator-add-user",
+  "mode": "chain",
+  "contract": "ApplyRoleAndPrivilegesContract",
+  "position": "second",
+  "class": "wrong-code",
+  "input": "{ role := \"\", privileges := \"\", username := \"\", password := \"\" }",
+  "output": "{ username := \"\", password := \"\", role := \"\", privileges := \"\" }",
+  "needed": "{ username := \"\", password := \"\", role := \"customer\", privileges := \"\" }",
+  "failing": [
+   "o.privileges = \"read\" ∨\n                      (o.role = \"customer\" ∧ o.privileges = m.privileges)"
+  ],
+  "inputs": 40,
+  "with_pre": 40
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "UC-sales-person-login-sales-person",
+  "mode": "chain",
+  "contract": "LoginContract",
+  "position": "first",
+  "class": "wrong-code",
+  "input": "{ username := \"salesperson\", password := \"password123\", email := \"salesperson@example.com\", cookie := none }",
+  "output": "{ cookie := none, email := \"salesperson@example.com\", password := \"password123\" }",
+  "needed": "{ cookie := (some \"a\"), email := \"salesperson@example.com\", password := \"password123\" }",
+  "failing": [
+   "m.cookie.isNone → i.email.toList.any (· = ' ')"
+  ],
+  "inputs": 40,
+  "with_pre": 15
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "UC-sales-person-login-sales-person",
+  "mode": "chain",
+  "contract": "ApplyCookieContract",
+  "position": "second",
+  "class": "wrong-code",
+  "input": "{ cookie := none, email := \"\", password := \"\" }",
+  "output": "{ loggedIn := true, cookie := none }",
+  "needed": "{ loggedIn := true, cookie := (some \"a\") }",
+  "failing": [
+   "o.loggedIn = true ↔\n    (o.cookie.isSome → o.cookie.getD \"\" ≠ \"\") ∧\n    (o.cookie.isNone → m.email.toList.any (· = ' '))"
+  ],
+  "inputs": 12,
+  "with_pre": 12
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "3.1.3/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 19,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "5.3/R5",
+  "mode": "chain",
+  "contract": "AuthenticateUserContract",
+  "position": "first",
+  "class": "unsatisfiable-spec",
+  "input": "{ accounts := [], username := \"user1\", password := \"pw1\" }",
+  "output": "{ accounts := [], accepted := false, username := \"user1\", password := \"pw1\" }",
+  "failing": [
+   "m.accepted = false →\n      ∃ a ∈ i.accounts, a.username = i.username ∧\n      (a.failedAttempts = 3 ∨ a.failedAttempts > 3 ∧ a.password ≠ i.password)"
+  ],
+  "inputs": 40,
+  "with_pre": 34,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "5.3/R5",
+  "mode": "chain",
+  "contract": "UpdateAccountsContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ accounts := [{ username := \"\", password := \"\", failedAttempts := 0 }], accepted := false, username := \"\", password := \"1\" }",
+  "output": "{ accounts := [{ username := \"\", password := \"\", failedAttempts := 1 }], accepted := false }",
+  "failing": [
+   "o.accounts = m.accounts",
+   "∀ a ∈ o.accounts, a.failedAttempts = a.failedAttempts + (if o.accepted then 0 else 1)"
+  ],
+  "inputs": 40,
+  "with_pre": 40,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "5.5/R1",
+  "mode": "chain",
+  "contract": "ComputeResultsContract",
+  "position": "first",
+  "class": "unsatisfiable-spec",
+  "input": "{ query := \"cats\", items := [{ name := \"cats\", source := \"web\", rating := 3 }, { name := \"cats\", source := \"archive\", rating := 5 }], includeArchive := true }",
+  "output": "{ results := [{ name := \"cats\", source := \"web\", rating := 3 }, { name := \"cats\", source := \"archive\", rating := 5 }] }",
+  "failing": [
+   "List.Pairwise (fun a b => a.rating ≥ b.rating) m.results"
+  ],
+  "inputs": 27,
+  "with_pre": 22,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "UC-sales-person-login-sales-person",
+  "mode": "chain",
+  "contract": "AuthenticateContract",
+  "position": "first",
+  "class": "wrong-code",
+  "input": "{ username := \"salesperson\", password := \"password123\", email := \"salesperson@example.com\", cookie := none }",
+  "output": "{ cookie := none, email := \"salesperson@example.com\", password := \"password123\" }",
+  "needed": "{ cookie := (some \"a\"), email := \"salesperson@example.com\", password := \"password123\" }",
+  "failing": [
+   "m.cookie.isNone → i.email.toList.any (· = ' ')"
+  ],
+  "inputs": 40,
+  "with_pre": 15
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "UC-sales-person-login-sales-person",
+  "mode": "chain",
+  "contract": "HandleLoginContract",
+  "position": "second",
+  "class": "wrong-code",
+  "input": "{ cookie := none, email := \"\", password := \"\" }",
+  "output": "{ loggedIn := true, cookie := none }",
+  "needed": "{ loggedIn := true, cookie := (some \"a\") }",
+  "failing": [
+   "o.loggedIn = true ↔\n    (o.cookie.isSome → o.cookie.getD \"\" ≠ \"\") ∧\n    (o.cookie.isNone → m.email.toList.any (· = ' '))"
+  ],
+  "inputs": 12,
+  "with_pre": 12
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.7.1/S6",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ command := \"start\", accepted := false, transmitted := true }",
+  "output": "{ accepted := false, transmitted := true }",
+  "failing": [
+   "o.accepted = true"
+  ],
+  "inputs": 12,
+  "with_pre": 12,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.3/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ nodes := [] }",
+  "output": "{ capacityNodes := 0, capacityUsers := 0 }",
+  "needed": "{ capacityNodes := 0, capacityUsers := 1 }",
+  "failing": [
+   "o.capacityUsers = (i.nodes.map (·.workstations)).sum ↔\n                      i.nodes.length = 1"
+  ],
+  "inputs": 3,
+  "with_pre": 3
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.5/S6",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 5,
+  "with_pre": 5,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.3.1/S6",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ station := \"a\", telescope := \"Gemini 8m\" }",
+  "output": "{ accessible := false, telescope := \"Gemini 8m\" }",
+  "failing": [
+   "o.telescope = \"\" ↔ o.accessible = false"
+  ],
+  "inputs": 32,
+  "with_pre": 27,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.3.4.1/I1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ command := \"a\" }",
+  "output": "{ reply := \"NACK\", status := true }",
+  "needed": "{ reply := \"NACK\", status := false }",
+  "failing": [
+   "o.status = true ↔\n    (o.reply = \"OK\" ∧ i.command = \"sync\") ∨\n    (o.reply = \"ACK\" ∧ i.command = \"coord\") ∨\n    (o.reply = \"NACK\" ∧ i.command = \"error\") ∧\n    o.reply ≠ i.command"
+  ],
+  "inputs": 8,
+  "with_pre": 7
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.2.2.1/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ videoData := [\"\"] }",
+  "output": "{ encodedData := [], transferred := true }",
+  "needed": "{ encodedData := [\"a\"], transferred := true }",
+  "failing": [
+   "o.encodedData.length = i.videoData.length"
+  ],
+  "inputs": 5,
+  "with_pre": 4
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.3.1.2.1/I4",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ recordSupports := [{ recordType := \"temp\", recordProcessingRoutineCalled := false }, { recordType := \"humidity\", recordProcessingRoutineCalled := true }], deviceSupports := [{ deviceType := \"sensor\", recordType := \"temp\" }, { deviceType := \"sensor\", recordType := \"humidity\" }], deviceDrivers := [{ deviceType := \"sensor\", recordType := \"temp\", hardwareAccessMethodCalled := true }, { deviceType := \"sensor\", recordType := \"humidity\", hardwareAccessMethodCalled := true }] }",
+  "output": "{ recordProcessingRoutineCalled := true, hardwareAccessMethodCalled := true }",
+  "needed": "{ recordProcessingRoutineCalled := true, hardwareAccessMethodCalled := false }",
+  "failing": [
+   "(∀ rs ∈ i.recordSupports, rs.recordProcessingRoutineCalled = true) ∧\n    (∀ ds ∈ i.deviceSupports, ds.recordType ∈ i.recordSupports.map (fun rs => rs.recordType)) ∧\n    (∀ dd ∈ i.deviceDrivers, dd.deviceType ∈ i.deviceSupports.map (fun ds => ds.deviceType) ∧\n      dd.recordType ∈ i.recordSupports.map (fun rs => rs.recordType) ∧\n      dd.hardwareAccessMethodCalled = true) ∧\n    o.recordProcessingRoutineCalled ↔\n      ∃ rs ∈ i.recordSupports, rs.recordProcessingRoutineCalled = true ∧\n      rs.recordType ∈ i.deviceSupports.map (fun ds => ds.recordType) ∧\n      rs.recordType ∈ i.deviceDrivers.map (fun dd => dd.recordType) ∧\n    o.hardwareAccessMethodCalled ↔\n      ∃ dd ∈ i.deviceDrivers, dd.hardwareAccessMethodCalled = true ∧\n    (o.recordProcessingRoutineCalled = false ↔\n      i.recordSupports.all (fun rs => rs.recordProcessingRoutineCalled = false))"
+  ],
+  "inputs": 25,
+  "with_pre": 25
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "2.10/S4",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 38,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.2.5/S6",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 5,
+  "with_pre": 5,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.3.1/S6",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ station := \"a\", telescope := \"Gemini 8m\" }",
+  "output": "{ accessible := false, telescope := \"Gemini 8m\" }",
+  "failing": [
+   "o.telescope = \"\" ↔ o.accessible = false"
+  ],
+  "inputs": 32,
+  "with_pre": 27,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "4.2.4.2/I3",
+  "mode": "chain",
+  "contract": "FinalizeContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ retries := 0, timeout := 0 }",
+  "output": "{ retries := 0, timeout := 0, succeeded := true }",
+  "failing": [
+   "o.succeeded = false ↔\n                      (m.retries = 0 ∧ m.timeout = 0)"
+  ],
+  "inputs": 32,
+  "with_pre": 32,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "2.10/S4",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ criticalResource := 1, allocatedUsers := [1, 2], maxUsers := 1 }",
+  "output": "{ allocatedUsers := [1, 2], maxUsers := 1 }",
+  "needed": "{ allocatedUsers := [1], maxUsers := 1 }",
+  "failing": [
+   "o.allocatedUsers.length ≤ i.maxUsers"
+  ],
+  "inputs": 40,
+  "with_pre": 38
+ },
+ {
+  "doc": "1998 - themas",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.1.6.3/S5",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "1998 - themas",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.1.10.3/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 12,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1999 - dii",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.1/I1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ readiness := 50, crisisPlanning := false, transferCapabilities := 100, dataManagement := 80 }",
+  "output": "{ environmentalMode := false, readiness := 50, crisisPlanning := false, transferCapabilities := 100, dataManagement := 80 }",
+  "needed": "{ environmentalMode := false, readiness := 100, crisisPlanning := false, transferCapabilities := 100, dataManagement := 80 }",
+  "failing": [
+   "o.environmentalMode ↔\n    (i.readiness > 0) ∧\n    (o.crisisPlanning = i.crisisPlanning) ∧\n    (o.transferCapabilities = i.transferCapabilities) ∧\n    (o.dataManagement = i.dataManagement) ∧\n    (o.readiness = i.readiness) ∧\n    (o.environmentalMode = true ↔\n      (i.crisisPlanning = true) ∧\n      (i.transferCapabilities > 0) ∧\n      (i.dataManagement > 0))"
+  ],
+  "inputs": 40,
+  "with_pre": 38
+ },
+ {
+  "doc": "1999 - dii",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.1/I3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ workload := 300, databaseSize := 500 }",
+  "output": "{ tuned := false, workload := 600, databaseSize := 1000 }",
+  "needed": "{ tuned := true, workload := 600, databaseSize := 1000 }",
+  "failing": [
+   "o.tuned = true ↔\n    (i.workload < 500 → o.workload = i.workload * 2) ∧\n    (i.workload ≥ 500 → o.workload = i.workload / 2) ∧\n    (i.databaseSize < 1000 → o.databaseSize = i.databaseSize * 2) ∧\n    (i.databaseSize ≥ 1000 → o.databaseSize = i.databaseSize / 2) ∧\n    o.tuned = false → o.workload = i.workload ∧ o.databaseSize = i.databaseSize ∧\n    o.tuned = true → o.workload ≠ i.workload ∧ o.databaseSize ≠ i.databaseSize"
+  ],
+  "inputs": 40,
+  "with_pre": 37
+ },
+ {
+  "doc": "1999 - dii",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.14.7/I5",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ tags := [] }",
+  "output": "{ consolidatedTags := [] }",
+  "failing": [
+   "o.consolidatedTags ≠ []"
+  ],
+  "inputs": 5,
+  "with_pre": 5,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1999 - dii",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "4.14.7/I5",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ tags := [] }",
+  "output": "{ consolidatedTags := [] }",
+  "failing": [
+   "o.consolidatedTags ≠ []"
+  ],
+  "inputs": 5,
+  "with_pre": 5,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.1/S6",
+  "mode": "chain",
+  "contract": "GenerateOutputContract",
+  "position": "second",
+  "class": "wrong-code",
+  "input": "{ valid := false, discrepancies := [], override := true, lolDelayTimer := 0 }",
+  "output": "{ valid := false, discrepancies := [\"Validation failed\"], override := true, lolDelayTimer := 0 }",
+  "needed": "{ valid := false, discrepancies := [\"Validation failed\"], override := false, lolDelayTimer := 0 }",
+  "failing": [
+   "o.valid = false →\n                       o.discrepancies.length > 0 ∧\n                       o.override = false"
+  ],
+  "inputs": 40,
+  "with_pre": 40
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.2.2/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ tcsId := 1, payloadId := 2, data := \"\" }",
+  "output": "{ tcsId := 1, payloadId := 2, data := \"\", status := \"Control sent\" }",
+  "needed": "{ tcsId := 1, payloadId := 2, data := \"\", status := \"\" }",
+  "failing": [
+   "o.status = \"Control sent\" ↔ i.data ≠ \"\""
+  ],
+  "inputs": 40,
+  "with_pre": 40
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.2.2.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ payloadMethods := [], override := true }",
+  "output": "{ payloadControl := \"override\" }",
+  "failing": [
+   "o.payloadControl ∈ i.payloadMethods"
+  ],
+  "inputs": 12,
+  "with_pre": 6,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.3.1/S4",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 28,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.5/S5",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ dataServer := \"server1\", videoCables := [], radios := [\"radio1\", \"radio2\"], liveVideo := true, interfacedRadios := true }",
+  "output": "{ receivedData := true, liveVideo := false, interfacedRadios := true }",
+  "needed": "{ receivedData := false, liveVideo := false, interfacedRadios := true }",
+  "failing": [
+   "o.receivedData = true ↔\n    i.dataServer ≠ \"\" ∧\n    (∃ v ∈ i.videoCables, o.liveVideo = true) ∧\n    (∃ r ∈ i.radios, o.interfacedRadios = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 30
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.3.1.4/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ data := [\"\"] }",
+  "output": "{ transferred := true }",
+  "needed": "{ transferred := false }",
+  "failing": [
+   "o.transferred = true ↔\n    (i.data.length = 0 → o.transferred = false) ∧\n    (i.data.length > 0 →\n      ∃ transferredData ∈ i.data, transferredData ∈ i.data ∧\n      (transferredData = \"digital data\" ∨ transferredData = \"digital imagery\"))"
+  ],
+  "inputs": 6,
+  "with_pre": 5
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.3.1.6/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ locationData := [\"\"] }",
+  "output": "{ geopositionalData := [\"\"] }",
+  "failing": [
+   "o.geopositionalData = i.locationData → o.geopositionalData = []"
+  ],
+  "inputs": 4,
+  "with_pre": 4,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.8.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ clearance := \"Top Secret\", sensitivities := [\"Confidential\", \"Secret\", \"Top Secret\"] }",
+  "output": "{ riskIndex := 4, securityRequirements := [] }",
+  "failing": [
+   "o.securityRequirements.length = 3"
+  ],
+  "inputs": 40,
+  "with_pre": 36,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.11.3/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 10,
+  "with_pre": 9,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.14/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ personnelType := \"civilian\", trainingType := \"initial\" }",
+  "output": "{ trainingComplete := false }",
+  "needed": "{ trainingComplete := true }",
+  "failing": [
+   "o.trainingComplete = true ↔\n                      (i.personnelType = \"civilian\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"new equipment\" ∨\n                        i.trainingType = \"initial\" ∨ i.trainingType = \"formal\" ∨\n                        i.trainingType = \"on-the-job\")) ∨\n                      (i.personnelType = \"active duty\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"new equipment\" ∨\n                        i.trainingType = \"initial\" ∨ i.trainingType = \"formal\" ∨\n                        i.trainingType = \"on-the-job\")) ∨\n                      (i.personnelType = \"reserve military\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"crew\" ∨\n                        i.trainingType = \"new equipment\" ∨ i.trainingType = \"initial\" ∨\n                        i.trainingType = \"formal\" ∨ i.trainingType = \"on-the-job\"))",
+   "o.trainingComplete = false ↔\n                      (i.personnelType = \"active duty\" ∧ i.trainingType = \"crew\")"
+  ],
+  "inputs": 40,
+  "with_pre": 7
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.2.3.1/S4",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 28,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "3.14/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ personnelType := \"civilian\", trainingType := \"crew\" }",
+  "output": "{ trainingComplete := true }",
+  "failing": [
+   "o.trainingComplete = true ↔\n                      (i.personnelType = \"civilian\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"new equipment\" ∨\n                        i.trainingType = \"initial\" ∨ i.trainingType = \"formal\" ∨\n                        i.trainingType = \"on-the-job\")) ∨\n                      (i.personnelType = \"active duty\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"new equipment\" ∨\n                        i.trainingType = \"initial\" ∨ i.trainingType = \"formal\" ∨\n                        i.trainingType = \"on-the-job\")) ∨\n                      (i.personnelType = \"reserve military\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"crew\" ∨\n                        i.trainingType = \"new equipment\" ∨ i.trainingType = \"initial\" ∨\n                        i.trainingType = \"formal\" ∨ i.trainingType = \"on-the-job\"))"
+  ],
+  "inputs": 40,
+  "with_pre": 7,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2003 - qheadache",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.1.4.3/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ selectedBlock := { position := 10 }, otherBlocks := [{ position := 0 }], distance := 10 }",
+  "output": "{ selectedBlock := { position := 10 }, otherBlocks := [{ position := 0 }], accepted := false }",
+  "failing": [
+   "o.accepted = true ↔\n    ∀ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≤ other.position - 1 ∨\n    other.position + 5 ≤ i.selectedBlock.position - 1"
+  ],
+  "inputs": 29,
+  "with_pre": 15,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2003 - qheadache",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.2.1.4.3/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ selectedBlock := { position := 10 }, otherBlocks := [], distance := 10 }",
+  "output": "{ selectedBlock := { position := 10 }, otherBlocks := [], accepted := false }",
+  "needed": "{ selectedBlock := { position := 10 }, otherBlocks := [], accepted := true }",
+  "failing": [
+   "o.accepted = true ↔\n    ∀ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≤ other.position - 1 ∨\n    other.position + 5 ≤ i.selectedBlock.position - 1",
+   "o.accepted = false ↔\n    ∃ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≥ other.position ∨\n    other.position + 5 ≥ i.selectedBlock.position"
+  ],
+  "inputs": 29,
+  "with_pre": 15
+ },
+ {
+  "doc": "2003 - qheadache",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "3.2.1.4.3/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ selectedBlock := { position := 10 }, otherBlocks := [{ position := 0 }], distance := 10 }",
+  "output": "{ selectedBlock := { position := 10 }, otherBlocks := [{ position := 0 }], accepted := false }",
+  "failing": [
+   "o.accepted = true ↔\n    ∀ other ∈ i.otherBlocks, i.selectedBlock.position + 5 ≤ other.position - 1 ∨\n    other.position + 5 ≤ i.selectedBlock.position - 1"
+  ],
+  "inputs": 29,
+  "with_pre": 15,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.1.1/I9",
+  "mode": "chain",
+  "contract": "ValidateFormsContract",
+  "position": "first",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.1.1/I9",
+  "mode": "chain",
+  "contract": "RejectedFormsContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ validatedForms := [{ formNumber := \"\", patientName := \"\", amount := 0 }], rejectedForms := [], forms := [] }",
+  "output": "{ validatedForms := [{ formNumber := \"\", patientName := \"\", amount := 0 }], rejectedForms := [] }",
+  "failing": [
+   "o.validatedForms.length + o.rejectedForms.length = m.forms.length"
+  ],
+  "inputs": 8,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.1.1/I11",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 32,
+  "with_pre": 32,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "1./S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ numbers := [12345, 67890] }",
+  "output": "{ barcodes := [{ number := 12345, barcode := \"\" }, { number := 67890, barcode := \"\" }] }",
+  "failing": [
+   "∀ n ∈ i.numbers, ∃ v ∈ o.barcodes, v.number = n ∧\n                     v.barcode ≠ \"\""
+  ],
+  "inputs": 6,
+  "with_pre": 6,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "Design Constraints/S5",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3./S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ data := \"\" }",
+  "output": "{ valid := true, data := \"\" }",
+  "needed": "{ valid := false, data := \"a\" }",
+  "failing": [
+   "o.valid = true ↔\n    (i.data.isEmpty → o.valid = false) ∧\n    (i.data.isEmpty → o.data = \"\") ∧\n    (i.data.length ≤ 100 → i.data.length ≥ 1 → o.valid = true) ∧\n    (i.data.length > 100 → o.valid = false) ∧\n    (o.data = i.data)"
+  ],
+  "inputs": 4,
+  "with_pre": 4
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "Design Constraints/I17",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ claim := { status := \"\", reason := none, mandatoryInfo := \"\", data := \"\" } }",
+  "output": "{ status := \"Rejection\", reason := none, mandatoryInfo := \"\", data := \"\" }",
+  "needed": "{ status := \"\", reason := none, mandatoryInfo := \"\", data := \"\" }",
+  "failing": [
+   "(o.status = \"Rejection\" ∨ o.status = \"Quarantine\") ↔\n                     (i.claim.status = \"Rejection\" ∨ i.claim.status = \"Quarantine\") ∧\n                     (o.status = \"Rejection\" → o.reason = i.claim.reason) ∧\n                     (o.status = \"Quarantine\" → o.reason = i.claim.reason) ∧\n                     o.mandatoryInfo = i.claim.mandatoryInfo ∧\n                     o.data = i.claim.data"
+  ],
+  "inputs": 2,
+  "with_pre": 2
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "2.1.1/I9",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "2.1.1/I11",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "2.1.1/I13",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 18,
+  "with_pre": 6,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3./S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ data := \"\" }",
+  "output": "{ valid := false, data := \"\" }",
+  "needed": "{ valid := false, data := \"a\" }",
+  "failing": [
+   "o.valid = true ↔\n    (i.data.isEmpty → o.valid = false) ∧\n    (i.data.isEmpty → o.data = \"\") ∧\n    (i.data.length ≤ 100 → i.data.length ≥ 1 → o.valid = true) ∧\n    (i.data.length > 100 → o.valid = false) ∧\n    (o.data = i.data)"
+  ],
+  "inputs": 4,
+  "with_pre": 4
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "Design Constraints/S2#6",
+  "mode": "chain",
+  "contract": "FinalizeContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ maxAmount := 0, accepted := true, message := \"\", claims := [] }",
+  "output": "{ accepted := false, message := \"\" }",
+  "failing": [
+   "o.accepted = m.accepted"
+  ],
+  "inputs": 40,
+  "with_pre": 40,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "2.1.1/I11",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 32,
+  "with_pre": 32,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "2.1.1/I13",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 18,
+  "with_pre": 6,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2005 - microcare",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "Design Constraints/S2#6",
+  "mode": "chain",
+  "contract": "DecideOutcomeContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ totalExceeded := true, message := \"\", claims := [], maxAmount := 0 }",
+  "output": "{ accepted := false, message := \"All claims exceed the maximum amount.\" }",
+  "failing": [
+   "o.message = m.message"
+  ],
+  "inputs": 40,
+  "with_pre": 40,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "1/S5",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 2,
+  "with_pre": 2,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.3.1.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ questions := [{ title := \"\", fields := [], answers := [] }] }",
+  "output": "{ validatedQuestions := [{ title := \"\", fields := [], answers := [] }] }",
+  "failing": [
+   "∀ q ∈ i.questions, q ∈ o.validatedQuestions ∧\n    (q.fields.length > 0 ∧ q.answers.length = q.fields.length)"
+  ],
+  "inputs": 3,
+  "with_pre": 2,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.3.3.3/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.5.7/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ cases := [{ classification := \"\", details := \"\" }] }",
+  "output": "{ cases := [{ classification := \"\", details := \"\" }] }",
+  "failing": [
+   "∀ c ∈ i.cases, c ∈ o.cases ∧\n                     (c.classification = \"confirmed\" ∨\n                      c.classification = \"probable\" ∨\n                      c.classification = \"suspect\" ∨\n                      c.classification = \"other\" ∨\n                      c.classification = \"unclassified\")"
+  ],
+  "inputs": 3,
+  "with_pre": 2,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.5.9/S1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ countermeasures := [] }",
+  "output": "{ processed := true, countermeasures := [] }",
+  "failing": [
+   "∃ cm ∈ i.countermeasures, o.processed = true →\n      o.countermeasures.contains cm ∧\n      o.countermeasures.count cm = i.countermeasures.count cm"
+  ],
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "2.2.6.6/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ specimens := [], testType := \"Blood Test\", patientName := \"John Doe\" }",
+  "output": "{ requestCreated := true, testRequest := { id := 0, patientName := \"\", testType := \"\", status := \"\" } }",
+  "needed": "{ requestCreated := false, testRequest := { id := 0, patientName := \"\", testType := \"\", status := \"\" } }",
+  "failing": [
+   "o.requestCreated = true ↔\n    ∃ s ∈ i.specimens, s.patientName = i.patientName ∧ s.testType = i.testType ∧\n    o.testRequest = { id := s.id, patientName := s.patientName, testType := s.testType, status := \"requested\" } ∧\n    o.requestCreated = true → o.testRequest.status = \"requested\""
+  ],
+  "inputs": 38,
+  "with_pre": 25
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "2.5.3/S1",
+  "mode": "chain",
+  "contract": "ComputeMessageIDContract",
+  "position": "first",
+  "class": "unsatisfiable-spec",
+  "input": "{ patientID := 123, testCode := \"TEST123\", results := none, send := true }",
+  "output": "{ messageID := 0 }",
+  "failing": [
+   "m.messageID ≠ 0"
+  ],
+  "inputs": 40,
+  "with_pre": 18,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "2.2.6.6/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ specimens := [], testType := \"Blood Test\", patientName := \"John Doe\" }",
+  "output": "{ requestCreated := true, testRequest := { id := 0, patientName := \"\", testType := \"\", status := \"\" } }",
+  "needed": "{ requestCreated := false, testRequest := { id := 0, patientName := \"\", testType := \"\", status := \"\" } }",
+  "failing": [
+   "o.requestCreated = true ↔\n    ∃ s ∈ i.specimens, s.patientName = i.patientName ∧ s.testType = i.testType ∧\n    o.testRequest = { id := s.id, patientName := s.patientName, testType := s.testType, status := \"requested\" } ∧\n    o.requestCreated = true → o.testRequest.status = \"requested\""
+  ],
+  "inputs": 38,
+  "with_pre": 25
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "2.5.3/S1",
+  "mode": "chain",
+  "contract": "ComputeMessageIDContract",
+  "position": "first",
+  "class": "unsatisfiable-spec",
+  "input": "{ patientID := 123, testCode := \"TEST123\", results := none, send := true }",
+  "output": "{ messageID := 0 }",
+  "failing": [
+   "m.messageID ≠ 0"
+  ],
+  "inputs": 40,
+  "with_pre": 19,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.5.9/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ temperature := 40 }",
+  "output": "{ stored := true }",
+  "needed": "{ stored := false }",
+  "failing": [
+   "o.stored = true ↔ i.temperature < 40",
+   "o.stored = false ↔ i.temperature = 40"
+  ],
+  "inputs": 9,
+  "with_pre": 9
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.5.36/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ temperature := 100, humidity := 75 }",
+  "output": "{ passed := false, temperatureTestPassed := false, humidityTestPassed := true }",
+  "needed": "{ passed := true, temperatureTestPassed := false, humidityTestPassed := true }",
+  "failing": [
+   "o.passed = true ↔\n    (o.temperatureTestPassed = true ↔ i.temperature ≤ 50) ∧\n    (o.humidityTestPassed = true ↔ i.humidity ≤ 80)"
+  ],
+  "inputs": 40,
+  "with_pre": 37
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.4.9/S1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ functions := [\"additional_on_train_function\", \"other_function\"], registered := true, activation := false }",
+  "output": "{ sent := false, message := \"USSD message not sent\" }",
+  "failing": [
+   "o.sent = true ↔\n    (i.activation ∧ ∃ f ∈ i.functions, f = \"additional_on_train_function\") ∨\n    (¬i.activation ∧ o.sent = false)"
+  ],
+  "inputs": 24,
+  "with_pre": 12,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.6.3/S1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ networkSelection := \"requiredNetwork\", network := \"currentNetwork\" }",
+  "output": "{ registered := false, network := \"currentNetwork\" }",
+  "needed": "{ registered := true, network := \"requiredNetwork\" }",
+  "failing": [
+   "o.registered = false →\n                      (i.networkSelection = i.network ∧ o.network = i.network) ∨\n                      (i.networkSelection ≠ i.network ∧ o.network = i.networkSelection)"
+  ],
+  "inputs": 9,
+  "with_pre": 5
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "9.2.6/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ routingDatabase := [], coachFunctionNumber := \"1234\", msisdnNumbers := [\"1234567890\"] }",
+  "output": "{ routingDatabase := [] }",
+  "failing": [
+   "∃ entry ∈ o.routingDatabase, entry.coachFunctionNumber = i.coachFunctionNumber ∧\n                      entry.msisdnNumbers = i.msisdnNumbers"
+  ],
+  "inputs": 38,
+  "with_pre": 27,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "13.5.8/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ cabRadioConnected := true, trainBorneRecorderConnected := false, confirmationDetails := \"Emergency call confirmed\" }",
+  "output": "{ trainBorneRecorderConnected := false, confirmationDetails := \"Emergency call confirmed\" }",
+  "needed": "{ trainBorneRecorderConnected := false, confirmationDetails := \"\" }",
+  "failing": [
+   "o.confirmationDetails = i.confirmationDetails ↔ i.trainBorneRecorderConnected = true"
+  ],
+  "inputs": 12,
+  "with_pre": 6
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "4.5.9/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ temperature := 100 }",
+  "output": "{ stored := false }",
+  "failing": [
+   "o.stored = false ↔ i.temperature = 40"
+  ],
+  "inputs": 9,
+  "with_pre": 9,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "9.2.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "5.6.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ subAddress := \"user1\", onTrainUsers := [] }",
+  "output": "{ routedTo := \"\" }",
+  "failing": [
+   "∃ u ∈ i.onTrainUsers, o.routedTo = u ↔ i.subAddress = u"
+  ],
+  "inputs": 15,
+  "with_pre": 10,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "7.3.3/S1",
+  "mode": "chain",
+  "contract": "ShowMessageContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ registered := true, message := \"\" }",
+  "output": "{ registered := true, message := \"Functional number registered.\" }",
+  "failing": [
+   "o.message = m.message"
+  ],
+  "inputs": 14,
+  "with_pre": 14,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "10.5.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ sim := { networks := [{ code := \"123\", priority := 1 }, { code := \"456\", priority := 2 }] }, automaticSelection := true }",
+  "output": "{ selectedNetwork := some { code := \"123\", priority := 1 }, networksDisplayed := [{ code := \"123\", priority := 1 }, { code := \"456\", priority := 2 }] }",
+  "needed": "{ selectedNetwork := some { code := \"123\", priority := 1 }, networksDisplayed := [] }",
+  "failing": [
+   "List.Pairwise (fun a b => a.priority ≥ b.priority) o.networksDisplayed"
+  ],
+  "inputs": 4,
+  "with_pre": 4
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.3.12",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 6,
+  "with_pre": 2,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.5.1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ callType := \"broadcast\", fixedUsers := [\"user1\", \"user2\"] }",
+  "output": "{ callType := \"broadcast\", participants := [\"user1\", \"user2\"] }",
+  "needed": "{ callType := \"broadcast\", participants := [\"\", \"a\"] }",
+  "failing": [
+   "o.participants = i.fixedUsers ↔\n                      (i.callType = \"group\" ∧ o.participants.length = i.fixedUsers.length)"
+  ],
+  "inputs": 21,
+  "with_pre": 11
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.2.37",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ leadDriverId := \"LD1\", controllerId := \"C1\", multiCall := [\"LD1\"], callingLeadFirst := true }",
+  "output": "{ multiCall := [\"LD1\"] }",
+  "failing": [
+   "o.multiCall.contains i.controllerId ↔\n      (i.multiCall.contains i.leadDriverId ∧ i.multiCall.count i.leadDriverId = 1) ∨\n      (i.multiCall.count i.leadDriverId = 0 ∧ i.callingLeadFirst = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 26,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.2.42",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ callList := [\"\"] }",
+  "output": "{ callInitiated := false, callNumber := \"\" }",
+  "needed": "{ callInitiated := true, callNumber := \"\" }",
+  "failing": [
+   "o.callInitiated = true ↔\n    (i.callList.length > 0 ∧ i.callList.headD \"\" = o.callNumber) ∨\n    (o.callNumber ≠ \"\" ∧ o.callNumber.length ≤ 10) ∨\n    (o.callNumber = \"functionalNumber\")"
+  ],
+  "inputs": 6,
+  "with_pre": 6
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.2.60",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.2.61",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 4,
+  "with_pre": 2,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.3.9",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 23,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.3.25i",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ currentNetwork := \"a\", externalDevice := \"device1\" }",
+  "output": "{ networkSelected := false, newNetwork := \"a\" }",
+  "needed": "{ networkSelected := true, newNetwork := \"a\" }",
+  "failing": [
+   "o.networkSelected = true ↔\n    (i.currentNetwork = \"foreign\" → o.newNetwork ≠ i.currentNetwork) ∧\n    (i.currentNetwork ≠ \"foreign\" → o.newNetwork = i.currentNetwork)"
+  ],
+  "inputs": 12,
+  "with_pre": 6
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.3.25ix",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ cabNetwork := \"foreign\", availableNetworks := [\"net1\", \"net2\"], riskLevel := 6 }",
+  "output": "{ selectedNetwork := \"foreign\" }",
+  "needed": "{ selectedNetwork := \"\" }",
+  "failing": [
+   "o.selectedNetwork = i.cabNetwork ↔\n    i.availableNetworks.contains i.cabNetwork",
+   "o.selectedNetwork ≠ i.cabNetwork ↔\n    i.availableNetworks.any (fun n => n ≠ i.cabNetwork ∧ n ≠ \"foreign\") ∧ i.riskLevel > 5"
+  ],
+  "inputs": 40,
+  "with_pre": 19
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.3.26",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.3.32",
+  "mode": "chain",
+  "contract": "FinalizeContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ currentTrainNumber := \"\", newTrainNumber := \"\", accepted := true }",
+  "output": "{ currentTrainNumber := \"\", newTrainNumber := \"\", accepted := false }",
+  "failing": [
+   "o.accepted = m.accepted"
+  ],
+  "inputs": 8,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "5.2.3.40",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "7.2.2.2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ radio := \"a\", primaryController := \"\", secondaryController := (some \"\"), powerSupplyController := (some \"\") }",
+  "output": "{ callEstablished := true }",
+  "failing": [
+   "o.callEstablished = true ↔\n    (i.primaryController ≠ \"\" ∨\n     i.secondaryController.isSome ∧ i.secondaryController.getD \"\" ≠ \"\" ∨\n     i.powerSupplyController.isNone)"
+  ],
+  "inputs": 40,
+  "with_pre": 32,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "7.2.2.3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ controllers := [{ id := 1 }, { id := 2 }, { id := 3 }], selectedId := none }",
+  "output": "{ selectedId := none, elapsedMicros := 10000000 }",
+  "needed": "{ selectedId := (some 1), elapsedMicros := 10000000 }",
+  "failing": [
+   "o.selectedId.isSome ↔\n    (o.elapsedMicros ≤ 10000000 ∧\n     ∃ id ∈ i.controllers.map Controller.id, o.selectedId.getD id = id) ∨\n    (o.elapsedMicros = 10000000 ∧ o.selectedId = none)"
+  ],
+  "inputs": 9,
+  "with_pre": 9
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "7.2.3.9i",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ userRegistered := true, manualOverride := false, calling := false }",
+  "output": "{ manualOverride := false }",
+  "needed": "{ manualOverride := true }",
+  "failing": [
+   "o.manualOverride = i.manualOverride ↔\n    (i.calling = false ∧ i.manualOverride = true)",
+   "o.manualOverride = false → i.calling = true"
+  ],
+  "inputs": 8,
+  "with_pre": 4
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "10.2.1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ priority := 5 }",
+  "output": "{ level := 5, message := \"Invalid priority\" }",
+  "needed": "{ level := 5, message := \"\" }",
+  "failing": [
+   "o.message = \"Invalid priority\" ↔ (i.priority = 0 ∨ i.priority > 5)"
+  ],
+  "inputs": 9,
+  "with_pre": 6
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "12.2.1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ groundMessage := \"Hello\", mobileNumbers := [\"\"] }",
+  "output": "{ sentMessages := [] }",
+  "failing": [
+   "o.sentMessages.length = i.mobileNumbers.length"
+  ],
+  "inputs": 26,
+  "with_pre": 22,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "12.2.3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ message := \"emergency stop\", safetyRelated := true }",
+  "output": "{ safetyMechanismsIncluded := false }",
+  "failing": [
+   "o.safetyMechanismsIncluded = false ↔ i.safetyRelated = false"
+  ],
+  "inputs": 8,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "13.1.6",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ predefinedAreas := [] }",
+  "output": "{ driversNotified := true, controllersNotified := true, areaNotified := { network := \"\", part := \"\" } }",
+  "needed": "{ driversNotified := false, controllersNotified := true, areaNotified := { network := \"\", part := \"\" } }",
+  "failing": [
+   "(o.driversNotified = true ∧ o.controllersNotified = true) ↔\n                     (∃ a ∈ i.predefinedAreas, a.network = o.areaNotified.network ∧\n                      a.part = o.areaNotified.part)"
+  ],
+  "inputs": 3,
+  "with_pre": 3
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "14.2.8",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ mode := \"M2\", linkAssuranceSignalPressed := false, periodicButtonPressed := false }",
+  "output": "{ linkAssuranceSignalActive := true }",
+  "needed": "{ linkAssuranceSignalActive := false }",
+  "failing": [
+   "i.mode = \"M1\" ↔ o.linkAssuranceSignalActive = true"
+  ],
+  "inputs": 16,
+  "with_pre": 8
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "14.2.13",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ shuntingGroup := { composition := [\"locomotive\", \"wagons\"] }, emergencyCall := none }",
+  "output": "{ recordedShuntingGroup := { composition := [\"locomotive\", \"wagons\"] }, recordedEmergencyCall := none }",
+  "needed": "{ recordedShuntingGroup := { composition := [\"locomotive\", \"wagons\"] }, recordedEmergencyCall := (some { source := \"\", time := 0, recipients := [] }) }",
+  "failing": [
+   "o.recordedEmergencyCall = i.emergencyCall ↔\n                      i.emergencyCall.isSome"
+  ],
+  "inputs": 6,
+  "with_pre": 6
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.5.1",
+  "mode": "chain",
+  "contract": "ComputeParticipantsContract",
+  "position": "first",
+  "class": "wrong-code",
+  "input": "{ callType := \"broadcast\", fixedUsers := [\"user1\", \"user2\"] }",
+  "output": "{ callType := \"broadcast\", participants := [] }",
+  "needed": "{ callType := \"broadcast\", participants := [\"\", \"a\"] }",
+  "failing": [
+   "i.callType = \"broadcast\" → m.participants.length = i.fixedUsers.length"
+  ],
+  "inputs": 21,
+  "with_pre": 11
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "4.1.2",
+  "mode": "chain",
+  "contract": "ComputeRadiosContract",
+  "position": "first",
+  "class": "unevaluable",
+  "why": "predicates or implementation could not be evaluated"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "4.1.2",
+  "mode": "chain",
+  "contract": "FormatOutputContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ cabRadio := \"\", generalRadio := \"\", operationalRadio := \"\" }",
+  "output": "{ cabRadio := \"\", generalRadio := \"\", operationalRadio := \"\" }",
+  "failing": [
+   "o.cabRadio ≠ \"\"",
+   "o.generalRadio ≠ \"\"",
+   "o.operationalRadio ≠ \"\"",
+   "o.cabRadio ≠ o.generalRadio",
+   "o.cabRadio ≠ o.operationalRadio",
+   "o.generalRadio ≠ o.operationalRadio"
+  ],
+  "inputs": 8,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "5.2.2.60",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "5.2.3.25ix",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ cabNetwork := \"foreign\", availableNetworks := [\"net1\", \"net2\"], riskLevel := 6 }",
+  "output": "{ selectedNetwork := \"foreign\" }",
+  "needed": "{ selectedNetwork := \"\" }",
+  "failing": [
+   "o.selectedNetwork = i.cabNetwork ↔\n    i.availableNetworks.contains i.cabNetwork",
+   "o.selectedNetwork ≠ i.cabNetwork ↔\n    i.availableNetworks.any (fun n => n ≠ i.cabNetwork ∧ n ≠ \"foreign\") ∧ i.riskLevel > 5"
+  ],
+  "inputs": 40,
+  "with_pre": 19
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "5.2.3.32",
+  "mode": "chain",
+  "contract": "FinalizeContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ currentTrainNumber := \"\", newTrainNumber := \"\", accepted := true }",
+  "output": "{ currentTrainNumber := \"\", newTrainNumber := \"\", accepted := false }",
+  "failing": [
+   "o.accepted = m.accepted"
+  ],
+  "inputs": 8,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "5.2.3.40",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "10.2.1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ priority := 5 }",
+  "output": "{ level := 5, message := \"Invalid priority\" }",
+  "needed": "{ level := 5, message := \"\" }",
+  "failing": [
+   "o.message = \"Invalid priority\" ↔ (i.priority = 0 ∨ i.priority > 5)"
+  ],
+  "inputs": 9,
+  "with_pre": 6
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "12.2.1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ groundMessage := \"Hello\", mobileNumbers := [\"\"] }",
+  "output": "{ sentMessages := [] }",
+  "failing": [
+   "o.sentMessages.length = i.mobileNumbers.length"
+  ],
+  "inputs": 26,
+  "with_pre": 22,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "3.5.1",
+  "mode": "chain",
+  "contract": "ComputeParticipantsContract",
+  "position": "first",
+  "class": "wrong-code",
+  "input": "{ callType := \"broadcast\", fixedUsers := [\"user1\", \"user2\"] }",
+  "output": "{ callType := \"broadcast\", participants := [] }",
+  "needed": "{ callType := \"broadcast\", participants := [\"\", \"a\"] }",
+  "failing": [
+   "i.callType = \"broadcast\" → m.participants.length = i.fixedUsers.length"
+  ],
+  "inputs": 21,
+  "with_pre": 11
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "5.2.2.60",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "5.2.3.9",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 23,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "5.2.3.40",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "7.2.2.2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ radio := \"R1\", primaryController := \"C1\", secondaryController := none, powerSupplyController := some \"PS1\" }",
+  "output": "{ callEstablished := false }",
+  "needed": "{ callEstablished := true }",
+  "failing": [
+   "o.callEstablished = true ↔\n    (i.primaryController ≠ \"\" ∨\n     i.secondaryController.isSome ∧ i.secondaryController.getD \"\" ≠ \"\" ∨\n     i.powerSupplyController.isNone)",
+   "o.callEstablished = false ↔\n      (i.primaryController = \"\" ∧ i.secondaryController.isNone ∧ i.powerSupplyController.isSome)"
+  ],
+  "inputs": 40,
+  "with_pre": 32
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.1.2.14b",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ trainNumber := 1234, currentDriverId := 5, newDriverId := 1, drivers := [{ id := 5, name := \"Driver 5\" }, { id := 6, name := \"Driver 6\" }] }",
+  "output": "{ trainNumber := 1234, currentDriverId := 1, newDriverId := 1, drivers := [] }",
+  "failing": [
+   "∃ d ∈ o.drivers, d.id = i.newDriverId"
+  ],
+  "inputs": 40,
+  "with_pre": 30,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.1.5.1b",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ track_occupancy := \"occupied\" }",
+  "output": "{ confirmed := true }",
+  "failing": [
+   "o.confirmed = true ↔\n    (i.track_occupancy = \"occupied\" → o.confirmed = false) ∧\n    (i.track_occupancy = \"clear\" → o.confirmed = true)"
+  ],
+  "inputs": 4,
+  "with_pre": 3,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.1.5.5",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ active := true, shuntingSelected := false, partialSupervisionInfoReceived := true, fullSupervision := false }",
+  "output": "{ fullSupervision := true }",
+  "failing": [
+   "o.fullSupervision ↔\n    (¬i.shuntingSelected ∧ ¬i.partialSupervisionInfoReceived) ∨\n    (i.shuntingSelected ∨ i.partialSupervisionInfoReceived) ∧\n    (o.fullSupervision = i.fullSupervision ↔\n     (i.shuntingSelected ∨ i.partialSupervisionInfoReceived))"
+  ],
+  "inputs": 16,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.1.1.3a#2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.3.3.3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ distanceToDangerPoint := 100, timeSinceStationary := 120, releaseSpeedThreshold := 0, isStationaryOrAfterThreshold := true }",
+  "output": "{ releaseSpeed := 0 }",
+  "needed": "{ releaseSpeed := 100 }",
+  "failing": [
+   "o.releaseSpeed = 0 ↔ i.timeSinceStationary < i.releaseSpeedThreshold",
+   "o.releaseSpeed > 0 ↔ i.timeSinceStationary ≥ i.releaseSpeedThreshold ∧ i.distanceToDangerPoint > 0 ∧ i.isStationaryOrAfterThreshold"
+  ],
+  "inputs": 40,
+  "with_pre": 30
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.3.10.7",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ level := 0, operational_status := \"shunting\", shunting_confirmation := true, national_train_control_data := \"data\", actual_speed := 10, full_service_brake := false, emergency_brake := false, train_trip_function := false, override_control := false, route_suitability_function := false, isolation_of_ets := false, data_entered := \"data\", data_received := \"data\", data_indicated := \"data\" }",
+  "output": "{ level := 0, operational_status := \"shunting\", shunting_confirmation := true, national_train_control_data := \"data\", actual_speed := 10, full_service_brake := false, emergency_brake := false, train_trip_function := false, override_control := false, route_suitability_function := false, isolation_of_ets := false, data_entered := \"data\", data_received := \"data\", data_indicated := \"data\" }",
+  "needed": "{ level := 10, operational_status := \"shunting\", shunting_confirmation := true, national_train_control_data := \"data\", actual_speed := 10, full_service_brake := false, emergency_brake := false, train_trip_function := false, override_control := false, route_suitability_function := false, isolation_of_ets := false, data_entered := \"data\", data_received := \"data\", data_indicated := \"data\" }",
+  "failing": [
+   "o.level = i.level ↔ i.level ≠ 0"
+  ],
+  "inputs": 40,
+  "with_pre": 40
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "4.3.2.7",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ currentSpeed := 50, targetSpeed := 60, brakeApplied := false, dangerPoint := 100, emergencyBrakeApplied := true }",
+  "output": "{ stopped := false, stoppingPoint := 0 }",
+  "failing": [
+   "o.stopped = false →\n                      o.stoppingPoint = i.dangerPoint + 1 - (i.currentSpeed - i.targetSpeed)"
+  ],
+  "inputs": 40,
+  "with_pre": 29,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "4.3.3.2d",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ distanceToDangerPoint := 1, maxDecelerationRate := 5, initialSpeed := 100 }",
+  "output": "{ releaseSpeed := 2, shallStopBeforeDanger := false }",
+  "needed": "{ releaseSpeed := 100, shallStopBeforeDanger := false }",
+  "failing": [
+   "o.shallStopBeforeDanger ↔\n    (o.releaseSpeed = 0 ∧ i.initialSpeed ≤ i.maxDecelerationRate * i.distanceToDangerPoint) ∨\n    (o.releaseSpeed > 0 ∧\n     (o.releaseSpeed ≤ i.initialSpeed ∧\n      (o.releaseSpeed + (i.distanceToDangerPoint * i.maxDecelerationRate) / 2) ≤ i.initialSpeed))"
+  ],
+  "inputs": 40,
+  "with_pre": 33
+ },
+ {
+  "doc": "2007-ertms",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "4.3.3.3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ distanceToDangerPoint := 0, timeSinceStationary := 120, releaseSpeedThreshold := 100, isStationaryOrAfterThreshold := true }",
+  "output": "{ releaseSpeed := 0 }",
+  "failing": [
+   "o.releaseSpeed = 0 ↔ i.timeSinceStationary < i.releaseSpeedThreshold"
+  ],
+  "inputs": 40,
+  "with_pre": 30,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2008 - keepass",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.9.1/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ title := (some \"\"), username := (some \"\"), password := none, url := (some \"\"), notes := (some \"a\"), groupName := (some \"\") }",
+  "output": "{ results := [\"title\", \"username\", \"url\", \"notes\", \"group name\"] }",
+  "failing": [
+   "∀ r ∈ o.results, \n      (i.title.isSome → r = \"title\") ∧\n      (i.username.isSome → r = \"username\") ∧\n      (i.password.isSome → r = \"password\") ∧\n      (i.url.isSome → r = \"url\") ∧\n      (i.notes.isSome → r = \"notes\") ∧\n      (i.groupName.isSome → r = \"group name\")"
+  ],
+  "inputs": 40,
+  "with_pre": 40,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2008 - keepass",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.9.1/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ title := (some \"\"), username := (some \"\"), password := none, url := (some \"\"), notes := (some \"a\"), groupName := (some \"\") }",
+  "output": "{ results := [] }",
+  "failing": [
+   "o.results = [] ↔ i.title.isNone ∧ i.username.isNone ∧ i.password.isNone ∧ i.url.isNone ∧ i.notes.isNone ∧ i.groupName.isNone"
+  ],
+  "inputs": 40,
+  "with_pre": 40,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2008 - keepass",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "3.15.1/I3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "0/S6",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ items := [\"a\", \"b\", \"c\"], limit := 1 }",
+  "output": "{ processed := [\"a\", \"b\", \"c\"], count := 3 }",
+  "failing": [
+   "∀ it ∈ o.processed, it ∈ i.items ∧\n                     o.processed.length ≤ i.limit"
+  ],
+  "inputs": 32,
+  "with_pre": 23,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "0/S17",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ overview := \"\", relation := \"y\" }",
+  "output": "{ overview := \"\", relation := \"y\" }",
+  "needed": "{ overview := \"Short overview of the updated state of practice.\", relation := \"y\" }",
+  "failing": [
+   "o.overview ≠ \"\""
+  ],
+  "inputs": 21,
+  "with_pre": 21
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.1.2.2/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ entities := [], memberState := \"Germany\", attestationType := \"Type X\" }",
+  "output": "{ recognizedEntities := [] }",
+  "failing": [
+   "o.recognizedEntities.length > 0"
+  ],
+  "inputs": 25,
+  "with_pre": 11,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.1.2.9/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ evidences := [], criteria := [\"c1\", \"c2\", \"c3\"], selected := [\"e2\", \"c2\"] }",
+  "output": "{ evidences := [], criteria := [\"c1\", \"c2\", \"c3\"], selected := [\"e2\", \"c2\"] }",
+  "failing": [
+   "o.evidences ≠ []"
+  ],
+  "inputs": 40,
+  "with_pre": 36,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.3.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ documents := [\"\", \"a\"], nationalLegislation := \"leg1\" }",
+  "output": "{ vcdDocuments := [\"a\"] }",
+  "needed": "{ vcdDocuments := [] }",
+  "failing": [
+   "o.vcdDocuments.length < i.documents.length →\n      ∃ d ∈ i.documents, d ∉ o.vcdDocuments ∧ Wanted i d"
+  ],
+  "inputs": 12,
+  "with_pre": 8
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.2.4.9/S9",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ attestations := [\"att1\", \"att2\"] }",
+  "output": "{ included := true, stage := 3 }",
+  "needed": "{ included := false, stage := 3 }",
+  "failing": [
+   "o.included = true ↔\n    (o.stage = 3 ∨ o.stage = 4) ∧\n    (o.stage = 3 ↔ i.attestations.length ≥ 2) ∧\n    (o.stage = 4 ↔ i.attestations.length ≥ 2) ∧\n    (o.included = true ↔ i.attestations.length ≥ 2)"
+  ],
+  "inputs": 6,
+  "with_pre": 2
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.3.2.3/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ attestation := \"Sample attestation\", sourceLang := \"a\", targetLang := \"fr\" }",
+  "output": "{ transformed := \"\", legalStatus := false }",
+  "needed": "{ transformed := \"\", legalStatus := true }",
+  "failing": [
+   "o.legalStatus ↔\n    (i.sourceLang = \"en\" ∧ i.targetLang = \"fr\" → o.transformed = \"Sample attestation\" ∧ o.legalStatus = true) ∧\n    (i.sourceLang = \"fr\" ∧ i.targetLang = \"en\" → o.transformed = \"Sample attestation\" ∧ o.legalStatus = true) ∧\n    (i.sourceLang = \"en\" ∧ i.targetLang = \"es\" → o.transformed = \"Sample attestation\" ∧ o.legalStatus = true) ∧\n    (i.sourceLang = \"es\" ∧ i.targetLang = \"en\" → o.transformed = \"Sample attestation\" ∧ o.legalStatus = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 32
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.3.2.9/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ evidence := \"extract from the register of conviction\" }",
+  "output": "{ valid := false }",
+  "failing": [
+   "o.valid = true ↔\n    i.evidence = \"other special legal regulation\" ∨\n    (i.evidence = \"extract from the register of conviction\" → o.valid = false)"
+  ],
+  "inputs": 4,
+  "with_pre": 4,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "3.4.2.6/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ partyId := \"12345\", verifiedAddresses := [\"\", \"a\"] }",
+  "output": "{ electronicAddress := \"\" }",
+  "needed": "{ electronicAddress := \"a\" }",
+  "failing": [
+   "o.electronicAddress = i.verifiedAddresses.headD \"\" ↔\n                      i.verifiedAddresses.length = 1"
+  ],
+  "inputs": 21,
+  "with_pre": 16
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.2/S10",
+  "mode": "chain",
+  "contract": "ComputeEvidenceRetrievalContract",
+  "position": "first",
+  "class": "unsatisfiable-spec",
+  "input": "{ evidences := [], issuingBodies := [\"b1\", \"b2\"], identityManagement := true, accessManagement := true }",
+  "output": "{ evidencesRetrieved := [], accessGranted := true }",
+  "failing": [
+   "∃ e ∈ i.evidences, ∃ b ∈ i.issuingBodies, m.evidencesRetrieved.contains e ∧\n                      (i.identityManagement = true → m.accessGranted = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 16,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "4.3.1/S8",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ legalRules := [] }",
+  "output": "{ legalRules := [] }",
+  "failing": [
+   "∃ r ∈ o.legalRules, r ∈ i.legalRules"
+  ],
+  "inputs": 6,
+  "with_pre": 6,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.3.2.9/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ evidence := \"extract from the register of conviction\" }",
+  "output": "{ valid := false }",
+  "failing": [
+   "o.valid = true ↔\n    i.evidence = \"other special legal regulation\" ∨\n    (i.evidence = \"extract from the register of conviction\" → o.valid = false)"
+  ],
+  "inputs": 4,
+  "with_pre": 4,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "3.4.2.9/S2",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ tenders := [\"t1\", \"t2\"], prescribedTime := 0 }",
+  "output": "{ tenders := [\"t1\", \"t2\"], accessed := true }",
+  "needed": "{ tenders := [], accessed := false }",
+  "failing": [
+   "o.accessed = false ↔ i.prescribedTime = 0"
+  ],
+  "inputs": 26,
+  "with_pre": 26
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "4.4.2/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 32,
+  "with_pre": 32,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "REQ-1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ query := \"cats\", streaming := true, torrent := false }",
+  "output": "{ results := [\"cats\"], message := \"\" }",
+  "needed": "{ results := [\"cats\"], message := \"cats\" }",
+  "failing": [
+   "(o.message = \"No results were found.\" ↔ o.results = []) ∧\n    (∀ r ∈ o.results, r = i.query) ∧\n    (i.streaming ∨ i.torrent) →\n    (o.results.length ≤ 100) ∧\n    (o.results.length > 0 ↔ o.message = \"\") ∧\n    (o.results.length = 0 ↔ o.message = \"No results were found.\") ∧\n    (o.results.length > 0 → o.message = \"\") ∧\n    (i.streaming ∨ i.torrent) ↔\n    (o.results.length = 0 ∧ o.message = \"Torrent search requires streaming search to be enabled.\")"
+  ],
+  "inputs": 19,
+  "with_pre": 16
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "REQ-3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ includeTorrent := true, query := \"cats\", items := [] }",
+  "output": "{ results := [] }",
+  "needed": "{ results := [\"\"] }",
+  "failing": [
+   "o.results.length = 0 ↔ i.includeTorrent = false",
+   "o.results.length > 0 ↔ i.includeTorrent = true"
+  ],
+  "inputs": 23,
+  "with_pre": 15
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "REQ-4",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ query := \"example\", torrents := [{ seed := 0, peer := 0, size := 0, date := \"\", link := \"\" }] }",
+  "output": "{ results := [] }",
+  "failing": [
+   "o.results = [] ↔ i.torrents = []"
+  ],
+  "inputs": 9,
+  "with_pre": 6,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "REQ-6",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "REQ-1#2",
+  "mode": "chain",
+  "contract": "FormatMessageContract",
+  "position": "second",
+  "class": "tactics",
+  "inputs": 5,
+  "with_pre": 5,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "REQ-5#2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ query := \"cat\", sites := [\"site1.com\", \"site2.com\"], videoResults := [{ name := \"\", length := 0, date := \"\", link := \"\" }] }",
+  "output": "{ results := [] }",
+  "failing": [
+   "o.results = [] ↔ i.videoResults = []"
+  ],
+  "inputs": 37,
+  "with_pre": 24,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "REQ-6#2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ query := \"a\", sites := [{ showName := \"Stranger Things\", episodeName := \"The Dark Hole\", link := \"https://example.com/Stranger_Things_The_Dark_Hole\" }] }",
+  "output": "{ results := [] }",
+  "failing": [
+   "o.results.length ≤ 100 → ∀ it ∈ i.sites, it.showName ≠ \"\" ∧ it.episodeName ≠ \"\" ∧ it.link ≠ \"\" → it ∈ o.results"
+  ],
+  "inputs": 9,
+  "with_pre": 6,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "REQ-6#3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ results := [] }",
+  "output": "{ results := [] }",
+  "failing": [
+   "o.results.length = 100"
+  ],
+  "inputs": 5,
+  "with_pre": 5,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep2",
+  "id": "REQ-4",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ query := \"example\", torrents := [{ seed := 0, peer := 0, size := 0, date := \"\", link := \"\" }] }",
+  "output": "{ results := [] }",
+  "failing": [
+   "o.results = [] ↔ i.torrents = []"
+  ],
+  "inputs": 9,
+  "with_pre": 6,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "REQ-1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ query := \"cats\", streaming := true, torrent := false }",
+  "output": "{ results := [\"cats\"], message := \"\" }",
+  "needed": "{ results := [\"cats\"], message := \"cats\" }",
+  "failing": [
+   "(o.message = \"No results were found.\" ↔ o.results = []) ∧\n    (∀ r ∈ o.results, r = i.query) ∧\n    (i.streaming ∨ i.torrent) →\n    (o.results.length ≤ 100) ∧\n    (o.results.length > 0 ↔ o.message = \"\") ∧\n    (o.results.length = 0 ↔ o.message = \"No results were found.\") ∧\n    (o.results.length > 0 → o.message = \"\") ∧\n    (i.streaming ∨ i.torrent) ↔\n    (o.results.length = 0 ∧ o.message = \"Torrent search requires streaming search to be enabled.\")"
+  ],
+  "inputs": 19,
+  "with_pre": 16
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5",
+  "rep": "rep3",
+  "id": "REQ-4",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ query := \"example\", torrents := [{ seed := 0, peer := 0, size := 0, date := \"\", link := \"\" }] }",
+  "output": "{ results := [] }",
+  "failing": [
+   "o.results = [] ↔ i.torrents = []"
+  ],
+  "inputs": 9,
+  "with_pre": 6,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2010-blitdraft",
+  "run": "qwen-chain-v5",
+  "rep": "rep1",
+  "id": "2.1.1.2.1.11/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ username := \"test\", password := \"pass\", confirm := true, cancel := true }",
+  "output": "{ message := \"User data saved successfully.\" }",
+  "failing": [
+   "o.message = \"Operation cancelled.\" ↔ i.cancel"
+  ],
+  "inputs": 40,
+  "with_pre": 29,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - cctns",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "3/registration/S1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 18,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "3.4.3/S2",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ currentOrder := { items := [\"item1\"], quantity := 3 }, revisedOrder := some { items := [\"item2\"], quantity := 5 } }",
+  "output": "{ currentOrder := { items := [\"item1\"], quantity := 3 }, revisedOrder := some { items := [\"item2\"], quantity := 5 }, confirmed := true }",
+  "needed": "{ currentOrder := { items := [], quantity := 0 }, revisedOrder := some { items := [\"item2\"], quantity := 5 }, confirmed := false }",
+  "failing": [
+   "o.revisedOrder = i.revisedOrder → o.confirmed = false"
+  ],
+  "inputs": 6,
+  "with_pre": 4
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "5.3/R5",
+  "mode": "chain",
+  "contract": "AuthenticateContract",
+  "position": "first",
+  "class": "unsatisfiable-spec",
+  "input": "{ accounts := [], username := \"user1\", password := \"pw1\" }",
+  "output": "{ accepted := false, accounts := [], username := \"user1\", password := \"pw1\" }",
+  "failing": [
+   "m.accepted = false →\n                     ∃ a ∈ i.accounts, a.username = i.username ∧\n                     (a.failedAttempts = 3 ∨ a.failedAttempts > 3 ∧ a.password ≠ i.password)"
+  ],
+  "inputs": 40,
+  "with_pre": 34,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "5.3/R5",
+  "mode": "chain",
+  "contract": "UpdateAccountsContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ accepted := false, accounts := [], username := \"\", password := \"\" }",
+  "output": "{ accounts := [], accepted := false }",
+  "failing": [
+   "o.accepted = false →\n                       ∃ a ∈ m.accounts, a.username = m.username ∧\n                       (a.failedAttempts = 3 ∨ a.failedAttempts > 3 ∧ a.password ≠ m.password)"
+  ],
+  "inputs": 40,
+  "with_pre": 40,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "5.5/R1",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ query := \"cats\", items := [{ name := \"cats\", source := \"web\", rating := 3 }, { name := \"cats\", source := \"archive\", rating := 5 }], includeArchive := true }",
+  "output": "{ results := [{ name := \"cats\", source := \"web\", rating := 3 }, { name := \"cats\", source := \"archive\", rating := 5 }], message := \"\" }",
+  "failing": [
+   "List.Pairwise (fun a b => a.rating ≥ b.rating) o.results"
+  ],
+  "inputs": 27,
+  "with_pre": 22,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "5.5/R1",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ query := \"cats\", items := [{ name := \"cats\", source := \"web\", rating := 3 }, { name := \"cats\", source := \"archive\", rating := 5 }], includeArchive := true }",
+  "output": "{ results := [{ name := \"cats\", source := \"web\", rating := 3 }, { name := \"cats\", source := \"archive\", rating := 5 }], message := \"\" }",
+  "failing": [
+   "List.Pairwise (fun a b => a.rating ≥ b.rating) o.results"
+  ],
+  "inputs": 27,
+  "with_pre": 22,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "0000 - gamma j",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "5.3/R5",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ accounts := [], username := \"user1\", password := \"pw1\" }",
+  "output": "{ accounts := [], accepted := false }",
+  "failing": [
+   "o.accepted = false →\n      ∃ a ∈ i.accounts, a.username = i.username ∧\n      (a.failedAttempts = 3 ∨ a.failedAttempts > 3 ∧ a.password ≠ i.password)"
+  ],
+  "inputs": 40,
+  "with_pre": 34,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1995 - gemini",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "3.3.4.1/I1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ command := \"a\" }",
+  "output": "{ reply := \"a\", status := true }",
+  "needed": "{ reply := \"a\", status := false }",
+  "failing": [
+   "o.status = true ↔\n    (o.reply = \"OK\" ∧ i.command = \"sync\") ∨\n    (o.reply = \"ACK\" ∧ i.command = \"coord\") ∨\n    (o.reply = \"NACK\" ∧ i.command = \"error\") ∧\n    o.reply ≠ i.command"
+  ],
+  "inputs": 8,
+  "with_pre": 7
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "3.2.3.2/S1",
+  "mode": "chain",
+  "contract": "ComputeAnnotationContract",
+  "position": "first",
+  "class": "tactics",
+  "inputs": 29,
+  "with_pre": 29,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "3.2.3.2/S1",
+  "mode": "chain",
+  "contract": "ApplyAnnotationContract",
+  "position": "second",
+  "class": "tactics",
+  "inputs": 9,
+  "with_pre": 9,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "3.14/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ personnelType := \"civilian\", trainingType := \"crew\" }",
+  "output": "{ trainingComplete := true }",
+  "failing": [
+   "o.trainingComplete = true ↔\n                      (i.personnelType = \"civilian\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"new equipment\" ∨\n                        i.trainingType = \"initial\" ∨ i.trainingType = \"formal\" ∨\n                        i.trainingType = \"on-the-job\")) ∨\n                      (i.personnelType = \"active duty\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"new equipment\" ∨\n                        i.trainingType = \"initial\" ∨ i.trainingType = \"formal\" ∨\n                        i.trainingType = \"on-the-job\")) ∨\n                      (i.personnelType = \"reserve military\" ∧\n                       (i.trainingType = \"individual\" ∨ i.trainingType = \"crew\" ∨\n                        i.trainingType = \"new equipment\" ∨ i.trainingType = \"initial\" ∨\n                        i.trainingType = \"formal\" ∨ i.trainingType = \"on-the-job\"))"
+  ],
+  "inputs": 40,
+  "with_pre": 7,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "3.2.3.2/S1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 29,
+  "with_pre": 29,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "3.2.5/S5",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ dataServer := \"server1\", videoCables := [], radios := [\"radio1\", \"radio2\"], liveVideo := true, interfacedRadios := true }",
+  "output": "{ receivedData := true, liveVideo := false, interfacedRadios := true }",
+  "needed": "{ receivedData := false, liveVideo := false, interfacedRadios := true }",
+  "failing": [
+   "o.receivedData = true ↔\n    i.dataServer ≠ \"\" ∧\n    (∃ v ∈ i.videoCables, o.liveVideo = true) ∧\n    (∃ r ∈ i.radios, o.interfacedRadios = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 30
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "3.2.3.2/S1",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 29,
+  "with_pre": 29,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "1999 - tcs",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "3.2.5/S5",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ dataServer := \"server1\", videoCables := [], radios := [\"radio1\", \"radio2\"], liveVideo := true, interfacedRadios := true }",
+  "output": "{ receivedData := true, liveVideo := false, interfacedRadios := true }",
+  "needed": "{ receivedData := false, liveVideo := false, interfacedRadios := true }",
+  "failing": [
+   "o.receivedData = true ↔\n    i.dataServer ≠ \"\" ∧\n    (∃ v ∈ i.videoCables, o.liveVideo = true) ∧\n    (∃ r ∈ i.radios, o.interfacedRadios = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 30
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "2.3.3.3/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "2.5.3/S1",
+  "mode": "chain",
+  "contract": "ComputeMessageIDContract",
+  "position": "first",
+  "class": "unsatisfiable-spec",
+  "input": "{ patientID := 123, testCode := \"TEST123\", results := none, send := true }",
+  "output": "{ messageID := 0 }",
+  "failing": [
+   "m.messageID ≠ 0"
+  ],
+  "inputs": 40,
+  "with_pre": 18,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "2.2.6.2/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ specimens := [{ subjectId := \"12345\" }], subjectId := \"12345\" }",
+  "output": "{ specimens := [] }",
+  "needed": "{ specimens := [{ subjectId := \"12345\" }] }",
+  "failing": [
+   "o.specimens.length = i.specimens.length"
+  ],
+  "inputs": 9,
+  "with_pre": 6
+ },
+ {
+  "doc": "2005 - phin",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "2.5.3/S1",
+  "mode": "chain",
+  "contract": "ComputeMessageIDContract",
+  "position": "first",
+  "class": "tactics",
+  "inputs": 40,
+  "with_pre": 18,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "5.4.9/S1",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ functions := [\"additional_on_train_function\", \"other_function\"], registered := true, activation := false }",
+  "output": "{ sent := false, message := \"USSD message not sent\" }",
+  "failing": [
+   "o.sent = true ↔\n    (i.activation ∧ ∃ f ∈ i.functions, f = \"additional_on_train_function\") ∨\n    (¬i.activation ∧ o.sent = false)"
+  ],
+  "inputs": 24,
+  "with_pre": 12,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "10.5.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ sim := { networks := [{ code := \"123\", priority := 1 }, { code := \"456\", priority := 2 }] }, automaticSelection := true }",
+  "output": "{ selectedNetwork := some { code := \"123\", priority := 1 }, networksDisplayed := [{ code := \"123\", priority := 1 }, { code := \"456\", priority := 2 }] }",
+  "needed": "{ selectedNetwork := some { code := \"123\", priority := 1 }, networksDisplayed := [] }",
+  "failing": [
+   "List.Pairwise (fun a b => a.priority ≥ b.priority) o.networksDisplayed"
+  ],
+  "inputs": 4,
+  "with_pre": 4
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "13.5.8/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ cabRadioConnected := true, trainBorneRecorderConnected := false, confirmationDetails := \"Not connected\" }",
+  "output": "{ trainBorneRecorderConnected := false, confirmationDetails := \"Not connected\" }",
+  "needed": "{ trainBorneRecorderConnected := false, confirmationDetails := \"\" }",
+  "failing": [
+   "o.confirmationDetails = i.confirmationDetails ↔ i.trainBorneRecorderConnected = true"
+  ],
+  "inputs": 16,
+  "with_pre": 8
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "14.4.3/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ shuntingTeamLeader := false, inShuntingMode := true, initiatingCall := true }",
+  "output": "{ allowedToInitiate := true }",
+  "needed": "{ allowedToInitiate := false }",
+  "failing": [
+   "(o.allowedToInitiate = true ↔\n    (i.shuntingTeamLeader = true ∧ i.inShuntingMode = false)) ∨\n    (o.allowedToInitiate = false ↔\n    (i.shuntingTeamLeader = false ∨ i.inShuntingMode = true))"
+  ],
+  "inputs": 8,
+  "with_pre": 4
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "4.5.9/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ temperature := 40 }",
+  "output": "{ stored := true }",
+  "needed": "{ stored := false }",
+  "failing": [
+   "o.stored = true ↔ i.temperature < 40",
+   "o.stored = false ↔ i.temperature = 40"
+  ],
+  "inputs": 9,
+  "with_pre": 9
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "4.5.9/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ temperature := 100 }",
+  "output": "{ stored := false }",
+  "failing": [
+   "o.stored = false ↔ i.temperature = 40"
+  ],
+  "inputs": 9,
+  "with_pre": 9,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "5.6.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ subAddress := \"user1\", onTrainUsers := [] }",
+  "output": "{ routedTo := \"\" }",
+  "failing": [
+   "∃ u ∈ i.onTrainUsers, o.routedTo = u ↔ i.subAddress = u"
+  ],
+  "inputs": 15,
+  "with_pre": 10,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2006 - eirene sys 15",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "9.2.1/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "5.2.2.60",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "4.1.2",
+  "mode": "chain",
+  "contract": "ComputeRadiosContract",
+  "position": "first",
+  "class": "unevaluable",
+  "why": "predicates or implementation could not be evaluated"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "4.1.2",
+  "mode": "chain",
+  "contract": "FormatRadiosContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ cabRadio := \"\", generalRadio := \"\", operationalRadio := \"\" }",
+  "output": "{ cabRadio := \"\", generalRadio := \"\", operationalRadio := \"\" }",
+  "failing": [
+   "o.cabRadio ≠ \"\"",
+   "o.generalRadio ≠ \"\"",
+   "o.operationalRadio ≠ \"\"",
+   "o.cabRadio ≠ o.generalRadio",
+   "o.cabRadio ≠ o.operationalRadio",
+   "o.generalRadio ≠ o.operationalRadio"
+  ],
+  "inputs": 8,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "5.2.3.25i",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ currentNetwork := \"a\", externalDevice := \"device1\" }",
+  "output": "{ networkSelected := false, newNetwork := \"a\" }",
+  "needed": "{ networkSelected := true, newNetwork := \"a\" }",
+  "failing": [
+   "o.networkSelected = true ↔\n    (i.currentNetwork = \"foreign\" → o.newNetwork ≠ i.currentNetwork) ∧\n    (i.currentNetwork ≠ \"foreign\" → o.newNetwork = i.currentNetwork)"
+  ],
+  "inputs": 12,
+  "with_pre": 6
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "5.2.3.32",
+  "mode": "chain",
+  "contract": "FinalizeContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ currentTrainNumber := \"\", newTrainNumber := \"\", accepted := true }",
+  "output": "{ currentTrainNumber := \"\", newTrainNumber := \"\", accepted := true }",
+  "failing": [
+   "o.accepted = false ↔ m.accepted"
+  ],
+  "inputs": 8,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "5.2.2.60",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "why": "proved with CF_PO3_TACTICS=2"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "5.2.3.32",
+  "mode": "chain",
+  "contract": "FinalizeOutputContract",
+  "position": "second",
+  "class": "unsatisfiable-spec",
+  "input": "{ currentTrainNumber := \"\", newTrainNumber := \"\", accepted := true }",
+  "output": "{ currentTrainNumber := \"\", newTrainNumber := \"\", accepted := false }",
+  "failing": [
+   "o.accepted = m.accepted"
+  ],
+  "inputs": 8,
+  "with_pre": 8,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "5.2.3.40",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 3,
+  "with_pre": 3,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2007-eirene_fun_7-2",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "7.2.3.9i",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ userRegistered := true, manualOverride := false, calling := false }",
+  "output": "{ manualOverride := false }",
+  "needed": "{ manualOverride := true }",
+  "failing": [
+   "o.manualOverride = i.manualOverride ↔\n    (i.calling = false ∧ i.manualOverride = true)",
+   "o.manualOverride = false → i.calling = true"
+  ],
+  "inputs": 8,
+  "with_pre": 4
+ },
+ {
+  "doc": "2008 - keepass",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "3.9.1/S3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ title := none, username := (some \"\"), password := none, url := none, notes := none, groupName := none }",
+  "output": "{ results := [] }",
+  "failing": [
+   "o.results = [] ↔ i.title.isNone ∧ i.username.isNone ∧ i.password.isNone ∧ i.url.isNone ∧ i.notes.isNone ∧ i.groupName.isNone"
+  ],
+  "inputs": 40,
+  "with_pre": 40,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2008 - keepass",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "3.15.1/I3",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 12,
+  "with_pre": 8,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "3.4.2.9/S2",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ tenders := [\"t1\", \"t2\"], prescribedTime := 0 }",
+  "output": "{ tenders := [\"t1\", \"t2\"], accessed := true }",
+  "needed": "{ tenders := [], accessed := false }",
+  "failing": [
+   "o.accessed = false ↔ i.prescribedTime = 0"
+  ],
+  "inputs": 26,
+  "with_pre": 26
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "4.2/S10",
+  "mode": "chain",
+  "contract": "RetrieveEvidencesContract",
+  "position": "first",
+  "class": "unsatisfiable-spec",
+  "input": "{ evidences := [], issuingBodies := [\"b1\", \"b2\"], identityManagement := true, accessManagement := true }",
+  "output": "{ evidencesRetrieved := [], accessGranted := true }",
+  "failing": [
+   "∃ e ∈ i.evidences, ∃ b ∈ i.issuingBodies, m.evidencesRetrieved.contains e ∧\n                      (i.identityManagement = true → m.accessGranted = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 16,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "3.2.4.10/S4",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 9,
+  "with_pre": 6,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "3.4.2.9/S2",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ tenders := [\"t1\", \"t2\"], prescribedTime := 0 }",
+  "output": "{ tenders := [\"t1\", \"t2\"], accessed := true }",
+  "needed": "{ tenders := [], accessed := false }",
+  "failing": [
+   "o.accessed = false ↔ i.prescribedTime = 0"
+  ],
+  "inputs": 26,
+  "with_pre": 26
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "4.4.2/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "tactics",
+  "inputs": 32,
+  "with_pre": 32,
+  "why": "no counterexample among the inputs tried"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "1.1/S4",
+  "mode": "chain",
+  "contract": "ComputeNoticeContract",
+  "position": "first",
+  "class": "wrong-code",
+  "input": "{ criteria := [\"\"] }",
+  "output": "{ notice := \"Contract Notice with selection criteria\" }",
+  "needed": "{ notice := \"\" }",
+  "failing": [
+   "m.notice = \"Contract Notice with selection criteria\" ↔\n    ∃ c ∈ i.criteria, c ≠ \"\""
+  ],
+  "inputs": 6,
+  "with_pre": 5
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "3.1.2.2/S2",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "unsatisfiable-spec",
+  "input": "{ entities := [], memberState := \"Germany\", attestationType := \"Type X\" }",
+  "output": "{ recognizedEntities := [] }",
+  "failing": [
+   "o.recognizedEntities.length > 0"
+  ],
+  "inputs": 25,
+  "with_pre": 11,
+  "why": "no output tried satisfies post for this input (search, not proof)"
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "3.3.2.3/S1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ attestation := \"Sample attestation\", sourceLang := \"a\", targetLang := \"fr\" }",
+  "output": "{ transformed := \"\", legalStatus := false }",
+  "needed": "{ transformed := \"\", legalStatus := true }",
+  "failing": [
+   "o.legalStatus ↔\n    (i.sourceLang = \"en\" ∧ i.targetLang = \"fr\" → o.transformed = \"Sample attestation\" ∧ o.legalStatus = true) ∧\n    (i.sourceLang = \"fr\" ∧ i.targetLang = \"en\" → o.transformed = \"Sample attestation\" ∧ o.legalStatus = true) ∧\n    (i.sourceLang = \"en\" ∧ i.targetLang = \"es\" → o.transformed = \"Sample attestation\" ∧ o.legalStatus = true) ∧\n    (i.sourceLang = \"es\" ∧ i.targetLang = \"en\" → o.transformed = \"Sample attestation\" ∧ o.legalStatus = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 32
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "3.4.2.9/S2",
+  "mode": "single-not-decomposable",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ tenders := [\"t1\", \"t2\"], prescribedTime := 0 }",
+  "output": "{ tenders := [\"t1\", \"t2\"], accessed := true }",
+  "needed": "{ tenders := [], accessed := false }",
+  "failing": [
+   "o.accessed = false ↔ i.prescribedTime = 0"
+  ],
+  "inputs": 26,
+  "with_pre": 26
+ },
+ {
+  "doc": "2009 - peppol approved",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "4.2/S10",
+  "mode": "single-fallback",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ evidences := [\"e1\", \"e2\"], issuingBodies := [\"b1\", \"b2\"], identityManagement := true, accessManagement := true }",
+  "output": "{ evidencesRetrieved := [], accessGranted := true }",
+  "needed": "{ evidencesRetrieved := [\"e1\", \"e2\"], accessGranted := true }",
+  "failing": [
+   "o.accessGranted = true ↔\n    ∃ e ∈ i.evidences, ∃ b ∈ i.issuingBodies, o.evidencesRetrieved.contains e ∧\n    (i.identityManagement = true → o.accessGranted = true)"
+  ],
+  "inputs": 40,
+  "with_pre": 16
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep1",
+  "id": "REQ-5",
+  "mode": "chain",
+  "contract": "ShowResultsContract",
+  "position": "second",
+  "class": "wrong-code",
+  "input": "{ found := [\"\"] }",
+  "output": "{ message := \"No results were found for this search.\", results := [\"\"] }",
+  "needed": "{ message := \"\", results := [\"\"] }",
+  "failing": [
+   "o.message = \"No results were found for this search.\" ↔ m.found = []"
+  ],
+  "inputs": 5,
+  "with_pre": 5
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep2",
+  "id": "REQ-5",
+  "mode": "chain",
+  "contract": "ShowResultsContract",
+  "position": "second",
+  "class": "wrong-code",
+  "input": "{ found := [\"\"] }",
+  "output": "{ message := \"No results were found for this search.\", results := [\"\"] }",
+  "needed": "{ message := \"\", results := [\"\"] }",
+  "failing": [
+   "o.message = \"No results were found for this search.\" ↔ m.found = []"
+  ],
+  "inputs": 5,
+  "with_pre": 5
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "REQ-1",
+  "mode": "single",
+  "contract": "Spec",
+  "position": "single",
+  "class": "wrong-code",
+  "input": "{ query := \"cats\", streaming := true, torrent := false }",
+  "output": "{ results := [\"cats\"], message := \"\" }",
+  "needed": "{ results := [\"cats\"], message := \"cats\" }",
+  "failing": [
+   "(o.message = \"No results were found.\" ↔ o.results = []) ∧\n    (∀ r ∈ o.results, r = i.query) ∧\n    (i.streaming ∨ i.torrent) →\n    (o.results.length ≤ 100) ∧\n    (o.results.length > 0 ↔ o.message = \"\") ∧\n    (o.results.length = 0 ↔ o.message = \"No results were found.\") ∧\n    (o.results.length > 0 → o.message = \"\") ∧\n    (i.streaming ∨ i.torrent) ↔\n    (o.results.length = 0 ∧ o.message = \"Torrent search requires streaming search to be enabled.\")"
+  ],
+  "inputs": 19,
+  "with_pre": 16
+ },
+ {
+  "doc": "2009 - video search",
+  "run": "qwen-chain-v5-fallback",
+  "rep": "rep3",
+  "id": "REQ-5",
+  "mode": "chain",
+  "contract": "ShowResultsContract",
+  "position": "second",
+  "class": "wrong-code",
+  "input": "{ found := [\"\"] }",
+  "output": "{ message := \"No results were found for this search.\", results := [\"\"] }",
+  "needed": "{ message := \"\", results := [\"\"] }",
+  "failing": [
+   "o.message = \"No results were found for this search.\" ↔ m.found = []"
+  ],
+  "inputs": 5,
+  "with_pre": 5
+ }
+]

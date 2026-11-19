@@ -257,11 +257,23 @@ def copy_witness(code: str) -> Optional[str]:
     return C.trivial_witness(code_defs_only(code))
 
 
-def weak_spec_problem(witness: str) -> str:
-    return (f"`post` is too weak: the implementation `{witness}` (only copied input fields and fixed "
-            "values) satisfies it, so code verified against this spec need not do anything the "
-            "requirement asks. Add the conditions that tie each output field to the rule in the "
-            "requirement (what it must be computed from, and when it differs from the input).")
+# P2: how many times a weak (copy-satisfiable) spec is sent back before it is accepted as weak.
+WEAK_ROUNDS = int(os.getenv("CF_WEAK_ROUNDS", "1"))
+
+
+def weak_spec_problem(witness: str, entry: Optional[dict] = None) -> str:
+    """Feedback for a weak spec: the actual copy implementation Lean accepted, and the
+    requirement it should be checked against (P2)."""
+    req = " ".join(requirement_text(entry).split())
+    text = ("`post` is too weak. The harness found this implementation, made only of copied input fields "
+            "and fixed values, and Lean proved that it satisfies your spec:\n```lean\n"
+            f"def Trivial (x : Input) : Output :=\n  {witness}\n```\n"
+            "So code verified against this spec need not do anything the requirement asks.")
+    if req:
+        text += f" The requirement says: \"{req}\"."
+    return text + (" Add the conditions that tie each output field to the rule in the requirement (what it must "
+                   "be computed from, and when it differs from the input), so that `Trivial` no longer "
+                   "satisfies `post`. Do not drop the conditions you already have.")
 
 
 def spec_strength(code: str, entry: Optional[dict] = None, realizability: Optional[bool] = None) -> dict:
@@ -286,9 +298,9 @@ def loop_checks(entry: Optional[dict]):
 
     Output-mention problems are always reported. The weak-spec finding (and the realizability
     miss, when CF_REALIZABILITY=1) is a judgement about strength / an incomplete search, so it is
-    reported at most once per entry: if the model cannot fix it, the spec is accepted and
-    recorded as weak instead of burning every attempt."""
-    told: Dict[str, bool] = {}
+    reported at most once per entry (the weak finding: CF_WEAK_ROUNDS times, default 1): if the
+    model cannot fix it, the spec is accepted and recorded as weak instead of burning every attempt."""
+    told: Dict[str, int] = {}
     ok = copy_ok(entry)
 
     def check(code: str) -> List[str]:
@@ -300,10 +312,10 @@ def loop_checks(entry: Optional[dict]):
             if p:
                 told["real"] = True
                 return p
-        if not ok and not told.get("weak"):
+        if not ok and told.get("weak", 0) < WEAK_ROUNDS:
             w = copy_witness(code)
             if w:
-                told["weak"] = True
-                return [weak_spec_problem(w)]
+                told["weak"] = told.get("weak", 0) + 1
+                return [weak_spec_problem(w, entry)]
         return []
     return check

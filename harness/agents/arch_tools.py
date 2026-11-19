@@ -382,7 +382,7 @@ class ArchSession:
         out = {}
         for part in ("pre", "post"):
             key = f"trace_{part}:{component}:{op}"
-            proof = (proofs or {}).get(part) or self.proofs.get(key) or A.auto_trace_proof(component, op, helpers)
+            proof = (proofs or {}).get(part) or self.proofs.get(key) or A.auto_trace_proof(component, op, helpers, self.l0.get(op))
             out[part] = A.theorem(st[part], proof)
         return out
 
@@ -411,7 +411,7 @@ class ArchSession:
             for op, part in todo:
                 key = f"trace_{part}:{component}:{op}"
                 auto = round_ == "auto" or key not in self.proofs
-                body = A.auto_trace_proof(component, op, def_names(code)) if auto else self.proofs[key]
+                body = A.auto_trace_proof(component, op, def_names(code), self.l0.get(op)) if auto else self.proofs[key]
                 thms.append(A.theorem(A.trace_statements(component, op)[part], body))
                 keys.append((op, part, "auto" if auto else "model"))
             r = check_lean(prefix + "\n\n" + "\n\n".join(thms))

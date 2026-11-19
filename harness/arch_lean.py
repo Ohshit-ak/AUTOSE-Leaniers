@@ -158,15 +158,38 @@ def _simp_set(names: Sequence[str]) -> str:
     return ", ".join(dict.fromkeys(names))
 
 
-def auto_trace_proof(comp: str, op: str, helpers: Sequence[str]) -> str:
-    """First try for a trace obligation: unfold the model's defs and the L0 spec, then close."""
+def l0_helpers(op: str, l0_code: Optional[str]) -> List[str]:
+    """The L0 spec's own helper definitions (everything but `Spec`), qualified with the
+    operation's namespace, e.g. `L0_3_5_3_s2.Wanted`."""
+    if not l0_code:
+        return []
+    defs, _ = split_example(_IMPORT_OPEN.sub("", l0_code))
+    names = re.findall(r"^(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?(?:def|abbrev)\s+([\w.']+)", defs, re.MULTILINE)
+    return [f"L0_{slug(op)}.{n}" for n in dict.fromkeys(names) if n != "Spec"]
+
+
+def auto_trace_proof(comp: str, op: str, helpers: Sequence[str], l0_code: Optional[str] = None) -> str:
+    """First try for a trace obligation: unfold the model's defs, the L0 spec and the L0 spec's
+    own helper definitions, then close.
+
+    P10: the L0 helpers were not unfolded before, so a contract that inlines one (the model writes
+    `it.name.contains q ∧ …` where the L0 `post` says `Wanted i it = true`) could not be matched,
+    every closer failed, and Lean reported the error of the last alternative, `decide`
+    ("Expected type must not contain free variables"), which hid the real cause (gamma j
+    `3.5.3/S2`: proved once `L0_3_5_3_s2.Wanted` is unfolded). The last alternative is now a bare
+    `simp_all`, so a trace that really does not hold reports its unsolved goal (gamma j
+    `3.1.3/S1`: the model put conditions of the L0 `post` inside its `↔`, so its `post` is
+    weaker; a correct rejection)."""
     s = slug(op)
-    unfold = _simp_set([pre_name(comp, op), post_name(comp, op), f"L0_{s}.Spec", *helpers])
+    unfold = _simp_set([pre_name(comp, op), post_name(comp, op), f"L0_{s}.Spec", *helpers,
+                        *l0_helpers(op, l0_code)])
     return ("by\n  intros\n  first\n"
             f"  | (simp_all [{unfold}]; done)\n"
             f"  | (simp_all [{unfold}]; omega)\n"
-            f"  | (unfold {pre_name(comp, op)} {post_name(comp, op)} at *; simp_all)\n"
-            f"  | (simp_all [{unfold}]; decide)")
+            f"  | (simp_all [{unfold}]; decide)\n"
+            f"  | (simp_all [{unfold}]; grind)\n"
+            f"  | (unfold {pre_name(comp, op)} {post_name(comp, op)} at *; simp_all; done)\n"
+            f"  | (simp_all [{unfold}])")
 
 
 def po1_name(a: str, b: str) -> str:
